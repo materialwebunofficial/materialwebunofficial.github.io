@@ -25,6 +25,13 @@ const MD3_PRESETS = [
 ];
 
 export function initShowcase() {
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
   // 1. Theme & Scheme Controls Wiring
   const schemeToggle = document.getElementById('scheme-toggle');
   const themeToggle = document.getElementById('theme-toggle');
@@ -1013,7 +1020,7 @@ export function initShowcase() {
 
       // Step 6: CLI Commands & Package Names
       raw = raw.replace(/\b(npm|pnpm|bun|npx|yarn)\b/g, m => addToken(m, 'syn-cmd'));
-      raw = raw.replace(/\b(md3e-web-unofficial)\b/g, m => addToken(m, 'syn-pkg'));
+      raw = raw.replace(/\b(@materialwebunofficial\/md3e-web|md3e-web-unofficial|md3e-web)\b/g, m => addToken(m, 'syn-pkg'));
 
       // Step 7: Language Keywords
       raw = raw.replace(/\b(import|from|export|default|const|let|var|return|function|class|extends|new|if|else|install|add|standalone|schemas|template|selector)\b/g, m => addToken(m, 'syn-keyword'));

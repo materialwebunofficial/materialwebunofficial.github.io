@@ -103,6 +103,9 @@ export function hctToRgb(hue, chroma, tone) {
   tone = clamp(tone, 0, 100);
   chroma = Math.max(0, chroma);
 
+  if (tone <= 0.001) return { r: 0, g: 0, b: 0 };
+  if (tone >= 99.999) return { r: 255, g: 255, b: 255 };
+
   // Exact Grayscale Shortcut when chroma is 0
   if (chroma <= 0.01) {
     const fy = (tone + 16) / 116;

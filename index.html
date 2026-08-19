@@ -376,7 +376,7 @@
         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
           <div class="install-snippet-box">
             <span class="mat-sym" style="font-size: 16px; color: var(--md-sys-color-primary);">terminal</span>
-            <code>npm i md3e-web-unofficial</code>
+            <code>npm i @materialwebunofficial/md3e-web</code>
             <button class="comp-code-copy-btn" type="button" title="Copy command">
               <span class="mat-sym" style="font-size: 15px;">content_copy</span>
             </button>
@@ -445,13 +445,13 @@
                   <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
                 </div>
                 <pre><code># Install with NPM
-npm install md3e-web-unofficial
+npm install @materialwebunofficial/md3e-web
 
 # or with PNPM
-pnpm add md3e-web-unofficial
+pnpm add @materialwebunofficial/md3e-web
 
 # or with Bun
-bun add md3e-web-unofficial</code></pre>
+bun add @materialwebunofficial/md3e-web</code></pre>
               </div>
             </md-card>
 
@@ -471,11 +471,11 @@ bun add md3e-web-unofficial</code></pre>
                   <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
                 </div>
                 <pre><code>&lt;!-- M3E Design Tokens --&gt;
-&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/md3e-web-unofficial/dist/tokens.min.css"&gt;
+&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materialwebunofficial/md3e-web/dist/tokens.min.css"&gt;
 &lt;link rel="stylesheet" href="src/icons/material-symbols.css"&gt;
 
 &lt;!-- M3E Web Components --&gt;
-&lt;script type="module" src="https://cdn.jsdelivr.net/npm/md3e-web-unofficial/dist/md3-expressive.min.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script type="module" src="https://cdn.jsdelivr.net/npm/@materialwebunofficial/md3e-web/dist/md3-expressive.min.js"&gt;&lt;/script&gt;</code></pre>
               </div>
             </md-card>
           </div>
@@ -502,10 +502,10 @@ bun add md3e-web-unofficial</code></pre>
   &lt;title&gt;MD3E Web App&lt;/title&gt;
 
   &lt;!-- 1. CSS Design Tokens &amp; Material Symbols --&gt;
-  &lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/md3e-web-unofficial/dist/tokens.min.css"&gt;
+  &lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materialwebunofficial/md3e-web/dist/tokens.min.css"&gt;
 
   &lt;!-- 2. Web Components Suite (All 36 Components) --&gt;
-  &lt;script type="module" src="https://cdn.jsdelivr.net/npm/md3e-web-unofficial/dist/md3-expressive.min.js"&gt;&lt;/script&gt;
+  &lt;script type="module" src="https://cdn.jsdelivr.net/npm/@materialwebunofficial/md3e-web/dist/md3-expressive.min.js"&gt;&lt;/script&gt;
 &lt;/head&gt;
 &lt;body style="background: var(--md-sys-color-background); color: var(--md-sys-color-on-background); padding: 32px; font-family: Roboto, sans-serif;"&gt;
   
@@ -549,13 +549,13 @@ bun add md3e-web-unofficial</code></pre>
                   </div>
                   <pre><code>'use client';
 import { useEffect } from 'react';
-import 'md3e-web-unofficial/src/tokens/bundle.css';
-import 'md3e-web-unofficial/src/icons/material-symbols.css';
+import '@materialwebunofficial/md3e-web/src/tokens/bundle.css';
+import '@materialwebunofficial/md3e-web/src/icons/material-symbols.css';
 
 export default function ActionCard() {
   useEffect(() =&gt; {
     // Dynamic import registers custom elements in the browser
-    import('md3e-web-unofficial');
+    import('@materialwebunofficial/md3e-web');
   }, []);
 
   return (
@@ -600,8 +600,8 @@ export default defineConfig({
                     <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
                   </div>
                   <pre><code>&lt;script&gt;
-  import 'md3e-web-unofficial/src/tokens/bundle.css';
-  import 'md3e-web-unofficial';
+  import '@materialwebunofficial/md3e-web/src/tokens/bundle.css';
+  import '@materialwebunofficial/md3e-web';
   let progress = $state(65);
 &lt;/script&gt;
 
@@ -617,7 +617,7 @@ export default defineConfig({
                     <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
                   </div>
                   <pre><code>import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import 'md3e-web-unofficial';
+import '@materialwebunofficial/md3e-web';
 
 @Component({
   selector: 'app-root',
@@ -635,7 +635,7 @@ export class AppComponent {}</code></pre>
                     <span class="code-lang-label">app.js (Vanilla JavaScript)</span>
                     <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
                   </div>
-                  <pre><code>import { applyDynamicTheme } from 'md3e-web-unofficial';
+                  <pre><code>import { applyDynamicTheme } from '@materialwebunofficial/md3e-web';
 
 // Apply CAM16 dynamic theming with single function call
 applyDynamicTheme('#6750A4', true, 'expressive');</code></pre>
@@ -658,7 +658,7 @@ applyDynamicTheme('#6750A4', true, 'expressive');</code></pre>
                 <span class="code-lang-label">Theming &amp; Physics API</span>
                 <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
               </div>
-              <pre><code>import { applyDynamicTheme, SpringPhysics } from 'md3e-web-unofficial';
+              <pre><code>import { applyDynamicTheme, SpringPhysics } from '@materialwebunofficial/md3e-web';
 
 // 1. Apply dynamic tonal color palette from any seed hex color
 applyDynamicTheme('#00639B', true, 'expressive');

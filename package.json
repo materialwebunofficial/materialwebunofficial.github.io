@@ -1,6 +1,6 @@
 {
-  "name": "md3e-web-unofficial",
-  "version": "1.0.1",
+  "name": "@materialwebunofficial/md3e-web",
+  "version": "1.0.2",
   "description": "Unofficial Web Adaptation of Material Design 3 Expressive (M3 Expressive) - Web Components, Design Tokens, Spring Physics, and HCT Dynamic Theme Engine",
   "type": "module",
   "main": "./dist/md3-expressive.esm.js",
@@ -63,13 +63,13 @@
     "ui-library",
     "unofficial"
   ],
-  "author": "saglame193",
+  "author": "materialwebunofficial",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/materialwebunofficial/materialwebunofficial.github.io.git"
   },
-  "homepage": "https://github.com/materialwebunofficial/materialwebunofficial.github.io#readme",
+  "homepage": "https://materialwebunofficial.github.io/#home",
   "bugs": {
     "url": "https://github.com/materialwebunofficial/materialwebunofficial.github.io/issues"
   },

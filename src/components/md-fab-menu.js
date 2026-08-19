@@ -73,7 +73,7 @@ export class MdFabMenu extends HTMLElement {
       this.style.zIndex = '1000';
       const parentCell = this.closest('.live-showcase-cell, .live-showcase-grid-row, .comp-card, .comp-preview');
       if (parentCell) parentCell.style.zIndex = '100';
-      this._activate();
+      this._activate(false);
     }
   }
 
@@ -102,7 +102,7 @@ export class MdFabMenu extends HTMLElement {
       if (iconSpan) {
         iconSpan.textContent = this.open ? 'close' : (this.getAttribute('icon') || 'add');
       }
-      this.open ? this._activate() : this._deactivate();
+      this.open ? this._activate(true) : this._deactivate();
     } else if (name === 'items' || name === 'color' || name === 'icon' || name === 'fixed' || name === 'placement') {
       this.render(); this.setupInteractions();
     }
@@ -308,12 +308,11 @@ export class MdFabMenu extends HTMLElement {
 
       <div class="scrim" part="scrim"></div>
       <div class="anchor">
-        <button class="fab" type="button" aria-haspopup="menu"
-          aria-expanded="${this.open ? 'true' : 'false'}"
+        <button class="fab" type="button" aria-haspopup="true" aria-expanded="${this.open ? 'true' : 'false'}"
           aria-label="${this.open ? 'Close menu' : 'Open menu'}">
           <span class="icon material-symbols-rounded">${escapeHtml(iconName)}</span>
         </button>
-        <ul class="list placement-${escapeHtml(this.placement)}" role="menu" aria-label="${escapeHtml(this.getAttribute('aria-label') || 'FAB menu')}">
+        <ul class="list placement-${isBottom ? 'bottom' : 'top'}" role="menu" aria-label="${escapeHtml(this.getAttribute('aria-label') || 'FAB menu')}">
           ${items.map((it, i) => `
             <li role="none" style="list-style: none;">
               <button class="item" type="button" role="menuitem" tabindex="-1" data-index="${i}">
@@ -329,7 +328,7 @@ export class MdFabMenu extends HTMLElement {
 
   _menuItems() { return [...this.shadowRoot.querySelectorAll('.item')]; }
 
-  _activate() {
+  _activate(fromUserInteraction = false) {
     document.removeEventListener('keydown', this._onKeydown);
     document.removeEventListener('click', this._onDocClick);
     document.addEventListener('keydown', this._onKeydown);
@@ -338,9 +337,17 @@ export class MdFabMenu extends HTMLElement {
     if (fab) fab.setAttribute('aria-label', 'Close menu');
     const items = this._menuItems();
     items.forEach((el, i) => {
-      setTimeout(() => SpringPhysics.animateProperty(el, 'scale', 0.6, 1.0, 'expressiveSpatialMedium'), i * 30);
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(6px) scale(0.96)';
+      el.style.transition = `opacity 130ms ease ${i * 25}ms, transform 160ms cubic-bezier(0.2, 0, 0, 1) ${i * 25}ms`;
+      requestAnimationFrame(() => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      });
     });
-    if (items.length) items[items.length - 1].focus();
+    if (fromUserInteraction && items.length) {
+      items[items.length - 1].focus({ preventScroll: true });
+    }
   }
 
   _deactivate() {
