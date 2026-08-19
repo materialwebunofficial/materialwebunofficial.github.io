@@ -1,0 +1,74 @@
+/* Material Design 3 Expressive (M3 Expressive) Motion System & Spring Physics Tokens */
+
+:root,
+[data-motion-scheme="expressive"],
+[data-theme-scheme="expressive"] {
+  /* Compose MotionScheme.expressive() Spring Physics Parameters */
+  --md-sys-motion-scheme: 'expressive';
+
+  --md-sys-motion-expressive-spatial-slow-damping: 0.70;
+  --md-sys-motion-expressive-spatial-slow-stiffness: 250;
+
+  --md-sys-motion-expressive-spatial-medium-damping: 0.70;
+  --md-sys-motion-expressive-spatial-medium-stiffness: 450;
+
+  --md-sys-motion-expressive-spatial-fast-damping: 0.75;
+  --md-sys-motion-expressive-spatial-fast-stiffness: 800;
+
+  --md-sys-motion-expressive-effect-slow-damping: 1.00;
+  --md-sys-motion-expressive-effect-slow-stiffness: 800;
+
+  --md-sys-motion-expressive-effect-fast-damping: 1.00;
+  --md-sys-motion-expressive-effect-fast-stiffness: 1400;
+
+  /* Active Scheme Easing (Expressive: Bouncy Overshoot) */
+  --md-sys-motion-easing-spatial-active: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --md-sys-motion-easing-fast-active: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --md-sys-motion-easing-effects-active: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+
+  /* Pre-computed Cubic-Bezier Fallback Easing Curves for CSS Transitions */
+  --md-sys-motion-easing-expressive-spatial: cubic-bezier(0.34, 1.56, 0.64, 1); /* Simulates spring overshoot */
+  --md-sys-motion-easing-expressive-fast: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --md-sys-motion-easing-expressive-effects: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --md-sys-motion-easing-standard: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --md-sys-motion-easing-emphasized: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --md-sys-motion-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+  --md-sys-motion-easing-emphasized-accelerate: cubic-bezier(0.3, 0.0, 0.8, 0.15);
+
+  /* Expressive Motion Durations (Fallback when JS Spring Solver is off) */
+  --md-sys-motion-duration-short1: 100ms;
+  --md-sys-motion-duration-short2: 200ms;
+  --md-sys-motion-duration-medium1: 300ms;
+  --md-sys-motion-duration-medium2: 400ms;
+  --md-sys-motion-duration-long1: 500ms;
+  --md-sys-motion-duration-long2: 600ms;
+  --md-sys-motion-duration-expressive-spring: 450ms;
+}
+
+/* Standard Material 3 Motion Scheme */
+[data-motion-scheme="standard"] {
+  --md-sys-motion-scheme: 'standard';
+
+  --md-sys-motion-standard-spatial-slow-damping: 1.00;
+  --md-sys-motion-standard-spatial-slow-stiffness: 300;
+
+  --md-sys-motion-standard-spatial-medium-damping: 1.00;
+  --md-sys-motion-standard-spatial-medium-stiffness: 700;
+
+  --md-sys-motion-standard-spatial-fast-damping: 1.00;
+  --md-sys-motion-standard-spatial-fast-stiffness: 1400;
+
+  --md-sys-motion-standard-effect-slow-damping: 1.00;
+  --md-sys-motion-standard-effect-slow-stiffness: 1600;
+
+  --md-sys-motion-standard-effect-fast-damping: 1.00;
+  --md-sys-motion-standard-effect-fast-stiffness: 3800;
+
+  /* Active Scheme Easing (Standard: Smooth Critically Damped - No Bounce) */
+  --md-sys-motion-easing-spatial-active: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --md-sys-motion-easing-fast-active: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --md-sys-motion-easing-effects-active: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --md-sys-motion-easing-expressive-spatial: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --md-sys-motion-easing-expressive-fast: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --md-sys-motion-duration-expressive-spring: 220ms;
+}

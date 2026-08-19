@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Research, notes & temporary tools
+research/
+*.mp4
+audit_output.txt
+scratch/
+docs/
+
+# Environment & Testing
+.env
+.env.local
+coverage/
+.nyc_output
+test-results/
+playwright-report/
+blob-report/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+

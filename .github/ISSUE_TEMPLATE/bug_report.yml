@@ -1,0 +1,53 @@
+name: 🐛 Bug Report
+description: Report a bug or unintended behavior in a component or module
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please provide as much detail as possible to help us reproduce and resolve the problem.
+  - type: input
+    id: component
+    attributes:
+      label: Affected Component or Module
+      description: E.g., `md-date-picker`, `hct-color-engine`, `spring-physics`, `shapes.css`
+      placeholder: md-loading-indicator
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of the Bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Steps or minimal HTML snippet to reproduce the behavior.
+      placeholder: |
+        1. Open the showcase
+        2. Click on the ...
+        3. Observe that ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome / Chromium
+        - Firefox
+        - Safari (WebKit)
+        - Edge
+        - Mobile Chrome / Safari
+    validations:
+      required: true

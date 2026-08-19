@@ -1,0 +1,14 @@
+# Exclude test files and tools from NPM package
+test/
+demo/
+docs/
+.github/
+.editorconfig
+*.mp4
+*.bat
+audit_output.txt
+scratch/
+scripts/
+index.html
+styles/
+assets/

@@ -1,0 +1,19 @@
+/* ==========================================================================
+   DOSYA: src/tokens/spacing.css
+   MD3E 8dp Taban Çizgisi & 4dp Alt Izgara Spacing Token'ları
+   ========================================================================== */
+
+:root {
+  --md-sys-spacing-0: 0px;
+  --md-sys-spacing-1: 4px;   /* 0.5x - mikro detaylar, rozet ofseti */
+  --md-sys-spacing-2: 8px;   /* 1.0x - ikon-metin aralığı, dikey padding */
+  --md-sys-spacing-3: 12px;  /* 1.5x - kompakt yatay padding */
+  --md-sys-spacing-4: 16px;  /* 2.0x - standart buton ve kart içi padding */
+  --md-sys-spacing-5: 20px;  /* 2.5x - form boşlukları */
+  --md-sys-spacing-6: 24px;  /* 3.0x - dialog padding, sütun olukları */
+  --md-sys-spacing-8: 32px;  /* 4.0x - XL elemanlar, modallar */
+  --md-sys-spacing-10: 40px; /* 5.0x - kartlar arası boşluk */
+  --md-sys-spacing-12: 48px; /* 6.0x - minimum touch target boyutu */
+  --md-sys-spacing-14: 56px; /* 7.0x - appbar / floating toolbar yüksekliği */
+  --md-sys-spacing-16: 64px; /* 8.0x - büyük sayfa kenar boşlukları */
+}

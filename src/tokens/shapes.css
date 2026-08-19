@@ -1,0 +1,54 @@
+/* Material Design 3 Expressive (M3 Expressive) Shape System & Corner Morphing Tokens */
+
+:root {
+  /* Standard M3 Corner Radii */
+  --md-sys-shape-corner-none: 0px;
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-extra-small-top: 4px 4px 0px 0px;
+
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-small-top: 8px 8px 0px 0px;
+
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-medium-top: 12px 12px 0px 0px;
+
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-large-increased: 20px;
+  --md-sys-shape-corner-large-top: 16px 16px 0px 0px;
+  --md-sys-shape-corner-large-end: 0px 16px 16px 0px;
+  --md-sys-shape-corner-large-start: 16px 0px 0px 16px;
+
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-extra-large-increased: 32px;
+  --md-sys-shape-corner-extra-large-top: 28px 28px 0px 0px;
+
+  --md-sys-shape-corner-extra-extra-large: 48px;
+
+  --md-sys-shape-corner-full: 9999px;
+
+  /* M3 Expressive Expanded Shapes (35+ corner shape clip-paths & asymmetric radii) */
+  --md-sys-shape-expressive-asymmetric-1: 28px 8px 28px 8px;
+  --md-sys-shape-expressive-asymmetric-2: 8px 28px 8px 28px;
+  --md-sys-shape-expressive-asymmetric-3: 36px 12px 12px 36px;
+  --md-sys-shape-expressive-asymmetric-4: 12px 36px 36px 12px;
+
+  /* Expressive Container Morphing Tokens */
+  --md-sys-shape-expressive-fab-default: 16px;
+  --md-sys-shape-expressive-fab-hover: 28px;
+  --md-sys-shape-expressive-fab-pressed: 9999px;
+
+  --md-sys-shape-expressive-button-default: 9999px;
+  --md-sys-shape-expressive-button-pressed: 16px;
+
+  --md-sys-shape-expressive-card-default: 16px;
+  --md-sys-shape-expressive-card-hover: 24px;
+
+  --md-sys-shape-expressive-chip-default: 8px;
+  --md-sys-shape-expressive-chip-selected: 16px;
+
+  /* SVG Polygon & Path Clip-Path Masks for Expressive Shapes */
+  --md-sys-shape-mask-clover: path('M 50,0 C 70,0 80,10 80,30 C 80,45 100,50 100,50 C 100,50 80,55 80,70 C 80,90 70,100 50,100 C 30,100 20,90 20,70 C 20,55 0,50 0,50 C 0,50 20,45 20,30 C 20,10 30,0 50,0 Z');
+  --md-sys-shape-mask-scallop: path('M 0,20 Q 20,0 40,20 Q 60,40 80,20 Q 100,0 100,20 Q 100,40 100,60 Q 100,80 100,100 Q 80,100 60,100 Q 40,100 20,100 Q 0,100 0,80 Z');
+  --md-sys-shape-mask-star-4: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
+  --md-sys-shape-mask-burst: polygon(50% 0%, 63% 18%, 85% 9%, 81% 33%, 100% 50%, 81% 67%, 85% 91%, 63% 82%, 50% 100%, 37% 82%, 15% 91%, 19% 67%, 0% 50%, 19% 33%, 15% 9%, 37% 18%);
+}

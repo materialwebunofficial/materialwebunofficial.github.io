@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-theme-scheme="expressive">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material Design 3 Expressive (MD3E) — Web Component Showcase</title>
+  <meta name="description" content="Independent Web Components adaptation of Google's Material Design 3 Expressive design system with CAM16 dynamic theming and Android Compose spring physics.">
+  <link rel="stylesheet" href="src/tokens/bundle.css">
+  <link rel="stylesheet" href="src/icons/material-symbols.css">
+  <link rel="stylesheet" href="styles/showcase.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Flex:opsz,wght@8..144,300..800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+</head>
+<body class="drawer-collapsed">
+
+  <!-- =========================================================================
+       0. MOBILE TOP APP BAR & SCRIM (< 600px)
+       ========================================================================= -->
+  <header class="mobile-top-bar" aria-label="Mobile Navigation Bar">
+    <div class="mobile-top-bar-leading">
+      <button class="mobile-drawer-btn" id="mobile-drawer-toggle" aria-label="Open Components Menu" type="button">
+        <span class="mat-sym">menu</span>
+      </button>
+      <span class="md-title-large mobile-bar-title">MD3 Expressive</span>
+    </div>
+    <div class="mobile-top-bar-actions">
+      <button class="rail-bottom-btn" id="mobile-motion-toggle" aria-label="Toggle Theme Scheme" type="button" title="Toggle Theme Scheme">
+        <span class="mat-sym">auto_awesome</span>
+      </button>
+      <button class="rail-bottom-btn" id="mobile-theme-toggle" aria-label="Toggle Dark/Light Mode" type="button" title="Toggle Dark/Light Mode">
+        <span class="mat-sym">dark_mode</span>
+      </button>
+    </div>
+  </header>
+  <div class="drawer-scrim" id="drawer-scrim"></div>
+
+  <!-- =========================================================================
+       1. NAVIGATION RAIL (LEFT 80px - HOME, GET STARTED, COMPONENTS)
+       ========================================================================= -->
+  <aside class="app-nav-rail" aria-label="Main Navigation Rail">
+    <div class="rail-top-group">
+      <div class="rail-brand-logo" title="Material Design 3 Expressive">
+        <span class="mat-sym">auto_awesome</span>
+      </div>
+
+      <nav class="rail-nav-items">
+        <button class="rail-item active" data-tab="home" type="button" aria-label="Home">
+          <div class="rail-icon-wrapper"><span class="mat-sym">home</span></div>
+          <span class="rail-label">Home</span>
+        </button>
+
+        <button class="rail-item" data-tab="get-started" type="button" aria-label="Get started">
+          <div class="rail-icon-wrapper"><span class="mat-sym">menu_book</span></div>
+          <span class="rail-label">Get started</span>
+        </button>
+
+        <button class="rail-item" data-tab="components" type="button" aria-label="Components">
+          <div class="rail-icon-wrapper"><span class="mat-sym">dashboard_customize</span></div>
+          <span class="rail-label">Components</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="rail-bottom-group">
+      <button class="rail-bottom-btn" id="rail-motion-toggle" title="Toggle Theme Scheme (Expressive / Standard)" type="button">
+        <span class="mat-sym">auto_awesome</span>
+      </button>
+      <button class="rail-bottom-btn" id="rail-theme-toggle" title="Toggle Dark/Light Mode" type="button">
+        <span class="mat-sym">dark_mode</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       2. MASTER NAVIGATION DRAWER (MOBILE MODAL / DESKTOP SUB-NAV)
+       ========================================================================= -->
+  <nav class="sub-nav-drawer" id="components-sub-nav" aria-label="Main Navigation Drawer">
+    
+    <!-- PRIMARY NAVIGATION DESTINATIONS (MOBILE & TABLET) -->
+    <div class="drawer-main-destinations">
+      <button class="drawer-dest-item active" data-tab="home" type="button" aria-label="Home">
+        <div class="drawer-dest-pill"><span class="mat-sym">home</span></div>
+        <span class="drawer-dest-label">Home</span>
+      </button>
+
+      <button class="drawer-dest-item" data-tab="get-started" type="button" aria-label="Get started">
+        <div class="drawer-dest-pill"><span class="mat-sym">menu_book</span></div>
+        <span class="drawer-dest-label">Get started</span>
+      </button>
+
+      <button class="drawer-dest-item" data-tab="components" type="button" aria-label="Components">
+        <div class="drawer-dest-pill"><span class="mat-sym">dashboard_customize</span></div>
+        <span class="drawer-dest-label">Components</span>
+      </button>
+    </div>
+
+    <div class="drawer-divider"></div>
+
+    <div class="drawer-section-title">Components Catalog</div>
+
+    <a href="#overview" class="sub-nav-overview-pill" data-target="overview">
+      <span class="mat-sym" style="font-size: 20px;">category</span>
+      <span>Components overview</span>
+    </a>
+
+    <div class="sub-nav-list">
+      <a class="sub-nav-item" href="#app-bars" data-target="app-bars">App bars</a>
+      <a class="sub-nav-item" href="#badges" data-target="badges">Badges</a>
+
+      <div class="sub-nav-accordion" data-group="buttons">
+        <button class="sub-nav-accordion-header" type="button">
+          <span>Buttons</span>
+          <span class="mat-sym chevron">arrow_drop_down</span>
+        </button>
+        <div class="sub-nav-accordion-content">
+          <a class="sub-nav-subitem" href="#buttons" data-target="buttons">All buttons</a>
+          <a class="sub-nav-subitem" href="#button-sizes" data-target="button-sizes">5 Expressive sizes</a>
+          <a class="sub-nav-subitem" href="#fabs" data-target="fabs">FABs</a>
+          <a class="sub-nav-subitem" href="#extended-fabs" data-target="extended-fabs">Extended FABs</a>
+          <a class="sub-nav-subitem" href="#fab-menu" data-target="fab-menu">FAB menu</a>
+          <a class="sub-nav-subitem" href="#icon-buttons" data-target="icon-buttons">Icon buttons</a>
+          <a class="sub-nav-subitem" href="#segmented-buttons" data-target="segmented-buttons">Segmented buttons</a>
+          <a class="sub-nav-subitem" href="#split-button" data-target="split-button">Split button</a>
+        </div>
+      </div>
+
+      <a class="sub-nav-item" href="#cards" data-target="cards">Cards</a>
+      <a class="sub-nav-item" href="#carousel" data-target="carousel">Carousel</a>
+      <a class="sub-nav-item" href="#chips" data-target="chips">Chips</a>
+
+      <div class="sub-nav-accordion" data-group="pickers">
+        <button class="sub-nav-accordion-header" type="button">
+          <span>Date &amp; time pickers</span>
+          <span class="mat-sym chevron">arrow_drop_down</span>
+        </button>
+        <div class="sub-nav-accordion-content">
+          <a class="sub-nav-subitem" href="#date-pickers" data-target="date-pickers">Date pickers</a>
+          <a class="sub-nav-subitem" href="#time-pickers" data-target="time-pickers">Time pickers</a>
+        </div>
+      </div>
+
+      <a class="sub-nav-item" href="#dialogs" data-target="dialogs">Dialogs</a>
+      <a class="sub-nav-item" href="#dividers" data-target="dividers">Divider</a>
+      <a class="sub-nav-item" href="#lists" data-target="lists">Lists</a>
+
+      <div class="sub-nav-accordion" data-group="progress">
+        <button class="sub-nav-accordion-header" type="button">
+          <span>Loading &amp; progress</span>
+          <span class="mat-sym chevron">arrow_drop_down</span>
+        </button>
+        <div class="sub-nav-accordion-content">
+          <a class="sub-nav-subitem" href="#loading-indicator" data-target="loading-indicator">Loading indicator</a>
+          <a class="sub-nav-subitem" href="#progress-indicators" data-target="progress-indicators">Progress indicators</a>
+        </div>
+      </div>
+
+      <a class="sub-nav-item" href="#menus" data-target="menus">Menus</a>
+
+      <div class="sub-nav-accordion" data-group="navigation">
+        <button class="sub-nav-accordion-header" type="button">
+          <span>Navigation</span>
+          <span class="mat-sym chevron">arrow_drop_down</span>
+        </button>
+        <div class="sub-nav-accordion-content">
+          <a class="sub-nav-subitem" href="#nav-bar" data-target="nav-bar">Navigation bar</a>
+          <a class="sub-nav-subitem" href="#nav-drawer" data-target="nav-drawer">Navigation drawer</a>
+          <a class="sub-nav-subitem" href="#nav-rail" data-target="nav-rail">Navigation rail</a>
+        </div>
+      </div>
+
+      <div class="sub-nav-accordion" data-group="selection">
+        <button class="sub-nav-accordion-header" type="button">
+          <span>Selection controls</span>
+          <span class="mat-sym chevron">arrow_drop_down</span>
+        </button>
+        <div class="sub-nav-accordion-content">
+          <a class="sub-nav-subitem" href="#checkbox" data-target="checkbox">Checkbox</a>
+          <a class="sub-nav-subitem" href="#radio-button" data-target="radio-button">Radio button</a>
+          <a class="sub-nav-subitem" href="#selection" data-target="selection">Switch</a>
+        </div>
+      </div>
+
+      <a class="sub-nav-item" href="#search" data-target="search">Search</a>
+
+      <div class="sub-nav-accordion" data-group="sheets">
+        <button class="sub-nav-accordion-header" type="button">
+          <span>Sheets</span>
+          <span class="mat-sym chevron">arrow_drop_down</span>
+        </button>
+        <div class="sub-nav-accordion-content">
+          <a class="sub-nav-subitem" href="#bottom-sheet" data-target="bottom-sheet">Bottom sheet</a>
+          <a class="sub-nav-subitem" href="#side-sheet" data-target="side-sheet">Side sheet</a>
+        </div>
+      </div>
+
+      <a class="sub-nav-item" href="#sliders" data-target="sliders">Sliders</a>
+      <a class="sub-nav-item" href="#snackbars" data-target="snackbars">Snackbar</a>
+      <a class="sub-nav-item" href="#tabs" data-target="tabs">Tabs</a>
+      <a class="sub-nav-item" href="#text-fields" data-target="text-fields">Text fields</a>
+      <a class="sub-nav-item" href="#toolbars" data-target="toolbars">Toolbars</a>
+      <a class="sub-nav-item" href="#tooltips" data-target="tooltips">Tooltips</a>
+      <a class="sub-nav-item" href="#theming" data-target="theming">Theme &amp; color</a>
+    </div>
+  </nav>
+
+  <!-- =========================================================================
+       3. MAIN CONTENT CONTAINER (HOME, GET STARTED, COMPONENTS)
+       ========================================================================= -->
+  <main class="main">
+
+    <!-- =====================================================================
+         AMBIENT HOME BACKGROUND WAVE (MD3E SHOWCASE EXCLUSIVE)
+         ===================================================================== -->
+    <div class="ambient-stage-wrapper" id="ambientStageWrapper" aria-hidden="true">
+      <div class="ambient-wave-anchor" id="ambientWaveAnchor">
+        <canvas id="ambientWaveCanvas"></canvas>
+      </div>
+    </div>
+
+
+    <!-- =====================================================================
+         TAB 1: HOME (DEFAULT ACTIVE LANDING VIEW - §2)
+         ===================================================================== -->
+    <div class="tab-view active" id="tab-view-home">
+      
+      <!-- 2.1 HERO -->
+      <section class="home-hero-container" aria-label="Hero Section">
+        <!-- Hero Thesis Card -->
+        <div class="home-hero-thesis">
+          <div>
+            <div class="home-hero-eyebrow">
+              <span class="md-label-large" style="color: var(--md-sys-color-primary); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">Material Design 3 Expressive</span>
+            </div>
+            
+            <h1 class="home-hero-title">Material Design 3 Expressive — Built for the Web</h1>
+            
+            <p class="home-hero-desc">
+              39 zero-dependency Web Components ported directly from Android Jetpack Compose 1.4+ source code. Features CAM16 HCT dynamic theming and spring physics.
+            </p>
+          </div>
+
+          <div class="home-actions-row">
+            <md-button variant="filled" size="m" icon="arrow_forward" data-navigate-tab="get-started">Get Started</md-button>
+            <md-button variant="tonal" size="m" icon="dashboard_customize" data-navigate-tab="components">Explore Components</md-button>
+            <md-button variant="outlined" size="m" icon="code" onclick="window.open('https://github.com/materialwebunofficial/materialwebunofficial.github.io', '_blank')">GitHub</md-button>
+          </div>
+        </div>
+
+        <!-- 2.2 LIVE MD3E SHOWCASE (SIGNATURE EFFECTS) -->
+        <div class="home-live-card">
+          <div class="home-live-header">
+            <div class="home-live-title">
+              <span class="mat-sym" style="color: var(--md-sys-color-primary);">play_circle</span>
+              <span>Live Expressive Showcase</span>
+            </div>
+            <span class="hero-live-badge">Compose 1:1 Physics</span>
+          </div>
+
+          <div class="home-live-body">
+            <!-- 1. Wavy Progress Cell -->
+            <div class="live-showcase-cell">
+              <div class="live-cell-header">
+                <div class="live-cell-title">
+                  <span class="mat-sym live-cell-icon">waves</span>
+                  <span>Wavy Progress Indicator</span>
+                </div>
+                <span class="live-cell-badge" id="hero-progress-val">65%</span>
+              </div>
+              <div class="live-cell-content">
+                <md-progress-indicator id="hero-wavy-progress" type="linear" variant="wavy" value="65"></md-progress-indicator>
+              </div>
+            </div>
+
+            <!-- 2. Morphology & Spring Buttons Grid -->
+            <div class="live-showcase-grid-row">
+              <div class="live-showcase-cell" style="flex: 1; align-items: center; justify-content: center; text-align: center;">
+                <div class="live-cell-title" style="margin-bottom: 4px;">
+                  <span class="mat-sym live-cell-icon">progress_activity</span>
+                  <span>Loading Morph</span>
+                </div>
+                <md-loading-indicator variant="contained" size="m" color="primary"></md-loading-indicator>
+              </div>
+
+              <div class="live-showcase-cell" style="flex: 2;">
+                <div class="live-cell-title" style="margin-bottom: 6px;">
+                  <span class="mat-sym live-cell-icon">smart_button</span>
+                  <span>Expressive Buttons &amp; FAB</span>
+                </div>
+                <div class="live-buttons-cluster">
+                  <md-button size="xs" variant="filled" label="XS"></md-button>
+                  <md-button size="s" variant="filled" label="S"></md-button>
+                  <md-button size="m" variant="filled" label="M"></md-button>
+                  <md-fab-menu icon="add" color="primary" items='[{"icon":"edit","label":"Document"},{"icon":"image","label":"Photo"}]'></md-fab-menu>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Tactile Slider Cell -->
+            <div class="live-showcase-cell">
+              <div class="live-cell-header">
+                <div class="live-cell-title">
+                  <span class="mat-sym live-cell-icon">tune</span>
+                  <span>Expressive Slider</span>
+                </div>
+                <span class="live-cell-badge" id="hero-slider-val">65</span>
+              </div>
+              <div class="live-cell-content">
+                <md-slider id="hero-live-slider" size="xs" value="65"></md-slider>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INTERACTIVE EXPERIMENT BAR -->
+      <section class="home-exp-band" aria-label="Interactive Experiment Controls">
+        <div class="home-exp-label">
+          <span class="mat-sym" style="color: var(--md-sys-color-primary);">tune</span>
+          <span>Interactive Experiment Bar:</span>
+        </div>
+
+        <div class="home-exp-controls">
+          <!-- Quick dynamic color seeds -->
+          <div style="display: flex; align-items: center; gap: 6px; margin-right: 8px;">
+            <span class="md-label-medium">Dynamic Seed:</span>
+            <button class="quick-color-dot active" style="background-color: #6750A4;" data-hex="#6750A4" title="Purple (Default)" type="button"></button>
+            <button class="quick-color-dot" style="background-color: #386A20;" data-hex="#386A20" title="Green Forest" type="button"></button>
+            <button class="quick-color-dot" style="background-color: #00639B;" data-hex="#00639B" title="Ocean Blue" type="button"></button>
+            <button class="quick-color-dot" style="background-color: #9C4146;" data-hex="#9C4146" title="Coral Warm" type="button"></button>
+            <button class="quick-color-dot" style="background-color: #7D5700;" data-hex="#7D5700" title="Deep Gold" type="button"></button>
+          </div>
+
+          <md-button id="scheme-toggle" variant="tonal" size="xs" icon="motion_photos_on">Scheme: Expressive</md-button>
+          <md-button id="theme-toggle" variant="outlined" size="xs" icon="dark_mode">Mode: Dark</md-button>
+        </div>
+      </section>
+
+      <!-- 2.3 "WHY MD3E?" (4-GRID VALUE PILLARS) -->
+      <section class="section-header home-why-header-card" aria-label="Value Pillars">
+        <h2 class="md-headline-medium section-title"><span class="mat-sym">verified</span> Why MD3E Web?</h2>
+        <p class="section-desc">Core architectural principles of the Material Design 3 Expressive web implementation.</p>
+      </section>
+
+      <div class="pillars-grid">
+        <div class="pillar-card">
+          <div class="pillar-icon-box"><span class="mat-sym">html</span></div>
+          <h3 class="pillar-title">1. Zero Dependencies</h3>
+          <p class="pillar-desc">Shadow DOM v1, Custom Elements v1, and CSS Custom Properties. No build step required, runs natively anywhere.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon-box"><span class="mat-sym">palette</span></div>
+          <h3 class="pillar-title">2. CAM16 Dynamic HCT</h3>
+          <p class="pillar-desc">Derives 5 tonal palettes with guaranteed WCAG 2.1 AA/AAA contrast ratios from a single seed hex color.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon-box"><span class="mat-sym">toys</span></div>
+          <h3 class="pillar-title">3. Android Compose 1:1 Spring Physics</h3>
+          <p class="pillar-desc">Organic and natural motion curves powered by a damped harmonic oscillator mathematical model.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon-box"><span class="mat-sym">integration_instructions</span></div>
+          <h3 class="pillar-title">4. Cross-Framework Ready</h3>
+          <p class="pillar-desc">Seamless form integration and event handling across React 19, Vue 3, Svelte 5, Angular 17+, and Vanilla HTML/JS.</p>
+        </div>
+      </div>
+
+      <!-- 2.4 NEXT STEPS / QUICK INSTALL BANNER -->
+      <section class="next-steps-card" aria-label="Quick Install and Guide">
+        <div>
+          <h3 class="md-title-large" style="margin-bottom: 6px; font-weight: 700; color: var(--md-sys-color-on-surface);">Ready to build with MD3E?</h3>
+          <p class="md-body-medium" style="color: var(--md-sys-color-on-surface-variant);">Install the zero-dependency package or read the developer quickstart guide.</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <div class="install-snippet-box">
+            <span class="mat-sym" style="font-size: 16px; color: var(--md-sys-color-primary);">terminal</span>
+            <code>npm i md3e-web-unofficial</code>
+            <button class="comp-code-copy-btn" type="button" title="Copy command">
+              <span class="mat-sym" style="font-size: 15px;">content_copy</span>
+            </button>
+          </div>
+          <md-button variant="filled" size="m" icon="arrow_forward" data-navigate-tab="get-started">Get Started Guide</md-button>
+        </div>
+      </section>
+
+      <!-- DISCLAIMER BANNER -->
+      <section class="disclaimer-card" aria-label="Open Source and Legal Notice">
+        <span class="mat-sym disclaimer-icon">info</span>
+        <div class="disclaimer-text">
+          <strong>Open Source &amp; Legal Notice (Apache-2.0 License):</strong><br>
+          This project is an independent open-source web adaptation and personal learning project. It is not affiliated with, endorsed by, or sponsored by Google LLC. The wavy progress and spring physics algorithms are derived under the Apache-2.0 license from the <strong>Android Open Source Project (AOSP)</strong> and <strong>Material Components for Android</strong> source trees.
+        </div>
+      </section>
+
+    </div>
+
+
+    <!-- =====================================================================
+         TAB 2: GET STARTED (MODERN DEVELOPER GUIDE & QUICKSTART)
+         ===================================================================== -->
+    <div class="tab-view" id="tab-view-get-started">
+      <div class="docs-wrapper">
+        
+        <!-- DOCS HERO HEADER (DOGFOODING ELEVATED CARD & MD-CHIP) -->
+        <md-card variant="elevated" style="padding: 32px 36px; border-radius: var(--md-sys-shape-corner-extra-large, 28px); width: 100%; box-sizing: border-box;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <span class="mat-sym" style="font-size: 34px; color: var(--md-sys-color-primary);">rocket_launch</span>
+            <h1 style="margin: 0; font-size: 36px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2;">Getting Started with MD3E</h1>
+          </div>
+          <p class="md-body-large" style="color: var(--md-sys-color-on-surface-variant); margin: 0 0 20px 0; max-width: 840px;">
+            A production-ready suite of 36+ Material Design 3 Expressive Web Components featuring CAM16 dynamic color theming and organic spring physics. Run natively in any modern browser with zero build step requirements.
+          </p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <md-chip variant="assist" icon="bolt" label="Zero Dependencies"></md-chip>
+            <md-chip variant="assist" icon="html" label="Native Web Components"></md-chip>
+            <md-chip variant="assist" icon="palette" label="CAM16 Dynamic Color"></md-chip>
+            <md-chip variant="assist" icon="toys" label="Compose 1:1 Spring Physics"></md-chip>
+            <md-chip variant="assist" icon="verified" label="Universal Framework Support"></md-chip>
+          </div>
+        </md-card>
+
+        <!-- 1. QUICK INSTALLATION (DOGFOODING ELEVATED CARDS) -->
+        <section class="docs-section" id="quick-install">
+          <div class="docs-section-header">
+            <h2 class="docs-section-title"><span class="mat-sym">download</span> 1. Quick Installation</h2>
+            <p class="docs-section-subtitle">Choose the integration method that fits your project architecture.</p>
+          </div>
+
+          <div class="install-grid">
+            <!-- OPTION A: PACKAGE MANAGER -->
+            <md-card variant="elevated" style="--md-card-padding: 24px; border-radius: var(--md-sys-shape-corner-large, 16px);">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                  <span class="mat-sym" style="color: var(--md-sys-color-primary); font-size: 20px;">terminal</span>
+                  <h3 class="md-title-medium" style="margin: 0;">Option A: Package Manager (Recommended)</h3>
+                </div>
+                <p class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin: 0 0 16px 0;">Install via npm, pnpm, or bun for React, Vue, Svelte, Next.js, or Vite apps.</p>
+              </div>
+              
+              <div class="code-block-wrapper">
+                <div class="code-header">
+                  <span class="code-lang-label"><span class="mat-sym">terminal</span> Terminal / Shell</span>
+                  <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+                </div>
+                <pre><code># Install with NPM
+npm install md3e-web-unofficial
+
+# or with PNPM
+pnpm add md3e-web-unofficial
+
+# or with Bun
+bun add md3e-web-unofficial</code></pre>
+              </div>
+            </md-card>
+
+            <!-- OPTION B: ZERO-BUILD CDN -->
+            <md-card variant="elevated" style="--md-card-padding: 24px; border-radius: var(--md-sys-shape-corner-large, 16px);">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                  <span class="mat-sym" style="color: var(--md-sys-color-primary); font-size: 20px;">cloud_download</span>
+                  <h3 class="md-title-medium" style="margin: 0;">Option B: Zero-Build CDN</h3>
+                </div>
+                <p class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin: 0 0 16px 0;">Embed directly into any HTML page with zero bundlers or build steps required.</p>
+              </div>
+
+              <div class="code-block-wrapper">
+                <div class="code-header">
+                  <span class="code-lang-label"><span class="mat-sym">code</span> HTML Head</span>
+                  <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+                </div>
+                <pre><code>&lt;!-- M3E Design Tokens --&gt;
+&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/md3e-web-unofficial/dist/tokens.min.css"&gt;
+&lt;link rel="stylesheet" href="src/icons/material-symbols.css"&gt;
+
+&lt;!-- M3E Web Components --&gt;
+&lt;script type="module" src="https://cdn.jsdelivr.net/npm/md3e-web-unofficial/dist/md3-expressive.min.js"&gt;&lt;/script&gt;</code></pre>
+              </div>
+            </md-card>
+          </div>
+        </section>
+
+        <!-- 2. 30-SECOND QUICKSTART -->
+        <section class="docs-section" id="quickstart-example">
+          <div class="docs-section-header">
+            <h2 class="docs-section-title"><span class="mat-sym">play_arrow</span> 2. 30-Second Quickstart Template</h2>
+            <p class="docs-section-subtitle">Copy and paste this minimal boilerplate into an <code>index.html</code> file to get immediate results.</p>
+          </div>
+
+          <md-card variant="elevated" style="padding: 24px; border-radius: var(--md-sys-shape-corner-large, 16px); width: 100%; box-sizing: border-box;">
+            <div class="code-block-wrapper" style="box-shadow: none;">
+              <div class="code-header">
+                <span class="code-lang-label"><span class="mat-sym" style="font-size: 16px;">html</span> index.html (Complete Template)</span>
+                <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+              </div>
+              <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en" data-theme="dark" data-theme-scheme="expressive"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;MD3E Web App&lt;/title&gt;
+
+  &lt;!-- 1. CSS Design Tokens &amp; Material Symbols --&gt;
+  &lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/md3e-web-unofficial/dist/tokens.min.css"&gt;
+
+  &lt;!-- 2. Web Components Suite (All 36 Components) --&gt;
+  &lt;script type="module" src="https://cdn.jsdelivr.net/npm/md3e-web-unofficial/dist/md3-expressive.min.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body style="background: var(--md-sys-color-background); color: var(--md-sys-color-on-background); padding: 32px; font-family: Roboto, sans-serif;"&gt;
+  
+  &lt;h1 class="md-headline-medium"&gt;Hello MD3 Expressive&lt;/h1&gt;
+  
+  &lt;div style="display: flex; gap: 12px; align-items: center; margin: 20px 0;"&gt;
+    &lt;md-button variant="filled" icon="favorite" label="Expressive Button"&gt;&lt;/md-button&gt;
+    &lt;md-button variant="tonal" icon="share" label="Tonal Action"&gt;&lt;/md-button&gt;
+  &lt;/div&gt;
+
+  &lt;md-progress-indicator type="linear" variant="wavy" value="70"&gt;&lt;/md-progress-indicator&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+            </div>
+          </md-card>
+        </section>
+
+        <!-- 3. FRAMEWORK INTEGRATION GUIDES -->
+        <section class="docs-section" id="framework-integration">
+          <div class="docs-section-header">
+            <h2 class="docs-section-title"><span class="mat-sym">integration_instructions</span> 3. Framework Integration</h2>
+            <p class="docs-section-subtitle">Since MD3E uses native W3C Custom Elements, it operates seamlessly with all major UI frameworks.</p>
+          </div>
+
+          <md-card variant="elevated" style="padding: 24px; border-radius: var(--md-sys-shape-corner-large, 16px); width: 100%; box-sizing: border-box;">
+            <div class="framework-tabs-container">
+              <div class="framework-tab-buttons">
+                <button class="framework-tab-btn active" data-framework="react" type="button">React 19 &amp; Next.js</button>
+                <button class="framework-tab-btn" data-framework="vue" type="button">Vue 3 + Vite</button>
+                <button class="framework-tab-btn" data-framework="svelte" type="button">Svelte 5</button>
+                <button class="framework-tab-btn" data-framework="angular" type="button">Angular 17+</button>
+                <button class="framework-tab-btn" data-framework="vanilla" type="button">Vanilla JS</button>
+              </div>
+
+              <div class="framework-tab-panel active" data-framework="react">
+                <div class="code-block-wrapper" style="box-shadow: none;">
+                  <div class="code-header">
+                    <span class="code-lang-label">React 19 / Next.js Component (App Router)</span>
+                    <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+                  </div>
+                  <pre><code>'use client';
+import { useEffect } from 'react';
+import 'md3e-web-unofficial/src/tokens/bundle.css';
+import 'md3e-web-unofficial/src/icons/material-symbols.css';
+
+export default function ActionCard() {
+  useEffect(() =&gt; {
+    // Dynamic import registers custom elements in the browser
+    import('md3e-web-unofficial');
+  }, []);
+
+  return (
+    &lt;div style={{ padding: '16px' }}&gt;
+      &lt;md-card variant="elevated" interactive&gt;
+        &lt;md-button variant="filled" size="m" icon="check" label="Confirm"&gt;&lt;/md-button&gt;
+      &lt;/md-card&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+                </div>
+              </div>
+
+              <div class="framework-tab-panel" data-framework="vue">
+                <div class="code-block-wrapper" style="box-shadow: none;">
+                  <div class="code-header">
+                    <span class="code-lang-label">vite.config.js (Vue 3 Custom Element Config)</span>
+                    <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+                  </div>
+                  <pre><code>import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+
+export default defineConfig({
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          // Tell Vue compiler to treat md- tags as native Web Components
+          isCustomElement: (tag) =&gt; tag.startsWith('md-')
+        }
+      }
+    })
+  ]
+});</code></pre>
+                </div>
+              </div>
+
+              <div class="framework-tab-panel" data-framework="svelte">
+                <div class="code-block-wrapper" style="box-shadow: none;">
+                  <div class="code-header">
+                    <span class="code-lang-label">App.svelte (Svelte 5 Runes)</span>
+                    <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+                  </div>
+                  <pre><code>&lt;script&gt;
+  import 'md3e-web-unofficial/src/tokens/bundle.css';
+  import 'md3e-web-unofficial';
+  let progress = $state(65);
+&lt;/script&gt;
+
+&lt;md-slider min="0" max="100" bind:value={progress}&gt;&lt;/md-slider&gt;
+&lt;md-progress-indicator type="linear" variant="wavy" value={progress}&gt;&lt;/md-progress-indicator&gt;</code></pre>
+                </div>
+              </div>
+
+              <div class="framework-tab-panel" data-framework="angular">
+                <div class="code-block-wrapper" style="box-shadow: none;">
+                  <div class="code-header">
+                    <span class="code-lang-label">app.component.ts (Angular 17+ Standalone)</span>
+                    <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+                  </div>
+                  <pre><code>import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import 'md3e-web-unofficial';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `&lt;md-button variant="filled" label="Angular MD3E" icon="bolt"&gt;&lt;/md-button&gt;`
+})
+export class AppComponent {}</code></pre>
+                </div>
+              </div>
+
+              <div class="framework-tab-panel" data-framework="vanilla">
+                <div class="code-block-wrapper" style="box-shadow: none;">
+                  <div class="code-header">
+                    <span class="code-lang-label">app.js (Vanilla JavaScript)</span>
+                    <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+                  </div>
+                  <pre><code>import { applyDynamicTheme } from 'md3e-web-unofficial';
+
+// Apply CAM16 dynamic theming with single function call
+applyDynamicTheme('#6750A4', true, 'expressive');</code></pre>
+                </div>
+              </div>
+            </div>
+          </md-card>
+        </section>
+
+        <!-- 4. CORE JAVASCRIPT APIS -->
+        <section class="docs-section" id="developer-api">
+          <div class="docs-section-header">
+            <h2 class="docs-section-title"><span class="mat-sym">code</span> 4. Core JavaScript APIs</h2>
+            <p class="docs-section-subtitle">Programmatically control dynamic theming and spring physics animations.</p>
+          </div>
+
+          <md-card variant="elevated" style="padding: 24px; border-radius: var(--md-sys-shape-corner-large, 16px); width: 100%; box-sizing: border-box;">
+            <div class="code-block-wrapper" style="box-shadow: none;">
+              <div class="code-header">
+                <span class="code-lang-label">Theming &amp; Physics API</span>
+                <button class="copy-code-btn" type="button"><span class="mat-sym" style="font-size: 16px;">content_copy</span> Copy</button>
+              </div>
+              <pre><code>import { applyDynamicTheme, SpringPhysics } from 'md3e-web-unofficial';
+
+// 1. Apply dynamic tonal color palette from any seed hex color
+applyDynamicTheme('#00639B', true, 'expressive');
+
+// 2. Generate smooth WAAPI keyframes with damped harmonic oscillator
+const keyframes = SpringPhysics.generateKeyframes({
+  stiffness: 800,
+  dampingRatio: 0.7
+});
+
+// 3. Animate any DOM element natively
+document.querySelector('#my-element').animate(keyframes, {
+  duration: 450,
+  fill: 'forwards'
+});</code></pre>
+            </div>
+          </md-card>
+        </section>
+
+        <!-- 5. DESIGN TOKENS REFERENCE -->
+        <section class="docs-section" id="tokens-reference">
+          <div class="docs-section-header">
+            <h2 class="docs-section-title"><span class="mat-sym">palette</span> 5. Key Design Tokens Reference</h2>
+            <p class="docs-section-subtitle">Core CSS Custom Properties available globally across your application.</p>
+          </div>
+
+          <md-card variant="elevated" style="padding: 24px; border-radius: var(--md-sys-shape-corner-large, 16px); width: 100%; box-sizing: border-box;">
+            <div class="docs-table-wrapper" style="box-shadow: none; background: transparent; padding: 0;">
+              <table class="docs-table">
+                <thead>
+                  <tr>
+                    <th>CSS Variable (Token)</th>
+                    <th>Description</th>
+                    <th>Example Usage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>--md-sys-color-primary</code></td>
+                    <td>Primary accent brand color</td>
+                    <td>Filled Buttons, Selected FABs, Active Indicators</td>
+                  </tr>
+                  <tr>
+                    <td><code>--md-sys-color-surface-container</code></td>
+                    <td>Default surface and card background</td>
+                    <td>Cards, Sheets, Dialogs, Content Panes</td>
+                  </tr>
+                  <tr>
+                    <td><code>--md-sys-motion-easing-expressive-spatial</code></td>
+                    <td>Organic expressive motion bezier curve</td>
+                    <td>Expanding surfaces, modal entrances, layout shifts</td>
+                  </tr>
+                  <tr>
+                    <td><code>--md-sys-shape-corner-extra-large</code></td>
+                    <td>28dp expressive corner radius</td>
+                    <td>Large containers, cards, bottom sheets</td>
+                  </tr>
+                  <tr>
+                    <td><code>--md-sys-typescale-display-large</code></td>
+                    <td>57px / 400 weight / 64px line-height (Brand font)</td>
+                    <td>Large expressive hero typography (<code>.md-display-large</code>)</td>
+                  </tr>
+                  <tr>
+                    <td><code>--md-sys-typescale-headline-medium-emphasized</code></td>
+                    <td>28px / 500 weight / 36px line-height (Brand font)</td>
+                    <td>Emphasized section headings (<code>.md-headline-medium-emphasized</code>)</td>
+                  </tr>
+                  <tr>
+                    <td><code>--md-sys-typescale-title-medium-emphasized</code></td>
+                    <td>16px / 700 weight / 24px line-height / 0.15px tracking</td>
+                    <td>Emphasized card &amp; list titles (<code>.md-title-medium-emphasized</code>)</td>
+                  </tr>
+                  <tr>
+                    <td><code>--md-sys-typescale-body-large</code></td>
+                    <td>16px / 400 weight / 24px line-height / 0.5px tracking</td>
+                    <td>Standard readable long-form text (<code>.md-body-large</code>)</td>
+                  </tr>
+                  <tr>
+                    <td><code>--md-sys-typescale-label-large-emphasized</code></td>
+                    <td>14px / 700 weight / 20px line-height / 0.1px tracking</td>
+                    <td>High-emphasis interactive CTA labels (<code>.md-label-large-emphasized</code>)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- TYPESCALE PREVIEW CARD -->
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--md-sys-color-outline-variant);">
+              <h3 class="md-title-medium" style="margin: 0 0 12px 0; color: var(--md-sys-color-on-surface);">M3 Expressive Typescale System (26 Styles — 13 Baseline + 13 Emphasized)</h3>
+              <p class="md-body-medium" style="color: var(--md-sys-color-on-surface-variant); margin: 0 0 16px 0;">
+                Ported directly from AndroidX <code>TypeScaleTokens.kt</code>. All styles support both CSS Custom Properties and utility classes (<code>.md-&lt;name&gt;</code> / <code>.md-typescale-&lt;name&gt;</code>).
+              </p>
+              <div class="typescale-preview-grid">
+                <div class="typescale-preview-card">
+                  <div class="md-label-medium" style="color: var(--md-sys-color-primary);">DISPLAY (BRAND)</div>
+                  <div class="md-display-small" style="font-size: 26px; line-height: 32px;">Display 36px</div>
+                  <div class="md-display-small-emphasized" style="font-size: 22px; line-height: 28px; color: var(--md-sys-color-primary);">Emph (500)</div>
+                </div>
+                <div class="typescale-preview-card">
+                  <div class="md-label-medium" style="color: var(--md-sys-color-primary);">HEADLINE (BRAND)</div>
+                  <div class="md-headline-small" style="font-size: 20px; line-height: 26px;">Headline 24px</div>
+                  <div class="md-headline-small-emphasized" style="font-size: 18px; line-height: 24px; color: var(--md-sys-color-primary);">Emph (500)</div>
+                </div>
+                <div class="typescale-preview-card">
+                  <div class="md-label-medium" style="color: var(--md-sys-color-primary);">TITLE (PLAIN)</div>
+                  <div class="md-title-medium">Title 16px/500</div>
+                  <div class="md-title-medium-emphasized" style="color: var(--md-sys-color-primary);">Emph 16px/700</div>
+                </div>
+                <div class="typescale-preview-card">
+                  <div class="md-label-medium" style="color: var(--md-sys-color-primary);">BODY &amp; LABEL</div>
+                  <div class="md-body-medium">Body 14px / 400</div>
+                  <div class="md-label-large-emphasized" style="color: var(--md-sys-color-primary);">Label Emph 14px/700</div>
+                </div>
+              </div>
+            </div>
+          </md-card>
+        </section>
+
+        <!-- 6. FOOTER / LEGAL & ATTRIBUTION -->
+        <md-card variant="elevated" style="padding: 20px 24px; border-radius: var(--md-sys-shape-corner-large, 16px); display: flex; flex-direction: row; gap: 16px; align-items: center; box-sizing: border-box;" aria-label="Legal & Origin Notice">
+          <span class="mat-sym disclaimer-icon" style="color: var(--md-sys-color-primary); font-size: 24px; flex-shrink: 0;">info</span>
+          <div class="disclaimer-text md-body-small" style="color: var(--md-sys-color-on-surface-variant);">
+            <strong>Open Source &amp; Legal Notice:</strong> MD3E is an independent open-source web implementation and personal learning project distributed under the Apache-2.0 License. It has no official affiliation with Google LLC. Motion models and mathematical curves are inspired by Android Open Source Project (AOSP) and Material Components for Android. <a href="https://github.com/materialwebunofficial/materialwebunofficial.github.io" target="_blank" style="color: var(--md-sys-color-primary);">GitHub Repository</a>
+          </div>
+        </md-card>
+
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         TAB 3: COMPONENTS (FULL 36-COMPONENT CATALOG FROM INDEX.HTML)
+         ===================================================================== -->
+    <div class="tab-view" id="tab-view-components">
+      
+      <!-- HERO COMPONENTS HEADER (MD3E ADAPTATION) -->
+      <section class="components-hero-banner" id="overview">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+          <div class="components-hero-icon-box">
+            <span class="mat-sym" style="font-size: 28px; color: var(--md-sys-color-primary);">dashboard_customize</span>
+          </div>
+          <div style="min-width: 0; flex: 1;">
+            <h1 style="margin: 0; line-height: 1.2; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span>Components</span>
+              <button type="button" class="copy-anchor-btn" data-anchor="overview" aria-label="Copy link to section"><span class="mat-sym">link</span></button>
+            </h1>
+            <span class="md-label-medium" style="color: var(--md-sys-color-primary); font-weight: 600;">39 Web Components Catalog</span>
+          </div>
+        </div>
+
+        <p class="components-hero-desc">
+          Components are interactive building blocks for assembling a user interface.
+          They are organized into 6 core categories: Action, containment,
+          communication, navigation, selection, and text input.
+        </p>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <div class="hero-meta-badge">
+            <span class="mat-sym" style="font-size: 16px;">verified</span>
+            <span>100% Android Compose Tokens</span>
+          </div>
+          <div class="hero-meta-badge">
+            <span class="mat-sym" style="font-size: 16px;">bolt</span>
+            <span>Zero Dependencies</span>
+          </div>
+          <div class="hero-meta-badge">
+            <span class="mat-sym" style="font-size: 16px;">code</span>
+            <span>Native Web Components</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 1. APP BARS -->
+      <section class="category-section" id="app-bars">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">toolbar</span> App bars <button type="button" class="copy-anchor-btn" data-anchor="app-bars" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Top and bottom app bars provide access to key destinations and screen actions.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <md-top-app-bar headline="Page Title" variant="small"></md-top-app-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Top App Bar (Small 64dp)</span>
+              <span class="comp-desc">Prominent page headline with leading navigation icon and action items.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-top-app-bar headline=&quot;Page Title&quot; variant=&quot;small&quot;&gt;&lt;/md-top-app-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <md-top-app-bar headline="Medium Top Bar" variant="medium" subtitle="Expanded context subtitle"></md-top-app-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Top App Bar (Medium 112dp)</span>
+              <span class="comp-desc">Expanded headline area for rich screen typography and scroll collapse.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-top-app-bar headline=&quot;Medium Top Bar&quot; variant=&quot;medium&quot; subtitle=&quot;Subtitle&quot;&gt;&lt;/md-top-app-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <md-bottom-app-bar></md-bottom-app-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Bottom App Bar (80dp)</span>
+              <span class="comp-desc">Anchored bottom surface housing floating primary actions and navigation.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-bottom-app-bar&gt;&lt;/md-bottom-app-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. BADGES -->
+      <section class="category-section" id="badges">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">notifications</span> Badges <button type="button" class="copy-anchor-btn" data-anchor="badges" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Dot badges and numeric count badges providing non-intrusive status indicators.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview">
+              <div style="display: flex; gap: 32px; align-items: center;">
+                <div style="position: relative; display: inline-block;">
+                  <md-icon-button variant="standard" icon="notifications" aria-label="Notifications"></md-icon-button>
+                  <md-badge style="position: absolute; top: 8px; right: 8px;"></md-badge>
+                </div>
+                <div style="position: relative; display: inline-block;">
+                  <md-icon-button variant="tonal" icon="mail" aria-label="Mail"></md-icon-button>
+                  <md-badge label="4" style="position: absolute; top: 4px; right: 4px;"></md-badge>
+                </div>
+                <div style="position: relative; display: inline-block;">
+                  <md-icon-button variant="filled" icon="chat" aria-label="Chat"></md-icon-button>
+                  <md-badge label="99+" style="position: absolute; top: 4px; right: 4px;"></md-badge>
+                </div></div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Badges</span>
+              <span class="comp-desc">Dot, single-digit, and large count badges with overflow handling.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-badge label=&quot;4&quot;&gt;&lt;/md-badge&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. BUTTONS -->
+      <section class="category-section" id="buttons">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">smart_button</span> Buttons <button type="button" class="copy-anchor-btn" data-anchor="buttons" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Buttons prompt most actions in a UI with 5 expressive sizes and spring morphing.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">        <div class="comp-preview">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                <md-button variant="filled" label="Filled" icon="add"></md-button>
+                <md-button variant="tonal" label="Tonal" icon="favorite"></md-button>
+                <md-button variant="outlined" label="Outlined" icon="edit"></md-button>
+                <md-button variant="elevated" label="Elevated"></md-button>
+                <md-button variant="text" label="Text"></md-button>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Buttons</span>
+              <span class="comp-desc">Filled, Tonal, Outlined, Elevated, and Text variants for high to low emphasis.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-button variant=&quot;filled&quot; label=&quot;Button&quot; icon=&quot;add&quot;&gt;&lt;/md-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="button-sizes">
+            <div class="comp-preview">
+              <div class="sizes-showcase-row">
+                <div class="size-item-box"><md-button size="xs" variant="filled" label="XS (32dp)"></md-button></div>
+                <div class="size-item-box"><md-button size="s" variant="filled" label="S (40dp)"></md-button></div>
+                <div class="size-item-box"><md-button size="m" variant="filled" label="M (56dp)"></md-button></div>
+                <div class="size-item-box"><md-button size="l" variant="filled" label="L (96dp)"></md-button></div>
+                <div class="size-item-box"><md-button size="xl" variant="filled" label="XL (136dp)"></md-button></div></div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">5 Expressive Sizes (XS to XL)</span>
+              <span class="comp-desc">Official scale from compact 32dp utility buttons up to 136dp hero callouts.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-button size=&quot;m&quot; variant=&quot;filled&quot; label=&quot;Button&quot;&gt;&lt;/md-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="fabs">        <div class="comp-preview">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: center;">
+                <md-fab variant="small" color="primary" icon="edit"></md-fab>
+                <md-fab variant="medium" color="primary" icon="add"></md-fab>
+                <md-fab variant="large" color="secondary-container" icon="brush"></md-fab>
+                <md-fab variant="medium" color="tertiary-container" icon="mic"></md-fab>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Floating Action Buttons (FABs)</span>
+              <span class="comp-desc">Small (40dp), Medium (80dp), and Large (96dp) primary action buttons.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-fab variant=&quot;medium&quot; color=&quot;primary&quot; icon=&quot;add&quot;&gt;&lt;/md-fab&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="extended-fabs">        <div class="comp-preview">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <md-fab variant="extended" size="small" color="primary" icon="add" label="Compose"></md-fab>
+                <md-fab variant="extended" size="medium" color="secondary-container" icon="navigation" label="Navigate"></md-fab>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Extended FABs</span>
+              <span class="comp-desc">Extended floating action buttons with clear text labels and icons.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-fab variant=&quot;extended&quot; color=&quot;primary&quot; icon=&quot;add&quot; label=&quot;Compose&quot;&gt;&lt;/md-fab&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="fab-menu">        <div class="comp-preview">
+              <div style="display: flex; gap: 24px; align-items: center; justify-content: center; min-height: 72px;">
+                <md-fab-menu icon="add" color="primary" items='[{"icon":"edit","label":"Document"},{"icon":"image","label":"Photo"},{"icon":"videocam","label":"Video"}]'></md-fab-menu>
+                <md-fab-menu icon="share" color="secondary" items='[{"icon":"link","label":"Copy Link"},{"icon":"mail","label":"Send Email"},{"icon":"forum","label":"Message"}]'></md-fab-menu>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">FAB Menu</span>
+              <span class="comp-desc">Speed-dial action menu with expressive spring pop-in physics.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-fab-menu icon=&quot;add&quot; color=&quot;primary&quot; items='[{&quot;icon&quot;:&quot;edit&quot;,&quot;label&quot;:&quot;Doc&quot;}]'&gt;&lt;/md-fab-menu&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="icon-buttons">        <div class="comp-preview">
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+                <md-icon-button variant="standard" icon="favorite_border" aria-label="Favorite"></md-icon-button>
+                <md-icon-button variant="filled" icon="share" aria-label="Share"></md-icon-button>
+                <md-icon-button variant="tonal" icon="bookmark_border" aria-label="Bookmark"></md-icon-button>
+                <md-icon-button variant="outlined" icon="settings" aria-label="Settings"></md-icon-button>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Variants (Medium / 56dp)</span>
+              <span class="comp-desc">Standard, Filled, Filled Tonal, and Outlined single-action icon buttons.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-icon-button variant=&quot;standard&quot; icon=&quot;favorite&quot; aria-label=&quot;Favorite&quot;&gt;&lt;/md-icon-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">        <div class="comp-preview">
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+                <md-icon-button variant="standard" toggle icon="favorite_border" selected-icon="favorite" aria-label="Toggle Heart"></md-icon-button>
+                <md-icon-button variant="filled" toggle icon="star_outline" selected-icon="star" aria-label="Toggle Star"></md-icon-button>
+                <md-icon-button variant="tonal" toggle icon="bookmark_border" selected-icon="bookmark" aria-label="Toggle Bookmark"></md-icon-button>
+                <md-icon-button variant="outlined" toggle icon="thumb_up_off_alt" selected-icon="thumb_up" aria-label="Toggle Like"></md-icon-button>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Toggle States (Unselected / Selected)</span>
+              <span class="comp-desc">Toggle icon buttons that switch between unselected and selected active states on click.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-icon-button toggle variant=&quot;tonal&quot; icon=&quot;bookmark&quot; selected-icon=&quot;bookmark_added&quot; aria-label=&quot;Bookmark&quot;&gt;&lt;/md-icon-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <div class="sizes-showcase-row">
+                <div class="size-item-box"><md-icon-button size="xs" variant="filled" icon="search" aria-label="Search XS"></md-icon-button></div>
+                <div class="size-item-box"><md-icon-button size="s" variant="filled" icon="search" aria-label="Search S"></md-icon-button></div>
+                <div class="size-item-box"><md-icon-button size="m" variant="filled" icon="search" aria-label="Search M"></md-icon-button></div>
+                <div class="size-item-box"><md-icon-button size="l" variant="filled" icon="search" aria-label="Search L"></md-icon-button></div>
+                <div class="size-item-box"><md-icon-button size="xl" variant="filled" icon="search" aria-label="Search XL"></md-icon-button></div></div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Sizes (XS, S, M, L, XL)</span>
+              <span class="comp-desc">Clean hit areas: XS (32dp), S (40dp), M (56dp), L (96dp), XL (136dp).</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-icon-button size=&quot;m&quot; variant=&quot;filled&quot; icon=&quot;search&quot; aria-label=&quot;Search&quot;&gt;&lt;/md-icon-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="segmented-buttons">
+            <div class="comp-preview">
+              <md-segmented-button items='["Day","Week","Month","Year"]' selected-index="0"></md-segmented-button>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Single-Choice Segmented Button</span>
+              <span class="comp-desc">Connected button group for mutually exclusive options.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-segmented-button items=&quot;Day,Week,Month,Year&quot; selected-index=&quot;0&quot;&gt;&lt;/md-segmented-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-segmented-button items='["Bold","Italic","Underline"]' multi-select></md-segmented-button>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Multi-Select Segmented Button</span>
+              <span class="comp-desc">Toggle multiple active formatting styles simultaneously.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-segmented-button multi-select items=&quot;Bold,Italic,Underline&quot; selected-indices=&quot;[0,1,2]&quot;&gt;&lt;/md-segmented-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="split-button">        <div class="comp-preview">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <md-split-button label="Save" icon="save" items='[{"icon":"cloud_upload","label":"Save to Cloud"},{"icon":"download","label":"Export as JSON"}]'></md-split-button>
+                <md-split-button label="Share" icon="share" variant="tonal" items='[{"icon":"link","label":"Copy Link"},{"icon":"mail","label":"Send Email"}]'></md-split-button>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Expressive Split Button</span>
+              <span class="comp-desc">Dual-action component pairing a primary trigger with a dropdown menu.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-split-button label=&quot;Save&quot; icon=&quot;save&quot; items='[{&quot;icon&quot;:&quot;cloud_upload&quot;,&quot;label&quot;:&quot;Save to Cloud&quot;},{&quot;icon&quot;:&quot;download&quot;,&quot;label&quot;:&quot;Export as JSON&quot;}]'&gt;&lt;/md-split-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. CARDS -->
+      <section class="category-section" id="cards">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">crop_square</span> Cards <button type="button" class="copy-anchor-btn" data-anchor="cards" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Cards contain content and actions about a single subject, available in both interactive and non-interactive variants.</p>
+        </div>
+        <div class="cards-grid">
+          <!-- 1. Interactive Cards -->
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-card variant="filled" interactive style="width: 100%; max-width: 280px;">
+                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Filled Card (Interactive)</h4>
+                <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Clickable container with tactile spring press and hover response.</p>
+              </md-card>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Interactive Filled Card</span>
+              <span class="comp-desc">Interactive surface container with spring scale (0.98) response.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-card interactive variant=&quot;filled&quot;&gt;&lt;h3 class=&quot;md-title-medium&quot;&gt;Filled Card&lt;/h3&gt;&lt;/md-card&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-card variant="elevated" interactive style="width: 100%; max-width: 280px;">
+                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Elevated Card (Interactive)</h4>
+                <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Elevated card lifting to Level 2 shadow with spring motion on hover.</p>
+              </md-card>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Interactive Elevated Card</span>
+              <span class="comp-desc">High-emphasis surface with dynamic elevation physics.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-card interactive variant=&quot;elevated&quot;&gt;&lt;h3 class=&quot;md-title-medium&quot;&gt;Elevated Card&lt;/h3&gt;&lt;/md-card&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-card variant="outlined" interactive style="width: 100%; max-width: 280px;">
+                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Outlined Card (Interactive)</h4>
+                <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Crisp 1dp outline variant with interactive click feedback.</p>
+              </md-card>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Interactive Outlined Card</span>
+              <span class="comp-desc">Clean structured border with interactive click action.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-card interactive variant=&quot;outlined&quot;&gt;&lt;h3 class=&quot;md-title-medium&quot;&gt;Outlined Card&lt;/h3&gt;&lt;/md-card&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <!-- 2. Non-Interactive Cards (Static) -->
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-card variant="filled" style="width: 100%; max-width: 280px;">
+                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Filled Card (Non-Interactive)</h4>
+                <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Static surface container for grouping purely informational content.</p>
+              </md-card>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Non-Interactive Filled Card</span>
+              <span class="comp-desc">Read-only container surface without hover or click states.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-card variant=&quot;filled&quot;&gt;&lt;h3 class=&quot;md-title-medium&quot;&gt;Filled Card&lt;/h3&gt;&lt;/md-card&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-card variant="elevated" style="width: 100%; max-width: 280px;">
+                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Elevated Card (Non-Interactive)</h4>
+                <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Fixed Level 1 shadow elevation for non-clickable content grouping.</p>
+              </md-card>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Non-Interactive Elevated Card</span>
+              <span class="comp-desc">Static resting elevation without hover lift effect.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-card variant=&quot;elevated&quot;&gt;&lt;h3 class=&quot;md-title-medium&quot;&gt;Elevated Card&lt;/h3&gt;&lt;/md-card&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-card variant="outlined" style="width: 100%; max-width: 280px;">
+                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Outlined Card (Non-Interactive)</h4>
+                <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Static 1dp outline border matching outline-variant token.</p>
+              </md-card>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Non-Interactive Outlined Card</span>
+              <span class="comp-desc">Crisp non-interactive perimeter for structured layout cards.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-card variant=&quot;outlined&quot;&gt;&lt;h3 class=&quot;md-title-medium&quot;&gt;Outlined Card&lt;/h3&gt;&lt;/md-card&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 5. CAROUSEL -->
+      <section class="category-section" id="carousel">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">view_carousel</span> Carousel <button type="button" class="copy-anchor-btn" data-anchor="carousel" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Multi-Browse Carousel with 280dp hero card morphing and spring physics.</p>
+        </div>
+        <div class="cards-grid full-width">
+          <div class="comp-card full-col">
+            <div class="comp-preview" style="padding: 16px; overflow: hidden;">
+              <md-carousel active-index="0" style="width: 100%;"></md-carousel>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Multi-Browse Carousel</span>
+              <span class="comp-desc">Click or arrow key to focus and morph active card into 280dp hero width with fluid spring physics.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-carousel variant=&quot;multi-browse&quot; items='[{&quot;title&quot;:&quot;City&quot;},{&quot;title&quot;:&quot;Nature&quot;}]'&gt;&lt;/md-carousel&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 7. CHIPS -->
+      <section class="category-section" id="chips">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">label</span> Chips <button type="button" class="copy-anchor-btn" data-anchor="chips" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Assist, Filter, Input, Suggestion, and Action chips with 32dp height and 48dp touch targets.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview">
+              <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;">
+                  <md-chip variant="filter" icon="mail" label="Unread"></md-chip>
+                  <md-chip variant="filter" selected label="Important"></md-chip>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;">
+                  <md-chip variant="assist" icon="event" label="Add to calendar"></md-chip>
+                  <md-chip variant="assist" icon="navigation" label="Directions"></md-chip>
+                </div></div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Filter &amp; Assist Chips</span>
+              <span class="comp-desc">Selectable filters and contextual action helpers.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-chip variant=&quot;filter&quot; label=&quot;Top Rated&quot; selected&gt;&lt;/md-chip&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;">
+                  <md-chip variant="input" icon="person" label="Design Lead" removable></md-chip>
+                  <md-chip variant="input" icon="code" label="TypeScript" removable></md-chip>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;">
+                  <md-chip variant="assist" elevated icon="star" label="Elevated Assist"></md-chip>
+                  <md-chip variant="filter" elevated selected label="Elevated Selected"></md-chip>
+                </div></div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Input &amp; Elevated Chips</span>
+              <span class="comp-desc">Removable token entries and elevated container chips.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-chip variant=&quot;input&quot; label=&quot;Contact&quot; dismissible&gt;&lt;/md-chip&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. DATE & TIME PICKERS -->
+      <section class="category-section" id="date-pickers">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">calendar_month</span> Date Pickers <button type="button" class="copy-anchor-btn" data-anchor="date-pickers" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">100% faithful AndroidX Compose DatePicker implementations.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-date-picker variant="docked" value="08/17/2025" inline></md-date-picker>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Date Picker (Docked / Inline)</span>
+              <span class="comp-desc">Compact calendar grid attached directly under an outlined date field.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-date-picker&gt;&lt;/md-date-picker&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-button variant="filled" label="Open Modal Date Picker" id="open-date-picker-btn"></md-button>
+              <md-date-picker id="sample-date-picker" variant="modal" value="08/17/2025"></md-date-picker>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Date Picker (Modal Dialog)</span>
+              <span class="comp-desc">Click to trigger modal calendar dialog with headline and month view.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-date-picker headline=&quot;Select Date&quot;&gt;&lt;/md-date-picker&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-date-picker variant="range" start-date="08/17/2025" end-date="08/24/2025" inline></md-date-picker>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Date Range Picker</span>
+              <span class="comp-desc">Continuous range track selection with start/end anchor pills.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-date-picker range headline=&quot;Select Range&quot;&gt;&lt;/md-date-picker&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+
+        <div class="category-header" style="margin-top: 40px;" id="time-pickers">
+          <h2 class="category-title"><span class="mat-sym">schedule</span> Time Pickers <button type="button" class="copy-anchor-btn" data-anchor="time-pickers" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">100% faithful AndroidX Compose TimePicker with dial, keyboard, and horizontal modes.</p>
+        </div>
+        <div class="cards-grid time-pickers-grid">
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-button variant="tonal" label="Open Time Picker Dialog" id="open-time-picker-btn"></md-button>
+              <md-time-picker id="sample-time-picker" variant="dial" value="09:30"></md-time-picker>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Time Picker (256dp Dial)</span>
+              <span class="comp-desc">Click to open circular interactive clock dial with selector arm.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-time-picker format=&quot;12h&quot;&gt;&lt;/md-time-picker&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-time-picker variant="input" value="14:45" is-24-hour inline></md-time-picker>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Time Picker (Keyboard Input)</span>
+              <span class="comp-desc">Direct hour and minute numeric text fields with 24-hour mode.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-time-picker format=&quot;12h&quot; input-mode=&quot;keyboard&quot;&gt;&lt;/md-time-picker&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card full-width" style="grid-column: 1 / -1;">
+            <div class="comp-preview" style="padding: 24px; overflow-x: auto;">
+              <md-time-picker variant="horizontal" value="10:15" inline></md-time-picker>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Time Picker (Horizontal / Compact)</span>
+              <span class="comp-desc">Side-by-side time display and dial for compact and landscape layouts.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-time-picker format=&quot;24h&quot; orientation=&quot;horizontal&quot;&gt;&lt;/md-time-picker&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 9. DIALOGS -->
+      <section class="category-section" id="dialogs">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">open_in_new</span> Dialogs <button type="button" class="copy-anchor-btn" data-anchor="dialogs" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Modal dialogs with title, supporting text, icon, and action buttons.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-button variant="filled" label="Open Sample Dialog" id="open-dialog-btn"></md-button>
+              <md-dialog id="sample-dialog" icon="delete" headline="Delete Album?" supporting-text="This will permanently remove the selected album and all contained media from your cloud backup." confirm-label="Delete" cancel-label="Cancel"></md-dialog>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Dialogs</span>
+              <span class="comp-desc">Click button to open centered modal dialog with scrim and focus trap.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-button variant=&quot;filled&quot;&gt;Dialogs&lt;/md-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 10. DIVIDERS -->
+      <section class="category-section" id="dividers">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">remove</span> Divider <button type="button" class="copy-anchor-btn" data-anchor="dividers" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">A thin line that groups content in lists and layouts.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">        <div class="comp-preview" style="width: 100%;">
+              <div style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+                <p class="md-body-small" style="margin: 0; opacity: 0.8;">Content Section 1</p>
+                <md-divider></md-divider>
+                <p class="md-body-small" style="margin: 0; opacity: 0.8;">Content Section 2 (Inset Divider)</p>
+                <md-divider inset></md-divider>
+                <p class="md-body-small" style="margin: 0; opacity: 0.8;">Content Section 3</p>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Dividers</span>
+              <span class="comp-desc">Full-width and inset 1dp dividers matching outline variant token.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-divider&gt;&lt;/md-divider&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11. LISTS -->
+      <section class="category-section" id="lists">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">list</span> Lists <button type="button" class="copy-anchor-btn" data-anchor="lists" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Continuous vertical indexes of text and images.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-list style="width: 100%;">
+                <md-list-item icon="inbox" headline="Inbox" trailing-text="24" interactive></md-list-item>
+                <md-list-item icon="star" headline="Starred Messages" supporting-text="Important conversations" interactive></md-list-item>
+                <md-list-item icon="send" headline="Sent Items" interactive></md-list-item>
+              </md-list>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Lists</span>
+              <span class="comp-desc">Single-line and two-line interactive list items with leading icons.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-button variant=&quot;filled&quot;&gt;Lists&lt;/md-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 12. PROGRESS & LOADING -->
+      <section class="category-section" id="loading-indicator">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">progress_activity</span> Progress &amp; Loading <button type="button" class="copy-anchor-btn" data-anchor="loading-indicator" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">100% faithful AndroidX Compose LoadingIndicator (7 MaterialShapes morph), Linear/Circular Standard &amp; Expressive Wavy indicators.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card" id="progress-indicators">        <div class="comp-preview" style="width: 100%;">
+              <div style="width: 100%; max-width: 280px; display: flex; flex-direction: column; gap: 10px;">
+                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant);">Linear Standard (Determinate 65%)</span>
+                <md-progress-indicator type="linear" variant="standard" value="65" style="width: 100%;"></md-progress-indicator>
+                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Linear Standard (Indeterminate)</span>
+                <md-progress-indicator type="linear" variant="standard" indeterminate style="width: 100%;"></md-progress-indicator>
+                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Linear Wavy Expressive (Determinate 75% · 10dp height)</span>
+                <md-progress-indicator type="linear" variant="wavy" value="75" style="width: 100%;"></md-progress-indicator>
+                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Linear Wavy Expressive (Indeterminate)</span>
+                <md-progress-indicator type="linear" variant="wavy" indeterminate style="width: 100%;"></md-progress-indicator>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Linear Progress Indicators</span>
+              <span class="comp-desc">Standard 4dp linear and 10dp expressive sinusoidal wavy progress tracks.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-progress-indicator type=&quot;linear&quot; variant=&quot;wavy&quot; value=&quot;68&quot;&gt;&lt;/md-progress-indicator&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                  <md-progress-indicator type="circular" variant="standard" value="75"></md-progress-indicator>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Standard 75%</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                  <md-progress-indicator type="circular" variant="standard" indeterminate></md-progress-indicator>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Standard Indet</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                  <md-progress-indicator type="circular" variant="wavy" value="70"></md-progress-indicator>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Wavy 70%</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                  <md-progress-indicator type="circular" variant="wavy" indeterminate></md-progress-indicator>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Wavy Indet</span>
+                </div></div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Circular Progress Indicators</span>
+              <span class="comp-desc">Circular standard and continuous 8-lobed wavy progress animations.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-progress-indicator type=&quot;circular&quot; variant=&quot;wavy&quot; value=&quot;70&quot;&gt;&lt;/md-progress-indicator&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview">
+              <div style="display: flex; gap: 36px; align-items: center; justify-content: center;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                  <md-loading-indicator variant="standalone" size="m" color="primary"></md-loading-indicator>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Standalone</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                  <md-loading-indicator variant="contained" size="m" color="primary"></md-loading-indicator>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Contained</span>
+                </div></div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Loading Indicator (Morphing 7 Shapes)</span>
+              <span class="comp-desc">Standalone (transparent background) and Contained (circular container) morphing shapes.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-loading-indicator variant=&quot;contained&quot; size=&quot;m&quot; color=&quot;primary&quot;&gt;&lt;/md-loading-indicator&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 13. MENUS -->
+      <section class="category-section" id="menus">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">menu</span> Menus <button type="button" class="copy-anchor-btn" data-anchor="menus" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Expressive Dropdown Menu with icons, labels, and keyboard navigation.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview" style="display: flex; gap: 16px; flex-wrap: wrap;">
+              <md-menu label="Edit Options" items='[{"icon":"content_cut","label":"Cut","trailing":"Ctrl+X"},{"icon":"content_copy","label":"Copy","trailing":"Ctrl+C"},{"icon":"content_paste","label":"Paste","trailing":"Ctrl+V"},{"icon":"delete","label":"Delete"}]'></md-menu>
+              <md-menu label="Declarative Menu">
+                <md-menu-item icon="share">Share Link</md-menu-item>
+                <md-menu-item icon="bookmark">Save to Library</md-menu-item>
+                <md-menu-item icon="download">Export PDF</md-menu-item>
+              </md-menu>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Dropdown Menu &amp; Menu Items</span>
+              <span class="comp-desc">Popup menus supporting both JSON item configuration and declarative &lt;md-menu-item&gt; children.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-menu label=&quot;Options&quot; items='[{&quot;icon&quot;:&quot;edit&quot;,&quot;label&quot;:&quot;Edit&quot;},{&quot;icon&quot;:&quot;delete&quot;,&quot;label&quot;:&quot;Delete&quot;}]'&gt;&lt;/md-menu&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 14. NAVIGATION -->
+      <section class="category-section" id="nav-bar">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">navigation</span> Navigation <button type="button" class="copy-anchor-btn" data-anchor="nav-bar" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Navigation bar, drawer, and rail allow users to navigate an app.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <md-navigation-bar items='[{"icon":"mail","label":"Mail"},{"icon":"chat","label":"Chat"},{"icon":"group","label":"Spaces"},{"icon":"videocam","label":"Meet"}]' selected="0"></md-navigation-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Navigation Bar</span>
+              <span class="comp-desc">Standard 80dp bottom navigation bar with active pill indicators.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-navigation-bar items='[{&quot;icon&quot;:&quot;home&quot;,&quot;label&quot;:&quot;Home&quot;}]'&gt;&lt;/md-navigation-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card" id="nav-drawer">
+            <div class="comp-preview" style="width: 100%; display: flex; justify-content: center;">
+              <md-navigation-drawer items='[{"icon":"inbox","label":"Inbox","badge":"12"},{"icon":"star","label":"Starred"},{"icon":"send","label":"Sent"},{"icon":"drafts","label":"Drafts"}]' selected="0" headline="Mailbox"></md-navigation-drawer>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Navigation Drawer</span>
+              <span class="comp-desc">Standard and modal navigation drawers for top-level app destinations.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-navigation-drawer header-title=&quot;Menu&quot;&gt;&lt;/md-navigation-drawer&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+
+          <div class="comp-card" id="nav-rail">
+            <div class="comp-preview" style="width: 100%; display: flex; justify-content: center;">
+              <md-navigation-rail items='[{"icon":"folder","label":"Files"},{"icon":"star","label":"Starred"},{"icon":"schedule","label":"Recent"},{"icon":"offline_pin","label":"Offline"}]' selected="0"></md-navigation-rail>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Navigation Rail</span>
+              <span class="comp-desc">Vertical navigation rail designed for tablets and desktop layouts.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-navigation-rail items='[{&quot;icon&quot;:&quot;home&quot;,&quot;label&quot;:&quot;Home&quot;}]'&gt;&lt;/md-navigation-rail&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 15. SELECTION CONTROLS -->
+      <section class="category-section" id="selection-controls">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">check_box</span> Selection Controls <button type="button" class="copy-anchor-btn" data-anchor="selection-controls" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Checkboxes, Radio buttons, and Switches with spring motion.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card" id="checkbox">        <div class="comp-preview">
+              <div style="display: flex; gap: 14px; align-items: center; justify-content: center;">
+                <md-checkbox aria-label="Unchecked"></md-checkbox>
+                <md-checkbox checked aria-label="Checked"></md-checkbox>
+                <md-checkbox indeterminate aria-label="Indeterminate"></md-checkbox>
+                <md-checkbox checked error aria-label="Error"></md-checkbox>
+                <md-checkbox disabled aria-label="Disabled"></md-checkbox>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Checkboxes (18&times;18dp / 2dp radius)</span>
+              <span class="comp-desc">Includes standard, checked, indeterminate dash, error, and disabled states.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-checkbox label=&quot;Subscribe to newsletter&quot; checked&gt;&lt;/md-checkbox&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="radio-button">        <div class="comp-preview">
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+                <md-radio-button name="radio-demo" value="1" checked aria-label="Radio 1"></md-radio-button>
+                <md-radio-button name="radio-demo" value="2" aria-label="Radio 2"></md-radio-button>
+                <md-radio-button name="radio-demo" value="3" aria-label="Radio 3"></md-radio-button>
+                <md-radio-button name="radio-demo" value="4" disabled aria-label="Radio 4"></md-radio-button>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Radio Buttons (20&times;20dp / 10dp dot)</span>
+              <span class="comp-desc">Clicking switches active selection across the radio group.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-radio-button name=&quot;plan&quot; label=&quot;Option 1&quot; checked&gt;&lt;/md-radio-button&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="selection">        <div class="comp-preview">
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+                <md-switch aria-label="Unchecked"></md-switch>
+                <md-switch checked icons aria-label="Checked with check icon"></md-switch>
+                <md-switch checked icon="lock" aria-label="Checked with lock icon"></md-switch>
+                <md-switch disabled aria-label="Disabled switch"></md-switch>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Switches (52&times;32dp Track / Spring Morph)</span>
+              <span class="comp-desc">Handle expands from 16dp to 24dp (selected) to 28dp (pressed) with spring travel.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-switch selected show-icons&gt;&lt;/md-switch&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 16. SEARCH -->
+      <section class="category-section" id="search">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">search</span> Search <button type="button" class="copy-anchor-btn" data-anchor="search" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Search bar allows users to enter search queries and view suggestions.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-search-bar placeholder="Search components..." style="width: 100%; max-width: 320px;"></md-search-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Search Bar</span>
+              <span class="comp-desc">Search input field with leading search icon and trailing actions.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-search-bar placeholder=&quot;Search...&quot;&gt;&lt;/md-search-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 18. SHEETS -->
+      <section class="category-section" id="bottom-sheet">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">horizontal_rule</span> Sheets <button type="button" class="copy-anchor-btn" data-anchor="bottom-sheet" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Bottom sheet and side sheet interactive contextual surfaces.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">        <div class="comp-preview">
+              <md-button variant="tonal" label="Open Bottom Sheet" id="open-bottom-sheet-btn"></md-button>
+              <md-bottom-sheet id="sample-bottom-sheet" modal headline="Share Media">
+                <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                  <p class="md-body-medium" style="margin: 0; opacity: 0.8;">Choose how you would like to share this item with your team.</p>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <md-chip variant="assist" icon="link" label="Copy Link"></md-chip>
+                    <md-chip variant="assist" icon="mail" label="Email"></md-chip>
+                    <md-chip variant="assist" icon="qr_code" label="QR Code"></md-chip>
+                  </div></div>
+              </md-bottom-sheet>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Bottom Sheet</span>
+              <span class="comp-desc">Modal bottom surface for mobile actions and sharing flows.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-bottom-sheet headline=&quot;Options&quot;&gt;&lt;/md-bottom-sheet&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card" id="side-sheet">
+            <div class="comp-preview">
+              <md-button variant="outlined" label="Open Side Sheet" id="open-side-sheet-btn"></md-button>
+              <md-side-sheet id="sample-side-sheet" modal headline="Details Panel">
+                <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                  <p class="md-body-medium" style="margin: 0; opacity: 0.8;">Detailed properties and metadata for the selected item.</p>
+                  <md-list>
+                    <md-list-item icon="info" headline="File Size" trailing-text="2.4 MB"></md-list-item>
+                    <md-list-item icon="schedule" headline="Modified" trailing-text="10 min ago"></md-list-item>
+                  </md-list>
+                </div>
+              </md-side-sheet>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Side Sheet</span>
+              <span class="comp-desc">Modal and standard side panels for desktop property editors.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-side-sheet headline=&quot;Filter&quot;&gt;&lt;/md-side-sheet&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 19. SLIDERS -->
+      <section class="category-section" id="sliders">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">tune</span> Sliders <button type="button" class="copy-anchor-btn" data-anchor="sliders" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Expressive sliders with 5 sizes (XS 16dp to XL 48dp), centered track, and 4dp discrete stops.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-slider size="xs" value="65" style="width: 100%; max-width: 260px;"></md-slider>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Continuous Slider (Standard XS - 16dp)</span>
+              <span class="comp-desc">1:1 pointer tracking with zero lag. Tooltip indicates current value.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-slider min=&quot;0&quot; max=&quot;100&quot; value=&quot;45&quot;&gt;&lt;/md-slider&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-slider size="md" value="40" step="10" stops style="width: 100%; max-width: 260px;"></md-slider>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Discrete Slider with Stops (MD - 32dp)</span>
+              <span class="comp-desc">Snaps to 10-unit intervals with 4dp discrete stop dots.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-slider min=&quot;0&quot; max=&quot;100&quot; step=&quot;10&quot; value=&quot;60&quot; discrete&gt;&lt;/md-slider&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 20. SNACKBARS -->
+      <section class="category-section" id="snackbars">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">announcement</span> Snackbar <button type="button" class="copy-anchor-btn" data-anchor="snackbars" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Snackbars provide brief messages about app processes at the bottom of the screen.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-button variant="tonal" label="Trigger Snackbar" id="show-snackbar-btn"></md-button>
+              <md-snackbar id="sample-snackbar" message="Item archived to your cloud storage." action-label="Undo" timeout="5000"></md-snackbar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Snackbar</span>
+              <span class="comp-desc">Transient feedback bar fixed at the bottom of the viewport.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-snackbar message=&quot;Item added to wishlist&quot; action-label=&quot;Undo&quot;&gt;&lt;/md-snackbar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 21. TABS -->
+      <section class="category-section" id="tabs">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">tab</span> Tabs <button type="button" class="copy-anchor-btn" data-anchor="tabs" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Tabs organize content across different screens and data views.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-tabs variant="primary" tabs='[{"icon":"flight","label":"Flights"},{"icon":"hotel","label":"Hotels"},{"icon":"explore","label":"Explore"}]' selected="0" style="width: 100%; max-width: 320px;"></md-tabs>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Primary Tabs</span>
+              <span class="comp-desc">High-emphasis category tabs with animated active indicators.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-tabs variant=&quot;primary&quot; tabs='[{&quot;label&quot;:&quot;Flights&quot;},{&quot;label&quot;:&quot;Trips&quot;}]'&gt;&lt;/md-tabs&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-tabs variant="secondary" tabs='[{"label":"Overview"},{"label":"Features"},{"label":"Pricing"}]' selected="1" style="width: 100%; max-width: 320px;"></md-tabs>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Secondary Tabs</span>
+              <span class="comp-desc">Underline tabs for sub-sections within a primary view.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-tabs variant=&quot;secondary&quot; tabs='[{&quot;label&quot;:&quot;Overview&quot;},{&quot;label&quot;:&quot;Specs&quot;}]'&gt;&lt;/md-tabs&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 22. TEXT FIELDS -->
+      <section class="category-section" id="text-fields">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">edit</span> Text Fields <button type="button" class="copy-anchor-btn" data-anchor="text-fields" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Outlined and Filled text fields with floating labels, leading/trailing icons, and supporting text.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-text-field variant="outlined" icon="person" label="User Name" value="alex_dev" supporting-text="Enter your unique handle" style="width: 100%; max-width: 280px;"></md-text-field>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Outlined Text Field</span>
+              <span class="comp-desc">1dp outline perimeter with floating label animation.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-text-field variant=&quot;outlined&quot; label=&quot;Email&quot; placeholder=&quot;name@example.com&quot;&gt;&lt;/md-text-field&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-text-field variant="filled" icon="mail" trailing-icon="check" label="Email Address" value="alex@example.com" style="width: 100%; max-width: 280px;"></md-text-field>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Filled Text Field</span>
+              <span class="comp-desc">High contrast container fill with bottom indicator line.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-text-field variant=&quot;filled&quot; label=&quot;Username&quot; placeholder=&quot;Enter username&quot;&gt;&lt;/md-text-field&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-text-field variant="outlined" icon="lock" label="Password" value="••••••" error error-text="Password is too weak" maxlength="20" style="width: 100%; max-width: 280px;"></md-text-field>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Error State &amp; Counter</span>
+              <span class="comp-desc">Error semantic coloring and dynamic character count tracking.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-text-field variant=&quot;outlined&quot; label=&quot;Password&quot; error error-text=&quot;Password is too weak&quot; maxlength=&quot;20&quot;&gt;&lt;/md-text-field&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div></div>
+        </div>
+      </section>
+
+      <!-- 23. TOOLBARS -->
+      <section class="category-section" id="toolbars">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">density_medium</span> Toolbars <button type="button" class="copy-anchor-btn" data-anchor="toolbars" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Toolbars display frequently used actions relevant to the current page.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-toolbar variant="floating" color="vibrant">
+                <md-icon-button variant="standard" icon="format_bold" aria-label="Bold"></md-icon-button>
+                <md-icon-button variant="standard" icon="format_italic" aria-label="Italic"></md-icon-button>
+                <md-icon-button variant="standard" icon="format_underlined" aria-label="Underline"></md-icon-button>
+                <md-divider vertical inset style="height: 24px; margin: 0 4px;"></md-divider>
+                <md-icon-button variant="standard" icon="format_align_left" aria-label="Align Left"></md-icon-button>
+                <md-icon-button variant="standard" icon="format_color_fill" aria-label="Color"></md-icon-button>
+              </md-toolbar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Floating Action Toolbar</span>
+              <span class="comp-desc">Rich editor floating action bar with standard icons and separators.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-toolbar color=&quot;surface-container&quot;&gt;&lt;/md-toolbar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 24. TOOLTIPS -->
+      <section class="category-section" id="tooltips">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">chat_bubble</span> Tooltips <button type="button" class="copy-anchor-btn" data-anchor="tooltips" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Tooltips display brief labels or messages anchored to interactive elements.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="comp-card">        <div class="comp-preview">
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+                <md-button id="btn-tip-1" variant="outlined" label="Hover Plain Tooltip" icon="info"></md-button>
+                <md-tooltip for="btn-tip-1" caret text="Helpful descriptive hint for users"></md-tooltip>
+
+                <md-button id="btn-tip-2" variant="tonal" label="Hover Rich Tooltip" icon="help"></md-button>
+                <md-tooltip for="btn-tip-2" variant="rich" caret headline="Contextual Help" text="Rich tooltips provide extended context and multiple lines of instructions."></md-tooltip>
+              </div></div>
+            <div class="comp-info">
+              <span class="comp-name">Plain &amp; Rich Tooltips</span>
+              <span class="comp-desc">Hover over buttons to inspect plain and rich tooltips with pointer carets.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-tooltip text=&quot;Helpful tooltip&quot;&gt;&lt;button&gt;Hover&lt;/button&gt;&lt;/md-tooltip&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 25. THEME & COLOR CUSTOMIZER -->
+      <section class="category-section" id="theming">
+        <div class="category-header">
+          <h2 class="category-title"><span class="mat-sym">palette</span> Theme &amp; color <button type="button" class="copy-anchor-btn" data-anchor="theming" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
+          <p class="category-desc">Material 3 Dynamic Color CAM16 / HCT engine and Compose theme composables.</p>
+        </div>
+        <div class="cards-grid full-width">
+          <div class="comp-card full-col">
+            <div class="comp-info" style="padding-bottom: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="comp-name md-title-medium">Dynamic HCT Color Customizer</span>
+                <button class="m3-reset-btn" id="reset-color-btn" type="button" title="Reset theme to baseline purple">
+                  <span class="mat-sym" style="font-size: 18px;">restart_alt</span>
+                  <span>Reset Defaults</span>
+                </button>
+              </div>
+              <p class="comp-desc">Select official presets, adjust HCT sliders, or pick RGB/Hex values to dynamically recolor the entire UI in real time.</p>
+            </div>
+
+            <div style="padding: 24px;">
+              <!-- 1. Preset MD3 Palettes -->
+              <div style="margin-bottom: 24px;">
+                <label class="color-section-label"><span class="mat-sym" style="font-size: 16px; color: var(--md-sys-color-primary);">palette</span> Official MD3 Seed Palettes:</label>
+                <div class="preset-swatches-row" id="preset-swatches"></div></div>
+
+              <!-- 2. HCT & RGB Controls Grid -->
+              <div class="hct-controls-grid">
+                <div class="hct-sliders-col">
+                  <!-- Hue Slider -->
+                  <div class="slider-control-group">
+                    <div class="slider-label-row">
+                      <span>Hue (H)</span>
+                      <span class="slider-value" id="hue-val-display">280°</span>
+                    </div>
+                    <md-slider id="hue-slider" min="0" max="360" value="280"></md-slider>
+                  </div>
+
+                  <!-- Chroma Slider -->
+                  <div class="slider-control-group">
+                    <div class="slider-label-row">
+                      <span>Chroma (C) / Saturation</span>
+                      <span class="slider-value" id="chroma-val-display">48</span>
+                    </div>
+                    <md-slider id="chroma-slider" min="0" max="120" value="48"></md-slider>
+                  </div>
+
+                  <!-- Tone Slider -->
+                  <div class="slider-control-group">
+                    <div class="slider-label-row">
+                      <span>Tone (T) / Lightness</span>
+                      <span class="slider-value" id="tone-val-display">40</span>
+                    </div>
+                    <md-slider id="tone-slider" min="10" max="90" value="40"></md-slider>
+                  </div>
+                </div>
+
+                <div class="rgb-preview-col">
+                  <div class="color-input-box">
+                    <label class="color-section-label"><span class="mat-sym" style="font-size: 16px; color: var(--md-sys-color-primary);">colorize</span> RGB / Hex Seed Input:</label>
+                    <div class="hex-picker-row">
+                      <div class="custom-color-swatch-wrapper" id="custom-color-swatch-wrapper">
+                        <button type="button" class="custom-color-swatch" id="custom-color-swatch-display" style="background-color: #6750A4;" aria-label="Open Material Color Picker" aria-expanded="false">
+                          <span class="mat-sym" style="color: #ffffff; font-size: 20px; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">palette</span>
+                        </button>
+
+                        <!-- MD3E Floating Color Picker Popover -->
+                        <div class="md3e-color-popover" id="md3e-color-popover" role="dialog" aria-label="MD3E Color Picker" hidden>
+                          <div class="popover-header">
+                            <span class="popover-title"><span class="mat-sym" style="font-size: 16px;">palette</span> MD3E Color Picker</span>
+                            <button type="button" class="popover-close-btn" id="popover-close-btn" aria-label="Close">
+                              <span class="mat-sym" style="font-size: 16px;">close</span>
+                            </button>
+                          </div>
+
+                          <!-- 2D Saturation / Value Canvas -->
+                          <div class="color-sv-area" id="color-sv-area" style="background-color: #6750A4;">
+                            <div class="color-sv-white"></div>
+                            <div class="color-sv-black"></div>
+                            <div class="color-sv-handle" id="color-sv-handle"></div>
+                          </div>
+
+                          <!-- Hue Rainbow Slider -->
+                          <div class="color-hue-bar" id="color-hue-bar">
+                            <div class="color-hue-handle" id="color-hue-handle"></div>
+                          </div>
+
+                          <!-- Quick Preset Swatches -->
+                          <div class="popover-swatches-grid">
+                            <button type="button" class="popover-swatch" data-hex="#6750A4" style="background: #6750A4;" title="Baseline Purple (Official M3)"></button>
+                            <button type="button" class="popover-swatch" data-hex="#185EAC" style="background: #185EAC;" title="Expressive Violet (280°)"></button>
+                            <button type="button" class="popover-swatch" data-hex="#006495" style="background: #006495;" title="Expressive Ocean"></button>
+                            <button type="button" class="popover-swatch" data-hex="#006C4C" style="background: #006C4C;" title="Forest Green"></button>
+                            <button type="button" class="popover-swatch" data-hex="#795900" style="background: #795900;" title="Warm Amber"></button>
+                            <button type="button" class="popover-swatch" data-hex="#9C4146" style="background: #9C4146;" title="Vibrant Coral"></button>
+                            <button type="button" class="popover-swatch" data-hex="#006874" style="background: #006874;" title="Cyan Tech"></button>
+                            <button type="button" class="popover-swatch" data-hex="#68548E" style="background: #68548E;" title="Lavender"></button>
+                          </div>
+
+                          <!-- Hex Preview Footer -->
+                          <div class="popover-footer-row">
+                            <div class="popover-hex-box">
+                              <span class="mat-sym" style="font-size: 15px; color: var(--md-sys-color-primary);">tag</span>
+                              <span id="popover-hex-val">#6750A4</span>
+                            </div>
+                            <button type="button" class="popover-apply-btn" id="popover-apply-btn">Close</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="hex-input-container">
+                        <span class="mat-sym hex-input-icon">tag</span>
+                        <input type="text" id="hex-code-input" value="#6750A4" maxlength="7" class="hex-text-input" placeholder="#6750A4" spellcheck="false" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="palette-preview-box">
+                    <label class="color-section-label"><span class="mat-sym" style="font-size: 16px; color: var(--md-sys-color-primary);">auto_awesome</span> Live Generated Tonal Tokens:</label>
+                    <div class="tokens-chips-grid">
+                      <div class="token-chip" style="background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);"><span>Primary</span></div>
+                      <div class="token-chip" style="background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);"><span>Primary Cont.</span></div>
+                      <div class="token-chip" style="background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);"><span>Secondary Cont.</span></div>
+                      <div class="token-chip" style="background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container);"><span>Tertiary Cont.</span></div>
+                      <div class="token-chip" style="background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface);"><span>Surface High</span></div>
+                      <div class="token-chip" style="background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);"><span>Error Cont.</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-theme seed=&quot;#6750A4&quot; scheme=&quot;tonal-spot&quot;&gt;&lt;/md-theme&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- =====================================================================
+         4. OPEN-SOURCE FOOTER (MD3E ADAPTATION)
+         ===================================================================== -->
+    <footer class="m3-site-footer">
+      <div class="squiggle-divider" aria-hidden="true">
+        <svg width="100%" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <pattern id="squiggle" width="40" height="16" patternUnits="userSpaceOnUse">
+            <path d="M 0 8 C 6 2, 14 2, 20 8 C 26 14, 34 14, 40 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#squiggle)"/>
+        </svg>
+      </div>
+
+      <div class="footer-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px;">
+          <div style="max-width: 580px;">
+            <div class="footer-brand-logo" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="15" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M8.5 22.5V9.5L16 17.5L23.5 9.5V22.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="md-title-medium" style="color: var(--md-sys-color-on-surface); font-weight: 600;">Material Design 3 Expressive (MD3E)</span>
+            </div>
+            <p class="footer-desc" style="max-width: 100%; margin: 0; color: var(--md-sys-color-on-surface-variant); font-size: 13px; line-height: 20px;">
+              An independent open-source Web Components library based on Android Jetpack Compose 1.4+ and Material Design 3 guidelines. Released under the Apache-2.0 License.
+            </p>
+          </div>
+
+          <div>
+            <button class="footer-github-link-btn" onclick="window.open('https://github.com/materialwebunofficial/materialwebunofficial.github.io', '_blank')">GitHub</button>
+          </div>
+        </div>
+
+        <div class="footer-bottom-row" style="margin-top: 12px;">
+          <div>
+            © 2026 MD3E Web Unofficial • Apache-2.0 License
+          </div>
+          <div class="footer-legal-links">
+            <a href="https://github.com/materialwebunofficial/materialwebunofficial.github.io/issues" target="_blank" rel="noopener">Issues &amp; Feedback</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- =========================================================================
+       MOBILE BOTTOM NAVIGATION BAR (MD3 COMPACT < 600px)
+       ========================================================================= -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
+    <button class="mobile-nav-item active" data-tab="home" type="button" aria-label="Home">
+      <div class="mobile-nav-pill"><span class="mat-sym">home</span></div>
+      <span class="mobile-nav-label">Home</span>
+    </button>
+    <button class="mobile-nav-item" data-tab="get-started" type="button" aria-label="Get started">
+      <div class="mobile-nav-pill"><span class="mat-sym">menu_book</span></div>
+      <span class="mobile-nav-label">Get started</span>
+    </button>
+    <button class="mobile-nav-item" data-tab="components" type="button" aria-label="Components">
+      <div class="mobile-nav-pill"><span class="mat-sym">dashboard_customize</span></div>
+      <span class="mobile-nav-label">Components</span>
+    </button>
+  </nav>
+
+  <!-- =========================================================================
+       SCRIPTS & CONTROLLER
+       ========================================================================= -->
+  <script type="module" src="src/index.js"></script>
+  <script type="module">
+    import { initShowcase } from './src/showcase.js';
+    initShowcase();
+  </script>
+</body>
+</html>

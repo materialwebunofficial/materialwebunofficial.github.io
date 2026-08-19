@@ -1,0 +1,80 @@
+{
+  "name": "md3e-web-unofficial",
+  "version": "1.0.1",
+  "description": "Unofficial Web Adaptation of Material Design 3 Expressive (M3 Expressive) - Web Components, Design Tokens, Spring Physics, and HCT Dynamic Theme Engine",
+  "type": "module",
+  "main": "./dist/md3-expressive.esm.js",
+  "module": "./dist/md3-expressive.esm.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/md3-expressive.min.js",
+  "jsdelivr": "./dist/md3-expressive.min.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/md3-expressive.esm.js",
+      "default": "./dist/md3-expressive.esm.js"
+    },
+    "./tokens": "./dist/tokens.css",
+    "./tokens.css": "./dist/tokens.css",
+    "./tokens.min.css": "./dist/tokens.min.css",
+    "./tokens/colors": "./src/tokens/colors.css",
+    "./tokens/colors.css": "./src/tokens/colors.css",
+    "./tokens/typography": "./src/tokens/typography.css",
+    "./tokens/typography.css": "./src/tokens/typography.css",
+    "./tokens/shapes": "./src/tokens/shapes.css",
+    "./tokens/shapes.css": "./src/tokens/shapes.css",
+    "./tokens/elevation": "./src/tokens/elevation.css",
+    "./tokens/elevation.css": "./src/tokens/elevation.css",
+    "./tokens/motion": "./src/tokens/motion.css",
+    "./tokens/motion.css": "./src/tokens/motion.css",
+    "./tokens/*": "./src/tokens/*",
+    "./components/*": "./src/components/*",
+    "./icons/*": "./src/icons/*",
+    "./motion/*": "./src/motion/*",
+    "./theme/*": "./src/theme/*",
+    "./dist/*": "./dist/*",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "types",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "prepack": "npm run build",
+    "start": "npx serve .",
+    "test": "node scripts/verify-tokens.js && node scripts/test-all-components.js && node scripts/test-audit-security-fixes.js && node scripts/test-npm-bundle.js"
+  },
+  "keywords": [
+    "material-design-3",
+    "m3-expressive",
+    "material-3",
+    "design-tokens",
+    "spring-physics",
+    "web-components",
+    "custom-elements",
+    "hct-color",
+    "dynamic-theme",
+    "ui-library",
+    "unofficial"
+  ],
+  "author": "saglame193",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/materialwebunofficial/materialwebunofficial.github.io.git"
+  },
+  "homepage": "https://github.com/materialwebunofficial/materialwebunofficial.github.io#readme",
+  "bugs": {
+    "url": "https://github.com/materialwebunofficial/materialwebunofficial.github.io/issues"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "^1.62.1"
+  }
+}

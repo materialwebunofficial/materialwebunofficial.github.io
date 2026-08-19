@@ -1,0 +1,58 @@
+MD3 Expressive for Web (md3e-web-unofficial) [Unofficial Web Adaptation]
+Copyright 2025-2026 saglame193
+
+This product is an independent, unofficial community web adaptation and includes
+software and design specifications developed by or derived from the following third-party works:
+
+===============================================================================
+1. Material Design 3 & Material 3 Expressive Design System
+===============================================================================
+Copyright Google LLC.
+Website: https://m3.material.io/
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+
+This library implements design tokens, color roles, elevation, typography,
+shapes, and motion schemes specified by the Material Design 3 and
+Material 3 Expressive guidelines.
+
+===============================================================================
+2. Android Open Source Project (AOSP) - AndroidX Jetpack Compose Material 3
+===============================================================================
+Copyright (C) The Android Open Source Project
+Repository: https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/compose/material3/
+Mirror: https://github.com/androidx/androidx
+Licensed under the Apache License, Version 2.0 (the "License").
+
+Component architectures, token definitions (e.g. SheetBottomTokens,
+AppBarTokens, ToolbarTokens, MotionScheme, SpringPhysics), interaction states,
+and API surfaces in this library are adapted from the official AndroidX
+Compose Material 3 Kotlin implementation.
+
+===============================================================================
+3. Material Components for Android (MDC-Android)
+===============================================================================
+Copyright (C) Google LLC.
+Repository: https://github.com/material-components/material-components-android
+Licensed under the Apache License, Version 2.0 (the "License").
+
+DockedToolbar, FloatingToolbar, and bottom sheet surface mechanics reference
+MDC-Android specifications.
+
+===============================================================================
+4. Material Color Utilities / HCT Color System
+===============================================================================
+Copyright (C) Google LLC.
+Repository: https://github.com/material-foundation/material-color-utilities
+Licensed under the Apache License, Version 2.0 (the "License").
+
+The HCT (Hue-Chroma-Tone) dynamic tonal palettes and color derivation algorithms
+used in the theme system are based on Google's Material Color Utilities.
+
+===============================================================================
+5. Material Symbols & Google Fonts
+===============================================================================
+Copyright Google LLC.
+Website: https://fonts.google.com/icons
+Licensed under the Apache License, Version 2.0.
+Roboto and Google Sans typography tokens are trademarks and copyrights of Google LLC.

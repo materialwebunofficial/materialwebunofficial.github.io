@@ -1,0 +1,34 @@
+name: 💡 Feature Request
+description: Propose a new feature, component variant, or design token enhancement
+labels: ["enhancement", "proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement! We aim to follow Google Material Design 3 Expressive standards closely.
+  - type: input
+    id: title
+    attributes:
+      label: Feature Title
+      placeholder: Add split button menu animation presets
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: Is your feature request related to a problem or a gap in M3 Expressive parity?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution & Design
+      description: Describe the ideal solution, API signature, or component behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you considered.

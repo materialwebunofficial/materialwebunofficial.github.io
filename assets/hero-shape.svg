@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <defs>
+    <linearGradient id="m3e-grad-1" x1="20" y1="20" x2="220" y2="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#D0BCFF" />
+      <stop offset="50%" stop-color="#CCC2DC" />
+      <stop offset="100%" stop-color="#EFB8C8" />
+    </linearGradient>
+    <linearGradient id="m3e-grad-2" x1="60" y1="40" x2="180" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6750A4" />
+      <stop offset="100%" stop-color="#7D5260" />
+    </linearGradient>
+  </defs>
+  <!-- Background Organic SoftBurst Shape -->
+  <path d="M120,20 C150,20 170,45 190,65 C210,85 220,110 215,140 C210,170 185,200 155,215 C125,230 95,215 65,200 C35,185 20,155 20,125 C20,95 45,70 70,45 C95,20 100,20 120,20 Z" fill="url(#m3e-grad-1)" opacity="0.85" />
+  <!-- Inner Dynamic Morphed Pill -->
+  <rect x="65" y="65" width="110" height="110" rx="44" fill="url(#m3e-grad-2)" />
+  <!-- Accent Floating Cookie Circle -->
+  <circle cx="155" cy="85" r="24" fill="#EADDFF" />
+  <circle cx="85" cy="155" r="18" fill="#FFD8E4" />
+</svg>
