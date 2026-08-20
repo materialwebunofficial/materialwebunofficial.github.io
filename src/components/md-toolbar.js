@@ -4,6 +4,68 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; display: inline-block; outline: none; user-select: none; -webkit-user-select: none; }
+
+  .toolbar {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    background-color: var(--md-sys-color-surface-container, #F3EDF7);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    user-select: none;
+    -webkit-user-select: none;
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
+      box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9)),
+      border-radius var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
+  }
+
+  .toolbar[aria-orientation="horizontal"] {
+    flex-direction: row;
+    height: 64px;
+  }
+
+  .toolbar[aria-orientation="vertical"] {
+    flex-direction: column;
+    width: 64px;
+    height: auto;
+  }
+
+  /* Docked: CornerNone, leading/trailing 16dp, between min 4dp */
+  .toolbar[data-variant="docked"] {
+    border-radius: 0;
+    padding: 0 16px;
+    gap: 8px;
+    width: 100%;
+    box-shadow: none;
+  }
+
+  /* Floating: CornerFull (50% capsule), leading/trailing 8dp, between 4dp */
+  .toolbar[data-variant="floating"] {
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    padding: 8px;
+    gap: 8px;
+    width: fit-content;
+    box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
+  }
+
+  /* Vibrant color style (floating): primary-container */
+  .toolbar[data-variant="floating"][data-color="vibrant"] {
+    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    color: var(--md-sys-color-on-primary-container, #21005D);
+  }
+
+  ::slotted(*) {
+    flex-shrink: 0;
+  }
+`;
+
+const toolbarSheet = createComponentSheet(defaultStyle);
 
 export class MdToolbar extends HTMLElement {
   static get observedAttributes() {
@@ -17,6 +79,7 @@ export class MdToolbar extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, toolbarSheet);
     this._rendered = false;
     this._abortController = null;
   }
@@ -97,66 +160,10 @@ export class MdToolbar extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none; display: inline-block; outline: none; user-select: none; -webkit-user-select: none; }
-
-        .toolbar {
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          background-color: var(--md-sys-color-surface-container, #F3EDF7);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          user-select: none;
-          -webkit-user-select: none;
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-            box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9)),
-            border-radius var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
-        }
-
-        .toolbar[aria-orientation="horizontal"] {
-          flex-direction: row;
-          height: 64px;
-        }
-
-        .toolbar[aria-orientation="vertical"] {
-          flex-direction: column;
-          width: 64px;
-          height: auto;
-        }
-
-        /* Docked: CornerNone, leading/trailing 16dp, between min 4dp */
-        .toolbar[data-variant="docked"] {
-          border-radius: 0;
-          padding: 0 16px;
-          gap: 8px;
-          width: 100%;
-          box-shadow: none;
-        }
-
-        /* Floating: CornerFull (50% capsule), leading/trailing 8dp, between 4dp */
-        .toolbar[data-variant="floating"] {
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          padding: 8px;
-          gap: 8px;
-          width: fit-content;
-          box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
-        }
-
-        /* Vibrant color style (floating): primary-container */
-        .toolbar[data-variant="floating"][data-color="vibrant"] {
-          background-color: var(--md-sys-color-primary-container, #EADDFF);
-          color: var(--md-sys-color-on-primary-container, #21005D);
-        }
-
-        ::slotted(*) {
-          flex-shrink: 0;
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="toolbar" role="toolbar" data-variant="${escapeHtml(this.variant)}" data-color="${escapeHtml(this.color)}"
         aria-label="${escapeHtml(this.getAttribute('aria-label') || 'Toolbar')}" aria-orientation="${escapeHtml(this.orientation)}">
         <slot></slot>

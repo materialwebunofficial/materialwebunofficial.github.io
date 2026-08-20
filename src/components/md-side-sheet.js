@@ -5,6 +5,107 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; outline: none; display: contents; }
+  :host(:not([open])) .scrim,
+  :host(:not([open])) .sheet { display: none !important; }
+  :host([open]) .scrim { display: block !important; }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background-color: var(--md-sys-color-scrim, #000);
+    opacity: 0.4;
+    z-index: 2000;
+    touch-action: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sheet {
+    box-sizing: border-box;
+    position: fixed;
+    inset-block: 0;
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    width: 360px;                 /* ContainerWidth 360dp (drawer token) */
+    max-width: 100vw;
+    padding: 16px;
+    background-color: var(--md-sys-color-surface-container-low, #F7F2FA);
+    box-shadow: var(--md-sys-elevation-level-1, 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15));
+    overflow-y: auto;
+  }
+  /* Right-side: CornerLargeStart 16/0/0/16 */
+  :host([position="right"]) .sheet,
+  :host(:not([position])) .sheet {
+    inset-inline-end: 0;
+    border-radius: var(--md-sys-shape-corner-large, 16px) 0 0 var(--md-sys-shape-corner-large, 16px);
+  }
+  /* Left-side: CornerLargeEnd 0/16/16/0 */
+  :host([position="left"]) .sheet {
+    inset-inline-start: 0;
+    border-radius: 0 var(--md-sys-shape-corner-large, 16px) var(--md-sys-shape-corner-large, 16px) 0;
+  }
+
+  .header {
+    display: flex; align-items: center; gap: 8px;
+    min-height: 48px;
+  }
+  .headline {
+    flex: 1 1 auto;
+    font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+  }
+  .close {
+    width: 40px; height: 40px;      /* touch target */
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; cursor: pointer; outline: none;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
+      color var(--md-sys-motion-duration-short2, 100ms) ease;
+  }
+  .close:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 10%, transparent);
+    color: var(--md-sys-color-on-surface, #E6E0E9);
+  }
+  .close.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 15%, transparent); }
+  .close:focus { outline: none; }
+  .close:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #D0BCFF);
+    outline-offset: 2px;
+  }
+
+  .material-symbols-rounded, .mat-sym {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .content {
+    flex: 1 1 auto;
+    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface, #E6E0E9);
+  }
+`;
+
+const sideSheetSheet = createComponentSheet(defaultStyle);
 
 export class MdSideSheet extends HTMLElement {
   static get observedAttributes() {
@@ -17,6 +118,7 @@ export class MdSideSheet extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, sideSheetSheet);
     this._rendered = false;
     this._onKeydown = this._onKeydown.bind(this);
     this._abortController = null;
@@ -84,105 +186,10 @@ export class MdSideSheet extends HTMLElement {
 
   render() {
     const headline = this.getAttribute('headline') || '';
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none; outline: none; display: contents; }
-        :host(:not([open])) .scrim,
-        :host(:not([open])) .sheet { display: none !important; }
-        :host([open]) .scrim { display: block !important; }
-
-        .scrim {
-          position: fixed;
-          inset: 0;
-          background-color: var(--md-sys-color-scrim, #000);
-          opacity: 0.4;
-          z-index: 2000;
-          touch-action: none;
-          cursor: pointer;
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        .sheet {
-          box-sizing: border-box;
-          position: fixed;
-          inset-block: 0;
-          z-index: 2001;
-          display: flex;
-          flex-direction: column;
-          width: 360px;                 /* ContainerWidth 360dp (drawer token) */
-          max-width: 100vw;
-          padding: 16px;
-          background-color: var(--md-sys-color-surface-container-low, #F7F2FA);
-          box-shadow: var(--md-sys-elevation-level-1, 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15));
-          overflow-y: auto;
-        }
-        /* Right-side: CornerLargeStart 16/0/0/16 */
-        :host([position="right"]) .sheet,
-        :host(:not([position])) .sheet {
-          inset-inline-end: 0;
-          border-radius: var(--md-sys-shape-corner-large, 16px) 0 0 var(--md-sys-shape-corner-large, 16px);
-        }
-        /* Left-side: CornerLargeEnd 0/16/16/0 */
-        :host([position="left"]) .sheet {
-          inset-inline-start: 0;
-          border-radius: 0 var(--md-sys-shape-corner-large, 16px) var(--md-sys-shape-corner-large, 16px) 0;
-        }
-
-        .header {
-          display: flex; align-items: center; gap: 8px;
-          min-height: 48px;
-        }
-        .headline {
-          flex: 1 1 auto;
-          font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-        }
-        .close {
-          width: 40px; height: 40px;      /* touch target */
-          display: inline-flex; align-items: center; justify-content: center;
-          border: none; background: transparent; cursor: pointer; outline: none;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-            color var(--md-sys-motion-duration-short2, 100ms) ease;
-        }
-        .close:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 10%, transparent);
-          color: var(--md-sys-color-on-surface, #E6E0E9);
-        }
-        .close.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 15%, transparent); }
-        .close:focus { outline: none; }
-        .close:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #D0BCFF);
-          outline-offset: 2px;
-        }
-
-        .material-symbols-rounded, .mat-sym {
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px;
-          line-height: 1;
-          display: inline-block;
-          text-transform: none;
-          letter-spacing: normal;
-          word-wrap: normal;
-          white-space: nowrap;
-          direction: ltr;
-          -webkit-font-smoothing: antialiased;
-          text-rendering: optimizeLegibility;
-        }
-
-        .content {
-          flex: 1 1 auto;
-          font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface, #E6E0E9);
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="scrim" part="scrim"></div>
       <aside class="sheet" role="dialog" aria-modal="${this.modal ? 'true' : 'false'}"
         aria-label="${escapeHtml(this.getAttribute('aria-label') || headline || 'Side sheet')}">

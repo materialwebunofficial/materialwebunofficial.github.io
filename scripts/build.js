@@ -28,6 +28,7 @@ const cssFiles = [
   'src/tokens/colors.css',
   'src/tokens/typography.css',
   'src/tokens/shapes.css',
+  'src/tokens/spacing.css',
   'src/tokens/elevation.css',
   'src/tokens/motion.css',
   'src/icons/material-symbols.css'

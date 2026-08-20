@@ -5,6 +5,124 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host { outline: none; display: block; width: 100%; max-width: 320px; user-select: none; -webkit-user-select: none; }
+  :host(:not([open])[modal]) .scrim,
+  :host(:not([open])[modal]) .drawer { display: none; }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background-color: var(--md-sys-color-scrim, #000);
+    opacity: 0.32;
+    z-index: 1000;
+    border: none;
+    padding: 0;
+  }
+  :host(:not([modal])) .scrim { display: none; }
+
+  .drawer {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    padding: 12px;
+    border-radius: var(--md-sys-shape-corner-large, 16px);
+    background-color: var(--md-sys-color-surface-container-low, #1D1B22);
+    border: 1px solid var(--md-sys-color-outline-variant, #49454F);
+    box-shadow: none;
+    overflow-y: auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  :host([modal]) .drawer {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 360px;
+    max-width: 100vw;
+    height: 100%;
+    border-radius: 0 var(--md-sys-shape-corner-large, 16px) var(--md-sys-shape-corner-large, 16px) 0;
+    border: none;
+    z-index: 1001;
+    background-color: var(--md-sys-color-surface-container-low, #1D1B22);
+    box-shadow: var(--md-sys-elevation-level-1, 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15));
+  }
+
+  .headline {
+    font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    padding: 16px 16px 16px;
+  }
+  .headline:empty { display: none; }
+
+  .item {
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 336px;             /* active indicator width 336dp */
+    height: 56px;                 /* active indicator height 56dp */
+    min-height: 48px;
+    padding: 0 16px;
+    border: none;
+    text-align: start;
+    cursor: pointer;
+    outline: none;
+    /* Active indicator: pill (CornerFull) */
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .item:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
+  .item.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
+  .item[aria-current="page"] { background-color: var(--md-sys-color-secondary-container, #E8DEF8); }
+  .item[aria-current="page"]:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 8%,
+      var(--md-sys-color-secondary-container, #E8DEF8));
+  }
+  .item:focus { outline: none; }
+  .item:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+  .item[disabled] { opacity: 0.38; cursor: not-allowed; }
+
+  .icon, .material-symbols-rounded, .material-symbols-outlined {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px; width: 24px; height: 24px; line-height: 24px;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+  }
+  .item[aria-current="page"] .icon,
+  .item[aria-current="page"] .label { color: var(--md-sys-color-on-secondary-container, #1D192B); }
+  .label {
+    flex: 1 1 auto;
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    color: inherit;
+  }
+  .badge {
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+  }
+`;
+
+const navigationDrawerSheet = createComponentSheet(defaultStyle);
 
 export class MdNavigationDrawer extends HTMLElement {
   static get observedAttributes() {
@@ -17,6 +135,7 @@ export class MdNavigationDrawer extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, navigationDrawerSheet);
     this._rendered = false;
     this._onKeydown = this._onKeydown.bind(this);
     this._abortController = null;
@@ -94,122 +213,10 @@ export class MdNavigationDrawer extends HTMLElement {
   render() {
     const items = this.items;
     const headline = this.getAttribute('headline') || '';
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host { outline: none; display: block; width: 100%; max-width: 320px; user-select: none; -webkit-user-select: none; }
-        :host(:not([open])[modal]) .scrim,
-        :host(:not([open])[modal]) .drawer { display: none; }
-
-        .scrim {
-          position: fixed;
-          inset: 0;
-          background-color: var(--md-sys-color-scrim, #000);
-          opacity: 0.32;
-          z-index: 1000;
-          border: none;
-          padding: 0;
-        }
-        :host(:not([modal])) .scrim { display: none; }
-
-        .drawer {
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          max-width: 100%;
-          padding: 12px;
-          border-radius: var(--md-sys-shape-corner-large, 16px);
-          background-color: var(--md-sys-color-surface-container-low, #1D1B22);
-          border: 1px solid var(--md-sys-color-outline-variant, #49454F);
-          box-shadow: none;
-          overflow-y: auto;
-          user-select: none;
-          -webkit-user-select: none;
-        }
-        :host([modal]) .drawer {
-          position: fixed;
-          inset-block: 0;
-          inset-inline-start: 0;
-          width: 360px;
-          max-width: 100vw;
-          height: 100%;
-          border-radius: 0 var(--md-sys-shape-corner-large, 16px) var(--md-sys-shape-corner-large, 16px) 0;
-          border: none;
-          z-index: 1001;
-          background-color: var(--md-sys-color-surface-container-low, #1D1B22);
-          box-shadow: var(--md-sys-elevation-level-1, 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15));
-        }
-
-        .headline {
-          font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          padding: 16px 16px 16px;
-        }
-        .headline:empty { display: none; }
-
-        .item {
-          box-sizing: border-box;
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          width: 100%;
-          max-width: 336px;             /* active indicator width 336dp */
-          height: 56px;                 /* active indicator height 56dp */
-          min-height: 48px;
-          padding: 0 16px;
-          border: none;
-          text-align: start;
-          cursor: pointer;
-          outline: none;
-          /* Active indicator: pill (CornerFull) */
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          background-color: transparent;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          -webkit-tap-highlight-color: transparent;
-          user-select: none;
-          -webkit-user-select: none;
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .item:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
-        .item.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
-        .item[aria-current="page"] { background-color: var(--md-sys-color-secondary-container, #E8DEF8); }
-        .item[aria-current="page"]:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 8%,
-            var(--md-sys-color-secondary-container, #E8DEF8));
-        }
-        .item:focus { outline: none; }
-        .item:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-        .item[disabled] { opacity: 0.38; cursor: not-allowed; }
-
-        .icon, .material-symbols-rounded, .material-symbols-outlined {
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px; width: 24px; height: 24px; line-height: 24px;
-          display: inline-block;
-          white-space: nowrap;
-          word-wrap: normal;
-          direction: ltr;
-          -webkit-font-smoothing: antialiased;
-        }
-        .item[aria-current="page"] .icon,
-        .item[aria-current="page"] .label { color: var(--md-sys-color-on-secondary-container, #1D192B); }
-        .label {
-          flex: 1 1 auto;
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          color: inherit;
-        }
-        .badge {
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="scrim" part="scrim"></div>
       <nav class="drawer" role="${this.modal ? 'dialog' : 'navigation'}"
         ${this.modal ? 'aria-modal="true"' : ''}

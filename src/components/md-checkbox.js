@@ -13,6 +13,153 @@
  */
 
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    display: inline-flex;
+    align-items: center;
+    outline: none;
+    vertical-align: middle;
+  }
+
+  .chk-root {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    box-sizing: border-box;
+    border-radius: 9999px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    will-change: transform;
+  }
+  .chk-root:focus { outline: none; }
+  .chk-root:focus-visible .box {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 3px;
+  }
+
+  /* 40x40 State layer */
+  .chk-root::before {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    background: currentColor;
+    color: var(--md-sys-color-primary, #6750A4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+  }
+  .chk-root:hover:not(.disabled)::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
+  }
+  .chk-root:focus-visible:not(.disabled)::before {
+    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.12);
+  }
+  .chk-root.pressed:not(.disabled)::before {
+    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
+  }
+
+  /* 18x18 Box container */
+  .box {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    box-sizing: border-box;
+    border-radius: 2px;
+    border: 2px solid var(--md-sys-color-on-surface-variant, #49454F);
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
+      border-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+    outline: none;
+  }
+
+  .box.checked,
+  .box.indeterminate {
+    background-color: var(--md-sys-color-primary, #6750A4);
+    border-color: var(--md-sys-color-primary, #6750A4);
+  }
+
+  .box.error {
+    border-color: var(--md-sys-color-error, #B3261E);
+  }
+  .box.error.checked,
+  .box.error.indeterminate {
+    background-color: var(--md-sys-color-error, #B3261E);
+    border-color: var(--md-sys-color-error, #B3261E);
+  }
+
+  .chk-root.disabled {
+    cursor: not-allowed;
+  }
+  .chk-root.disabled .box {
+    opacity: 0.38;
+    border-color: var(--md-sys-color-on-surface, #1D1B20);
+  }
+  .chk-root.disabled .box.checked,
+  .chk-root.disabled .box.indeterminate {
+    background-color: var(--md-sys-color-on-surface, #1D1B20);
+    border-color: transparent;
+  }
+
+  /* SVG Marks (Checkmark & Indeterminate Dash) */
+  svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .mark-check,
+  .mark-dash {
+    fill: none;
+    stroke: var(--md-sys-color-on-primary, #FFFFFF);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke-dashoffset var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
+                opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+  }
+
+  .mark-check {
+    stroke-dasharray: 20;
+    stroke-dashoffset: 20;
+    opacity: 0;
+  }
+  .box.checked .mark-check {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+
+  .mark-dash {
+    stroke-dasharray: 10;
+    stroke-dashoffset: 10;
+    opacity: 0;
+  }
+  .box.indeterminate .mark-dash {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+
+  .box.error .mark-check,
+  .box.error .mark-dash {
+    stroke: var(--md-sys-color-on-error, #FFFFFF);
+  }
+`;
+
+const checkboxSheet = createComponentSheet(defaultStyle);
 
 export class MdCheckbox extends HTMLElement {
   static formAssociated = true;
@@ -24,6 +171,7 @@ export class MdCheckbox extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, checkboxSheet);
     this._internals = this.attachInternals ? this.attachInternals() : null;
     this._rendered = false;
     this._abortController = null;
@@ -170,151 +318,9 @@ export class MdCheckbox extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: inline-flex;
-          align-items: center;
-          outline: none;
-          vertical-align: middle;
-        }
-
-        .chk-root {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 48px;
-          height: 48px;
-          box-sizing: border-box;
-          border-radius: 9999px;
-          cursor: pointer;
-          user-select: none;
-          -webkit-tap-highlight-color: transparent;
-          outline: none;
-          will-change: transform;
-        }
-        .chk-root:focus { outline: none; }
-        .chk-root:focus-visible .box {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 3px;
-        }
-
-        /* 40x40 State layer */
-        .chk-root::before {
-          content: '';
-          position: absolute;
-          width: 40px;
-          height: 40px;
-          border-radius: 9999px;
-          background: currentColor;
-          color: var(--md-sys-color-primary, #6750A4);
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-        }
-        .chk-root:hover:not(.disabled)::before {
-          opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-        }
-        .chk-root:focus-visible:not(.disabled)::before {
-          opacity: var(--md-sys-state-focus-state-layer-opacity, 0.12);
-        }
-        .chk-root.pressed:not(.disabled)::before {
-          opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
-        }
-
-        /* 18x18 Box container */
-        .box {
-          position: relative;
-          width: 18px;
-          height: 18px;
-          box-sizing: border-box;
-          border-radius: 2px;
-          border: 2px solid var(--md-sys-color-on-surface-variant, #49454F);
-          background-color: transparent;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-            border-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-          outline: none;
-        }
-
-        .box.checked,
-        .box.indeterminate {
-          background-color: var(--md-sys-color-primary, #6750A4);
-          border-color: var(--md-sys-color-primary, #6750A4);
-        }
-
-        .box.error {
-          border-color: var(--md-sys-color-error, #B3261E);
-        }
-        .box.error.checked,
-        .box.error.indeterminate {
-          background-color: var(--md-sys-color-error, #B3261E);
-          border-color: var(--md-sys-color-error, #B3261E);
-        }
-
-        .chk-root.disabled {
-          cursor: not-allowed;
-        }
-        .chk-root.disabled .box {
-          opacity: 0.38;
-          border-color: var(--md-sys-color-on-surface, #1D1B20);
-        }
-        .chk-root.disabled .box.checked,
-        .chk-root.disabled .box.indeterminate {
-          background-color: var(--md-sys-color-on-surface, #1D1B20);
-          border-color: transparent;
-        }
-
-        /* SVG Marks (Checkmark & Indeterminate Dash) */
-        svg {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          pointer-events: none;
-        }
-
-        .mark-check,
-        .mark-dash {
-          fill: none;
-          stroke: var(--md-sys-color-on-primary, #FFFFFF);
-          stroke-width: 2.2;
-          stroke-linecap: round;
-          stroke-linejoin: round;
-          transition: stroke-dashoffset var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-                      opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-        }
-
-        .mark-check {
-          stroke-dasharray: 20;
-          stroke-dashoffset: 20;
-          opacity: 0;
-        }
-        .box.checked .mark-check {
-          stroke-dashoffset: 0;
-          opacity: 1;
-        }
-
-        .mark-dash {
-          stroke-dasharray: 10;
-          stroke-dashoffset: 10;
-          opacity: 0;
-        }
-        .box.indeterminate .mark-dash {
-          stroke-dashoffset: 0;
-          opacity: 1;
-        }
-
-        .box.error .mark-check,
-        .box.error .mark-dash {
-          stroke: var(--md-sys-color-on-error, #FFFFFF);
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="chk-root" role="checkbox" tabindex="0" aria-checked="false">
         <div class="box">
           <svg viewBox="0 0 18 18" aria-hidden="true">

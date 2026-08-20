@@ -9,6 +9,128 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host { display: block; outline: none; width: 100%; user-select: none; -webkit-user-select: none; }
+  :host([vertical]) { width: auto; height: 100%; }
+
+  .bar {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    height: 64px;                 /* NavigationBarTokens.ContainerHeight */
+    border-radius: 0;             /* CornerNone */
+    background-color: var(--md-sys-color-surface-container, #F3EDF7);
+    box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
+    gap: 0;                       /* item between space 0dp */
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  :host([tall]) .bar { height: 80px; }          /* Tall (expressive) */
+  :host([vertical]) .bar {
+    flex-direction: column;
+    justify-content: flex-start;
+    width: auto;
+    height: 100%;
+    gap: 6px;                     /* vertical container between space 6dp */
+    padding: 6px 4px;
+  }
+
+  .item {
+    position: relative;
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;                     /* active indicator icon-label space 4dp */
+    min-width: 48px;
+    min-height: 48px;             /* touch target */
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  :host([vertical]) .item { flex: 0 0 auto; width: 56px; }
+  .item:focus { outline: none; }
+  .item:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+  }
+  .item[disabled] { opacity: 0.38; cursor: not-allowed; }
+
+  /* Active indicator: PILL (CornerFull) — expressive signature */
+  .indicator {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;                 /* horizontal active indicator height */
+    padding: 0 16px;              /* leading/trailing 16dp */
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    background-color: transparent;
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  :host([vertical]) .indicator { height: 32px; width: 56px; padding: 0; }
+
+  /* Hover = CSS only (state layer 0.08) */
+  .item:hover .indicator {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
+  }
+  .item.pressed:hover .indicator {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent);
+  }
+  .item[aria-current="page"] .indicator {
+    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+  }
+  .item[aria-current="page"]:hover .indicator {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 8%,
+      var(--md-sys-color-secondary-container, #E8DEF8));
+  }
+
+  .icon, .material-symbols-rounded, .material-symbols-outlined {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;              /* IconSize 24dp */
+    width: 24px; height: 24px;
+    line-height: 24px;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+  }
+  .item[aria-current="page"] .icon { color: var(--md-sys-color-on-secondary-container, #1D192B); }
+
+  .label {
+    font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking, 0.5px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    white-space: nowrap;
+  }
+  .item[aria-current="page"] .label {
+    color: var(--md-sys-color-secondary, #625B71);
+    font: var(--md-sys-typescale-label-medium-emphasized, 700 12px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-medium-emphasized-tracking, 0.5px);
+  }
+`;
+
+const navigationBarSheet = createComponentSheet(defaultStyle);
 
 export class MdNavigationBar extends HTMLElement {
   static get observedAttributes() {
@@ -18,6 +140,7 @@ export class MdNavigationBar extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, navigationBarSheet);
     this._rendered = false;
     this._abortController = null;
   }
@@ -82,126 +205,10 @@ export class MdNavigationBar extends HTMLElement {
 
   render() {
     const items = this.items;
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host { display: block; outline: none; width: 100%; user-select: none; -webkit-user-select: none; }
-        :host([vertical]) { width: auto; height: 100%; }
-
-        .bar {
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          justify-content: space-around;
-          width: 100%;
-          height: 64px;                 /* NavigationBarTokens.ContainerHeight */
-          border-radius: 0;             /* CornerNone */
-          background-color: var(--md-sys-color-surface-container, #F3EDF7);
-          box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
-          gap: 0;                       /* item between space 0dp */
-          user-select: none;
-          -webkit-user-select: none;
-        }
-        :host([tall]) .bar { height: 80px; }          /* Tall (expressive) */
-        :host([vertical]) .bar {
-          flex-direction: column;
-          justify-content: flex-start;
-          width: auto;
-          height: 100%;
-          gap: 6px;                     /* vertical container between space 6dp */
-          padding: 6px 4px;
-        }
-
-        .item {
-          position: relative;
-          flex: 1 1 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;                     /* active indicator icon-label space 4dp */
-          min-width: 48px;
-          min-height: 48px;             /* touch target */
-          padding: 0;
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          outline: none;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          -webkit-tap-highlight-color: transparent;
-          user-select: none;
-          -webkit-user-select: none;
-          transition: color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        :host([vertical]) .item { flex: 0 0 auto; width: 56px; }
-        .item:focus { outline: none; }
-        .item:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-        }
-        .item[disabled] { opacity: 0.38; cursor: not-allowed; }
-
-        /* Active indicator: PILL (CornerFull) — expressive signature */
-        .indicator {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          height: 40px;                 /* horizontal active indicator height */
-          padding: 0 16px;              /* leading/trailing 16dp */
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          background-color: transparent;
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        :host([vertical]) .indicator { height: 32px; width: 56px; padding: 0; }
-
-        /* Hover = CSS only (state layer 0.08) */
-        .item:hover .indicator {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
-        }
-        .item.pressed:hover .indicator {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent);
-        }
-        .item[aria-current="page"] .indicator {
-          background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-        }
-        .item[aria-current="page"]:hover .indicator {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 8%,
-            var(--md-sys-color-secondary-container, #E8DEF8));
-        }
-
-        .icon, .material-symbols-rounded, .material-symbols-outlined {
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px;              /* IconSize 24dp */
-          width: 24px; height: 24px;
-          line-height: 24px;
-          display: inline-block;
-          white-space: nowrap;
-          word-wrap: normal;
-          direction: ltr;
-          -webkit-font-smoothing: antialiased;
-          text-rendering: optimizeLegibility;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-        }
-        .item[aria-current="page"] .icon { color: var(--md-sys-color-on-secondary-container, #1D192B); }
-
-        .label {
-          font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-medium-tracking, 0.5px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          white-space: nowrap;
-        }
-        .item[aria-current="page"] .label {
-          color: var(--md-sys-color-secondary, #625B71);
-          font: var(--md-sys-typescale-label-medium-emphasized, 700 12px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-medium-emphasized-tracking, 0.5px);
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <nav class="bar" role="navigation" aria-label="${escapeHtml(this.getAttribute('aria-label') || 'Main navigation')}">
         ${items.map((it, i) => `
           <button class="item" type="button" role="link" data-index="${i}"

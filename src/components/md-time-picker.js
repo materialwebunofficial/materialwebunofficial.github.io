@@ -11,6 +11,430 @@
  */
 
 import { SpringPhysics } from '../motion/spring-physics.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: block;
+    outline: none;
+    box-sizing: border-box;
+    user-select: none;
+    font-family: var(--md-sys-typescale-font-family, 'Roboto', 'Roboto Flex', system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+  }
+  :host([inline]) {
+    display: inline-block;
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 24px 16px;
+    box-sizing: border-box;
+  }
+
+  .picker-dialog {
+    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
+    padding: 24px;
+    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+    will-change: transform;
+    width: 328px;
+    max-width: calc(100vw - 32px);
+    margin: auto;
+  }
+
+  :host([inline]) .picker-dialog {
+    width: 100%;
+    max-width: 328px;
+    box-shadow: none;
+    margin: 0 auto;
+  }
+
+  .picker-dialog.horizontal,
+  :host([inline]) .picker-dialog.horizontal {
+    width: 580px;
+    max-width: calc(100vw - 32px);
+  }
+  .picker-dialog.input-mode {
+    width: 328px;
+    max-width: calc(100vw - 32px);
+  }
+
+  /* Rich Color Scheme (Expressive Palette) */
+  .picker-dialog.rich {
+    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+  }
+  .picker-dialog.rich .time-card.active,
+  .picker-dialog.rich .time-input-field:focus {
+    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    color: var(--md-sys-color-on-primary-container, #21005D);
+    border-color: var(--md-sys-color-primary, #6750A4);
+  }
+  .picker-dialog.rich .clock-face {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 10%, var(--md-sys-color-surface-container, #F3EDF7));
+  }
+
+  .picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .header-title {
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    text-transform: capitalize;
+  }
+
+  .main-layout-wrap.vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .main-layout-wrap.horizontal {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  /* Time Cards Section */
+  .time-display-section {
+    display: flex;
+    justify-content: center;
+  }
+
+  .time-display-section.horizontal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .time-cards-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .time-card {
+    width: 96px;
+    height: 80px;
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    border: none;
+    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+  .time-card.active {
+    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    color: var(--md-sys-color-on-primary-container, #21005D);
+  }
+
+  .time-val {
+    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
+    letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
+  }
+
+  .time-separator {
+    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
+    letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    line-height: 80px;
+    user-select: none;
+  }
+
+  /* Keyboard Input Mode Textfields */
+  .input-card-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .time-input-field {
+    box-sizing: border-box;
+    width: 96px;
+    height: 80px;
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    border: 2px solid transparent;
+    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
+    letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
+    text-align: center;
+    outline: none;
+    transition: border-color 150ms ease, background-color 150ms ease;
+  }
+  .time-input-field:focus {
+    border-color: var(--md-sys-color-primary, #6750A4);
+    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    color: var(--md-sys-color-on-primary-container, #21005D);
+  }
+
+  .input-sublabel {
+    font: var(--md-sys-typescale-body-small, 400 12px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+  }
+
+  /* AM / PM Segmented Column (Vertical layout) */
+  .period-toggle-column {
+    display: flex;
+    flex-direction: column;
+    height: 80px;
+    width: 52px;
+    border: 1px solid var(--md-sys-color-outline, #79747E);
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+    overflow: hidden;
+  }
+
+  .period-toggle-column .period-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    cursor: pointer;
+    outline: none;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+  .period-toggle-column .period-btn:first-child {
+    border-bottom: 1px solid var(--md-sys-color-outline, #79747E);
+  }
+  .period-toggle-column .period-btn.active {
+    background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
+    color: var(--md-sys-color-on-tertiary-container, #31111D);
+    font-weight: var(--md-sys-typescale-label-large-emphasized-weight, 700);
+  }
+
+  /* AM / PM Segmented Row (Horizontal landscape layout - Android Compose Parity) */
+  .period-toggle-row {
+    display: flex;
+    flex-direction: row;
+    height: 38px;
+    width: 216px;
+    border: 1px solid var(--md-sys-color-outline, #79747E);
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+    overflow: hidden;
+  }
+
+  .period-toggle-row .period-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    cursor: pointer;
+    outline: none;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+  .period-toggle-row .period-btn:first-child {
+    border-right: 1px solid var(--md-sys-color-outline, #79747E);
+  }
+  .period-toggle-row .period-btn.active {
+    background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
+    color: var(--md-sys-color-on-tertiary-container, #31111D);
+    font-weight: var(--md-sys-typescale-label-large-emphasized-weight, 700);
+  }
+
+  /* 256dp Clock Dial */
+  .dial-section {
+    display: flex;
+    justify-content: center;
+    width: 256px;
+    height: 256px;
+    flex-shrink: 0;
+  }
+
+  .clock-face {
+    position: relative;
+    width: 256px;
+    height: 256px;
+    border-radius: 9999px;
+    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    touch-action: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .dial-center-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: var(--md-sys-color-primary, #6750A4);
+    border-radius: 9999px;
+    top: 124px;
+    left: 124px;
+    z-index: 4;
+  }
+
+  .clock-arm {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 256px;
+    height: 256px;
+    pointer-events: none;
+    transform-origin: 128px 128px;
+    transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+    z-index: 2;
+  }
+
+  .clock-hand-line {
+    position: absolute;
+    width: 2px;
+    height: 100px;
+    background-color: var(--md-sys-color-primary, #6750A4);
+    left: 127px;
+    top: 28px;
+  }
+
+  .clock-selector-head {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    border-radius: 9999px;
+    background-color: var(--md-sys-color-primary, #6750A4);
+    left: 104px;
+    top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .selector-dot {
+    display: none;
+    width: 8px;
+    height: 8px;
+    background-color: var(--md-sys-color-on-primary, #FFFFFF);
+    border-radius: 9999px;
+  }
+
+  .dial-number {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    transform: translate(-50%, -50%);
+    user-select: none;
+    cursor: pointer;
+    z-index: 3;
+    transition: color 150ms ease;
+  }
+  .dial-number.selected {
+    color: var(--md-sys-color-on-primary, #FFFFFF) !important;
+    font-weight: var(--md-sys-typescale-body-large-emphasized-weight, 500);
+  }
+
+  /* Footer Actions */
+  .picker-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  .icon-btn {
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 150ms ease;
+  }
+  .icon-btn:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
+  }
+
+  .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .text-btn {
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-primary, #6750A4);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 9999px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 150ms ease;
+  }
+  .text-btn:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 8%, transparent);
+  }
+
+  .ico {
+    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
+    font-size: 24px;
+    line-height: 1;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+
+  @media (max-width: 600px) {
+    .picker-dialog {
+      width: 328px !important;
+      max-width: calc(100vw - 32px) !important;
+      padding: 24px 16px !important;
+      border-radius: var(--md-sys-shape-corner-extra-large, 28px) !important;
+      box-sizing: border-box !important;
+      margin: auto !important;
+    }
+    .picker-dialog.horizontal {
+      width: 328px !important;
+      max-width: calc(100vw - 32px) !important;
+    }
+    .main-layout-wrap.horizontal {
+      flex-direction: column !important;
+      gap: 16px !important;
+    }
+  }
+`;
+
+const timePickerSheet = createComponentSheet(defaultStyle);
 
 export class MdTimePicker extends HTMLElement {
   static get observedAttributes() {
@@ -20,6 +444,7 @@ export class MdTimePicker extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, timePickerSheet);
     this.state = {
       hours: 7,
       minutes: 30,
@@ -545,417 +970,10 @@ export class MdTimePicker extends HTMLElement {
       </div>
     `;
 
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: ${this.inline ? 'inline-block;' : 'block;'};
-          outline: none;
-          box-sizing: border-box;
-          user-select: none;
-          font-family: var(--md-sys-typescale-font-family, 'Roboto', 'Roboto Flex', system-ui, sans-serif);
-          -webkit-font-smoothing: antialiased;
-        }
-
-        .scrim {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.4);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2000;
-          padding: 24px 16px;
-          box-sizing: border-box;
-        }
-
-        .picker-dialog {
-          background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          border-radius: var(--md-sys-shape-corner-extra-large, 28px);
-          padding: 24px;
-          box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          box-sizing: border-box;
-          will-change: transform;
-          width: 328px;
-          max-width: calc(100vw - 32px);
-          margin: auto;
-        }
-
-        .picker-dialog.horizontal {
-          width: 580px;
-          max-width: calc(100vw - 32px);
-        }
-        .picker-dialog.input-mode {
-          width: 328px;
-          max-width: calc(100vw - 32px);
-        }
-
-        /* Rich Color Scheme (Expressive Palette) */
-        .picker-dialog.rich {
-          background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-        }
-        .picker-dialog.rich .time-card.active,
-        .picker-dialog.rich .time-input-field:focus {
-          background-color: var(--md-sys-color-primary-container, #EADDFF);
-          color: var(--md-sys-color-on-primary-container, #21005D);
-          border-color: var(--md-sys-color-primary, #6750A4);
-        }
-        .picker-dialog.rich .clock-face {
-          background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 10%, var(--md-sys-color-surface-container, #F3EDF7));
-        }
-
-        .picker-header {
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
-        }
-
-        .header-title {
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          text-transform: capitalize;
-        }
-
-        .main-layout-wrap.vertical {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 24px;
-        }
-
-        .main-layout-wrap.horizontal {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: space-between;
-          gap: 24px;
-        }
-
-        /* Time Cards Section */
-        .time-display-section {
-          display: flex;
-          justify-content: center;
-        }
-
-        .time-display-section.horizontal {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .time-cards-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .time-card {
-          width: 96px;
-          height: 80px;
-          border-radius: var(--md-sys-shape-corner-medium, 12px);
-          border: none;
-          background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          outline: none;
-          transition: background-color 180ms ease, color 180ms ease;
-        }
-        .time-card.active {
-          background-color: var(--md-sys-color-primary-container, #EADDFF);
-          color: var(--md-sys-color-on-primary-container, #21005D);
-        }
-
-        .time-val {
-          font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
-          letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
-        }
-
-        .time-separator {
-          font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
-          letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          line-height: 80px;
-          user-select: none;
-        }
-
-        /* Keyboard Input Mode Textfields */
-        .input-card-wrap {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .time-input-field {
-          box-sizing: border-box;
-          width: 96px;
-          height: 80px;
-          border-radius: var(--md-sys-shape-corner-medium, 12px);
-          border: 2px solid transparent;
-          background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
-          letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
-          text-align: center;
-          outline: none;
-          transition: border-color 150ms ease, background-color 150ms ease;
-        }
-        .time-input-field:focus {
-          border-color: var(--md-sys-color-primary, #6750A4);
-          background-color: var(--md-sys-color-primary-container, #EADDFF);
-          color: var(--md-sys-color-on-primary-container, #21005D);
-        }
-
-        .input-sublabel {
-          font: var(--md-sys-typescale-body-small, 400 12px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-        }
-
-        /* AM / PM Segmented Column (Vertical layout) */
-        .period-toggle-column {
-          display: flex;
-          flex-direction: column;
-          height: 80px;
-          width: 52px;
-          border: 1px solid var(--md-sys-color-outline, #79747E);
-          border-radius: var(--md-sys-shape-corner-small, 8px);
-          overflow: hidden;
-        }
-
-        .period-toggle-column .period-btn {
-          flex: 1;
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          cursor: pointer;
-          outline: none;
-          transition: background-color 150ms ease, color 150ms ease;
-        }
-        .period-toggle-column .period-btn:first-child {
-          border-bottom: 1px solid var(--md-sys-color-outline, #79747E);
-        }
-        .period-toggle-column .period-btn.active {
-          background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
-          color: var(--md-sys-color-on-tertiary-container, #31111D);
-          font-weight: var(--md-sys-typescale-label-large-emphasized-weight, 700);
-        }
-
-        /* AM / PM Segmented Row (Horizontal landscape layout - Android Compose Parity) */
-        .period-toggle-row {
-          display: flex;
-          flex-direction: row;
-          height: 38px;
-          width: 216px;
-          border: 1px solid var(--md-sys-color-outline, #79747E);
-          border-radius: var(--md-sys-shape-corner-small, 8px);
-          overflow: hidden;
-        }
-
-        .period-toggle-row .period-btn {
-          flex: 1;
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          cursor: pointer;
-          outline: none;
-          transition: background-color 150ms ease, color 150ms ease;
-        }
-        .period-toggle-row .period-btn:first-child {
-          border-right: 1px solid var(--md-sys-color-outline, #79747E);
-        }
-        .period-toggle-row .period-btn.active {
-          background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
-          color: var(--md-sys-color-on-tertiary-container, #31111D);
-          font-weight: var(--md-sys-typescale-label-large-emphasized-weight, 700);
-        }
-
-        /* 256dp Clock Dial */
-        .dial-section {
-          display: flex;
-          justify-content: center;
-          width: 256px;
-          height: 256px;
-          flex-shrink: 0;
-        }
-
-        .clock-face {
-          position: relative;
-          width: 256px;
-          height: 256px;
-          border-radius: 9999px;
-          background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-          touch-action: none;
-          cursor: pointer;
-          flex-shrink: 0;
-        }
-
-        .dial-center-dot {
-          position: absolute;
-          width: 8px;
-          height: 8px;
-          background-color: var(--md-sys-color-primary, #6750A4);
-          border-radius: 9999px;
-          top: 124px;
-          left: 124px;
-          z-index: 4;
-        }
-
-        .clock-arm {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 256px;
-          height: 256px;
-          pointer-events: none;
-          transform-origin: 128px 128px;
-          transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
-          z-index: 2;
-        }
-
-        .clock-hand-line {
-          position: absolute;
-          width: 2px;
-          height: 100px;
-          background-color: var(--md-sys-color-primary, #6750A4);
-          left: 127px;
-          top: 28px;
-        }
-
-        .clock-selector-head {
-          position: absolute;
-          width: 48px;
-          height: 48px;
-          border-radius: 9999px;
-          background-color: var(--md-sys-color-primary, #6750A4);
-          left: 104px;
-          top: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .selector-dot {
-          display: none;
-          width: 8px;
-          height: 8px;
-          background-color: var(--md-sys-color-on-primary, #FFFFFF);
-          border-radius: 9999px;
-        }
-
-        .dial-number {
-          position: absolute;
-          width: 48px;
-          height: 48px;
-          border-radius: 9999px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          transform: translate(-50%, -50%);
-          user-select: none;
-          cursor: pointer;
-          z-index: 3;
-          transition: color 150ms ease;
-        }
-        .dial-number.selected {
-          color: var(--md-sys-color-on-primary, #FFFFFF) !important;
-          font-weight: var(--md-sys-typescale-body-large-emphasized-weight, 500);
-        }
-
-        /* Footer Actions */
-        .picker-footer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-top: 4px;
-        }
-
-        .icon-btn {
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          width: 40px;
-          height: 40px;
-          border-radius: 9999px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          outline: none;
-          transition: background-color 150ms ease;
-        }
-        .icon-btn:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
-        }
-
-        .action-buttons {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .text-btn {
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-primary, #6750A4);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          height: 40px;
-          padding: 0 16px;
-          border-radius: 9999px;
-          cursor: pointer;
-          outline: none;
-          transition: background-color 150ms ease;
-        }
-        .text-btn:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 8%, transparent);
-        }
-
-        .ico {
-          font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
-          font-size: 24px;
-          line-height: 1;
-          font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
-        }
-
-        @media (max-width: 600px) {
-          .picker-dialog {
-            width: 328px !important;
-            max-width: calc(100vw - 32px) !important;
-            padding: 24px 16px !important;
-            border-radius: var(--md-sys-shape-corner-extra-large, 28px) !important;
-            box-sizing: border-box !important;
-            margin: auto !important;
-          }
-          .picker-dialog.horizontal {
-            width: 328px !important;
-            max-width: calc(100vw - 32px) !important;
-          }
-          .main-layout-wrap.horizontal {
-            flex-direction: column !important;
-            gap: 16px !important;
-          }
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       ${this.inline ? dialogContent : `<div class="scrim" role="dialog" aria-modal="true">${dialogContent}</div>`}
     `;
   }

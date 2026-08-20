@@ -1805,13 +1805,15 @@ md-fab-menu[open] {
   padding: 24px 16px;
   min-height: 120px;
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
   justify-content: center;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
   user-select: none;
   -webkit-user-select: none;
@@ -1820,6 +1822,25 @@ md-fab-menu[open] {
 .comp-preview > * {
   max-width: 100%;
   box-sizing: border-box;
+}
+
+.comp-preview:has(md-date-picker[inline]),
+.comp-preview:has(md-time-picker[inline]) {
+  padding: 16px 8px;
+  height: auto;
+  align-items: flex-start;
+}
+
+.comp-preview md-date-picker,
+.comp-preview md-time-picker {
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.comp-preview md-bottom-app-bar {
+  width: 100%;
+  max-width: 100%;
 }
 
 .comp-info {
@@ -2700,6 +2721,37 @@ md-fab-menu[open] {
    1. COMPACT WINDOW CLASS (< 600px - Phones in Portrait)
    -------------------------------------------------------------------------- */
 @media (max-width: 599px) {
+  /* Touch Ergonomics & 48px Target Rule (WCAG 2.2 Level AA / Lighthouse) */
+  .mobile-drawer-btn,
+  .mobile-top-bar-actions .rail-bottom-btn {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sub-nav-item,
+  .drawer-dest-item,
+  .sub-nav-accordion-header,
+  .sub-nav-overview-pill {
+    min-height: 48px;
+    height: 48px;
+    box-sizing: border-box;
+  }
+
+  .sub-nav-subitem {
+    min-height: 44px;
+    height: 44px;
+    box-sizing: border-box;
+  }
+
+  .mobile-nav-item {
+    min-height: 48px;
+  }
+
   .mobile-top-bar {
     display: flex;
   }
@@ -2958,7 +3010,7 @@ md-fab-menu[open] {
   }
 
   .cards-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
   }
 
@@ -3036,7 +3088,7 @@ md-fab-menu[open] {
   }
 
   .cards-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
     gap: 28px;
   }
 
@@ -3125,12 +3177,15 @@ body:not([data-active-tab="home"]) .ambient-stage-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.05s linear;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 #ambientWaveCanvas {
   display: block;
   background: transparent;
+  will-change: contents;
+  contain: strict;
 }
 
 /* Stacking Context Hierarchy:

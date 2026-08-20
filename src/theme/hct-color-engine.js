@@ -457,8 +457,19 @@ export function applyDynamicTheme(source, isDark = null, schemeType = null, targ
   target._activeHct = { ...resolvedHct };
 
   const tokens = generateM3Scheme(resolvedHct, isDark, schemeType);
-  for (const [key, value] of Object.entries(tokens)) {
-    target.style.setProperty(key, value);
+  if (isGlobalTarget && typeof document !== 'undefined') {
+    let themeStyle = document.getElementById('md3e-dynamic-theme-vars');
+    if (!themeStyle) {
+      themeStyle = document.createElement('style');
+      themeStyle.id = 'md3e-dynamic-theme-vars';
+      document.head.appendChild(themeStyle);
+    }
+    const cssLines = Object.entries(tokens).map(([k, v]) => `  ${k}: ${v};`).join('\n');
+    themeStyle.textContent = `:root {\n${cssLines}\n}`;
+  } else if (target && target.style) {
+    for (const [key, value] of Object.entries(tokens)) {
+      target.style.setProperty(key, value);
+    }
   }
 
   const seedHex = hctToHex(resolvedHct.hue, resolvedHct.chroma, resolvedHct.tone);

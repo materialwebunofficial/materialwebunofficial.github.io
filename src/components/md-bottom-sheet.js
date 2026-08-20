@@ -5,6 +5,121 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; outline: none; display: contents; }
+  :host(:not([open])) .scrim, :host(:not([open])) .sheet { display: none !important; }
+  :host([open]) .scrim { display: block !important; }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background-color: var(--md-sys-color-scrim, #000);
+    opacity: 0.4;
+    z-index: 2000;
+    touch-action: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sheet {
+    box-sizing: border-box;
+    position: fixed;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: min(640px, 100vw);
+    bottom: 0;
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    max-height: 85vh;
+    padding: 0 24px calc(56px + env(safe-area-inset-bottom, 24px));
+    /* CornerExtraLargeTop 28/28/0/0 */
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px) var(--md-sys-shape-corner-extra-large, 28px) 0 0;
+    background-color: var(--md-sys-color-surface-container-low, #1D1B20);
+    color: var(--md-sys-color-on-surface, #E6E0E9);
+    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.25));
+    overflow: visible;
+    will-change: transform;
+  }
+
+  /* Skirt extension at bottom so dragging upwards never exposes background beneath */
+  .sheet::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background-color: inherit;
+    pointer-events: none;
+  }
+
+  .handle-area {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 40px;                    /* touch target */
+    padding: 12px 0 8px;
+    border: none; background: transparent; cursor: grab; outline: none;
+    width: 100%;
+    touch-action: none;
+    user-select: none;
+  }
+  .handle-area:active { cursor: grabbing; }
+  .handle-area:focus { outline: none; }
+  .handle-area:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #D0BCFF);
+    outline-offset: 2px;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+  }
+  .handle {
+    width: 32px; height: 4px;            /* drag handle 32x4dp */
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    background-color: var(--md-sys-color-on-surface-variant, #CAC4D0);
+    opacity: 0.4;
+    transition: opacity var(--md-sys-motion-duration-short2, 100ms) ease;
+  }
+  .handle-area:hover .handle { opacity: 0.7; }
+  .handle-area.pressed .handle { opacity: 0.95; }
+
+  .headline {
+    font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface, #E6E0E9);
+    padding: 4px 0 12px;
+  }
+  .headline:empty { display: none; }
+  .content {
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
+    overflow-y: auto;
+    max-height: calc(85vh - 80px);
+    overscroll-behavior: contain;
+    padding-bottom: 24px;
+  }
+
+  @media (max-width: 600px) {
+    .sheet {
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100vw !important;
+      max-width: 100vw !important;
+      margin: 0 !important;
+      border-radius: var(--md-sys-shape-corner-extra-large, 28px) var(--md-sys-shape-corner-extra-large, 28px) 0 0 !important;
+      padding: 0 20px calc(80px + env(safe-area-inset-bottom, 24px)) !important;
+      box-sizing: border-box !important;
+    }
+    .content {
+      padding-bottom: 24px !important;
+    }
+  }
+`;
+
+const bottomSheetSheet = createComponentSheet(defaultStyle);
 
 export class MdBottomSheet extends HTMLElement {
   static get observedAttributes() {
@@ -18,6 +133,7 @@ export class MdBottomSheet extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, bottomSheetSheet);
     this._rendered = false;
     this._onKeydown = this._onKeydown.bind(this);
     this._abortController = null;
@@ -105,119 +221,10 @@ export class MdBottomSheet extends HTMLElement {
 
   render() {
     const headline = this.getAttribute('headline') || '';
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none; outline: none; display: contents; }
-        :host(:not([open])) .scrim, :host(:not([open])) .sheet { display: none !important; }
-        :host([open]) .scrim { display: block !important; }
-
-        .scrim {
-          position: fixed;
-          inset: 0;
-          background-color: var(--md-sys-color-scrim, #000);
-          opacity: 0.4;
-          z-index: 2000;
-          touch-action: none;
-          cursor: pointer;
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        .sheet {
-          box-sizing: border-box;
-          position: fixed;
-          left: 0;
-          right: 0;
-          margin: 0 auto;
-          width: min(640px, 100vw);
-          bottom: 0;
-          z-index: 2001;
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          max-height: 85vh;
-          padding: 0 24px calc(56px + env(safe-area-inset-bottom, 24px));
-          /* CornerExtraLargeTop 28/28/0/0 */
-          border-radius: var(--md-sys-shape-corner-extra-large, 28px) var(--md-sys-shape-corner-extra-large, 28px) 0 0;
-          background-color: var(--md-sys-color-surface-container-low, #1D1B20);
-          color: var(--md-sys-color-on-surface, #E6E0E9);
-          box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.25));
-          overflow: visible;
-          will-change: transform;
-        }
-
-        /* Skirt extension at bottom so dragging upwards never exposes background beneath */
-        .sheet::after {
-          content: '';
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          height: 100vh;
-          background-color: inherit;
-          pointer-events: none;
-        }
-
-        .handle-area {
-          display: flex; align-items: center; justify-content: center;
-          min-height: 40px;                    /* touch target */
-          padding: 12px 0 8px;
-          border: none; background: transparent; cursor: grab; outline: none;
-          width: 100%;
-          touch-action: none;
-          user-select: none;
-        }
-        .handle-area:active { cursor: grabbing; }
-        .handle-area:focus { outline: none; }
-        .handle-area:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #D0BCFF);
-          outline-offset: 2px;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-        }
-        .handle {
-          width: 32px; height: 4px;            /* drag handle 32x4dp */
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          background-color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-          opacity: 0.4;
-          transition: opacity var(--md-sys-motion-duration-short2, 100ms) ease;
-        }
-        .handle-area:hover .handle { opacity: 0.7; }
-        .handle-area.pressed .handle { opacity: 0.95; }
-
-        .headline {
-          font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface, #E6E0E9);
-          padding: 4px 0 12px;
-        }
-        .headline:empty { display: none; }
-        .content {
-          font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-          overflow-y: auto;
-          max-height: calc(85vh - 80px);
-          overscroll-behavior: contain;
-          padding-bottom: 24px;
-        }
-
-        @media (max-width: 600px) {
-          .sheet {
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100vw !important;
-            max-width: 100vw !important;
-            margin: 0 !important;
-            border-radius: var(--md-sys-shape-corner-extra-large, 28px) var(--md-sys-shape-corner-extra-large, 28px) 0 0 !important;
-            padding: 0 20px calc(80px + env(safe-area-inset-bottom, 24px)) !important;
-            box-sizing: border-box !important;
-          }
-          .content {
-            padding-bottom: 24px !important;
-          }
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="scrim" part="scrim"></div>
       <div class="sheet" role="dialog" aria-modal="${this.modal ? 'true' : 'false'}"
         aria-label="${escapeHtml(this.getAttribute('aria-label') || headline || 'Bottom sheet')}">

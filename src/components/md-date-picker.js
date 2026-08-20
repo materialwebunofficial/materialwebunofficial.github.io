@@ -13,6 +13,422 @@
  */
 
 import { SpringPhysics } from '../motion/spring-physics.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: block;
+    outline: none;
+    box-sizing: border-box;
+    user-select: none;
+    font-family: var(--md-sys-typescale-font-family, 'Roboto', 'Roboto Flex', system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+  }
+  :host([inline]) {
+    display: inline-block;
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 24px 16px;
+    box-sizing: border-box;
+  }
+
+  /* 1. DOCKED STYLES */
+  .docked-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 328px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .outlined-field-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin-top: 6px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .field-label {
+    position: absolute;
+    top: -8px;
+    left: 12px;
+    background: var(--md-sys-color-surface, #FEF7FF);
+    padding: 0 4px;
+    font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking, 0.5px);
+    color: var(--md-sys-color-primary, #6750A4);
+    z-index: 2;
+  }
+
+  .outlined-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 56px;
+    border-radius: 4px;
+    border: 2px solid var(--md-sys-color-primary, #6750A4);
+    background: transparent;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
+    padding: 0 16px;
+    outline: none;
+  }
+
+  .helper-text {
+    font: var(--md-sys-typescale-body-small, 400 12px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    margin-top: 4px;
+    margin-left: 12px;
+  }
+
+  .docked-calendar {
+    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0);
+    border-radius: 16px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px rgba(0,0,0,0.12));
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .docked-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+  }
+
+  .nav-cluster {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .dropdown-pill-btn {
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 9999px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 150ms ease;
+  }
+  .dropdown-pill-btn:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
+  }
+
+  /* 2. MODAL & RANGE DIALOG STYLES */
+  .picker-dialog {
+    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
+    padding: 24px;
+    width: 328px;
+    max-width: calc(100vw - 32px);
+    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+    will-change: transform;
+    margin: auto;
+  }
+
+  :host([inline]) .picker-dialog {
+    width: 100%;
+    max-width: 328px;
+    box-shadow: none;
+    margin: 0 auto;
+  }
+
+  .picker-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-title {
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    text-transform: capitalize;
+  }
+
+  .formatted-date {
+    font: var(--md-sys-typescale-headline-large, 400 32px/40px Roboto Flex, sans-serif);
+    letter-spacing: var(--md-sys-typescale-headline-large-tracking, 0px);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+  }
+
+  .icon-toggle-btn {
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 150ms ease;
+  }
+  .icon-toggle-btn:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
+  }
+
+  .divider {
+    height: 1px;
+    background-color: var(--md-sys-color-outline-variant, #CAC4D0);
+    margin: 0;
+  }
+
+  .calendar-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .month-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    padding: 0 4px;
+  }
+
+  .month-nav {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-btn {
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    outline: none;
+    transition: background-color 150ms ease;
+  }
+  .nav-btn:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
+  }
+
+  .ico {
+    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
+    font-size: 22px;
+    line-height: 1;
+    display: inline-block;
+    white-space: nowrap;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+  .ico.arrow { font-size: 18px; }
+
+  .weekdays-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking, 0.5px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    height: 32px;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px 0;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .day-cell {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    cursor: pointer;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  .day-cell.empty {
+    cursor: default;
+    pointer-events: none;
+  }
+  .day-cell .day-text {
+    position: relative;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 36px;
+    max-height: 36px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: auto;
+    line-height: 1;
+    text-align: center;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+    box-sizing: border-box;
+  }
+  .day-cell:hover:not(.empty):not(.selected):not(.in-range) .day-text {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent);
+  }
+  .day-cell.today .day-text {
+    border: 1px solid var(--md-sys-color-primary, #6750A4);
+  }
+  .day-cell.selected .day-text {
+    background-color: var(--md-sys-color-primary, #6750A4);
+    color: var(--md-sys-color-on-primary, #FFFFFF);
+    font-weight: var(--md-sys-typescale-body-medium-emphasized-weight, 500);
+  }
+
+  /* Seamless Continuous Range Selection Highlighting (1:1 AndroidX Compose DateRangePicker Parity) */
+  .day-cell.in-range {
+    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+    color: var(--md-sys-color-on-secondary-container, #1D192B);
+    border-radius: 0;
+  }
+  .day-cell.range-start::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 50%;
+    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+    z-index: 1;
+  }
+  .day-cell.range-end::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 50%;
+    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+    z-index: 1;
+  }
+  .day-cell.range-start.range-end::before {
+    display: none;
+  }
+
+  .range-input-pane, .modal-input-pane {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .range-input-pane .outlined-field-wrap { flex: 1; }
+
+  .actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .text-btn {
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-primary, #6750A4);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 9999px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 150ms ease;
+  }
+  .text-btn:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 8%, transparent);
+  }
+
+  @media (max-width: 600px) {
+    .picker-dialog {
+      width: 328px !important;
+      max-width: calc(100vw - 32px) !important;
+      padding: 20px 16px !important;
+      border-radius: var(--md-sys-shape-corner-extra-large, 28px) !important;
+      box-sizing: border-box !important;
+      margin: auto !important;
+    }
+    .docked-container {
+      width: 100% !important;
+      max-width: 328px !important;
+      margin: 0 auto !important;
+    }
+    .docked-calendar {
+      padding: 16px 12px !important;
+    }
+  }
+`;
+
+const datePickerSheet = createComponentSheet(defaultStyle);
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -55,6 +471,7 @@ export class MdDatePicker extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, datePickerSheet);
 
     const now = new Date();
     const futureDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -592,410 +1009,10 @@ export class MdDatePicker extends HTMLElement {
       `;
     }
 
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: ${this.inline ? 'inline-block;' : 'block;'};
-          outline: none;
-          box-sizing: border-box;
-          user-select: none;
-          font-family: var(--md-sys-typescale-font-family, 'Roboto', 'Roboto Flex', system-ui, sans-serif);
-          -webkit-font-smoothing: antialiased;
-        }
-
-        .scrim {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.4);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2000;
-          padding: 24px 16px;
-          box-sizing: border-box;
-        }
-
-        /* 1. DOCKED STYLES */
-        .docked-container {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          width: 328px;
-          max-width: 100%;
-          box-sizing: border-box;
-        }
-
-        .outlined-field-wrap {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          margin-top: 6px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        .field-label {
-          position: absolute;
-          top: -8px;
-          left: 12px;
-          background: var(--md-sys-color-surface, #FEF7FF);
-          padding: 0 4px;
-          font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-medium-tracking, 0.5px);
-          color: var(--md-sys-color-primary, #6750A4);
-          z-index: 2;
-        }
-
-        .outlined-input {
-          box-sizing: border-box;
-          width: 100%;
-          height: 56px;
-          border-radius: 4px;
-          border: 2px solid var(--md-sys-color-primary, #6750A4);
-          background: transparent;
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
-          padding: 0 16px;
-          outline: none;
-        }
-
-        .helper-text {
-          font: var(--md-sys-typescale-body-small, 400 12px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          margin-top: 4px;
-          margin-left: 12px;
-        }
-
-        .docked-calendar {
-          background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-          border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0);
-          border-radius: 16px;
-          padding: 16px 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px rgba(0,0,0,0.12));
-          box-sizing: border-box;
-          width: 100%;
-        }
-
-        .docked-nav-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 4px;
-        }
-
-        .nav-cluster {
-          display: flex;
-          align-items: center;
-          gap: 2px;
-        }
-
-        .dropdown-pill-btn {
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 6px 10px;
-          border-radius: 9999px;
-          cursor: pointer;
-          outline: none;
-          transition: background-color 150ms ease;
-        }
-        .dropdown-pill-btn:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
-        }
-
-        /* 2. MODAL & RANGE DIALOG STYLES */
-        .picker-dialog {
-          background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          border-radius: var(--md-sys-shape-corner-extra-large, 28px);
-          padding: 24px;
-          width: 328px;
-          max-width: calc(100vw - 32px);
-          box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          box-sizing: border-box;
-          will-change: transform;
-          margin: auto;
-        }
-
-        .picker-header {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .header-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .header-title {
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          text-transform: capitalize;
-        }
-
-        .formatted-date {
-          font: var(--md-sys-typescale-headline-large, 400 32px/40px Roboto Flex, sans-serif);
-          letter-spacing: var(--md-sys-typescale-headline-large-tracking, 0px);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-        }
-
-        .icon-toggle-btn {
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          width: 36px;
-          height: 36px;
-          border-radius: 9999px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          outline: none;
-          transition: background-color 150ms ease;
-        }
-        .icon-toggle-btn:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
-        }
-
-        .divider {
-          height: 1px;
-          background-color: var(--md-sys-color-outline-variant, #CAC4D0);
-          margin: 0;
-        }
-
-        .calendar-body {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        .month-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          padding: 0 4px;
-        }
-
-        .month-nav {
-          display: flex;
-          gap: 4px;
-        }
-
-        .nav-btn {
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          cursor: pointer;
-          width: 36px;
-          height: 36px;
-          border-radius: 9999px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0;
-          outline: none;
-          transition: background-color 150ms ease;
-        }
-        .nav-btn:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
-        }
-
-        .ico {
-          font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
-          font-size: 22px;
-          line-height: 1;
-          display: inline-block;
-          white-space: nowrap;
-          font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
-        }
-        .ico.arrow { font-size: 18px; }
-
-        .weekdays-row {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          text-align: center;
-          font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-medium-tracking, 0.5px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          height: 32px;
-          align-items: center;
-          justify-items: center;
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        .days-grid {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          gap: 4px 0;
-          align-items: center;
-          justify-items: center;
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        .day-cell {
-          position: relative;
-          width: 100%;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          cursor: pointer;
-          outline: none;
-          padding: 0;
-          margin: 0;
-          box-sizing: border-box;
-        }
-        .day-cell.empty {
-          cursor: default;
-          pointer-events: none;
-        }
-        .day-cell .day-text {
-          position: relative;
-          z-index: 2;
-          width: 36px;
-          height: 36px;
-          min-width: 36px;
-          min-height: 36px;
-          max-width: 36px;
-          max-height: 36px;
-          aspect-ratio: 1 / 1;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          margin: auto;
-          line-height: 1;
-          text-align: center;
-          transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
-          box-sizing: border-box;
-        }
-        .day-cell:hover:not(.empty):not(.selected):not(.in-range) .day-text {
-          background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent);
-        }
-        .day-cell.today .day-text {
-          border: 1px solid var(--md-sys-color-primary, #6750A4);
-        }
-        .day-cell.selected .day-text {
-          background-color: var(--md-sys-color-primary, #6750A4);
-          color: var(--md-sys-color-on-primary, #FFFFFF);
-          font-weight: var(--md-sys-typescale-body-medium-emphasized-weight, 500);
-        }
-
-        /* Seamless Continuous Range Selection Highlighting (1:1 AndroidX Compose DateRangePicker Parity) */
-        .day-cell.in-range {
-          background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-          color: var(--md-sys-color-on-secondary-container, #1D192B);
-          border-radius: 0;
-        }
-        .day-cell.range-start::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          right: 0;
-          width: 50%;
-          background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-          z-index: 1;
-        }
-        .day-cell.range-end::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          left: 0;
-          width: 50%;
-          background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-          z-index: 1;
-        }
-        .day-cell.range-start.range-end::before {
-          display: none;
-        }
-
-        .range-input-pane, .modal-input-pane {
-          display: flex;
-          gap: 12px;
-          padding: 12px 0;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .range-input-pane .outlined-field-wrap { flex: 1; }
-
-        .actions-row {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 8px;
-          margin-top: 4px;
-        }
-
-        .text-btn {
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-primary, #6750A4);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          height: 40px;
-          padding: 0 16px;
-          border-radius: 9999px;
-          cursor: pointer;
-          outline: none;
-          transition: background-color 150ms ease;
-        }
-        .text-btn:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 8%, transparent);
-        }
-
-        @media (max-width: 600px) {
-          .picker-dialog {
-            width: 328px !important;
-            max-width: calc(100vw - 32px) !important;
-            padding: 20px 16px !important;
-            border-radius: var(--md-sys-shape-corner-extra-large, 28px) !important;
-            box-sizing: border-box !important;
-            margin: auto !important;
-          }
-          .docked-container {
-            width: 100% !important;
-            max-width: 328px !important;
-            margin: 0 auto !important;
-          }
-          .docked-calendar {
-            padding: 16px 12px !important;
-          }
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       ${this.inline ? cardContentHtml : `<div class="scrim" role="dialog" aria-modal="true">${cardContentHtml}</div>`}
     `;
   }

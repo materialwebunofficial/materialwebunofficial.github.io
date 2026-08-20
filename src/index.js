@@ -54,4 +54,5 @@ export {
   TonalPalette
 } from './theme/hct-color-engine.js';
 export { escapeHtml, sanitizeAttribute, safeJsonParse } from './utils/security.js';
+export { createComponentSheet, adoptSheet } from './utils/styles.js';
 

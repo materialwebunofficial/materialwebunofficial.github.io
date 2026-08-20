@@ -11,6 +11,191 @@
 
 import { createRipple, bindPress, pressScale, releaseScale } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    display: inline-flex;
+    vertical-align: middle;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    border: none;
+    outline: none;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    background: transparent;
+    overflow: hidden;
+    transition:
+      background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
+      color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
+      border-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease);
+  }
+
+  /* Focus Ring */
+  .btn:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 3px solid var(--md-sys-color-secondary, #625b71);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Touch Target: 48dp minimum */
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 48px;
+    min-height: 48px;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+  }
+
+  /* State Layer */
+  .state-layer {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background-color: currentColor;
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-duration-short-2, 100ms) ease;
+  }
+
+  .btn:hover:not([disabled]) .state-layer {
+    opacity: var(--md-sys-state-hover-opacity, 0.08);
+  }
+  .btn:focus-visible:not([disabled]) .state-layer {
+    opacity: var(--md-sys-state-focus-opacity, 0.10);
+  }
+  .btn:active:not([disabled]) .state-layer {
+    opacity: var(--md-sys-state-pressed-opacity, 0.10);
+  }
+
+  /* Ripple */
+  .md-ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0.15;
+    transform: scale(0);
+    animation: ripple-anim 400ms var(--md-sys-motion-easing-emphasized-decelerate, cubic-bezier(0.05, 0.7, 0.1, 1)) forwards;
+    pointer-events: none;
+  }
+
+  @keyframes ripple-anim {
+    to {
+      transform: scale(2.5);
+      opacity: 0;
+    }
+  }
+
+  /* Standard */
+  .btn.standard {
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    background: transparent;
+  }
+  .btn.standard.togglable.selected {
+    color: var(--md-sys-color-primary, #6750a4);
+  }
+
+  /* Filled */
+  .btn.filled {
+    background-color: var(--md-sys-color-primary, #6750a4);
+    color: var(--md-sys-color-on-primary, #ffffff);
+  }
+  .btn.filled.togglable {
+    background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+    color: var(--md-sys-color-primary, #6750a4);
+  }
+  .btn.filled.togglable.selected {
+    background-color: var(--md-sys-color-primary, #6750a4);
+    color: var(--md-sys-color-on-primary, #ffffff);
+  }
+
+  /* Tonal */
+  .btn.tonal {
+    background-color: var(--md-sys-color-secondary-container, #e8def8);
+    color: var(--md-sys-color-on-secondary-container, #1d192b);
+  }
+  .btn.tonal.togglable {
+    background-color: var(--md-sys-color-surface-container, #f3edf7);
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+  }
+  .btn.tonal.togglable.selected {
+    background-color: var(--md-sys-color-secondary, #625b71);
+    color: var(--md-sys-color-on-secondary, #ffffff);
+  }
+
+  /* Outlined */
+  .btn.outlined {
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    background: transparent;
+  }
+  .btn.outlined.togglable.selected {
+    background-color: var(--md-sys-color-inverse-surface, #313033);
+    color: var(--md-sys-color-inverse-on-surface, #f4eff4);
+    border-color: var(--md-sys-color-inverse-surface, #313033);
+  }
+
+  /* Disabled */
+  .btn:disabled, .btn[disabled] {
+    cursor: not-allowed;
+    box-shadow: none !important;
+    pointer-events: none;
+  }
+  .btn.filled:disabled {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
+    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  }
+  .btn.tonal:disabled {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
+    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  }
+  .btn.standard:disabled {
+    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+    background: transparent;
+  }
+  .btn.outlined:disabled {
+    border-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
+    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+    background: transparent;
+  }
+
+  .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Google Symbols', sans-serif;
+    font-size: 24px;
+    line-height: 1;
+    pointer-events: none;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .btn.selected .icon {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+`;
+
+const iconButtonSheet = createComponentSheet(defaultStyle);
 
 const SIZES = {
   xs: { size: 32, iconSize: 18 },
@@ -28,6 +213,7 @@ export class MdIconButton extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, iconButtonSheet);
     this._rendered = false;
     this._abortController = null;
   }
@@ -78,184 +264,9 @@ export class MdIconButton extends HTMLElement {
   get selectedIcon() { return this.getAttribute('selected-icon') || this.icon; }
 
   _render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: inline-flex;
-          vertical-align: middle;
-          outline: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn {
-          position: relative;
-          width: 40px;
-          height: 40px;
-          min-width: 40px;
-          min-height: 40px;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          border: none;
-          outline: none;
-          box-sizing: border-box;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          user-select: none;
-          background: transparent;
-          overflow: hidden;
-          transition:
-            background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-            color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-            border-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease);
-        }
-
-        /* 48x48dp Dokunma Alanı Genişletmesi (§7.1) */
-        .btn::before {
-          content: '';
-          position: absolute;
-          inset: -4px;
-          min-width: 48px;
-          min-height: 48px;
-          pointer-events: auto;
-        }
-
-        /* Focus Ring (§5.3) */
-        .btn:focus-visible::after {
-          content: '';
-          position: absolute;
-          inset: -4px;
-          border: 3px solid var(--md-sys-color-secondary, #625b71);
-          border-radius: inherit;
-          pointer-events: none;
-        }
-
-        /* State Layer (§5.1 & §5.2) */
-        .state-layer {
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          pointer-events: none;
-          background-color: currentColor;
-          opacity: 0;
-          transition: opacity var(--md-sys-motion-duration-short-2, 100ms) ease;
-        }
-
-        .btn:hover:not([disabled]) .state-layer {
-          opacity: var(--md-sys-state-hover-opacity, 0.08);
-        }
-        .btn:focus-visible:not([disabled]) .state-layer {
-          opacity: var(--md-sys-state-focus-opacity, 0.10);
-        }
-        .btn:active:not([disabled]) .state-layer {
-          opacity: var(--md-sys-state-pressed-opacity, 0.10);
-        }
-
-        /* Ripple Effect */
-        .md-ripple-effect {
-          position: absolute;
-          border-radius: 50%;
-          background-color: currentColor;
-          opacity: 0.15;
-          transform: scale(0);
-          animation: ripple-anim 400ms var(--md-sys-motion-easing-emphasized-decelerate, cubic-bezier(0.05, 0.7, 0.1, 1)) forwards;
-          pointer-events: none;
-        }
-
-        @keyframes ripple-anim {
-          to {
-            transform: scale(2.5);
-            opacity: 0;
-          }
-        }
-
-        /* Standard */
-        .btn.standard {
-          color: var(--md-sys-color-on-surface-variant, #49454f);
-          background: transparent;
-        }
-        .btn.standard.togglable.selected {
-          color: var(--md-sys-color-primary, #6750a4);
-        }
-
-        /* Filled */
-        .btn.filled {
-          background-color: var(--md-sys-color-primary, #6750a4);
-          color: var(--md-sys-color-on-primary, #ffffff);
-        }
-        .btn.filled.togglable {
-          background-color: var(--md-sys-color-surface-container, #f3edf7);
-          color: var(--md-sys-color-on-surface-variant, #49454f);
-        }
-        .btn.filled.togglable.selected {
-          background-color: var(--md-sys-color-primary, #6750a4);
-          color: var(--md-sys-color-on-primary, #ffffff);
-        }
-
-        /* Tonal */
-        .btn.tonal {
-          background-color: var(--md-sys-color-secondary-container, #e8def8);
-          color: var(--md-sys-color-on-secondary-container, #1d192b);
-        }
-        .btn.tonal.togglable {
-          background-color: var(--md-sys-color-surface-container, #f3edf7);
-          color: var(--md-sys-color-on-surface-variant, #49454f);
-        }
-        .btn.tonal.togglable.selected {
-          background-color: var(--md-sys-color-secondary, #625b71);
-          color: var(--md-sys-color-on-secondary, #ffffff);
-        }
-
-        /* Outlined */
-        .btn.outlined {
-          border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-          color: var(--md-sys-color-on-surface-variant, #49454f);
-          background: transparent;
-        }
-        .btn.outlined.togglable.selected {
-          background-color: var(--md-sys-color-inverse-surface, #313033);
-          color: var(--md-sys-color-inverse-on-surface, #f4eff4);
-          border-color: var(--md-sys-color-inverse-surface, #313033);
-        }
-
-        /* Disabled */
-        .btn:disabled, .btn[disabled] {
-          cursor: not-allowed;
-          box-shadow: none !important;
-          pointer-events: none;
-        }
-        .btn.filled:disabled {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-          color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
-        }
-        .btn.tonal:disabled {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-          color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
-        }
-        .btn.standard:disabled {
-          color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
-          background: transparent;
-        }
-        .btn.outlined:disabled {
-          border-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-          color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
-          background: transparent;
-        }
-
-        .icon {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Google Symbols', sans-serif;
-          font-size: 24px;
-          line-height: 1;
-          pointer-events: none;
-          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .btn.selected .icon {
-          font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <button class="btn" type="button" part="button">
         <span class="state-layer"></span>
         <span class="icon"><slot></slot></span>

@@ -13,6 +13,150 @@
  *   - Keyboard navigation parity
  */
 
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    display: block;
+    width: 100%;
+    outline: none;
+    user-select: none;
+    touch-action: none;
+    vertical-align: middle;
+  }
+
+  .slider-root {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 48px;
+    box-sizing: border-box;
+    cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .slider-root:focus { outline: none; }
+  .slider-root:focus-visible .thumb {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 3px;
+  }
+
+  .track-box {
+    position: relative;
+    width: 100%;
+    height: 16px;
+    border-radius: 9999px;
+    background: var(--md-slider-track-bg, var(--md-sys-color-secondary-container, #E8DEF8));
+    overflow: visible;
+  }
+
+  .active-track {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    background: var(--md-slider-active-track-bg, var(--md-sys-color-primary, #6750A4));
+    border-radius: 9999px;
+    pointer-events: none;
+  }
+
+  /* Stops dots */
+  .stops {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .stop-dot {
+    position: absolute;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background-color: var(--md-sys-color-on-secondary-container, #1D192B);
+    transform: translate(-50%, -50%);
+    opacity: 0.5;
+  }
+  .stop-dot.active {
+    background-color: var(--md-sys-color-on-primary, #FFFFFF);
+    opacity: 0.7;
+  }
+
+  /* Handle (Thumb) — 44dp height, 4dp resting width -> morphs to 2dp on focus/press */
+  .thumb {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 44px;
+    border-radius: 9999px;
+    background: var(--md-slider-thumb-bg, var(--md-sys-color-primary, #6750A4));
+    transform: translate(-50%, -50%);
+    box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,0.15));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition:
+      width var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease),
+      transform var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease),
+      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+    outline: none;
+  }
+
+  .slider-root:hover .thumb {
+    width: 6px;
+  }
+  .slider-root.pressed .thumb,
+  .slider-root:focus-visible .thumb {
+    width: 2px;
+    height: 44px;
+    transform: translate(-50%, -50%) scale(1.15, 0.95);
+  }
+
+  /* Value Indicator (Tooltip) */
+  .tooltip {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    transform-origin: bottom center;
+    background-color: var(--md-sys-color-inverse-surface, #322F35);
+    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
+    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
+    font-size: var(--md-sys-typescale-label-large-size, 14px);
+    font-weight: var(--md-sys-typescale-label-large-weight, 500);
+    padding: 4px 8px;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    white-space: nowrap;
+    transition:
+      transform var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease),
+      opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+  }
+
+  .slider-root.pressed .tooltip,
+  .slider-root.labeled .tooltip,
+  .slider-root:hover .tooltip {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+
+  .slider-root.disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+  }
+  .slider-root.disabled .active-track,
+  .slider-root.disabled .thumb {
+    background-color: var(--md-sys-color-on-surface, #1D1B20);
+    box-shadow: none;
+  }
+`;
+
+const sliderSheet = createComponentSheet(defaultStyle);
+
 export class MdSlider extends HTMLElement {
   static formAssociated = true;
 
@@ -27,6 +171,7 @@ export class MdSlider extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, sliderSheet);
     this._internals = this.attachInternals ? this.attachInternals() : null;
     this._isDragging = false;
     this._rendered = false;
@@ -358,147 +503,9 @@ export class MdSlider extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          width: 100%;
-          outline: none;
-          user-select: none;
-          touch-action: none;
-          vertical-align: middle;
-        }
-
-        .slider-root {
-          position: relative;
-          display: flex;
-          align-items: center;
-          width: 100%;
-          height: 48px;
-          box-sizing: border-box;
-          cursor: pointer;
-          outline: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .slider-root:focus { outline: none; }
-        .slider-root:focus-visible .thumb {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 3px;
-        }
-
-        .track-box {
-          position: relative;
-          width: 100%;
-          height: 16px;
-          border-radius: 9999px;
-          background: var(--md-slider-track-bg, var(--md-sys-color-secondary-container, #E8DEF8));
-          overflow: visible;
-        }
-
-        .active-track {
-          position: absolute;
-          left: 0;
-          top: 0;
-          height: 100%;
-          width: 50%;
-          background: var(--md-slider-active-track-bg, var(--md-sys-color-primary, #6750A4));
-          border-radius: 9999px;
-          pointer-events: none;
-        }
-
-        /* Stops dots */
-        .stops {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-        }
-        .stop-dot {
-          position: absolute;
-          top: 50%;
-          width: 4px;
-          height: 4px;
-          border-radius: 9999px;
-          background-color: var(--md-sys-color-on-secondary-container, #1D192B);
-          transform: translate(-50%, -50%);
-          opacity: 0.5;
-        }
-        .stop-dot.active {
-          background-color: var(--md-sys-color-on-primary, #FFFFFF);
-          opacity: 0.7;
-        }
-
-        /* Handle (Thumb) — 44dp height, 4dp resting width -> morphs to 2dp on focus/press */
-        .thumb {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 4px;
-          height: 44px;
-          border-radius: 9999px;
-          background: var(--md-slider-thumb-bg, var(--md-sys-color-primary, #6750A4));
-          transform: translate(-50%, -50%);
-          box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,0.15));
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2;
-          transition:
-            width var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease),
-            transform var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease),
-            background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-          outline: none;
-        }
-
-        .slider-root:hover .thumb {
-          width: 6px;
-        }
-        .slider-root.pressed .thumb,
-        .slider-root:focus-visible .thumb {
-          width: 2px;
-          height: 44px;
-          transform: translate(-50%, -50%) scale(1.15, 0.95);
-        }
-
-        /* Value Indicator (Tooltip) */
-        .tooltip {
-          position: absolute;
-          bottom: 32px;
-          left: 50%;
-          transform: translateX(-50%) scale(0);
-          transform-origin: bottom center;
-          background-color: var(--md-sys-color-inverse-surface, #322F35);
-          color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-          font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-          font-size: var(--md-sys-typescale-label-large-size, 14px);
-          font-weight: var(--md-sys-typescale-label-large-weight, 500);
-          padding: 4px 8px;
-          border-radius: 8px;
-          pointer-events: none;
-          opacity: 0;
-          white-space: nowrap;
-          transition:
-            transform var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease),
-            opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-        }
-
-        .slider-root.pressed .tooltip,
-        .slider-root.labeled .tooltip,
-        .slider-root:hover .tooltip {
-          transform: translateX(-50%) scale(1);
-          opacity: 1;
-        }
-
-        .slider-root.disabled {
-          cursor: not-allowed;
-          opacity: 0.38;
-        }
-        .slider-root.disabled .active-track,
-        .slider-root.disabled .thumb {
-          background-color: var(--md-sys-color-on-surface, #1D1B20);
-          box-shadow: none;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="slider-root" role="slider" tabindex="0" aria-orientation="horizontal">
         <div class="track-box">
           <div class="active-track"></div>

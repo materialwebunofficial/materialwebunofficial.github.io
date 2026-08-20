@@ -13,6 +13,117 @@
 
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host { display: inline-block; outline: none; position: relative; vertical-align: middle; user-select: none; }
+
+  .split-container { display: inline-flex; align-items: center; gap: 2px; position: relative; }
+
+  .btn-left, .btn-right {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: none;
+    margin: 0;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    height: 40px;
+    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
+    font-size: var(--md-sys-typescale-label-large-size, 14px);
+    font-weight: var(--md-sys-typescale-label-large-weight, 500);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    color: var(--md-sys-color-on-primary, #fff);
+    outline: none;
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
+      border-radius var(--md-sys-motion-duration-medium1, 300ms) var(--md-sys-motion-easing-expressive-spatial, ease),
+      box-shadow var(--md-sys-motion-duration-medium1, 300ms) var(--md-sys-motion-easing-expressive-spatial, ease);
+    will-change: transform, border-radius;
+  }
+  .btn-left:focus, .btn-right:focus { outline: none; }
+  .btn-left:focus-visible, .btn-right:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+
+  .btn-left  { padding: 0 16px; border-radius: 9999px 4px 4px 9999px; }
+  .btn-right { width: 40px; padding: 0 9px; border-radius: 4px 9999px 9999px 4px; font-size: 22px; }
+
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 22px;
+    line-height: 1;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Inner corner morphs larger on hover/press */
+  .btn-left:hover  { border-radius: 9999px 12px 12px 9999px; }
+  .btn-right:hover { border-radius: 12px 9999px 9999px 12px; }
+  .btn-left.pressed  { border-radius: 9999px 12px 12px 9999px; }
+  .btn-right.pressed { border-radius: 12px 9999px 9999px 12px; }
+
+  .chevron { display: inline-block; transition: transform 0.2s var(--md-sys-motion-easing-expressive-spatial, ease); }
+  .btn-right.open { border-radius: 50% 9999px 9999px 50% !important; }
+  .btn-right.open .chevron { transform: rotate(180deg); }
+
+  /* Variants */
+  .v-filled .btn-left   { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
+  .v-filled .btn-left:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
+  .v-filled .btn-right  { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
+  .v-filled .btn-right:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
+  .v-filled .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 88%, black); }
+
+  .v-tonal .btn-left   { background-color: var(--md-sys-color-secondary-container, #E8DEF8); color: var(--md-sys-color-on-secondary-container, #1D192B); }
+  .v-tonal .btn-left:hover { background-color: color-mix(in srgb, var(--md-sys-color-secondary-container, #E8DEF8) 92%, black); }
+  .v-tonal .btn-right  { background-color: var(--md-sys-color-secondary-container, #E8DEF8); color: var(--md-sys-color-on-secondary-container, #1D192B); }
+  .v-tonal .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-secondary-container, #E8DEF8) 88%, black); }
+
+  .v-elevated .btn-left   { background-color: var(--md-sys-color-surface-container-low, #F7F2FA); color: var(--md-sys-color-primary, #6750A4); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
+  .v-elevated .btn-left:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
+  .v-elevated .btn-right  { background-color: var(--md-sys-color-surface-container-low, #F7F2FA); color: var(--md-sys-color-primary, #6750A4); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
+  .v-elevated .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-surface-container-low, #F7F2FA) 92%, black); }
+
+  .v-outlined .btn-left   { background-color: transparent; color: var(--md-sys-color-on-surface-variant, #49454F); border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0); }
+  .v-outlined .btn-left:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454F) 8%, transparent); }
+  .v-outlined .btn-right  { background-color: transparent; color: var(--md-sys-color-on-surface-variant, #49454F); border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0); }
+  .v-outlined .btn-right.open { background-color: var(--md-sys-color-inverse-surface, #322F35); color: var(--md-sys-color-inverse-on-surface, #F5EFF7); border-color: var(--md-sys-color-inverse-surface, #322F35); }
+
+  /* Dropdown menu */
+  .dropdown-menu {
+    display: none;
+    position: absolute; top: 100%; right: 0; margin-top: 8px;
+    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    border-radius: 16px; padding: 8px 0; min-width: 140px;
+    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
+    opacity: 0; pointer-events: none; transform: translateY(-8px) scale(0.96);
+    transition: opacity 0.15s ease, transform 0.15s var(--md-sys-motion-easing-expressive-spatial, ease);
+    z-index: 100; text-align: left;
+  }
+  .dropdown-menu.open { display: block; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+
+  .menu-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+    cursor: pointer; outline: none;
+    transition: background-color 0.15s ease;
+  }
+  .menu-item:hover { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
+  .menu-item:focus-visible { outline: 3px solid var(--md-sys-color-primary, #6750A4); outline-offset: -3px; background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
+  .menu-item .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 18px; }
+`;
+
+const splitButtonSheet = createComponentSheet(defaultStyle);
 
 const SIZE = {
   xs:  { h: 32,  leadPadX: 12, leadPadT: 10, icon: 22, inner: 4  },
@@ -30,6 +141,7 @@ export class MdSplitButton extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, splitButtonSheet);
     this._rendered = false;
     this._abortController = null;
     this._docClick = this._docClick.bind(this);
@@ -192,118 +304,10 @@ export class MdSplitButton extends HTMLElement {
     const inner = d.inner;
     const trailPad = Math.max(0, (d.h - d.icon) / 2);
     const items = this._parseItems();
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
     this.shadowRoot.innerHTML = `
-      <style>
-        :host { display: inline-block; outline: none; position: relative; vertical-align: middle; user-select: none; }
-
-        .split-container { display: inline-flex; align-items: center; gap: ${this.spacing}px; position: relative; }
-
-        .btn-left, .btn-right {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          box-sizing: border-box;
-          border: none;
-          margin: 0;
-          cursor: pointer;
-          user-select: none;
-          -webkit-tap-highlight-color: transparent;
-          height: ${d.h}px;
-          font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-          font-size: var(--md-sys-typescale-label-large-size, 14px);
-          font-weight: var(--md-sys-typescale-label-large-weight, 500);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          color: var(--md-sys-color-on-primary, #fff);
-          outline: none;
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-            border-radius var(--md-sys-motion-duration-medium1, 300ms) var(--md-sys-motion-easing-expressive-spatial, ease),
-            box-shadow var(--md-sys-motion-duration-medium1, 300ms) var(--md-sys-motion-easing-expressive-spatial, ease);
-          will-change: transform, border-radius;
-        }
-        .btn-left:focus, .btn-right:focus { outline: none; }
-        .btn-left:focus-visible, .btn-right:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-
-        /* Outer corners CornerFull; inner corners = small (morph on hover/press/open). */
-        .btn-left  { padding: 0 ${d.leadPadX}px; border-radius: 9999px ${inner}px ${inner}px 9999px; }
-        .btn-right { width: ${d.h}px; padding: 0 ${trailPad}px; border-radius: ${inner}px 9999px 9999px ${inner}px; font-size: ${d.icon}px; }
-
-        .material-symbols-outlined {
-          font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: ${d.icon}px;
-          line-height: 1;
-          display: inline-block;
-          white-space: nowrap;
-          direction: ltr;
-          -webkit-font-smoothing: antialiased;
-        }
-
-        /* Inner corner morphs larger on hover/press */
-        .btn-left:hover  { border-radius: 9999px 12px 12px 9999px; }
-        .btn-right:hover { border-radius: 12px 9999px 9999px 12px; }
-        .btn-left.pressed  { border-radius: 9999px 12px 12px 9999px; }
-        .btn-right.pressed { border-radius: 12px 9999px 9999px 12px; }
-
-        .chevron { display: inline-block; transition: transform 0.2s var(--md-sys-motion-easing-expressive-spatial, ease); }
-        /* Open: trailing inner corner -> full round (TrailingInnerSelectedCornerCornerSizePercent=50) + spin */
-        .btn-right.open { border-radius: 50% 9999px 9999px 50% !important; }
-        .btn-right.open .chevron { transform: rotate(180deg); }
-
-        /* ---- Variants (leading = button colors, trailing = icon-button colors) §2.2 ---- */
-        .v-filled .btn-left   { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
-        .v-filled .btn-left:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
-        .v-filled .btn-right  { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
-        .v-filled .btn-right:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
-        .v-filled .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 88%, black); }
-
-        .v-tonal .btn-left   { background-color: var(--md-sys-color-secondary-container, #E8DEF8); color: var(--md-sys-color-on-secondary-container, #1D192B); }
-        .v-tonal .btn-left:hover { background-color: color-mix(in srgb, var(--md-sys-color-secondary-container, #E8DEF8) 92%, black); }
-        .v-tonal .btn-right  { background-color: var(--md-sys-color-secondary-container, #E8DEF8); color: var(--md-sys-color-on-secondary-container, #1D192B); }
-        .v-tonal .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-secondary-container, #E8DEF8) 88%, black); }
-
-        .v-elevated .btn-left   { background-color: var(--md-sys-color-surface-container-low, #F7F2FA); color: var(--md-sys-color-primary, #6750A4); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
-        .v-elevated .btn-left:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
-        .v-elevated .btn-right  { background-color: var(--md-sys-color-surface-container-low, #F7F2FA); color: var(--md-sys-color-primary, #6750A4); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
-        .v-elevated .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-surface-container-low, #F7F2FA) 92%, black); }
-
-        .v-outlined .btn-left   { background-color: transparent; color: var(--md-sys-color-on-surface-variant, #49454F); border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0); }
-        .v-outlined .btn-left:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454F) 8%, transparent); }
-        .v-outlined .btn-right  { background-color: transparent; color: var(--md-sys-color-on-surface-variant, #49454F); border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0); }
-        .v-outlined .btn-right.open { background-color: var(--md-sys-color-inverse-surface, #322F35); color: var(--md-sys-color-inverse-on-surface, #F5EFF7); border-color: var(--md-sys-color-inverse-surface, #322F35); }
-
-        /* Dropdown menu */
-        .dropdown-menu {
-          display: none;
-          position: absolute; top: 100%; right: 0; margin-top: 8px;
-          background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          border-radius: 16px; padding: 8px 0; min-width: 140px;
-          box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
-          opacity: 0; pointer-events: none; transform: translateY(-8px) scale(0.96);
-          transition: opacity 0.15s ease, transform 0.15s var(--md-sys-motion-easing-expressive-spatial, ease);
-          z-index: 100; text-align: left;
-        }
-        .dropdown-menu.open { display: block; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
-
-        .menu-item {
-          display: flex; align-items: center; gap: 12px; padding: 10px 16px;
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-          cursor: pointer; outline: none;
-          transition: background-color 0.15s ease;
-        }
-        .menu-item:hover { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
-        .menu-item:focus-visible { outline: 3px solid var(--md-sys-color-primary, #6750A4); outline-offset: -3px; background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
-        .menu-item .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 18px; }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="split-container v-${escapeHtml(v)}">
         <div class="btn-left" role="button" tabindex="0" aria-label="${escapeHtml(this.label)}">
           <span class="material-symbols-outlined" aria-hidden="true">${escapeHtml(this.icon)}</span>

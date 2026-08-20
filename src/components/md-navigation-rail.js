@@ -5,6 +5,139 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host { display: inline-block; outline: none; user-select: none; -webkit-user-select: none; }
+
+  .rail {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 96px;                       /* Collapsed container width 96dp */
+    padding: 16px 8px;
+    gap: 12px;
+    border-radius: var(--md-sys-shape-corner-large, 16px);
+    background-color: var(--md-sys-color-surface-container-low, #1D1B22);
+    border: 1px solid var(--md-sys-color-outline-variant, #49454F);
+    box-shadow: none;                  /* Level0 */
+    user-select: none;
+    -webkit-user-select: none;
+    transition:
+      width var(--md-sys-motion-duration-medium2, 300ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9)),
+      background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
+      box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
+  }
+  :host([narrow]) .rail { width: 80px; }
+  :host([expanded]) .rail {
+    width: 360px;                      /* Expanded max (min 220dp) */
+    min-width: 220px;
+    border-radius: var(--md-sys-shape-corner-large, 16px); /* CornerLarge(16) modal */
+    background-color: var(--md-sys-color-surface-container, #F3EDF7);
+    box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
+    gap: 6px;                          /* baseline item vertical space 6dp */
+  }
+
+  .header {
+    min-height: 40px;                  /* Header space minimum 40dp */
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 8px 4px;
+  }
+  .items { display: flex; flex-direction: column; gap: inherit; padding: 0 8px; }
+
+  .item {
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    gap: 8px;                          /* indicator icon-label space 8dp */
+    min-height: 64px;                  /* item container height 64dp */
+    min-width: 48px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .item.horizontal { flex-direction: row; justify-content: flex-start; }
+  .item:focus { outline: none; }
+  .item:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+  }
+  .item[disabled] { opacity: 0.38; cursor: not-allowed; }
+
+  /* Active indicator: pill (CornerFull) */
+  .indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 32px;                      /* vertical item indicator 32dp */
+    width: 56px;                       /* vertical item indicator width 56dp */
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    background-color: transparent;
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .item.horizontal .indicator {
+    height: 56px;                      /* horizontal item indicator 56dp */
+    width: auto;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    padding: 0 16px;                   /* leading/trailing 16dp */
+  }
+
+  /* Hover = CSS only; state layer = on-secondary-container */
+  .item:hover .indicator {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 8%, transparent);
+  }
+  .item.pressed:hover .indicator {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 10%, transparent);
+  }
+  .item[aria-current="page"] .indicator {
+    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+  }
+  .item[aria-current="page"]:hover .indicator {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 8%,
+      var(--md-sys-color-secondary-container, #E8DEF8));
+  }
+
+  .icon, .material-symbols-rounded, .material-symbols-outlined {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px; width: 24px; height: 24px; line-height: 24px;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+  }
+  .item[aria-current="page"] .icon { color: var(--md-sys-color-on-secondary-container, #1D192B); }
+
+  .label {
+    font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    white-space: nowrap;
+  }
+  .item.horizontal .label {
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+  }
+  .item[aria-current="page"] .label { color: var(--md-sys-color-on-secondary-container, #1D192B); }
+`;
+
+const navigationRailSheet = createComponentSheet(defaultStyle);
 
 export class MdNavigationRail extends HTMLElement {
   static get observedAttributes() {
@@ -17,6 +150,7 @@ export class MdNavigationRail extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, navigationRailSheet);
     this._rendered = false;
     this._abortController = null;
   }
@@ -92,137 +226,10 @@ export class MdNavigationRail extends HTMLElement {
   render() {
     const items = this.items;
     const horizontal = this.itemLayout === 'horizontal' || this.expanded;
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host { display: inline-block; outline: none; user-select: none; -webkit-user-select: none; }
-
-        .rail {
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          width: 96px;                       /* Collapsed container width 96dp */
-          padding: 16px 8px;
-          gap: 12px;
-          border-radius: var(--md-sys-shape-corner-large, 16px);
-          background-color: var(--md-sys-color-surface-container-low, #1D1B22);
-          border: 1px solid var(--md-sys-color-outline-variant, #49454F);
-          box-shadow: none;                  /* Level0 */
-          user-select: none;
-          -webkit-user-select: none;
-          transition:
-            width var(--md-sys-motion-duration-medium2, 300ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9)),
-            background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-            box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
-        }
-        :host([narrow]) .rail { width: 80px; }
-        :host([expanded]) .rail {
-          width: 360px;                      /* Expanded max (min 220dp) */
-          min-width: 220px;
-          border-radius: var(--md-sys-shape-corner-large, 16px); /* CornerLarge(16) modal */
-          background-color: var(--md-sys-color-surface-container, #F3EDF7);
-          box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
-          gap: 6px;                          /* baseline item vertical space 6dp */
-        }
-
-        .header {
-          min-height: 40px;                  /* Header space minimum 40dp */
-          display: flex; align-items: center; justify-content: center;
-          padding: 0 8px 4px;
-        }
-        .items { display: flex; flex-direction: column; gap: inherit; padding: 0 8px; }
-
-        .item {
-          position: relative;
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          user-select: none;
-          -webkit-user-select: none;
-          gap: 8px;                          /* indicator icon-label space 8dp */
-          min-height: 64px;                  /* item container height 64dp */
-          min-width: 48px;
-          padding: 0;
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          outline: none;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          -webkit-tap-highlight-color: transparent;
-        }
-        .item.horizontal { flex-direction: row; justify-content: flex-start; }
-        .item:focus { outline: none; }
-        .item:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-        }
-        .item[disabled] { opacity: 0.38; cursor: not-allowed; }
-
-        /* Active indicator: pill (CornerFull) */
-        .indicator {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          height: 32px;                      /* vertical item indicator 32dp */
-          width: 56px;                       /* vertical item indicator width 56dp */
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          background-color: transparent;
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .item.horizontal .indicator {
-          height: 56px;                      /* horizontal item indicator 56dp */
-          width: auto;
-          flex: 1 1 auto;
-          justify-content: flex-start;
-          padding: 0 16px;                   /* leading/trailing 16dp */
-        }
-
-        /* Hover = CSS only; state layer = on-secondary-container */
-        .item:hover .indicator {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 8%, transparent);
-        }
-        .item.pressed:hover .indicator {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 10%, transparent);
-        }
-        .item[aria-current="page"] .indicator {
-          background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-        }
-        .item[aria-current="page"]:hover .indicator {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1D192B) 8%,
-            var(--md-sys-color-secondary-container, #E8DEF8));
-        }
-
-        .icon, .material-symbols-rounded, .material-symbols-outlined {
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px; width: 24px; height: 24px; line-height: 24px;
-          display: inline-block;
-          white-space: nowrap;
-          word-wrap: normal;
-          direction: ltr;
-          -webkit-font-smoothing: antialiased;
-          text-rendering: optimizeLegibility;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-        }
-        .item[aria-current="page"] .icon { color: var(--md-sys-color-on-secondary-container, #1D192B); }
-
-        .label {
-          font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          white-space: nowrap;
-        }
-        .item.horizontal .label {
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-        }
-        .item[aria-current="page"] .label { color: var(--md-sys-color-on-secondary-container, #1D192B); }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <nav class="rail" role="navigation" aria-label="${escapeHtml(this.getAttribute('aria-label') || 'Rail navigation')}">
         <div class="header"><slot name="header"></slot></div>
         <div class="items">

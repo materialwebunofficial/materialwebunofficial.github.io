@@ -23,7 +23,7 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   let urlPath = req.url.split('?')[0];
   if (urlPath === '/' || urlPath === '') {
-    urlPath = '/indexnew.html';
+    urlPath = '/index.html';
   }
 
   const safePath = path.normalize(urlPath).replace(/^(\.\.[\/\\])+/, '');
@@ -57,5 +57,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/indexnew.html`);
+  console.log(`Server running at http://localhost:${PORT}/`);
 });

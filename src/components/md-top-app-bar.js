@@ -7,6 +7,144 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; display: block; outline: none; width: 100%; }
+
+  .bar {
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    /* CornerNone(0) — AppBarTokens.ContainerShape */
+    border-radius: 0;
+    padding: 0 4px; /* Leading/Trailing space 4dp */
+    background-color: var(--md-sys-color-surface, #FEF7FF);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    box-shadow: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
+      box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
+  }
+
+  /* Scrolled: surface -> surface-container + elevation L2 */
+  :host([scrolled]) .bar {
+    background-color: var(--md-sys-color-surface-container, #F3EDF7);
+    box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
+  }
+
+  /* Small (center-aligned) 64dp */
+  .bar[data-variant="small"] { min-height: 64px; align-items: center; }
+  .bar[data-variant="small"] .titles { text-align: center; }
+  .bar[data-variant="small"] .headline {
+    font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto, sans-serif);
+  }
+  .bar[data-variant="small"] .subtitle {
+    font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
+  }
+
+  /* Medium 112dp */
+  .bar[data-variant="medium"] { min-height: 112px; }
+  .bar[data-variant="medium"] .headline {
+    font: var(--md-sys-typescale-headline-small, 400 24px/32px Roboto, sans-serif);
+  }
+
+  /* Medium flexible 112dp, HeadlineMedium(28) + LabelLarge(14) */
+  .bar[data-variant="medium-flexible"] { min-height: 112px; }
+  .bar[data-variant="medium-flexible"] .headline {
+    font: var(--md-sys-typescale-headline-medium, 400 28px/36px Roboto, sans-serif);
+  }
+  .bar[data-variant="medium-flexible"] .subtitle {
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+  }
+
+  /* Large 152dp */
+  .bar[data-variant="large"] { min-height: 152px; }
+  .bar[data-variant="large"] .headline {
+    font: var(--md-sys-typescale-headline-medium, 400 28px/36px Roboto, sans-serif);
+  }
+
+  /* Large flexible 152dp, DisplaySmall(36) + TitleMedium(16) */
+  .bar[data-variant="large-flexible"] { min-height: 152px; }
+  .bar[data-variant="large-flexible"] .headline {
+    font: var(--md-sys-typescale-display-small, 400 36px/44px Roboto, sans-serif);
+  }
+  .bar[data-variant="large-flexible"] .subtitle {
+    font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
+  }
+
+  .leading, .trailing {
+    display: flex;
+    align-items: center;
+    gap: 0; /* IconButtonSpace 0dp */
+    min-height: 48px; /* touch target */
+    flex: 0 0 auto;
+  }
+  .bar:not([data-variant="small"]) .leading,
+  .bar:not([data-variant="small"]) .trailing { padding-top: 8px; }
+
+  .titles {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: 8px;
+  }
+  .bar:not([data-variant="small"]) .titles {
+    align-self: flex-end;
+    padding-bottom: 12px;
+  }
+  .headline {
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .subtitle {
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .subtitle:empty { display: none; }
+
+  /* Icon slot wrappers: 48x48 hit area, hover = CSS only */
+  .icon-wrap {
+    width: 48px; height: 48px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    background-color: transparent;
+    cursor: pointer;
+    outline: none;
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .icon-wrap:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
+  .icon-wrap.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
+  .icon-wrap:focus { outline: none; }
+  .icon-wrap:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+  .mat-sym {
+    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', system-ui, sans-serif;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  ::slotted([slot="leading"]) { color: var(--md-sys-color-on-surface, #1D1B20); }
+  ::slotted([slot="trailing"]) { color: var(--md-sys-color-on-surface-variant, #49454F); }
+`;
+
+const topAppBarSheet = createComponentSheet(defaultStyle);
 
 export class MdTopAppBar extends HTMLElement {
   static get observedAttributes() {
@@ -20,6 +158,7 @@ export class MdTopAppBar extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, topAppBarSheet);
     this._rendered = false;
     this._abortController = null;
   }
@@ -98,142 +237,10 @@ export class MdTopAppBar extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none; display: block; outline: none; width: 100%; }
-
-        .bar {
-          box-sizing: border-box;
-          display: flex;
-          align-items: flex-start;
-          width: 100%;
-          /* CornerNone(0) — AppBarTokens.ContainerShape */
-          border-radius: 0;
-          padding: 0 4px; /* Leading/Trailing space 4dp */
-          background-color: var(--md-sys-color-surface, #FEF7FF);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          box-shadow: none;
-          user-select: none;
-          -webkit-user-select: none;
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-            box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
-        }
-
-        /* Scrolled: surface -> surface-container + elevation L2 */
-        :host([scrolled]) .bar {
-          background-color: var(--md-sys-color-surface-container, #F3EDF7);
-          box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
-        }
-
-        /* Small (center-aligned) 64dp */
-        .bar[data-variant="small"] { min-height: 64px; align-items: center; }
-        .bar[data-variant="small"] .titles { text-align: center; }
-        .bar[data-variant="small"] .headline {
-          font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto, sans-serif);
-        }
-        .bar[data-variant="small"] .subtitle {
-          font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
-        }
-
-        /* Medium 112dp */
-        .bar[data-variant="medium"] { min-height: 112px; }
-        .bar[data-variant="medium"] .headline {
-          font: var(--md-sys-typescale-headline-small, 400 24px/32px Roboto, sans-serif);
-        }
-
-        /* Medium flexible 112dp, HeadlineMedium(28) + LabelLarge(14) */
-        .bar[data-variant="medium-flexible"] { min-height: 112px; }
-        .bar[data-variant="medium-flexible"] .headline {
-          font: var(--md-sys-typescale-headline-medium, 400 28px/36px Roboto, sans-serif);
-        }
-        .bar[data-variant="medium-flexible"] .subtitle {
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-        }
-
-        /* Large 152dp */
-        .bar[data-variant="large"] { min-height: 152px; }
-        .bar[data-variant="large"] .headline {
-          font: var(--md-sys-typescale-headline-medium, 400 28px/36px Roboto, sans-serif);
-        }
-
-        /* Large flexible 152dp, DisplaySmall(36) + TitleMedium(16) */
-        .bar[data-variant="large-flexible"] { min-height: 152px; }
-        .bar[data-variant="large-flexible"] .headline {
-          font: var(--md-sys-typescale-display-small, 400 36px/44px Roboto, sans-serif);
-        }
-        .bar[data-variant="large-flexible"] .subtitle {
-          font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
-        }
-
-        .leading, .trailing {
-          display: flex;
-          align-items: center;
-          gap: 0; /* IconButtonSpace 0dp */
-          min-height: 48px; /* touch target */
-          flex: 0 0 auto;
-        }
-        .bar:not([data-variant="small"]) .leading,
-        .bar:not([data-variant="small"]) .trailing { padding-top: 8px; }
-
-        .titles {
-          flex: 1 1 auto;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          min-width: 0;
-          padding: 8px;
-        }
-        .bar:not([data-variant="small"]) .titles {
-          align-self: flex-end;
-          padding-bottom: 12px;
-        }
-        .headline {
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .subtitle {
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .subtitle:empty { display: none; }
-
-        /* Icon slot wrappers: 48x48 hit area, hover = CSS only */
-        .icon-wrap {
-          width: 48px; height: 48px;
-          display: inline-flex; align-items: center; justify-content: center;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          background-color: transparent;
-          cursor: pointer;
-          outline: none;
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .icon-wrap:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
-        .icon-wrap.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
-        .icon-wrap:focus { outline: none; }
-        .icon-wrap:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-        .mat-sym {
-          font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', system-ui, sans-serif;
-          font-size: 24px;
-          line-height: 1;
-          display: inline-block;
-          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-
-        ::slotted([slot="leading"]) { color: var(--md-sys-color-on-surface, #1D1B20); }
-        ::slotted([slot="trailing"]) { color: var(--md-sys-color-on-surface-variant, #49454F); }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <header class="bar" data-variant="${escapeHtml(this.variant)}" role="banner">
         <div class="leading">
           <slot name="leading">

@@ -6,6 +6,125 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host { display: inline-block; outline: none; position: relative; }
+
+  .trigger {
+    min-width: 48px; min-height: 48px;   /* touch target */
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 0 12px;
+    border: none;
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    cursor: pointer;
+    outline: none;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .trigger:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
+  .trigger.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
+  .trigger:focus { outline: none; }
+  .trigger:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+
+  .scrim { position: fixed; inset: 0; background: transparent; z-index: 999; }
+  :host(:not([open])) .scrim, :host(:not([open])) .menu { display: none; }
+
+  .menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 1000;
+    min-width: 112px;
+    max-width: 280px;
+    margin: 0;
+    padding: 8px 0;
+    list-style: none;
+    /* Base: CornerExtraSmall(4), elevation Level2 */
+    border-radius: var(--md-sys-shape-corner-extra-small, 4px);
+    background-color: var(--md-sys-color-surface-container, #F3EDF7);
+    box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
+    outline: none;
+  }
+
+  /* Vibrant: tertiary-container */
+  :host([variant="vibrant"]) .menu {
+    background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
+    color: var(--md-sys-color-on-tertiary-container, #31111D);
+  }
+
+  /* Segmented: CornerLarge(16), 44dp item height */
+  :host([variant="segmented"]) .menu {
+    border-radius: var(--md-sys-shape-corner-large, 16px);
+    padding: 8px;
+    gap: 4px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .item {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;                 /* touch target */
+    padding: 0 16px;                  /* leading/trailing 16dp */
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    text-align: start;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  :host([variant="segmented"]) .item {
+    min-height: 44px;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+  }
+  .item:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
+  .item.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
+  .item:focus { outline: none; }
+  .item:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: -3px;
+  }
+  .item[aria-disabled="true"] { opacity: 0.38; cursor: not-allowed; }
+
+  .icon, .material-symbols-rounded, .material-symbols-outlined {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px; width: 24px; height: 24px; line-height: 24px;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    flex: 0 0 auto;
+  }
+
+  .label { flex: 1 1 auto; color: inherit; }
+
+  .trailing {
+    font: var(--md-sys-typescale-label-small, 500 11px/16px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    flex: 0 0 auto;
+  }
+`;
+
+const menuSheet = createComponentSheet(defaultStyle);
 
 export class MdMenu extends HTMLElement {
   static get observedAttributes() {
@@ -18,6 +137,7 @@ export class MdMenu extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, menuSheet);
     this._rendered = false;
     this._onKeydown = this._onKeydown.bind(this);
     this._onDocClick = this._onDocClick.bind(this);
@@ -113,124 +233,10 @@ export class MdMenu extends HTMLElement {
 
   render() {
     const items = this.items;
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host { display: inline-block; outline: none; position: relative; }
-
-        .trigger {
-          min-width: 48px; min-height: 48px;   /* touch target */
-          display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-          padding: 0 12px;
-          border: none;
-          background-color: transparent;
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          cursor: pointer;
-          outline: none;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .trigger:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
-        .trigger.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
-        .trigger:focus { outline: none; }
-        .trigger:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-
-        .scrim { position: fixed; inset: 0; background: transparent; z-index: 999; }
-        :host(:not([open])) .scrim, :host(:not([open])) .menu { display: none; }
-
-        .menu {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          z-index: 1000;
-          min-width: 112px;
-          max-width: 280px;
-          margin: 0;
-          padding: 8px 0;
-          list-style: none;
-          /* Base: CornerExtraSmall(4), elevation Level2 */
-          border-radius: var(--md-sys-shape-corner-extra-small, 4px);
-          background-color: var(--md-sys-color-surface-container, #F3EDF7);
-          box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
-          outline: none;
-        }
-
-        /* Vibrant: tertiary-container */
-        :host([variant="vibrant"]) .menu {
-          background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
-          color: var(--md-sys-color-on-tertiary-container, #31111D);
-        }
-
-        /* Segmented: CornerLarge(16), 44dp item height */
-        :host([variant="segmented"]) .menu {
-          border-radius: var(--md-sys-shape-corner-large, 16px);
-          padding: 8px;
-          gap: 4px;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .item {
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          width: 100%;
-          min-height: 48px;                 /* touch target */
-          padding: 0 16px;                  /* leading/trailing 16dp */
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          outline: none;
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          text-align: start;
-          white-space: nowrap;
-          -webkit-tap-highlight-color: transparent;
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        :host([variant="segmented"]) .item {
-          min-height: 44px;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-        }
-        .item:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
-        .item.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
-        .item:focus { outline: none; }
-        .item:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: -3px;
-        }
-        .item[aria-disabled="true"] { opacity: 0.38; cursor: not-allowed; }
-
-        .icon, .material-symbols-rounded, .material-symbols-outlined {
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px; width: 24px; height: 24px; line-height: 24px;
-          display: inline-block;
-          white-space: nowrap;
-          word-wrap: normal;
-          direction: ltr;
-          -webkit-font-smoothing: antialiased;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          flex: 0 0 auto;
-        }
-
-        .label { flex: 1 1 auto; color: inherit; }
-
-        .trailing {
-          font: var(--md-sys-typescale-label-small, 500 11px/16px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          flex: 0 0 auto;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="scrim" part="scrim"></div>
       <button class="trigger" type="button" aria-haspopup="menu"
         aria-expanded="${this.open ? 'true' : 'false'}">

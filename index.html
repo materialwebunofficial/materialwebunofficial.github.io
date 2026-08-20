@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Material Design 3 Expressive (MD3E) — Web Component Showcase</title>
   <meta name="description" content="Independent Web Components adaptation of Google's Material Design 3 Expressive design system with CAM16 dynamic theming and Android Compose spring physics.">
-  <link rel="stylesheet" href="src/tokens/bundle.css">
-  <link rel="stylesheet" href="src/icons/material-symbols.css">
+  <link rel="preload" href="dist/fonts/material-symbols-rounded.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="dist/tokens.min.css">
   <link rel="stylesheet" href="styles/showcase.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Flex:opsz,wght@8..144,300..800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Flex:opsz,wght@8..144,300..800&display=swap" rel="stylesheet">
 </head>
 <body class="drawer-collapsed">
 
@@ -407,7 +408,7 @@
         <md-card variant="elevated" style="padding: 32px 36px; border-radius: var(--md-sys-shape-corner-extra-large, 28px); width: 100%; box-sizing: border-box;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
             <span class="mat-sym" style="font-size: 34px; color: var(--md-sys-color-primary);">rocket_launch</span>
-            <h1 style="margin: 0; font-size: 36px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2;">Getting Started with MD3E</h1>
+            <h2 style="margin: 0; font-size: 36px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2;">Getting Started with MD3E</h2>
           </div>
           <p class="md-body-large" style="color: var(--md-sys-color-on-surface-variant); margin: 0 0 20px 0; max-width: 840px;">
             A production-ready suite of 36+ Material Design 3 Expressive Web Components featuring CAM16 dynamic color theming and organic spring physics. Run natively in any modern browser with zero build step requirements.
@@ -800,10 +801,10 @@ document.querySelector('#my-element').animate(keyframes, {
             <span class="mat-sym" style="font-size: 28px; color: var(--md-sys-color-primary);">dashboard_customize</span>
           </div>
           <div style="min-width: 0; flex: 1;">
-            <h1 style="margin: 0; line-height: 1.2; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <h2 style="margin: 0; line-height: 1.2; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <span>Components</span>
               <button type="button" class="copy-anchor-btn" data-anchor="overview" aria-label="Copy link to section"><span class="mat-sym">link</span></button>
-            </h1>
+            </h2>
             <span class="md-label-medium" style="color: var(--md-sys-color-primary); font-weight: 600;">39 Web Components Catalog</span>
           </div>
         </div>
@@ -890,7 +891,7 @@ document.querySelector('#my-element').animate(keyframes, {
         <div class="cards-grid">
           <div class="comp-card">
             <div class="comp-preview">
-              <div style="display: flex; gap: 32px; align-items: center;">
+              <div style="display: flex; gap: 24px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <div style="position: relative; display: inline-block;">
                   <md-icon-button variant="standard" icon="notifications" aria-label="Notifications"></md-icon-button>
                   <md-badge style="position: absolute; top: 8px; right: 8px;"></md-badge>
@@ -961,7 +962,7 @@ document.querySelector('#my-element').animate(keyframes, {
           </div>
 
           <div class="comp-card" id="fabs">        <div class="comp-preview">
-              <div style="display: flex; gap: 12px; align-items: center; justify-content: center;">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
                 <md-fab variant="small" color="primary" icon="edit"></md-fab>
                 <md-fab variant="medium" color="primary" icon="add"></md-fab>
                 <md-fab variant="large" color="secondary-container" icon="brush"></md-fab>
@@ -993,7 +994,7 @@ document.querySelector('#my-element').animate(keyframes, {
           </div>
 
           <div class="comp-card" id="fab-menu">        <div class="comp-preview">
-              <div style="display: flex; gap: 24px; align-items: center; justify-content: center; min-height: 72px;">
+              <div style="display: flex; gap: 24px; align-items: center; justify-content: center; min-height: 72px; flex-wrap: wrap;">
                 <md-fab-menu icon="add" color="primary" items='[{"icon":"edit","label":"Document"},{"icon":"image","label":"Photo"},{"icon":"videocam","label":"Video"}]'></md-fab-menu>
                 <md-fab-menu icon="share" color="secondary" items='[{"icon":"link","label":"Copy Link"},{"icon":"mail","label":"Send Email"},{"icon":"forum","label":"Message"}]'></md-fab-menu>
               </div></div>
@@ -1008,7 +1009,7 @@ document.querySelector('#my-element').animate(keyframes, {
           </div>
 
           <div class="comp-card" id="icon-buttons">        <div class="comp-preview">
-              <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <md-icon-button variant="standard" icon="favorite_border" aria-label="Favorite"></md-icon-button>
                 <md-icon-button variant="filled" icon="share" aria-label="Share"></md-icon-button>
                 <md-icon-button variant="tonal" icon="bookmark_border" aria-label="Bookmark"></md-icon-button>
@@ -1025,7 +1026,7 @@ document.querySelector('#my-element').animate(keyframes, {
           </div>
 
           <div class="comp-card">        <div class="comp-preview">
-              <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <md-icon-button variant="standard" toggle icon="favorite_border" selected-icon="favorite" aria-label="Toggle Heart"></md-icon-button>
                 <md-icon-button variant="filled" toggle icon="star_outline" selected-icon="star" aria-label="Toggle Star"></md-icon-button>
                 <md-icon-button variant="tonal" toggle icon="bookmark_border" selected-icon="bookmark" aria-label="Toggle Bookmark"></md-icon-button>
@@ -1116,7 +1117,7 @@ document.querySelector('#my-element').animate(keyframes, {
           <div class="comp-card">
             <div class="comp-preview">
               <md-card variant="filled" interactive style="width: 100%; max-width: 280px;">
-                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Filled Card (Interactive)</h4>
+                <h3 class="md-title-medium" style="margin: 0 0 4px 0;">Filled Card (Interactive)</h3>
                 <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Clickable container with tactile spring press and hover response.</p>
               </md-card>
             </div>
@@ -1132,7 +1133,7 @@ document.querySelector('#my-element').animate(keyframes, {
           <div class="comp-card">
             <div class="comp-preview">
               <md-card variant="elevated" interactive style="width: 100%; max-width: 280px;">
-                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Elevated Card (Interactive)</h4>
+                <h3 class="md-title-medium" style="margin: 0 0 4px 0;">Elevated Card (Interactive)</h3>
                 <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Elevated card lifting to Level 2 shadow with spring motion on hover.</p>
               </md-card>
             </div>
@@ -1148,7 +1149,7 @@ document.querySelector('#my-element').animate(keyframes, {
           <div class="comp-card">
             <div class="comp-preview">
               <md-card variant="outlined" interactive style="width: 100%; max-width: 280px;">
-                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Outlined Card (Interactive)</h4>
+                <h3 class="md-title-medium" style="margin: 0 0 4px 0;">Outlined Card (Interactive)</h3>
                 <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Crisp 1dp outline variant with interactive click feedback.</p>
               </md-card>
             </div>
@@ -1165,7 +1166,7 @@ document.querySelector('#my-element').animate(keyframes, {
           <div class="comp-card">
             <div class="comp-preview">
               <md-card variant="filled" style="width: 100%; max-width: 280px;">
-                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Filled Card (Non-Interactive)</h4>
+                <h3 class="md-title-medium" style="margin: 0 0 4px 0;">Filled Card (Non-Interactive)</h3>
                 <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Static surface container for grouping purely informational content.</p>
               </md-card>
             </div>
@@ -1181,7 +1182,7 @@ document.querySelector('#my-element').animate(keyframes, {
           <div class="comp-card">
             <div class="comp-preview">
               <md-card variant="elevated" style="width: 100%; max-width: 280px;">
-                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Elevated Card (Non-Interactive)</h4>
+                <h3 class="md-title-medium" style="margin: 0 0 4px 0;">Elevated Card (Non-Interactive)</h3>
                 <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Fixed Level 1 shadow elevation for non-clickable content grouping.</p>
               </md-card>
             </div>
@@ -1197,7 +1198,7 @@ document.querySelector('#my-element').animate(keyframes, {
           <div class="comp-card">
             <div class="comp-preview">
               <md-card variant="outlined" style="width: 100%; max-width: 280px;">
-                <h4 class="md-title-medium" style="margin: 0 0 4px 0;">Outlined Card (Non-Interactive)</h4>
+                <h3 class="md-title-medium" style="margin: 0 0 4px 0;">Outlined Card (Non-Interactive)</h3>
                 <p class="md-body-small" style="margin: 0; color: var(--md-sys-color-on-surface-variant);">Static 1dp outline border matching outline-variant token.</p>
               </md-card>
             </div>
@@ -1623,7 +1624,7 @@ document.querySelector('#my-element').animate(keyframes, {
         </div>
         <div class="cards-grid">
           <div class="comp-card" id="checkbox">        <div class="comp-preview">
-              <div style="display: flex; gap: 14px; align-items: center; justify-content: center;">
+              <div style="display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
                 <md-checkbox aria-label="Unchecked"></md-checkbox>
                 <md-checkbox checked aria-label="Checked"></md-checkbox>
                 <md-checkbox indeterminate aria-label="Indeterminate"></md-checkbox>
@@ -1641,7 +1642,7 @@ document.querySelector('#my-element').animate(keyframes, {
           </div>
 
           <div class="comp-card" id="radio-button">        <div class="comp-preview">
-              <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
                 <md-radio-button name="radio-demo" value="1" checked aria-label="Radio 1"></md-radio-button>
                 <md-radio-button name="radio-demo" value="2" aria-label="Radio 2"></md-radio-button>
                 <md-radio-button name="radio-demo" value="3" aria-label="Radio 3"></md-radio-button>
@@ -1658,9 +1659,9 @@ document.querySelector('#my-element').animate(keyframes, {
           </div>
 
           <div class="comp-card" id="selection">        <div class="comp-preview">
-              <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
                 <md-switch aria-label="Unchecked"></md-switch>
-                <md-switch checked icons aria-label="Checked with check icon"></md-switch>
+                <md-switch checked icon="check" aria-label="Checked with check icon"></md-switch>
                 <md-switch checked icon="lock" aria-label="Checked with lock icon"></md-switch>
                 <md-switch disabled aria-label="Disabled switch"></md-switch>
               </div></div>
@@ -2165,7 +2166,7 @@ document.querySelector('#my-element').animate(keyframes, {
   <!-- =========================================================================
        SCRIPTS & CONTROLLER
        ========================================================================= -->
-  <script type="module" src="src/index.js"></script>
+  <script type="module" src="dist/md3-expressive.esm.js"></script>
   <script type="module">
     import { initShowcase } from './src/showcase.js';
     initShowcase();

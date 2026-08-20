@@ -12,6 +12,104 @@
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
 import { escapeHtml } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; outline: none; display: contents; }
+  :host(:not([open])) .snackbar { display: none; }
+
+  .snackbar {
+    box-sizing: border-box;
+    position: fixed;
+    bottom: 24px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+    max-width: min(672px, calc(100vw - 32px));
+    z-index: 2002;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    min-width: min(344px, calc(100vw - 32px));
+    padding: 4px 8px 4px 16px;
+    border-radius: var(--md-sys-shape-corner-extra-small, 4px);
+    background-color: var(--md-sys-color-inverse-surface, #322F35);
+    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
+    box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
+  }
+
+  @media (max-width: 599px) {
+    .snackbar {
+      bottom: calc(80px + 16px) !important;
+      max-width: calc(100vw - 32px) !important;
+      min-width: 0 !important;
+      width: fit-content !important;
+      margin: 0 auto !important;
+    }
+  }
+  :host([two-line]) .snackbar {
+    min-height: 68px;
+    align-items: flex-start;
+    padding-top: 12px;
+  }
+
+  .message {
+    flex: 1 1 auto;
+    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
+    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
+  }
+
+  .action {
+    flex: 0 0 auto;
+    min-width: 48px; min-height: 48px;
+    padding: 0 12px;
+    border: none;
+    background-color: transparent;
+    color: var(--md-sys-color-inverse-primary, #D0BCFF);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    cursor: pointer;
+    outline: none;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .action[hidden] { display: none; }
+  .action:hover { background-color: color-mix(in srgb, var(--md-sys-color-inverse-primary, #D0BCFF) 8%, transparent); }
+  .action.pressed { background-color: color-mix(in srgb, var(--md-sys-color-inverse-primary, #D0BCFF) 12%, transparent); }
+  .action:focus-visible {
+    outline: 3px solid var(--md-sys-color-inverse-primary, #D0BCFF);
+    outline-offset: 2px;
+  }
+
+  .close {
+    flex: 0 0 auto;
+    width: 48px; height: 48px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; cursor: pointer; outline: none;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .close:hover { background-color: color-mix(in srgb, var(--md-sys-color-inverse-on-surface, #F5EFF7) 8%, transparent); }
+  .close.pressed { background-color: color-mix(in srgb, var(--md-sys-color-inverse-on-surface, #F5EFF7) 12%, transparent); }
+  .close:focus-visible {
+    outline: 3px solid var(--md-sys-color-inverse-primary, #D0BCFF);
+    outline-offset: 2px;
+  }
+
+  .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-size: 24px;
+    line-height: 1;
+  }
+`;
+
+const snackbarSheet = createComponentSheet(defaultStyle);
 
 export class MdSnackbar extends HTMLElement {
   static get observedAttributes() {
@@ -25,6 +123,7 @@ export class MdSnackbar extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, snackbarSheet);
     this._rendered = false;
     this._timer = null;
     this._onKeydown = this._onKeydown.bind(this);
@@ -113,101 +212,10 @@ export class MdSnackbar extends HTMLElement {
 
   render() {
     const actionLabel = this.getAttribute('action-label') || '';
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none; outline: none; display: contents; }
-        :host(:not([open])) .snackbar { display: none; }
-
-        .snackbar {
-          box-sizing: border-box;
-          position: fixed;
-          bottom: 24px;
-          left: 0;
-          right: 0;
-          margin: 0 auto;
-          width: fit-content;
-          max-width: min(672px, calc(100vw - 32px));
-          z-index: 2002;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          min-height: 48px;
-          min-width: min(344px, calc(100vw - 32px));
-          padding: 4px 8px 4px 16px;
-          border-radius: var(--md-sys-shape-corner-extra-small, 4px);
-          background-color: var(--md-sys-color-inverse-surface, #322F35);
-          color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-          box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
-        }
-
-        @media (max-width: 599px) {
-          .snackbar {
-            bottom: calc(80px + 16px) !important;
-            max-width: calc(100vw - 32px) !important;
-            min-width: 0 !important;
-            width: fit-content !important;
-            margin: 0 auto !important;
-          }
-        }
-        :host([two-line]) .snackbar {
-          min-height: 68px;
-          align-items: flex-start;
-          padding-top: 12px;
-        }
-
-        .message {
-          flex: 1 1 auto;
-          font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-          color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-        }
-
-        .action {
-          flex: 0 0 auto;
-          min-width: 48px; min-height: 48px;
-          padding: 0 12px;
-          border: none;
-          background-color: transparent;
-          color: var(--md-sys-color-inverse-primary, #D0BCFF);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          cursor: pointer;
-          outline: none;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .action[hidden] { display: none; }
-        .action:hover { background-color: color-mix(in srgb, var(--md-sys-color-inverse-primary, #D0BCFF) 8%, transparent); }
-        .action.pressed { background-color: color-mix(in srgb, var(--md-sys-color-inverse-primary, #D0BCFF) 12%, transparent); }
-        .action:focus-visible {
-          outline: 3px solid var(--md-sys-color-inverse-primary, #D0BCFF);
-          outline-offset: 2px;
-        }
-
-        .close {
-          flex: 0 0 auto;
-          width: 48px; height: 48px;
-          display: inline-flex; align-items: center; justify-content: center;
-          border: none; background: transparent; cursor: pointer; outline: none;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .close:hover { background-color: color-mix(in srgb, var(--md-sys-color-inverse-on-surface, #F5EFF7) 8%, transparent); }
-        .close.pressed { background-color: color-mix(in srgb, var(--md-sys-color-inverse-on-surface, #F5EFF7) 12%, transparent); }
-        .close:focus-visible {
-          outline: 3px solid var(--md-sys-color-inverse-primary, #D0BCFF);
-          outline-offset: 2px;
-        }
-
-        .material-symbols-rounded {
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-size: 24px;
-          line-height: 1;
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="snackbar" role="status" aria-live="polite">
         <span class="message">${escapeHtml(this.getAttribute('message'))}</span>
         <button class="action" type="button" ${actionLabel ? '' : 'hidden'}

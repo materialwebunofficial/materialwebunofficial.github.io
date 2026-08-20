@@ -26,6 +26,44 @@
  */
 
 import { SpringPhysics } from '../motion/spring-physics.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: inline-block;
+    vertical-align: middle;
+    outline: none;
+  }
+
+  .loading-root {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    overflow: hidden;
+    background-color: transparent;
+    transition: background-color 0.2s ease;
+  }
+
+  :host([variant="contained"]) .loading-root {
+    background-color: var(--md-sys-color-primary-container, #EADDFF);
+  }
+
+  canvas {
+    display: block;
+    width: 48px;
+    height: 48px;
+    pointer-events: none;
+  }
+`;
+
+const loadingIndicatorSheet = createComponentSheet(defaultStyle);
 
 const GLOBAL_ROTATION_DURATION = 4666; // 4666ms from LoadingIndicator.kt
 const MORPH_INTERVAL = 650;           // 650ms from LoadingIndicator.kt
@@ -64,6 +102,7 @@ export class MdLoadingIndicator extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, loadingIndicatorSheet);
     this._rendered = false;
     this._rafId = null;
     this._startTime = 0;
@@ -136,7 +175,7 @@ export class MdLoadingIndicator extends HTMLElement {
       activeColor = colorAttr;
     } else {
       const computedStyle = getComputedStyle(this);
-      if (colorAttr === 'primary') {
+      if (colorAttr === 'primary' && !isContained) {
         activeColor = computedStyle.getPropertyValue('--md-sys-color-primary').trim() || '#D0BCFF';
       } else if (colorAttr === 'secondary') {
         activeColor = computedStyle.getPropertyValue('--md-sys-color-secondary').trim() || '#CCC2DC';
@@ -281,8 +320,8 @@ export class MdLoadingIndicator extends HTMLElement {
 
     const center = sz / 2;
     const isContained = this.variant === 'contained';
-    // Compose ratio: Contained mode uses 0.66 (32dp in 48dp container), Standalone uses 0.82 (39dp in 48dp box)
-    const activeRatio = isContained ? 0.66 : 0.82;
+    // Both Standalone and Contained morphing shapes render at the exact same size (0.66)
+    const activeRatio = 0.66;
     const indicatorRadius = activeRatio * (sz / 2);
 
     const isIndet = this.indeterminate;
@@ -392,43 +431,10 @@ export class MdLoadingIndicator extends HTMLElement {
   }
 
   render() {
-    const sz = this.sizePx;
-    const isContained = this.variant === 'contained';
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: inline-block;
-          vertical-align: middle;
-          outline: none;
-        }
-
-        .loading-root {
-          position: relative;
-          width: ${sz}px;
-          height: ${sz}px;
-          box-sizing: border-box;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          overflow: hidden;
-          background-color: ${isContained
-            ? 'var(--md-sys-color-primary-container, #EADDFF)'
-            : 'transparent'};
-          transition: background-color 0.2s ease;
-        }
-
-        canvas {
-          display: block;
-          width: ${sz}px;
-          height: ${sz}px;
-          pointer-events: none;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="loading-root" role="progressbar" aria-label="Loading indicator">
         <canvas></canvas>
       </div>

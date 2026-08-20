@@ -14,6 +14,152 @@
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: block;
+    width: 100%;
+    outline: none;
+    user-select: none;
+    box-sizing: border-box;
+  }
+
+  .carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    padding: 8px 0;
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding: 8px 16px;
+    align-items: center;
+    -webkit-overflow-scrolling: touch;
+  }
+  .carousel-track::-webkit-scrollbar { display: none; }
+
+  .carousel-card {
+    position: relative;
+    flex-shrink: 0;
+    height: 280px;
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
+    box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
+    cursor: pointer;
+    outline: none;
+    overflow: hidden;
+    scroll-snap-align: start;
+    transition:
+      width var(--md-sys-motion-duration-long3, 650ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.35, 1.2, 0.25, 1.0)),
+      box-shadow var(--md-sys-motion-duration-medium1, 300ms) ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px;
+    box-sizing: border-box;
+    color: #FFFFFF;
+  }
+  .carousel-card:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+
+  /* Responsive Focal Widths (Multi-Browse Spec §8) */
+  .carousel-card.hero {
+    width: 280px;
+    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.2));
+  }
+  .carousel-card.medium {
+    width: 160px;
+  }
+  .carousel-card.small {
+    width: 76px;
+  }
+
+  .card-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: transform 600ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .carousel-card:hover .card-bg {
+    transform: scale(1.06);
+  }
+
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.85) 100%);
+    pointer-events: none;
+    transition: opacity 500ms ease;
+  }
+
+  .card-content {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition:
+      opacity var(--md-sys-motion-duration-medium2, 400ms) ease,
+      transform var(--md-sys-motion-duration-long3, 650ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.35, 1.2, 0.25, 1.0));
+  }
+
+  .tag {
+    align-self: flex-start;
+    font: var(--md-sys-typescale-label-small-emphasized, 700 11px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-small-emphasized-tracking, 0.5px);
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(8px);
+    padding: 4px 8px;
+    border-radius: 9999px;
+    margin-bottom: 6px;
+  }
+
+  .title {
+    font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto Flex, sans-serif);
+    letter-spacing: var(--md-sys-typescale-title-large-tracking, 0px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .subtitle {
+    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity 300ms ease, max-height 400ms ease;
+    max-height: 24px;
+  }
+
+  .carousel-card.small .card-content {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+  }
+  .carousel-card.medium .subtitle {
+    opacity: 0;
+    max-height: 0;
+    pointer-events: none;
+  }
+`;
+
+const carouselSheet = createComponentSheet(defaultStyle);
 
 const DEMO_ITEMS = [
   {
@@ -78,6 +224,7 @@ export class MdCarousel extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, carouselSheet);
     this._activeIndex = 0;
     this._rendered = false;
     this._abortController = null;
@@ -265,151 +412,10 @@ export class MdCarousel extends HTMLElement {
 
   render() {
     const items = this.itemsList;
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: block;
-          width: 100%;
-          outline: none;
-          user-select: none;
-          box-sizing: border-box;
-        }
-
-        .carousel-container {
-          position: relative;
-          width: 100%;
-          overflow: hidden;
-          padding: 8px 0;
-        }
-
-        .carousel-track {
-          display: flex;
-          gap: 16px;
-          overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          scrollbar-width: none;
-          padding: 8px 16px;
-          align-items: center;
-          -webkit-overflow-scrolling: touch;
-        }
-        .carousel-track::-webkit-scrollbar { display: none; }
-
-        .carousel-card {
-          position: relative;
-          flex-shrink: 0;
-          height: 280px;
-          border-radius: var(--md-sys-shape-corner-extra-large, 28px);
-          box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
-          cursor: pointer;
-          outline: none;
-          overflow: hidden;
-          scroll-snap-align: start;
-          transition:
-            width var(--md-sys-motion-duration-long3, 650ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.35, 1.2, 0.25, 1.0)),
-            box-shadow var(--md-sys-motion-duration-medium1, 300ms) ease;
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-end;
-          padding: 24px;
-          box-sizing: border-box;
-          color: #FFFFFF;
-        }
-        .carousel-card:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-
-        /* Responsive Focal Widths (Multi-Browse Spec §8) */
-        .carousel-card.hero {
-          width: 280px;
-          box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.2));
-        }
-        .carousel-card.medium {
-          width: 160px;
-        }
-        .carousel-card.small {
-          width: 76px;
-        }
-
-        .card-bg {
-          position: absolute;
-          inset: 0;
-          z-index: 1;
-          background-size: cover;
-          background-position: center;
-          background-repeat: no-repeat;
-          transition: transform 600ms cubic-bezier(0.2, 0, 0, 1);
-        }
-        .carousel-card:hover .card-bg {
-          transform: scale(1.06);
-        }
-
-        .card-overlay {
-          position: absolute;
-          inset: 0;
-          z-index: 2;
-          background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.85) 100%);
-          pointer-events: none;
-          transition: opacity 500ms ease;
-        }
-
-        .card-content {
-          position: relative;
-          z-index: 3;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          transition:
-            opacity var(--md-sys-motion-duration-medium2, 400ms) ease,
-            transform var(--md-sys-motion-duration-long3, 650ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.35, 1.2, 0.25, 1.0));
-        }
-
-        .tag {
-          align-self: flex-start;
-          font: var(--md-sys-typescale-label-small-emphasized, 700 11px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-small-emphasized-tracking, 0.5px);
-          text-transform: uppercase;
-          background: rgba(255,255,255,0.25);
-          backdrop-filter: blur(8px);
-          padding: 4px 8px;
-          border-radius: 9999px;
-          margin-bottom: 6px;
-        }
-
-        .title {
-          font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto Flex, sans-serif);
-          letter-spacing: var(--md-sys-typescale-title-large-tracking, 0px);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .subtitle {
-          font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
-          opacity: 0.85;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          transition: opacity 300ms ease, max-height 400ms ease;
-          max-height: 24px;
-        }
-
-        .carousel-card.small .card-content {
-          opacity: 0;
-          pointer-events: none;
-          transform: translateY(8px);
-        }
-        .carousel-card.medium .subtitle {
-          opacity: 0;
-          max-height: 0;
-          pointer-events: none;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="carousel-container" role="region" aria-label="Photo Carousel">
         <div class="carousel-track" role="listbox" tabindex="0" aria-label="Carousel items">
           ${items.map((it, idx) => `

@@ -15,6 +15,33 @@
 
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const listDefaultStyle = `
+  :host {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    outline: none;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .list.segmented {
+    gap: 8px;
+    padding: 8px;
+  }
+`;
+
+const listSheet = createComponentSheet(listDefaultStyle);
 
 export class MdList extends HTMLElement {
   static get observedAttributes() {
@@ -24,6 +51,7 @@ export class MdList extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, listSheet);
     this._rendered = false;
   }
 
@@ -49,37 +77,184 @@ export class MdList extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          outline: none;
-        }
-
-        .list {
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          box-sizing: border-box;
-          padding: 8px 0;
-          margin: 0;
-          list-style: none;
-        }
-
-        .list.segmented {
-          gap: 8px;
-          padding: 8px;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${listDefaultStyle}</style>`}
       <div class="list ${escapeHtml(this.variant)}" role="list">
         <slot></slot>
       </div>
     `;
   }
 }
+
+const listItemDefaultStyle = `
+  :host {
+    display: block;
+    width: 100%;
+    outline: none;
+  }
+
+  .item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 56px;
+    padding: 8px 16px;
+    box-sizing: border-box;
+    color: var(--md-sys-color-on-surface, #E6E0E9);
+    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
+    background-color: transparent;
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
+      border-radius var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease),
+      color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+    outline: none;
+    will-change: transform;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .item:focus { outline: none; }
+  .item:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: -2px;
+    z-index: 2;
+  }
+
+  .item.segmented {
+    border-radius: var(--md-sys-shape-corner-large, 16px);
+    background-color: var(--md-sys-color-surface-container-low, #F7F2FA);
+  }
+
+  .item.selected {
+    background-color: var(--md-sys-color-secondary-container, #E8DEF8) !important;
+    color: var(--md-sys-color-on-secondary-container, #1D192B) !important;
+    border-radius: var(--md-sys-shape-corner-large, 16px);
+  }
+
+  .item.interactive {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* State layer */
+  .item.interactive::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+  }
+  .item.interactive:hover:not(.disabled)::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
+  }
+  .item.interactive:focus-visible:not(.disabled)::before {
+    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.12);
+  }
+  .item.interactive.pressed:not(.disabled)::before {
+    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
+  }
+
+  .item.disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Leading Elements */
+  .leading-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ico {
+    font-family: 'Material Symbols Outlined';
+    font-size: 24px;
+    line-height: 1;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .item.selected .ico {
+    color: var(--md-sys-color-on-secondary-container, #1D192B);
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    color: var(--md-sys-color-on-primary-container, #21005D);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-title-medium-tracking, 0.2px);
+    object-fit: cover;
+  }
+
+  .image-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+    object-fit: cover;
+  }
+
+  /* Content */
+  .content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .overline {
+    font: var(--md-sys-typescale-label-small, 500 11px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-small-tracking, 0.5px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    text-transform: uppercase;
+  }
+
+  .headline {
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
+    color: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .supporting-text {
+    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .item.selected .supporting-text,
+  .item.selected .overline {
+    color: var(--md-sys-color-on-secondary-container, #1D192B);
+    opacity: 0.8;
+  }
+
+  /* Trailing Elements */
+  .trailing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    font: var(--md-sys-typescale-label-small, 500 11px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-label-small-tracking, 0.5px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+  }
+`;
+
+const listItemSheet = createComponentSheet(listItemDefaultStyle);
 
 export class MdListItem extends HTMLElement {
   static get observedAttributes() {
@@ -94,6 +269,7 @@ export class MdListItem extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, listItemSheet);
     this._rendered = false;
     this._abortController = null;
   }
@@ -241,174 +417,9 @@ export class MdListItem extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          width: 100%;
-          outline: none;
-        }
-
-        .item {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          min-height: 56px;
-          padding: 8px 16px;
-          box-sizing: border-box;
-          color: var(--md-sys-color-on-surface, #E6E0E9);
-          font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-          background-color: transparent;
-          border-radius: var(--md-sys-shape-corner-medium, 12px);
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-            border-radius var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease),
-            color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-          outline: none;
-          will-change: transform;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .item:focus { outline: none; }
-        .item:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: -2px;
-          z-index: 2;
-        }
-
-        .item.segmented {
-          border-radius: var(--md-sys-shape-corner-large, 16px);
-          background-color: var(--md-sys-color-surface-container-low, #F7F2FA);
-        }
-
-        .item.selected {
-          background-color: var(--md-sys-color-secondary-container, #E8DEF8) !important;
-          color: var(--md-sys-color-on-secondary-container, #1D192B) !important;
-          border-radius: var(--md-sys-shape-corner-large, 16px);
-        }
-
-        .item.interactive {
-          cursor: pointer;
-          user-select: none;
-        }
-
-        /* State layer */
-        .item.interactive::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          background: currentColor;
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-        }
-        .item.interactive:hover:not(.disabled)::before {
-          opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-        }
-        .item.interactive:focus-visible:not(.disabled)::before {
-          opacity: var(--md-sys-state-focus-state-layer-opacity, 0.12);
-        }
-        .item.interactive.pressed:not(.disabled)::before {
-          opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
-        }
-
-        .item.disabled {
-          opacity: 0.38;
-          cursor: not-allowed;
-          pointer-events: none;
-        }
-
-        /* Leading Elements */
-        .leading-slot {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .ico {
-          font-family: 'Material Symbols Outlined';
-          font-size: 24px;
-          line-height: 1;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .item.selected .ico {
-          color: var(--md-sys-color-on-secondary-container, #1D192B);
-        }
-
-        .avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 9999px;
-          background-color: var(--md-sys-color-primary-container, #EADDFF);
-          color: var(--md-sys-color-on-primary-container, #21005D);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-title-medium-tracking, 0.2px);
-          object-fit: cover;
-        }
-
-        .image-thumb {
-          width: 56px;
-          height: 56px;
-          border-radius: var(--md-sys-shape-corner-small, 8px);
-          object-fit: cover;
-        }
-
-        /* Content */
-        .content {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          flex: 1;
-          min-width: 0;
-        }
-
-        .overline {
-          font: var(--md-sys-typescale-label-small, 500 11px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-small-tracking, 0.5px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          text-transform: uppercase;
-        }
-
-        .headline {
-          font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
-          color: inherit;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .supporting-text {
-          font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .item.selected .supporting-text,
-        .item.selected .overline {
-          color: var(--md-sys-color-on-secondary-container, #1D192B);
-          opacity: 0.8;
-        }
-
-        /* Trailing Elements */
-        .trailing {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-shrink: 0;
-          font: var(--md-sys-typescale-label-small, 500 11px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-label-small-tracking, 0.5px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${listItemDefaultStyle}</style>`}
       <div class="item ${escapeHtml(this.variant)}" part="item">
         <div class="leading-slot">
           ${this.avatar ? `<img class="avatar" src="${escapeHtml(this.avatar)}" alt="Avatar">` : ''}

@@ -10,6 +10,123 @@
  */
 
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: contents;
+  }
+
+  .tip {
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 10000;
+    font-family: var(--md-sys-typescale-font-family, Roboto, sans-serif);
+    transition:
+      opacity var(--md-sys-motion-duration-short1, 100ms) cubic-bezier(0.4, 0, 1, 1),
+      transform var(--md-sys-motion-duration-short1, 100ms) cubic-bezier(0.4, 0, 1, 1),
+      visibility var(--md-sys-motion-duration-short1, 100ms);
+    will-change: opacity, transform;
+  }
+
+  .tip.top {
+    transform-origin: center bottom;
+    transform: translate(-50%, calc(-100% + 4px)) scale(0.92);
+  }
+
+  .tip.bottom {
+    transform-origin: center top;
+    transform: translate(-50%, -4px) scale(0.92);
+  }
+
+  .tip.open {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity var(--md-sys-motion-duration-short2, 150ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
+      transform var(--md-sys-motion-duration-short2, 150ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1)),
+      visibility var(--md-sys-motion-duration-short2, 150ms);
+  }
+
+  .tip.top.open {
+    transform: translate(-50%, -100%) scale(1);
+  }
+
+  .tip.bottom.open {
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  /* Plain Tooltip */
+  .tip.plain {
+    background-color: var(--md-sys-color-inverse-surface, #322F35);
+    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
+    border-radius: var(--md-sys-shape-corner-extra-small, 4px);
+    font: var(--md-sys-typescale-body-small, 400 12px/16px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
+    padding: 4px 8px;
+    white-space: nowrap;
+    box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,0.15));
+  }
+
+  /* Rich Tooltip */
+  .tip.rich {
+    background-color: var(--md-sys-color-surface-container, #F3EDF7);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
+    padding: 12px 16px;
+    max-width: 320px;
+    white-space: normal;
+    box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,0.15));
+  }
+
+  .headline {
+    font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-title-small-tracking, 0.1px);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    margin-bottom: 4px;
+  }
+
+  /* Caret Arrow */
+  .tip.has-caret::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+  }
+  .tip.has-caret.top::after {
+    top: 100%;
+    border-top-color: var(--md-sys-color-inverse-surface, #322F35);
+  }
+  .tip.rich.has-caret.top::after {
+    border-top-color: var(--md-sys-color-surface-container, #F3EDF7);
+  }
+  .tip.has-caret.bottom::after {
+    bottom: 100%;
+    border-bottom-color: var(--md-sys-color-inverse-surface, #322F35);
+  }
+  .tip.rich.has-caret.bottom::after {
+    border-bottom-color: var(--md-sys-color-surface-container, #F3EDF7);
+  }
+
+  .actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+`;
+
+const tooltipSheet = createComponentSheet(defaultStyle);
 
 export class MdTooltip extends HTMLElement {
   static get observedAttributes() {
@@ -22,6 +139,7 @@ export class MdTooltip extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, tooltipSheet);
     this._rendered = false;
     this._target = null;
     this._boundHandlers = null;
@@ -179,121 +297,10 @@ export class MdTooltip extends HTMLElement {
 
   render() {
     const hasHead = !!this.headline;
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: contents;
-        }
-
-        .tip {
-          box-sizing: border-box;
-          position: fixed;
-          top: 0;
-          left: 0;
-          opacity: 0;
-          visibility: hidden;
-          pointer-events: none;
-          z-index: 10000;
-          font-family: var(--md-sys-typescale-font-family, Roboto, sans-serif);
-          transition:
-            opacity var(--md-sys-motion-duration-short1, 100ms) cubic-bezier(0.4, 0, 1, 1),
-            transform var(--md-sys-motion-duration-short1, 100ms) cubic-bezier(0.4, 0, 1, 1),
-            visibility var(--md-sys-motion-duration-short1, 100ms);
-          will-change: opacity, transform;
-        }
-
-        .tip.top {
-          transform-origin: center bottom;
-          transform: translate(-50%, calc(-100% + 4px)) scale(0.92);
-        }
-
-        .tip.bottom {
-          transform-origin: center top;
-          transform: translate(-50%, -4px) scale(0.92);
-        }
-
-        .tip.open {
-          opacity: 1;
-          visibility: visible;
-          transition:
-            opacity var(--md-sys-motion-duration-short2, 150ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-            transform var(--md-sys-motion-duration-short2, 150ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1)),
-            visibility var(--md-sys-motion-duration-short2, 150ms);
-        }
-
-        .tip.top.open {
-          transform: translate(-50%, -100%) scale(1);
-        }
-
-        .tip.bottom.open {
-          transform: translate(-50%, 0) scale(1);
-        }
-
-        /* Plain Tooltip */
-        .tip.plain {
-          background-color: var(--md-sys-color-inverse-surface, #322F35);
-          color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-          border-radius: var(--md-sys-shape-corner-extra-small, 4px);
-          font: var(--md-sys-typescale-body-small, 400 12px/16px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
-          padding: 4px 8px;
-          white-space: nowrap;
-          box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,0.15));
-        }
-
-        /* Rich Tooltip */
-        .tip.rich {
-          background-color: var(--md-sys-color-surface-container, #F3EDF7);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          border-radius: var(--md-sys-shape-corner-medium, 12px);
-          font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
-          padding: 12px 16px;
-          max-width: 320px;
-          white-space: normal;
-          box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,0.15));
-        }
-
-        .headline {
-          font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
-          letter-spacing: var(--md-sys-typescale-title-small-tracking, 0.1px);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          margin-bottom: 4px;
-        }
-
-        /* Caret Arrow */
-        .tip.has-caret::after {
-          content: '';
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-          border: 6px solid transparent;
-        }
-        .tip.has-caret.top::after {
-          top: 100%;
-          border-top-color: var(--md-sys-color-inverse-surface, #322F35);
-        }
-        .tip.rich.has-caret.top::after {
-          border-top-color: var(--md-sys-color-surface-container, #F3EDF7);
-        }
-        .tip.has-caret.bottom::after {
-          bottom: 100%;
-          border-bottom-color: var(--md-sys-color-inverse-surface, #322F35);
-        }
-        .tip.rich.has-caret.bottom::after {
-          border-bottom-color: var(--md-sys-color-surface-container, #F3EDF7);
-        }
-
-        .actions {
-          margin-top: 8px;
-          display: flex;
-          gap: 8px;
-          justify-content: flex-end;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="tip ${escapeHtml(this.variant)}" role="tooltip" id="${escapeHtml(this.id)}">
         ${hasHead ? `<div class="headline">${escapeHtml(this.headline)}</div>` : ''}
         <span class="txt">${escapeHtml(this.text)}</span>

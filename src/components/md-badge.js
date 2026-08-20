@@ -8,6 +8,46 @@
  */
 
 import { escapeHtml } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: inline-flex;
+    outline: none;
+    vertical-align: middle;
+    position: relative;
+    pointer-events: none;
+  }
+
+  .badge {
+    box-sizing: border-box;
+    background-color: var(--md-sys-color-error, #B3261E);
+    color: var(--md-sys-color-on-error, #FFFFFF);
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 6px;
+    height: 6px;
+    padding: 0;
+    pointer-events: none;
+    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    font-weight: var(--md-sys-typescale-label-small-weight, 500);
+    line-height: 1;
+    user-select: none;
+  }
+
+  .badge.numeric {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+  }
+`;
+
+const badgeSheet = createComponentSheet(defaultStyle);
 
 export class MdBadge extends HTMLElement {
   static get observedAttributes() {
@@ -17,6 +57,7 @@ export class MdBadge extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, badgeSheet);
     this._rendered = false;
   }
 
@@ -88,44 +129,9 @@ export class MdBadge extends HTMLElement {
 
   render() {
     const isNumeric = Boolean(this.label);
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: inline-flex;
-          outline: none;
-          vertical-align: middle;
-          position: relative;
-          pointer-events: none;
-        }
-
-        .badge {
-          box-sizing: border-box;
-          background-color: var(--md-sys-color-error, #B3261E);
-          color: var(--md-sys-color-on-error, #FFFFFF);
-          border-radius: 9999px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 6px;
-          height: 6px;
-          padding: 0;
-          pointer-events: none;
-          font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-          font-size: var(--md-sys-typescale-label-small-size, 11px);
-          font-weight: var(--md-sys-typescale-label-small-weight, 500);
-          line-height: 1;
-          user-select: none;
-        }
-
-        .badge.numeric {
-          min-width: 16px;
-          height: 16px;
-          padding: 0 4px;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <span class="badge ${isNumeric ? 'numeric' : 'dot'}" role="status" aria-label="${escapeHtml(isNumeric ? this.label + ' notifications' : 'New notification')}">
         <span class="txt">${escapeHtml(this._displayText())}</span>
       </span>

@@ -1053,7 +1053,7 @@ export function initShowcase() {
     const canvas = document.getElementById('ambientWaveCanvas');
     if (!stageWrapper || !anchor || !canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     // Sequential Pipeline Steps (Configured by User)
@@ -1108,14 +1108,21 @@ export function initShowcase() {
       }
     ];
 
-
-    function getDynamicThemeColor() {
+    // Zero-Reflow Dynamic Theme Color Cache
+    let cachedThemeColor = '';
+    function updateThemeColor() {
       const computed = getComputedStyle(document.documentElement);
       const primary = computed.getPropertyValue('--md-sys-color-primary').trim();
-      if (primary) return primary;
       const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-      return isDark ? '#d0bcff' : '#6750a4';
+      cachedThemeColor = primary || (isDark ? '#d0bcff' : '#6750a4');
     }
+    updateThemeColor();
+
+    const themeObserver = new MutationObserver(() => updateThemeColor());
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'data-theme-scheme', 'style']
+    });
 
     function getFormationOffset(i, count, leadLag, formation) {
       if (count <= 1 || leadLag === 0) return 0;
@@ -1140,7 +1147,8 @@ export function initShowcase() {
       const scale = step.scale || 1.0;
       const screenDiag = Math.sqrt(window.innerWidth * window.innerWidth + window.innerHeight * window.innerHeight);
       const vhPx = window.innerHeight * (step.lengthVh / 100);
-      const w = Math.max(screenDiag * 1.8, vhPx * scale, 3400);
+      // Cap maximum canvas width to screen diagonal with comfortable bleed margin (avoids 13k px buffer thrashing)
+      const w = Math.min(3200, Math.max(screenDiag * 1.3, vhPx, 2400));
 
       const strokeWidth = step.strokeWidth * scale;
       const amplitude = step.amplitude * scale;
@@ -1167,6 +1175,34 @@ export function initShowcase() {
       };
     }
 
+    // Pre-calculated Timeline (Zero allocation per frame)
+    let timeline = [];
+    let totalCycle = 1;
+
+    function buildTimeline() {
+      timeline = [];
+      let cursor = 0;
+      pipelineSteps.forEach(step => {
+        const metrics = getStepMetrics(step);
+        const start = cursor;
+        const end = start + metrics.duration;
+        const nextStart = end + step.waitAfterSeconds;
+        timeline.push({
+          step,
+          metrics,
+          start,
+          end,
+          nextStart,
+          duration: metrics.duration
+        });
+        cursor = nextStart;
+      });
+      totalCycle = cursor || 1;
+    }
+
+    buildTimeline();
+    window.addEventListener('resize', buildTimeline, { passive: true });
+
     let startTime = performance.now();
 
     function draw(now) {
@@ -1177,33 +1213,8 @@ export function initShowcase() {
         return;
       }
 
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const totalElapsed = (now - startTime) / 1000;
-      const dynamicPrimaryColor = getDynamicThemeColor();
-
-      // Build active timeline
-      const timeline = [];
-      let cursor = 0;
-
-      pipelineSteps.forEach(step => {
-        const metrics = getStepMetrics(step);
-        const start = cursor;
-        const end = start + metrics.duration;
-        const nextStart = end + step.waitAfterSeconds;
-
-        timeline.push({
-          step,
-          metrics,
-          start,
-          end,
-          nextStart,
-          duration: metrics.duration
-        });
-
-        cursor = nextStart;
-      });
-
-      const totalCycle = cursor || 1;
       const cycleTime = totalElapsed % totalCycle;
 
       // Find active step
@@ -1233,7 +1244,10 @@ export function initShowcase() {
         const m = currentItem.metrics;
 
         // Dynamic Stacking Layer per Animation Step
-        stageWrapper.style.zIndex = step.zIndex ? String(step.zIndex) : '2';
+        const targetZ = step.zIndex ? String(step.zIndex) : '2';
+        if (stageWrapper.style.zIndex !== targetZ) {
+          stageWrapper.style.zIndex = targetZ;
+        }
 
         // Position & Rotate
         anchor.style.transform = `translateX(-50%) translate(${step.posX}vw, ${step.posY}vh) rotate(${step.angle}deg)`;
@@ -1268,9 +1282,8 @@ export function initShowcase() {
         const basePhase = (stepTime * (wavelength * step.speed * 0.8)) % wavelength;
         const staggerFrac = (step.phaseOffset / 100);
 
-        const anchorRect = anchor.getBoundingClientRect();
-        const anchorCenterX = anchorRect.left + anchorRect.width / 2;
-        const anchorCenterY = anchorRect.top + anchorRect.height / 2;
+        // Adaptive step resolution for 60fps / 120fps hardware acceleration
+        const stepX = Math.max(4, Math.round(wavelength / 36));
 
         for (let i = 0; i < count; i++) {
           const lineOffset = (i - (count - 1) / 2) * m.lineGap;
@@ -1280,7 +1293,7 @@ export function initShowcase() {
           const formOffset = getFormationOffset(i, count, m.leadLag, step.formation || 'linear');
 
           ctx.beginPath();
-          ctx.strokeStyle = dynamicPrimaryColor;
+          ctx.strokeStyle = cachedThemeColor;
           ctx.globalAlpha = step.opacity;
           ctx.lineWidth = m.strokeWidth;
 
@@ -1289,7 +1302,7 @@ export function initShowcase() {
             const clampedE = Math.min(m.w, eX);
             if (clampedE > clampedS) {
               ctx.moveTo(clampedS, waveY(clampedS));
-              for (let x = clampedS + 2; x < clampedE; x += 2) {
+              for (let x = clampedS + stepX; x < clampedE; x += stepX) {
                 ctx.lineTo(x, waveY(x));
               }
               ctx.lineTo(clampedE, waveY(clampedE));

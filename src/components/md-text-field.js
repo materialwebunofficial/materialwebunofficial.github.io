@@ -14,6 +14,210 @@
  */
 
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: inline-block;
+    width: 100%;
+    outline: none;
+    vertical-align: top;
+    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
+  }
+
+  .tf-root {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .field-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    min-height: 56px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    cursor: text;
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
+      border-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
+      box-shadow var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease);
+  }
+
+  /* Outlined Variant */
+  .field-box.outlined {
+    border-radius: var(--md-sys-shape-corner-extra-small, 4px);
+    border: 1px solid var(--md-sys-color-outline, #79747E);
+    background-color: transparent;
+  }
+  .field-box.outlined:hover:not(.disabled) {
+    border-color: var(--md-sys-color-on-surface, #1D1B20);
+  }
+  .field-box.outlined:focus-within {
+    border-color: var(--md-sys-color-primary, #6750A4);
+    border-width: 2px;
+    padding: 0 15px;
+  }
+
+  /* Filled Variant */
+  .field-box.filled {
+    border-radius: var(--md-sys-shape-corner-extra-small, 4px) var(--md-sys-shape-corner-extra-small, 4px) 0 0;
+    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    border: none;
+    border-bottom: 1px solid var(--md-sys-color-on-surface-variant, #49454F);
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .field-box.filled:hover:not(.disabled) {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 4%, var(--md-sys-color-surface-container-highest, #E6E0E9));
+    border-bottom-color: var(--md-sys-color-on-surface, #1D1B20);
+  }
+  .field-box.filled:focus-within {
+    border-bottom: 2px solid var(--md-sys-color-primary, #6750A4);
+  }
+
+  /* Error States */
+  .field-box.error {
+    border-color: var(--md-sys-color-error, #B3261E) !important;
+  }
+  .field-box.error .label {
+    color: var(--md-sys-color-error, #B3261E) !important;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+  }
+
+  .field-box.filled .input-wrapper {
+    justify-content: flex-end;
+    padding-bottom: 2px;
+  }
+
+  /* Floating Label */
+  .label {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    transform-origin: left top;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    font-size: var(--md-sys-typescale-body-large-size, 16px);
+    line-height: var(--md-sys-typescale-body-large-line-height, 24px);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
+    pointer-events: none;
+    white-space: nowrap;
+    transition:
+      transform var(--md-sys-motion-duration-short2, 150ms) cubic-bezier(0.2, 0, 0, 1),
+      color var(--md-sys-motion-duration-short2, 150ms) ease,
+      top var(--md-sys-motion-duration-short2, 150ms) cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  /* Floating label for Outlined */
+  .field-box.outlined.floating .label {
+    top: -9px;
+    transform: scale(0.75);
+    color: var(--md-sys-color-primary, #6750A4);
+    background-color: var(--md-sys-color-surface-container-high, #2B2930);
+    padding: 0 4px;
+    margin-left: -4px;
+    border-radius: 2px;
+    line-height: var(--md-sys-typescale-body-small-line-height, 16px);
+    z-index: 1;
+  }
+
+  /* Floating label for Filled */
+  .field-box.filled.floating .label {
+    top: 4px;
+    transform: scale(0.75);
+    color: var(--md-sys-color-primary, #6750A4);
+    line-height: var(--md-sys-typescale-body-small-line-height, 16px);
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 24px;
+  }
+
+  .field-box.filled.floating .input-row {
+    margin-top: 14px;
+  }
+
+  input {
+    width: 100%;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    font-family: inherit;
+    font-size: var(--md-sys-typescale-body-large-size, 16px);
+    line-height: var(--md-sys-typescale-body-large-line-height, 24px);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
+    padding: 0;
+    margin: 0;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .affix {
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    font-size: var(--md-sys-typescale-body-large-size, 16px);
+    line-height: var(--md-sys-typescale-body-large-line-height, 24px);
+    user-select: none;
+    white-space: nowrap;
+  }
+  .affix.prefix { margin-right: 4px; }
+  .affix.suffix { margin-left: 4px; }
+
+  .ico {
+    font-family: 'Material Symbols Outlined';
+    font-size: 24px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    flex-shrink: 0;
+    user-select: none;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .ico.leading { margin-right: 12px; }
+  .ico.trailing { margin-left: 12px; }
+  .field-box:focus-within .ico.leading { color: var(--md-sys-color-primary, #6750A4); }
+  .field-box.error .ico { color: var(--md-sys-color-error, #B3261E); }
+
+  .helper-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 16px 0 16px;
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    line-height: var(--md-sys-typescale-body-small-line-height, 16px);
+    letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    min-height: 20px;
+  }
+  .tf-root.error .helper-text { color: var(--md-sys-color-error, #B3261E); }
+  .tf-root.disabled { cursor: not-allowed; opacity: 0.38; }
+  .tf-root.disabled .field-box { pointer-events: none; }
+`;
+
+const textFieldSheet = createComponentSheet(defaultStyle);
 
 export class MdTextField extends HTMLElement {
   static formAssociated = true;
@@ -30,6 +234,7 @@ export class MdTextField extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, textFieldSheet);
     this._internals = this.attachInternals ? this.attachInternals() : null;
     this._value = '';
     this._rendered = false;
@@ -286,208 +491,9 @@ export class MdTextField extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: inline-block;
-          width: 100%;
-          outline: none;
-          vertical-align: top;
-          font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-        }
-
-        .tf-root {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        .field-box {
-          position: relative;
-          display: flex;
-          align-items: center;
-          height: 56px;
-          min-height: 56px;
-          padding: 0 16px;
-          box-sizing: border-box;
-          cursor: text;
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-            border-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-            box-shadow var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease);
-        }
-
-        /* Outlined Variant */
-        .field-box.outlined {
-          border-radius: var(--md-sys-shape-corner-extra-small, 4px);
-          border: 1px solid var(--md-sys-color-outline, #79747E);
-          background-color: transparent;
-        }
-        .field-box.outlined:hover:not(.disabled) {
-          border-color: var(--md-sys-color-on-surface, #1D1B20);
-        }
-        .field-box.outlined:focus-within {
-          border-color: var(--md-sys-color-primary, #6750A4);
-          border-width: 2px;
-          padding: 0 15px;
-        }
-
-        /* Filled Variant */
-        .field-box.filled {
-          border-radius: var(--md-sys-shape-corner-extra-small, 4px) var(--md-sys-shape-corner-extra-small, 4px) 0 0;
-          background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-          border: none;
-          border-bottom: 1px solid var(--md-sys-color-on-surface-variant, #49454F);
-          padding-top: 8px;
-          padding-bottom: 8px;
-        }
-        .field-box.filled:hover:not(.disabled) {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 4%, var(--md-sys-color-surface-container-highest, #E6E0E9));
-          border-bottom-color: var(--md-sys-color-on-surface, #1D1B20);
-        }
-        .field-box.filled:focus-within {
-          border-bottom: 2px solid var(--md-sys-color-primary, #6750A4);
-        }
-
-        /* Error States */
-        .field-box.error {
-          border-color: var(--md-sys-color-error, #B3261E) !important;
-        }
-        .field-box.error .label {
-          color: var(--md-sys-color-error, #B3261E) !important;
-        }
-
-        .input-wrapper {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          flex: 1;
-          height: 100%;
-          min-width: 0;
-        }
-
-        .field-box.filled .input-wrapper {
-          justify-content: flex-end;
-          padding-bottom: 2px;
-        }
-
-        /* Floating Label */
-        .label {
-          position: absolute;
-          left: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          transform-origin: left top;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          font-size: var(--md-sys-typescale-body-large-size, 16px);
-          line-height: var(--md-sys-typescale-body-large-line-height, 24px);
-          letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
-          pointer-events: none;
-          white-space: nowrap;
-          transition:
-            transform var(--md-sys-motion-duration-short2, 150ms) cubic-bezier(0.2, 0, 0, 1),
-            color var(--md-sys-motion-duration-short2, 150ms) ease,
-            top var(--md-sys-motion-duration-short2, 150ms) cubic-bezier(0.2, 0, 0, 1);
-        }
-
-        /* Floating label for Outlined */
-        .field-box.outlined.floating .label {
-          top: -9px;
-          transform: scale(0.75);
-          color: var(--md-sys-color-primary, #6750A4);
-          background-color: var(--md-sys-color-surface-container-high, #2B2930);
-          padding: 0 4px;
-          margin-left: -4px;
-          border-radius: 2px;
-          line-height: var(--md-sys-typescale-body-small-line-height, 16px);
-          z-index: 1;
-        }
-
-        /* Floating label for Filled */
-        .field-box.filled.floating .label {
-          top: 4px;
-          transform: scale(0.75);
-          color: var(--md-sys-color-primary, #6750A4);
-          line-height: var(--md-sys-typescale-body-small-line-height, 16px);
-        }
-
-        .input-row {
-          display: flex;
-          align-items: center;
-          width: 100%;
-          height: 24px;
-        }
-
-        .field-box.filled.floating .input-row {
-          margin-top: 14px;
-        }
-
-        input {
-          width: 100%;
-          height: 24px;
-          border: none;
-          background: transparent;
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          font-family: inherit;
-          font-size: var(--md-sys-typescale-body-large-size, 16px);
-          line-height: var(--md-sys-typescale-body-large-line-height, 24px);
-          letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
-          padding: 0;
-          margin: 0;
-          outline: none;
-          box-sizing: border-box;
-        }
-
-        .affix {
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          font-size: var(--md-sys-typescale-body-large-size, 16px);
-          line-height: var(--md-sys-typescale-body-large-line-height, 24px);
-          user-select: none;
-          white-space: nowrap;
-        }
-        .affix.prefix { margin-right: 4px; }
-        .affix.suffix { margin-left: 4px; }
-
-        .ico {
-          font-family: 'Material Symbols Outlined';
-          font-size: 24px;
-          line-height: 1;
-          width: 24px;
-          height: 24px;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          align-self: center;
-          flex-shrink: 0;
-          user-select: none;
-          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .ico.leading { margin-right: 12px; }
-        .ico.trailing { margin-left: 12px; }
-        .field-box:focus-within .ico.leading { color: var(--md-sys-color-primary, #6750A4); }
-        .field-box.error .ico { color: var(--md-sys-color-error, #B3261E); }
-
-        .helper-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 4px 16px 0 16px;
-          font-size: var(--md-sys-typescale-body-small-size, 12px);
-          line-height: var(--md-sys-typescale-body-small-line-height, 16px);
-          letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          min-height: 20px;
-        }
-        .tf-root.error .helper-text { color: var(--md-sys-color-error, #B3261E); }
-        .tf-root.disabled { cursor: not-allowed; opacity: 0.38; }
-        .tf-root.disabled .field-box { pointer-events: none; }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="tf-root ${escapeHtml(this.variant)}">
         <div class="field-box ${escapeHtml(this.variant)}">
           <span class="ico leading" aria-hidden="true" style="display: none;"></span>

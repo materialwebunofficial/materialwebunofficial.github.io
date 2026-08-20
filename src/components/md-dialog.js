@@ -15,6 +15,112 @@
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
 import { escapeHtml } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; outline: none; display: contents; }
+  :host(:not([open])) .scrim, :host(:not([open])) .dialog-container { display: none; }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background-color: var(--md-sys-color-scrim, #000);
+    opacity: 0.32;
+    z-index: 2000;
+  }
+
+  .dialog-container {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2001;
+    pointer-events: none;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+
+  .dialog {
+    box-sizing: border-box;
+    position: relative;
+    pointer-events: auto;
+    transform-origin: center center;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 280px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 80vh;
+    padding: 24px;
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
+    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
+    overflow-y: auto;
+  }
+
+  .icon {
+    align-self: center;
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    display: inline-block;
+    color: var(--md-sys-color-secondary, #625B71);
+  }
+  .icon:empty { display: none; }
+
+  .headline {
+    font: var(--md-sys-typescale-headline-small, 400 24px/32px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    margin: 0;
+  }
+  .headline:empty { display: none; }
+
+  .supporting {
+    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+  }
+  .supporting:empty { display: none; }
+
+  .content { color: var(--md-sys-color-on-surface-variant, #49454F); }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 8px;
+  }
+
+  .action {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0 12px;
+    border: none;
+    background-color: transparent;
+    color: var(--md-sys-color-primary, #6750A4);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    cursor: pointer;
+    outline: none;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .action:hover { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 8%, transparent); }
+  .action.pressed { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
+  .action:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+`;
+
+const dialogSheet = createComponentSheet(defaultStyle);
 
 export class MdDialog extends HTMLElement {
   static get observedAttributes() {
@@ -27,6 +133,7 @@ export class MdDialog extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, dialogSheet);
     this._rendered = false;
     this._onKeydown = this._onKeydown.bind(this);
     this._abortController = null;
@@ -97,110 +204,10 @@ export class MdDialog extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none; outline: none; display: contents; }
-        :host(:not([open])) .scrim, :host(:not([open])) .dialog-container { display: none; }
-
-        .scrim {
-          position: fixed;
-          inset: 0;
-          background-color: var(--md-sys-color-scrim, #000);
-          opacity: 0.32;
-          z-index: 2000;
-        }
-
-        .dialog-container {
-          position: fixed;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2001;
-          pointer-events: none;
-          padding: 24px;
-          box-sizing: border-box;
-        }
-
-        .dialog {
-          box-sizing: border-box;
-          position: relative;
-          pointer-events: auto;
-          transform-origin: center center;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          min-width: 280px;
-          max-width: 560px;
-          width: 100%;
-          max-height: 80vh;
-          padding: 24px;
-          border-radius: var(--md-sys-shape-corner-extra-large, 28px);
-          background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-          box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
-          overflow-y: auto;
-        }
-
-        .icon {
-          align-self: center;
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px;
-          width: 24px;
-          height: 24px;
-          line-height: 24px;
-          display: inline-block;
-          color: var(--md-sys-color-secondary, #625B71);
-        }
-        .icon:empty { display: none; }
-
-        .headline {
-          font: var(--md-sys-typescale-headline-small, 400 24px/32px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          margin: 0;
-        }
-        .headline:empty { display: none; }
-
-        .supporting {
-          font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-        }
-        .supporting:empty { display: none; }
-
-        .content { color: var(--md-sys-color-on-surface-variant, #49454F); }
-
-        .actions {
-          display: flex;
-          justify-content: flex-end;
-          gap: 8px;
-          padding-top: 8px;
-        }
-
-        .action {
-          min-width: 48px;
-          min-height: 48px;
-          padding: 0 12px;
-          border: none;
-          background-color: transparent;
-          color: var(--md-sys-color-primary, #6750A4);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          cursor: pointer;
-          outline: none;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .action:hover { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 8%, transparent); }
-        .action.pressed { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
-        .action:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="scrim" part="scrim"></div>
       <div class="dialog-container">
         <div class="dialog" role="dialog" aria-modal="true"

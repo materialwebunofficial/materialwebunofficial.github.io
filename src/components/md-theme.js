@@ -12,8 +12,18 @@
 
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { applyDynamicTheme, getActiveSeedHex, MD3_PRESETS } from '../theme/hct-color-engine.js';
-
 import { safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: contents;
+  }
+`;
+
+const themeSheet = createComponentSheet(defaultStyle);
 
 export class MdExpressiveTheme extends HTMLElement {
   static get observedAttributes() {
@@ -23,6 +33,7 @@ export class MdExpressiveTheme extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, themeSheet);
   }
 
   connectedCallback() {
@@ -187,14 +198,9 @@ export class MdExpressiveTheme extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: contents;
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <slot></slot>
     `;
   }

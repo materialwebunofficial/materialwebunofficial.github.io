@@ -7,6 +7,51 @@
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md
  */
 
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: block;
+    outline: none;
+  }
+  :host([vertical]) {
+    display: inline-block;
+    height: 100%;
+    align-self: stretch;
+  }
+
+  .line {
+    height: 1px;
+    width: 100%;
+    border: 0;
+    background-color: var(--md-sys-color-outline-variant, #CAC4D0);
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  .line.inset {
+    margin-inline-start: 16px;
+    margin-inline-end: 16px;
+    width: auto;
+  }
+
+  .line.vertical {
+    width: 1px;
+    height: 100%;
+    min-height: 24px;
+  }
+  .line.vertical.inset {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-inline: 0;
+    height: calc(100% - 16px);
+  }
+`;
+
+const dividerSheet = createComponentSheet(defaultStyle);
+
 export class MdDivider extends HTMLElement {
   static get observedAttributes() {
     return ['inset', 'vertical', 'thickness', 'color'];
@@ -15,6 +60,7 @@ export class MdDivider extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, dividerSheet);
     this._rendered = false;
   }
 
@@ -79,47 +125,9 @@ export class MdDivider extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: block;
-          outline: none;
-        }
-        :host([vertical]) {
-          display: inline-block;
-          height: 100%;
-          align-self: stretch;
-        }
-
-        .line {
-          height: 1px;
-          width: 100%;
-          border: 0;
-          background-color: var(--md-sys-color-outline-variant, #CAC4D0);
-          margin: 0;
-          box-sizing: border-box;
-        }
-
-        .line.inset {
-          margin-inline-start: 16px;
-          margin-inline-end: 16px;
-          width: auto;
-        }
-
-        .line.vertical {
-          width: 1px;
-          height: 100%;
-          min-height: 24px;
-        }
-        .line.vertical.inset {
-          margin-top: 8px;
-          margin-bottom: 8px;
-          margin-inline: 0;
-          height: calc(100% - 16px);
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <hr class="line${this.inset ? ' inset' : ''}${this.vertical ? ' vertical' : ''}" aria-hidden="true">
     `;
   }

@@ -3,6 +3,111 @@
  * 80dp height, CornerNone, surface-container, elevation Level2. FAB ile hizalanır.
  */
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: block;
+    outline: none;
+    width: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .bar {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    height: 80px;                 /* ContainerHeight 80dp */
+    border-radius: 0;             /* CornerNone */
+    padding: 0 16px;
+    background-color: var(--md-sys-color-surface-container, #F3EDF7);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1 1 auto;
+  }
+
+  .fab {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+  }
+
+  .mat-sym {
+    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', system-ui, sans-serif;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  .icon-wrap {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+  .icon-wrap:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+  }
+  .icon-wrap:active {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 16%, transparent);
+  }
+  .icon-wrap:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: -2px;
+  }
+
+  .fab-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    color: var(--md-sys-color-on-primary-container, #21005D);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px rgba(0,0,0,0.2));
+    transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 150ms ease;
+  }
+  .fab-btn:hover {
+    box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px rgba(0,0,0,0.25));
+  }
+  .fab-btn:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+`;
+
+const bottomAppBarSheet = createComponentSheet(defaultStyle);
 
 export class MdBottomAppBar extends HTMLElement {
   static get observedAttributes() {
@@ -12,6 +117,7 @@ export class MdBottomAppBar extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, bottomAppBarSheet);
     this._rendered = false;
     this._abortController = null;
   }
@@ -51,8 +157,9 @@ export class MdBottomAppBar extends HTMLElement {
 
   render() {
     const justify = this.horizontalArrangement === 'start' ? 'flex-start' : (this.horizontalArrangement === 'center' ? 'center' : 'space-between');
+    const hasAdopted = !this.containerColor && !this.contentColor && this.horizontalArrangement === 'space-between' && !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
+      ${hasAdopted ? '' : `<style>
         :host {
           -webkit-tap-highlight-color: transparent;
           -webkit-touch-callout: none;
@@ -152,7 +259,7 @@ export class MdBottomAppBar extends HTMLElement {
           outline: 2px solid var(--md-sys-color-primary, #6750A4);
           outline-offset: 2px;
         }
-      </style>
+      </style>`}
       <footer class="bar" role="contentinfo">
         <div class="actions">
           <slot>

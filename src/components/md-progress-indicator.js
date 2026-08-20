@@ -14,6 +14,51 @@
  * 4. type="circular" variant="wavy"     (48dp size, 8-wave continuous sinusoid, 3dp amplitude, 4dp gap)
  */
 
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    display: inline-block;
+    vertical-align: middle;
+    outline: none;
+  }
+
+  :host([type="linear"]) {
+    display: block;
+    width: 100%;
+  }
+
+  .progress-root {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+
+  :host([type="linear"]) .progress-root {
+    display: block;
+    width: 100%;
+  }
+
+  canvas {
+    display: block;
+    width: 48px;
+    height: 48px;
+    pointer-events: none;
+  }
+
+  :host([type="linear"]) canvas {
+    width: 100%;
+  }
+`;
+
+const progressIndicatorSheet = createComponentSheet(defaultStyle);
+
 export class MdProgressIndicator extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -25,6 +70,7 @@ export class MdProgressIndicator extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, progressIndicatorSheet);
     this._rendered = false;
     this._rafId = null;
     this._startTime = 0;
@@ -655,53 +701,10 @@ export class MdProgressIndicator extends HTMLElement {
   }
 
   render() {
-    const isLinear = this.type === 'linear';
-    const isWavy = this.variant === 'wavy';
-    const w = this._getWidth();
-    const h = isLinear ? (isWavy ? 10 : 4) : 48;
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: inline-block;
-          vertical-align: middle;
-          outline: none;
-        }
-
-        :host([type="linear"]) {
-          display: block;
-          width: 100%;
-        }
-
-        .progress-root {
-          position: relative;
-          width: ${isLinear ? '100%' : `${w}px`};
-          height: ${h}px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          overflow: visible;
-        }
-
-        :host([type="linear"]) .progress-root {
-          display: block;
-          width: 100%;
-        }
-
-        canvas {
-          display: block;
-          width: ${isLinear ? '100%' : `${w}px`};
-          height: ${h}px;
-          pointer-events: none;
-        }
-
-        :host([type="linear"]) canvas {
-          width: 100%;
-        }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="progress-root" role="progressbar" aria-label="Progress indicator">
         <canvas></canvas>
       </div>

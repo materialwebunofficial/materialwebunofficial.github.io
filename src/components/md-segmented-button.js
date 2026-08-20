@@ -15,6 +15,122 @@
 
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    display: inline-flex;
+    outline: none;
+    vertical-align: middle;
+  }
+
+  .container {
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    min-height: 40px;
+    border-radius: 9999px;
+    border: 1px solid var(--md-sys-color-outline, #79747E);
+    box-sizing: border-box;
+    overflow: hidden;
+    background-color: transparent;
+  }
+
+  .segment {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
+    border: none;
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
+    font-size: var(--md-sys-typescale-label-large-size, 14px);
+    font-weight: var(--md-sys-typescale-label-large-weight, 500);
+    line-height: var(--md-sys-typescale-label-large-line-height, 20px);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    border-right: 1px solid var(--md-sys-color-outline, #79747E);
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
+      color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+    outline: none;
+  }
+  .segment:last-child {
+    border-right: none;
+  }
+  .segment:focus { outline: none; }
+  .segment:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: -2px;
+    z-index: 3;
+  }
+
+  .seg-content {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 100%;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .segment::after {
+    content: '';
+    position: absolute;
+    inset: calc((48px - 100%) / 2) 0;
+    pointer-events: auto;
+  }
+
+  .segment::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
+  }
+  .segment:hover:not(.disabled)::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
+  }
+  .segment:focus-visible:not(.disabled)::before {
+    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.12);
+  }
+  .segment.pressed:not(.disabled)::before {
+    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
+  }
+
+  .segment.selected {
+    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+    color: var(--md-sys-color-on-secondary-container, #1D192B);
+  }
+
+  .segment.disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .ico {
+    font-family: 'Material Symbols Outlined';
+    font-size: 18px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    pointer-events: none;
+  }
+`;
+
+const segmentedButtonSheet = createComponentSheet(defaultStyle);
 
 export class MdSegmentedButton extends HTMLElement {
   static get observedAttributes() {
@@ -24,6 +140,7 @@ export class MdSegmentedButton extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, segmentedButtonSheet);
     this._rendered = false;
     this._selectedIndices = new Set();
     this._abortController = null;
@@ -58,89 +175,92 @@ export class MdSegmentedButton extends HTMLElement {
     this._sync();
   }
 
-  _parseInitialAttributes() {
-    if (this.multiSelect && this.hasAttribute('selected-indices')) {
-      this._parseSelectedIndices();
-    }
-  }
-
-  _parseSelectedIndices() {
-    const raw = this.getAttribute('selected-indices');
-    if (!raw) return;
-    const parsed = safeJsonParse(raw, null);
-    if (Array.isArray(parsed)) {
-      this._selectedIndices = new Set(parsed.map(Number));
-    } else {
-      this._selectedIndices = new Set(
-        raw.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n))
-      );
-    }
-  }
-
   get selectedIndex() {
-    const v = parseInt(this.getAttribute('selected-index'), 10);
-    return isNaN(v) ? 0 : v;
+    const idx = parseInt(this.getAttribute('selected-index'), 10);
+    return isNaN(idx) ? 0 : idx;
   }
   set selectedIndex(val) {
     this.setAttribute('selected-index', String(val));
   }
 
-  get selected() { return this.selectedIndex; }
-  set selected(val) { this.selectedIndex = val; }
-
-  get checked() { return this.selectedIndex; }
-  set checked(val) { this.selectedIndex = val; }
-
-  get space() {
-    const s = parseFloat(this.getAttribute('space'));
-    return isNaN(s) || s < 0 ? 0 : s;
-  }
-  set space(val) {
-    if (val === null || val === undefined) this.removeAttribute('space');
-    else this.setAttribute('space', String(val));
-  }
-
-  get selectedIndices() {
-    return Array.from(this._selectedIndices);
-  }
-  set selectedIndices(val) {
-    if (Array.isArray(val)) {
-      this._selectedIndices = new Set(val.map(Number));
-    } else if (val instanceof Set) {
-      this._selectedIndices = new Set(val);
-    }
-    this._sync();
-  }
-
   get multiSelect() { return this.hasAttribute('multi-select'); }
+  set multiSelect(val) {
+    if (val) this.setAttribute('multi-select', '');
+    else this.removeAttribute('multi-select');
+  }
+
   get disabled() { return this.hasAttribute('disabled'); }
   set disabled(val) {
     if (val) this.setAttribute('disabled', '');
     else this.removeAttribute('disabled');
   }
 
+  get space() {
+    const s = parseInt(this.getAttribute('space'), 10);
+    return isNaN(s) ? 0 : s;
+  }
+  set space(val) {
+    this.setAttribute('space', String(val));
+  }
+
+  get checked() {
+    return this.selectedIndex;
+  }
+  set checked(val) {
+    this.selectedIndex = val;
+  }
+
+  get selected() {
+    return this.selectedIndex;
+  }
+  set selected(val) {
+    this.selectedIndex = val;
+  }
+
   get itemsList() {
     const raw = this.getAttribute('items');
-    if (!raw) return ['Day', 'Week', 'Month'];
-    const parsed = safeJsonParse(raw, null);
-    if (Array.isArray(parsed)) return parsed;
-    return raw.split(',').map(s => s.trim());
+    return safeJsonParse(raw, ['Segment 1', 'Segment 2']);
+  }
+
+  _parseInitialAttributes() {
+    if (this.multiSelect) {
+      this._parseSelectedIndices();
+    } else {
+      if (this.hasAttribute('selected') || this.hasAttribute('checked')) {
+        const val = parseInt(this.getAttribute('selected') || this.getAttribute('checked'), 10);
+        if (!isNaN(val)) this.selectedIndex = val;
+      }
+    }
+  }
+
+  _parseSelectedIndices() {
+    const raw = this.getAttribute('selected-indices');
+    const parsed = safeJsonParse(raw, []);
+    this._selectedIndices = new Set(Array.isArray(parsed) ? parsed : []);
   }
 
   _sync() {
     const segments = this.shadowRoot.querySelectorAll('.segment');
-    if (!segments.length) return;
-
-    if (!this.multiSelect) {
-      this._selectedIndices.clear();
-      this._selectedIndices.add(this.selectedIndex);
-    }
+    const isMulti = this.multiSelect;
+    const currentIdx = this.selectedIndex;
 
     segments.forEach((seg, idx) => {
-      const isSelected = this._selectedIndices.has(idx);
-      seg.className = `segment seg-btn${isSelected ? ' selected' : ''}${this.disabled ? ' disabled' : ''}`;
+      let isSelected = false;
+      if (isMulti) {
+        isSelected = this._selectedIndices.has(idx);
+      } else {
+        isSelected = (idx === currentIdx);
+      }
+
       seg.setAttribute('aria-checked', isSelected ? 'true' : 'false');
-      seg.setAttribute('tabindex', this.disabled ? '-1' : (isSelected ? '0' : '-1'));
+      seg.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
+      seg.tabIndex = this.disabled ? -1 : (isSelected || (!isMulti && currentIdx === 0 && idx === 0) ? 0 : -1);
+
+      if (isSelected) seg.classList.add('selected');
+      else seg.classList.remove('selected');
+
+      if (this.disabled) seg.classList.add('disabled');
+      else seg.classList.remove('disabled');
 
       const checkIco = seg.querySelector('.check-ico');
       const itemIco = seg.querySelector('.item-ico');
@@ -154,13 +274,14 @@ export class MdSegmentedButton extends HTMLElement {
   }
 
   _handleSegmentActivation(idx, seg) {
-    if (this.disabled) return;
     if (this.multiSelect) {
       if (this._selectedIndices.has(idx)) {
         this._selectedIndices.delete(idx);
       } else {
         this._selectedIndices.add(idx);
       }
+      this.setAttribute('selected-indices', JSON.stringify(Array.from(this._selectedIndices)));
+      this._sync();
       this.dispatchEvent(new CustomEvent('change', {
         detail: { selectedIndices: Array.from(this._selectedIndices) },
         bubbles: true,
@@ -168,8 +289,7 @@ export class MdSegmentedButton extends HTMLElement {
       }));
     } else {
       this.selectedIndex = idx;
-      this._selectedIndices.clear();
-      this._selectedIndices.add(idx);
+      this._sync();
       const rawItem = this.itemsList[idx];
       const label = typeof rawItem === 'object' && rawItem !== null ? (rawItem.label || rawItem.text) : rawItem;
       this.dispatchEvent(new CustomEvent('change', {
@@ -178,8 +298,6 @@ export class MdSegmentedButton extends HTMLElement {
         composed: true
       }));
     }
-    this._sync();
-    seg?.focus();
   }
 
   _setup() {
@@ -187,9 +305,7 @@ export class MdSegmentedButton extends HTMLElement {
     this._abortController = new AbortController();
     const { signal } = this._abortController;
 
-    const segments = this.shadowRoot.querySelectorAll('.segment');
-    if (!segments.length) return;
-
+    const segments = Array.from(this.shadowRoot.querySelectorAll('.segment'));
     segments.forEach((seg, idx) => {
       const content = seg.querySelector('.seg-content');
 
@@ -201,13 +317,11 @@ export class MdSegmentedButton extends HTMLElement {
         if (content) releaseScale(content, 0.92, 'expressiveSpatialMedium');
       };
 
-      // Native single click activation
-      seg.addEventListener('click', (e) => {
+      seg.addEventListener('click', () => {
         if (this.disabled) return;
         this._handleSegmentActivation(idx, seg);
       }, { signal });
 
-      // Spring press physics on inner content (no redundant onActivate)
       bindPress(seg, {
         disabled: () => this.disabled,
         onPress: press,
@@ -215,7 +329,6 @@ export class MdSegmentedButton extends HTMLElement {
         signal
       });
 
-      // Keyboard arrow navigation
       seg.addEventListener('keydown', (e) => {
         if (this.disabled) return;
         let targetIdx = idx;
@@ -229,15 +342,7 @@ export class MdSegmentedButton extends HTMLElement {
         e.preventDefault();
         segments[targetIdx]?.focus();
         if (!this.multiSelect) {
-          this.selectedIndex = targetIdx;
-          this._sync();
-          const rawItem = this.itemsList[targetIdx];
-          const label = typeof rawItem === 'object' && rawItem !== null ? (rawItem.label || rawItem.text) : rawItem;
-          this.dispatchEvent(new CustomEvent('change', {
-            detail: { selectedIndex: targetIdx, label },
-            bubbles: true,
-            composed: true
-          }));
+          this._handleSegmentActivation(targetIdx, segments[targetIdx]);
         }
       }, { signal });
     });
@@ -246,123 +351,11 @@ export class MdSegmentedButton extends HTMLElement {
   render() {
     const items = this.itemsList;
     const isMulti = this.multiSelect;
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: inline-flex;
-          outline: none;
-          vertical-align: middle;
-        }
-
-        .container {
-          display: inline-flex;
-          align-items: center;
-          height: 40px;
-          min-height: 40px;
-          border-radius: 9999px;
-          border: 1px solid var(--md-sys-color-outline, #79747E);
-          box-sizing: border-box;
-          overflow: hidden;
-          background-color: transparent;
-          gap: ${this.space}px;
-        }
-
-        .segment {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          padding: 0 16px;
-          box-sizing: border-box;
-          border: none;
-          background-color: transparent;
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-          font-size: var(--md-sys-typescale-label-large-size, 14px);
-          font-weight: var(--md-sys-typescale-label-large-weight, 500);
-          line-height: var(--md-sys-typescale-label-large-line-height, 20px);
-          cursor: pointer;
-          user-select: none;
-          -webkit-tap-highlight-color: transparent;
-          border-right: 1px solid var(--md-sys-color-outline, #79747E);
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-            color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-          outline: none;
-        }
-        .segment:last-child {
-          border-right: none;
-        }
-        .segment:focus { outline: none; }
-        .segment:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: -2px;
-          z-index: 3;
-        }
-
-        .seg-content {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          height: 100%;
-          pointer-events: none;
-          will-change: transform;
-        }
-
-        .segment::after {
-          content: '';
-          position: absolute;
-          inset: calc((48px - 100%) / 2) 0;
-          pointer-events: auto;
-        }
-
-        .segment::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: currentColor;
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-        }
-        .segment:hover:not(.disabled)::before {
-          opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-        }
-        .segment:focus-visible:not(.disabled)::before {
-          opacity: var(--md-sys-state-focus-state-layer-opacity, 0.12);
-        }
-        .segment.pressed:not(.disabled)::before {
-          opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
-        }
-
-        .segment.selected {
-          background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-          color: var(--md-sys-color-on-secondary-container, #1D192B);
-        }
-
-        .segment.disabled {
-          opacity: 0.38;
-          cursor: not-allowed;
-          pointer-events: none;
-        }
-
-        .ico {
-          font-family: 'Material Symbols Outlined';
-          font-size: 18px;
-          line-height: 1;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
-          pointer-events: none;
-        }
-      </style>
-
-      <div class="container" role="${isMulti ? 'group' : 'radiogroup'}">
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
+      <div class="container" role="${isMulti ? 'group' : 'radiogroup'}" style="${this.space ? `gap: ${this.space}px;` : ''}">
         ${items.map((item) => {
           const icon = typeof item === 'object' && item !== null ? item.icon : '';
           const label = typeof item === 'object' && item !== null ? (item.label || item.text || '') : String(item);

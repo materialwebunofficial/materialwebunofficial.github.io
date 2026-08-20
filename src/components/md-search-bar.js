@@ -6,6 +6,121 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; display: block; outline: none; position: relative; }
+  :host([disabled]) .bar { opacity: 0.38; cursor: not-allowed; }
+
+  .bar {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 56px;                    /* ContainerHeight 56dp */
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);  /* CornerFull */
+    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
+    cursor: text;
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
+      box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
+  }
+  .bar:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, var(--md-sys-color-surface-container-high, #ECE6F0)); }
+  .bar.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, var(--md-sys-color-surface-container-high, #ECE6F0)); }
+
+  .leading, .material-symbols-rounded, .material-symbols-outlined {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px; width: 24px; height: 24px; line-height: 24px;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    flex: 0 0 auto;
+  }
+  .trailing {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 48px; min-height: 48px;
+    border: none; background: transparent; cursor: pointer; outline: none;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .trailing:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454F) 8%, transparent); }
+  .trailing.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454F) 10%, transparent); }
+  .trailing:focus { outline: none; }
+  .trailing:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+
+  .input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    outline: none;
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+  }
+  .input:focus { outline: none; }
+  .input:focus-visible { outline: none; } /* ring lives on .bar */
+  .input::placeholder { color: var(--md-sys-color-on-surface-variant, #49454F); }
+  .input::-webkit-search-decoration,
+  .input::-webkit-search-cancel-button,
+  .input::-webkit-search-results-button,
+  .input::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+  .bar:focus-within {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+
+  /* Suggestions: listbox/option */
+  .suggestions {
+    position: absolute;
+    inset-inline: 0;
+    margin-top: 4px;
+    padding: 8px 0;
+    list-style: none;
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
+    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
+    z-index: 10;
+  }
+  .suggestions[hidden] { display: none; }
+  .option {
+    display: flex; align-items: center;
+    min-height: 48px;
+    padding: 0 16px;
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    cursor: pointer;
+    outline: none;
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
+      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .option:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
+  .option:focus { outline: none; }
+  .option:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: -3px;
+  }
+`;
+
+const searchBarSheet = createComponentSheet(defaultStyle);
 
 export class MdSearchBar extends HTMLElement {
   static get observedAttributes() {
@@ -18,6 +133,7 @@ export class MdSearchBar extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, searchBarSheet);
     this._rendered = false;
     this._abortController = null;
   }
@@ -87,119 +203,9 @@ export class MdSearchBar extends HTMLElement {
   }
 
   render() {
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      <style>
-
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none; display: block; outline: none; position: relative; }
-        :host([disabled]) .bar { opacity: 0.38; cursor: not-allowed; }
-
-        .bar {
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          height: 56px;                    /* ContainerHeight 56dp */
-          min-height: 48px;
-          padding: 0 16px;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);  /* CornerFull */
-          background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-          box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
-          cursor: text;
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-            box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
-        }
-        .bar:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, var(--md-sys-color-surface-container-high, #ECE6F0)); }
-        .bar.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, var(--md-sys-color-surface-container-high, #ECE6F0)); }
-
-        .leading, .material-symbols-rounded, .material-symbols-outlined {
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px; width: 24px; height: 24px; line-height: 24px;
-          display: inline-block;
-          white-space: nowrap;
-          word-wrap: normal;
-          direction: ltr;
-          -webkit-font-smoothing: antialiased;
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          flex: 0 0 auto;
-        }
-        .trailing {
-          display: inline-flex; align-items: center; justify-content: center;
-          min-width: 48px; min-height: 48px;
-          border: none; background: transparent; cursor: pointer; outline: none;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .trailing:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454F) 8%, transparent); }
-        .trailing.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454F) 10%, transparent); }
-        .trailing:focus { outline: none; }
-        .trailing:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-
-        .input {
-          flex: 1 1 auto;
-          min-width: 0;
-          border: none;
-          background: transparent;
-          outline: none;
-          font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-        }
-        .input:focus { outline: none; }
-        .input:focus-visible { outline: none; } /* ring lives on .bar */
-        .input::placeholder { color: var(--md-sys-color-on-surface-variant, #49454F); }
-        .input::-webkit-search-decoration,
-        .input::-webkit-search-cancel-button,
-        .input::-webkit-search-results-button,
-        .input::-webkit-search-results-decoration {
-          -webkit-appearance: none;
-          appearance: none;
-          display: none;
-        }
-        .bar:focus-within {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-
-        /* Suggestions: listbox/option */
-        .suggestions {
-          position: absolute;
-          inset-inline: 0;
-          margin-top: 4px;
-          padding: 8px 0;
-          list-style: none;
-          border-radius: var(--md-sys-shape-corner-extra-large, 28px);
-          background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-          box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
-          z-index: 10;
-        }
-        .suggestions[hidden] { display: none; }
-        .option {
-          display: flex; align-items: center;
-          min-height: 48px;
-          padding: 0 16px;
-          font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-          cursor: pointer;
-          outline: none;
-          transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-            var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-        .option:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
-        .option:focus { outline: none; }
-        .option:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: -3px;
-        }
-      </style>
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="wrapper" role="search">
         <div class="bar">
           <span class="leading material-symbols-rounded">search</span>

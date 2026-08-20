@@ -7,6 +7,184 @@
  */
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
+import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+
+const defaultStyle = `
+  :host {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    outline: none;
+    display: inline-block;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  :host([open]) {
+    z-index: 1000;
+  }
+
+  :host([fixed]) {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1000;
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background-color: var(--md-sys-color-scrim, #000);
+    opacity: 0.32;
+    z-index: 999;
+    display: none;
+  }
+  :host([fixed][open]) .scrim {
+    display: block;
+  }
+
+  .anchor {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    z-index: 1000;
+  }
+
+  :host([fixed]) .anchor {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+  }
+
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    position: absolute;
+    left: 0;
+    z-index: 1001;
+    pointer-events: auto;
+  }
+
+  .list.placement-top {
+    bottom: calc(100% + 8px);
+    top: auto;
+  }
+
+  .list.placement-bottom {
+    top: calc(100% + 8px);
+    bottom: auto;
+  }
+
+  :host([fixed]) .list {
+    align-items: flex-end;
+    left: auto;
+    right: 0;
+    bottom: calc(100% + 8px);
+    top: auto;
+  }
+
+  :host(:not([open])) .list {
+    display: none;
+  }
+
+  .item {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    min-height: 48px;
+    padding: 0 20px;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    color: var(--md-sys-color-on-primary-container, #21005D);
+    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
+    cursor: pointer;
+    outline: none;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: none;
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
+  }
+
+  :host([color="secondary"]) .item {
+    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+    color: var(--md-sys-color-on-secondary-container, #1D192B);
+  }
+  :host([color="tertiary"]) .item {
+    background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
+    color: var(--md-sys-color-on-tertiary-container, #31111D);
+  }
+  .item:hover { background-color: color-mix(in srgb, currentColor 8%, var(--md-sys-color-primary-container, #EADDFF)); }
+  .item.pressed:hover { background-color: color-mix(in srgb, currentColor 10%, var(--md-sys-color-primary-container, #EADDFF)); }
+  .item:focus { outline: none; }
+  .item:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+
+  .icon, .material-symbols-rounded, .material-symbols-outlined {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px; width: 24px; height: 24px; line-height: 24px;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Trigger / close FAB: 56x56dp CornerFull */
+  .fab {
+    box-sizing: border-box;
+    width: 56px; height: 56px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    background-color: var(--md-sys-color-primary, #6750A4);
+    color: var(--md-sys-color-on-primary, #FFFFFF);
+    cursor: pointer;
+    outline: none;
+    box-shadow: none;
+    transition:
+      background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
+      transform var(--md-sys-motion-duration-short2, 150ms) ease;
+  }
+
+  :host([color="secondary"]) .fab {
+    background-color: var(--md-sys-color-secondary, #625B71);
+    color: var(--md-sys-color-on-secondary, #FFFFFF);
+  }
+  :host([color="tertiary"]) .fab {
+    background-color: var(--md-sys-color-tertiary, #7D5260);
+    color: var(--md-sys-color-on-tertiary, #FFFFFF);
+  }
+  .fab:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-primary, #FFF) 8%, var(--md-sys-color-primary, #6750A4));
+    box-shadow: none;
+  }
+  .fab.pressed:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-primary, #FFF) 10%, var(--md-sys-color-primary, #6750A4));
+  }
+  .fab:focus { outline: none; }
+  .fab:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary, #6750A4);
+    outline-offset: 2px;
+  }
+  .fab .icon { font-size: 24px; width: 24px; height: 24px; line-height: 24px; }
+`;
+
+const fabMenuSheet = createComponentSheet(defaultStyle);
 
 export class MdFabMenu extends HTMLElement {
   static get observedAttributes() {
@@ -19,6 +197,7 @@ export class MdFabMenu extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    adoptSheet(this.shadowRoot, fabMenuSheet);
     this._rendered = false;
     this._onKeydown = this._onKeydown.bind(this);
     this._onDocClick = this._onDocClick.bind(this);
@@ -129,183 +308,10 @@ export class MdFabMenu extends HTMLElement {
     const isBottom = this.placement === 'bottom';
     const rawIcon = this.getAttribute('icon') || 'add';
     const iconName = this.open ? 'close' : rawIcon;
+    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
     this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          outline: none;
-          display: inline-block;
-          position: relative;
-          user-select: none;
-          -webkit-user-select: none;
-        }
-
-        :host([open]) {
-          z-index: 1000;
-        }
-
-        :host([fixed]) {
-          position: fixed;
-          right: 24px;
-          bottom: 24px;
-          z-index: 1000;
-        }
-
-        .scrim {
-          position: fixed;
-          inset: 0;
-          background-color: var(--md-sys-color-scrim, #000);
-          opacity: 0.32;
-          z-index: 999;
-          display: none;
-        }
-        :host([fixed][open]) .scrim {
-          display: block;
-        }
-
-        .anchor {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-          z-index: 1000;
-        }
-
-        :host([fixed]) .anchor {
-          align-items: flex-end;
-          flex-direction: column-reverse;
-        }
-
-        .list {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-          position: absolute;
-          left: 0;
-          z-index: 1001;
-          pointer-events: auto;
-        }
-
-        .list.placement-top {
-          bottom: calc(100% + 8px);
-          top: auto;
-        }
-
-        .list.placement-bottom {
-          top: calc(100% + 8px);
-          bottom: auto;
-        }
-
-        :host([fixed]) .list {
-          align-items: flex-end;
-          left: auto;
-          right: 0;
-          bottom: calc(100% + 8px);
-          top: auto;
-        }
-
-        :host(:not([open])) .list {
-          display: none;
-        }
-
-        .item {
-          box-sizing: border-box;
-          display: inline-flex;
-          align-items: center;
-          gap: 12px;
-          height: 56px;
-          min-height: 48px;
-          padding: 0 20px;
-          border: none;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          background-color: var(--md-sys-color-primary-container, #EADDFF);
-          color: var(--md-sys-color-on-primary-container, #21005D);
-          font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-          cursor: pointer;
-          outline: none;
-          white-space: nowrap;
-          user-select: none;
-          -webkit-user-select: none;
-          box-shadow: none;
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-        }
-
-        :host([color="secondary"]) .item {
-          background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-          color: var(--md-sys-color-on-secondary-container, #1D192B);
-        }
-        :host([color="tertiary"]) .item {
-          background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
-          color: var(--md-sys-color-on-tertiary-container, #31111D);
-        }
-        .item:hover { background-color: color-mix(in srgb, currentColor 8%, var(--md-sys-color-primary-container, #EADDFF)); }
-        .item.pressed:hover { background-color: color-mix(in srgb, currentColor 10%, var(--md-sys-color-primary-container, #EADDFF)); }
-        .item:focus { outline: none; }
-        .item:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-
-        .icon, .material-symbols-rounded, .material-symbols-outlined {
-          font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px; width: 24px; height: 24px; line-height: 24px;
-          display: inline-block;
-          white-space: nowrap;
-          word-wrap: normal;
-          direction: ltr;
-          -webkit-font-smoothing: antialiased;
-        }
-
-        /* Trigger / close FAB: 56x56dp CornerFull */
-        .fab {
-          box-sizing: border-box;
-          width: 56px; height: 56px;
-          display: inline-flex; align-items: center; justify-content: center;
-          border: none;
-          border-radius: var(--md-sys-shape-corner-full, 9999px);
-          background-color: var(--md-sys-color-primary, #6750A4);
-          color: var(--md-sys-color-on-primary, #FFFFFF);
-          cursor: pointer;
-          outline: none;
-          box-shadow: none;
-          transition:
-            background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-            transform var(--md-sys-motion-duration-short2, 150ms) ease;
-        }
-
-        :host([color="secondary"]) .fab {
-          background-color: var(--md-sys-color-secondary, #625B71);
-          color: var(--md-sys-color-on-secondary, #FFFFFF);
-        }
-        :host([color="tertiary"]) .fab {
-          background-color: var(--md-sys-color-tertiary, #7D5260);
-          color: var(--md-sys-color-on-tertiary, #FFFFFF);
-        }
-        .fab:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-primary, #FFF) 8%, var(--md-sys-color-primary, #6750A4));
-          box-shadow: none;
-        }
-        .fab.pressed:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-primary, #FFF) 10%, var(--md-sys-color-primary, #6750A4));
-        }
-        .fab:focus { outline: none; }
-        .fab:focus-visible {
-          outline: 3px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-        .fab .icon { font-size: 24px; width: 24px; height: 24px; line-height: 24px; }
-      </style>
-
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="scrim" part="scrim"></div>
       <div class="anchor">
         <button class="fab" type="button" aria-haspopup="true" aria-expanded="${this.open ? 'true' : 'false'}"
