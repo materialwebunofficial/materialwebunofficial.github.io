@@ -445,5 +445,9 @@ export class MdListItem extends HTMLElement {
   }
 }
 
-customElements.define('md-list', MdList);
-customElements.define('md-list-item', MdListItem);
+if (!customElements.get('md-list')) {
+  customElements.define('md-list', MdList);
+}
+if (!customElements.get('md-list-item')) {
+  customElements.define('md-list-item', MdListItem);
+}

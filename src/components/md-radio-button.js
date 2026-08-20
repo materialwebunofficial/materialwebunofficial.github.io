@@ -281,4 +281,6 @@ export class MdRadioButton extends HTMLElement {
   }
 }
 
-customElements.define('md-radio-button', MdRadioButton);
+if (!customElements.get('md-radio-button')) {
+  customElements.define('md-radio-button', MdRadioButton);
+}

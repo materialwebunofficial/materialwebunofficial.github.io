@@ -4,7 +4,6 @@
  */
 
 import { SpringPhysics } from './motion/spring-physics.js';
-import { MdExpressiveTheme } from './index.js';
 import { applyDynamicTheme, rgbToHct, hexToRgb, hctToHex } from './theme/hct-color-engine.js';
 
 const STORAGE_KEYS = {

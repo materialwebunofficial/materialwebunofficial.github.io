@@ -326,4 +326,6 @@ export class MdSplitButton extends HTMLElement {
   }
 }
 
-customElements.define('md-split-button', MdSplitButton);
+if (!customElements.get('md-split-button')) {
+  customElements.define('md-split-button', MdSplitButton);
+}

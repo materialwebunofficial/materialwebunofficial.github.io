@@ -139,4 +139,6 @@ export class MdBadge extends HTMLElement {
   }
 }
 
-customElements.define('md-badge', MdBadge);
+if (!customElements.get('md-badge')) {
+  customElements.define('md-badge', MdBadge);
+}

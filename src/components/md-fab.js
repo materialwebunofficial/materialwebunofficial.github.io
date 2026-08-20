@@ -260,4 +260,6 @@ export class MdFab extends HTMLElement {
   }
 }
 
-customElements.define('md-fab', MdFab);
+if (!customElements.get('md-fab')) {
+  customElements.define('md-fab', MdFab);
+}

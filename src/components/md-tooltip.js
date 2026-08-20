@@ -312,4 +312,6 @@ export class MdTooltip extends HTMLElement {
   }
 }
 
-customElements.define('md-tooltip', MdTooltip);
+if (!customElements.get('md-tooltip')) {
+  customElements.define('md-tooltip', MdTooltip);
+}

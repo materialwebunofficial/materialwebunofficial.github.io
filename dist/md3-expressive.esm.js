@@ -965,7 +965,9 @@ var MdSplitButton = class extends HTMLElement {
     `;
   }
 };
-customElements.define("md-split-button", MdSplitButton);
+if (!customElements.get("md-split-button")) {
+  customElements.define("md-split-button", MdSplitButton);
+}
 
 // src/components/md-icon-button.js
 var defaultStyle3 = `
@@ -1533,7 +1535,9 @@ var MdFab = class extends HTMLElement {
     `;
   }
 };
-customElements.define("md-fab", MdFab);
+if (!customElements.get("md-fab")) {
+  customElements.define("md-fab", MdFab);
+}
 
 // src/components/md-card.js
 var defaultStyle5 = `
@@ -2656,7 +2660,9 @@ var MdSlider = class extends HTMLElement {
     `;
   }
 };
-customElements.define("md-slider", MdSlider);
+if (!customElements.get("md-slider")) {
+  customElements.define("md-slider", MdSlider);
+}
 
 // src/components/md-switch.js
 var defaultStyle8 = `
@@ -2954,7 +2960,9 @@ var MdSwitch = class extends HTMLElement {
     `;
   }
 };
-customElements.define("md-switch", MdSwitch);
+if (!customElements.get("md-switch")) {
+  customElements.define("md-switch", MdSwitch);
+}
 
 // src/components/md-text-field.js
 var defaultStyle9 = `
@@ -3792,7 +3800,9 @@ var MdCheckbox = class extends HTMLElement {
     `;
   }
 };
-customElements.define("md-checkbox", MdCheckbox);
+if (!customElements.get("md-checkbox")) {
+  customElements.define("md-checkbox", MdCheckbox);
+}
 
 // src/components/md-radio-button.js
 var defaultStyle11 = `
@@ -4052,7 +4062,9 @@ var MdRadioButton = class extends HTMLElement {
     `;
   }
 };
-customElements.define("md-radio-button", MdRadioButton);
+if (!customElements.get("md-radio-button")) {
+  customElements.define("md-radio-button", MdRadioButton);
+}
 
 // src/components/md-progress-indicator.js
 var defaultStyle12 = `
@@ -5994,7 +6006,9 @@ var MdTooltip = class extends HTMLElement {
     this._sync();
   }
 };
-customElements.define("md-tooltip", MdTooltip);
+if (!customElements.get("md-tooltip")) {
+  customElements.define("md-tooltip", MdTooltip);
+}
 
 // src/components/md-badge.js
 var defaultStyle17 = `
@@ -6116,7 +6130,9 @@ var MdBadge = class extends HTMLElement {
     `;
   }
 };
-customElements.define("md-badge", MdBadge);
+if (!customElements.get("md-badge")) {
+  customElements.define("md-badge", MdBadge);
+}
 
 // src/components/md-top-app-bar.js
 var defaultStyle18 = `
@@ -8459,7 +8475,9 @@ var MdDivider = class extends HTMLElement {
     `;
   }
 };
-customElements.define("md-divider", MdDivider);
+if (!customElements.get("md-divider")) {
+  customElements.define("md-divider", MdDivider);
+}
 
 // src/components/md-carousel.js
 var defaultStyle26 = `
@@ -11230,8 +11248,12 @@ var MdListItem = class extends HTMLElement {
     this._sync();
   }
 };
-customElements.define("md-list", MdList);
-customElements.define("md-list-item", MdListItem);
+if (!customElements.get("md-list")) {
+  customElements.define("md-list", MdList);
+}
+if (!customElements.get("md-list-item")) {
+  customElements.define("md-list-item", MdListItem);
+}
 
 // src/components/md-menu.js
 var defaultStyle29 = `

@@ -319,4 +319,6 @@ export class MdSwitch extends HTMLElement {
   }
 }
 
-customElements.define('md-switch', MdSwitch);
+if (!customElements.get('md-switch')) {
+  customElements.define('md-switch', MdSwitch);
+}

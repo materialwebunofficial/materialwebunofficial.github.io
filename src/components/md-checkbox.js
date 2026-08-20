@@ -333,4 +333,6 @@ export class MdCheckbox extends HTMLElement {
   }
 }
 
-customElements.define('md-checkbox', MdCheckbox);
+if (!customElements.get('md-checkbox')) {
+  customElements.define('md-checkbox', MdCheckbox);
+}

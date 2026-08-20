@@ -133,4 +133,6 @@ export class MdDivider extends HTMLElement {
   }
 }
 
-customElements.define('md-divider', MdDivider);
+if (!customElements.get('md-divider')) {
+  customElements.define('md-divider', MdDivider);
+}

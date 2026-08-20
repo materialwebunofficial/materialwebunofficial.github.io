@@ -519,4 +519,6 @@ export class MdSlider extends HTMLElement {
   }
 }
 
-customElements.define('md-slider', MdSlider);
+if (!customElements.get('md-slider')) {
+  customElements.define('md-slider', MdSlider);
+}
