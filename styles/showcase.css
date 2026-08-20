@@ -1824,6 +1824,16 @@ md-fab-menu[open] {
   box-sizing: border-box;
 }
 
+.comp-preview:has(md-menu[open]),
+.comp-preview:has(md-split-button[open]),
+.comp-preview:has(md-fab-menu[open]),
+.comp-card:has(md-menu[open]),
+.comp-card:has(md-split-button[open]),
+.comp-card:has(md-fab-menu[open]) {
+  overflow: visible !important;
+  z-index: 100;
+}
+
 .comp-preview:has(md-date-picker[inline]),
 .comp-preview:has(md-time-picker[inline]) {
   padding: 16px 8px;
