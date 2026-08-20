@@ -48,7 +48,7 @@
     "build": "node scripts/build.js",
     "prepack": "npm run build",
     "start": "npx serve .",
-    "test": "node scripts/verify-tokens.js && node scripts/test-all-components.js && node scripts/test-audit-security-fixes.js && node scripts/test-npm-bundle.js"
+    "test": "node test/unit/tokens.test.js && node test/unit/components.test.js && node test/unit/security.test.js && node test/unit/theme.test.js"
   },
   "keywords": [
     "material-design-3",
