@@ -795,12 +795,18 @@ export class MdTimePicker extends HTMLElement {
     const hourValEl = this.shadowRoot.querySelector('#hour-val');
     const minValEl = this.shadowRoot.querySelector('#min-val');
 
-    if (hourCard && minCard) {
+    const hh = String(this.state.hours).padStart(2, '0');
+    const mm = String(this.state.minutes).padStart(2, '0');
+    if (hourCard) {
       hourCard.classList.toggle('active', isHours);
-      minCard.classList.toggle('active', !isHours);
+      hourCard.setAttribute('aria-label', `Hour ${hh}`);
     }
-    if (hourValEl) hourValEl.textContent = String(this.state.hours).padStart(2, '0');
-    if (minValEl) minValEl.textContent = String(this.state.minutes).padStart(2, '0');
+    if (minCard) {
+      minCard.classList.toggle('active', !isHours);
+      minCard.setAttribute('aria-label', `Minute ${mm}`);
+    }
+    if (hourValEl) hourValEl.textContent = hh;
+    if (minValEl) minValEl.textContent = mm;
 
     // Update Input Textboxes if in input mode
     const hourInput = this.shadowRoot.querySelector('#hour-input');
@@ -916,11 +922,11 @@ export class MdTimePicker extends HTMLElement {
                   <span class="input-sublabel">Minute</span>
                 </div>
               ` : `
-                <button class="time-card active" id="hour-card" type="button" aria-label="Select hour">
+                <button class="time-card active" id="hour-card" type="button" aria-label="Hour ${hh}">
                   <span class="time-val" id="hour-val">${hh}</span>
                 </button>
                 <div class="time-separator">:</div>
-                <button class="time-card" id="min-card" type="button" aria-label="Select minute">
+                <button class="time-card" id="min-card" type="button" aria-label="Minute ${mm}">
                   <span class="time-val" id="min-val">${mm}</span>
                 </button>
               `}

@@ -6033,7 +6033,7 @@ var defaultStyle17 = `
   .badge {
     box-sizing: border-box;
     background-color: var(--md-sys-color-error, #B3261E);
-    color: #FFFFFF !important;
+    color: var(--md-sys-color-on-error, #FFFFFF);
     border-radius: 9999px;
     display: flex;
     align-items: center;
@@ -6044,7 +6044,8 @@ var defaultStyle17 = `
     pointer-events: none;
     font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
     font-size: var(--md-sys-typescale-label-small-size, 11px);
-    font-weight: 700;
+    font-weight: var(--md-sys-typescale-label-small-weight, 500);
+    letter-spacing: var(--md-sys-typescale-label-small-tracking, 0.5px);
     line-height: 1;
     user-select: none;
   }
@@ -8882,7 +8883,7 @@ var MdCarousel = class extends HTMLElement {
               role="option"
               aria-selected="${idx === 0 ? "true" : "false"}"
               tabindex="0"
-              aria-label="${escapeHtml(it.title || "")} - ${escapeHtml(it.subtitle || "")}">
+              aria-label="${it.badge ? `${escapeHtml(it.badge)} - ` : ""}${escapeHtml(it.title || "")} - ${escapeHtml(it.subtitle || "")}">
               <div class="card-bg" style="background-color: ${escapeHtml(it.bg || "#333")}; ${it.image ? `background-image: url('${escapeHtml(it.image)}');` : ""}"></div>
               <div class="card-overlay"></div>
               <div class="card-content">
@@ -10650,12 +10651,18 @@ var MdTimePicker = class extends HTMLElement {
     const minCard = this.shadowRoot.querySelector("#min-card");
     const hourValEl = this.shadowRoot.querySelector("#hour-val");
     const minValEl = this.shadowRoot.querySelector("#min-val");
-    if (hourCard && minCard) {
+    const hh = String(this.state.hours).padStart(2, "0");
+    const mm = String(this.state.minutes).padStart(2, "0");
+    if (hourCard) {
       hourCard.classList.toggle("active", isHours);
-      minCard.classList.toggle("active", !isHours);
+      hourCard.setAttribute("aria-label", `Hour ${hh}`);
     }
-    if (hourValEl) hourValEl.textContent = String(this.state.hours).padStart(2, "0");
-    if (minValEl) minValEl.textContent = String(this.state.minutes).padStart(2, "0");
+    if (minCard) {
+      minCard.classList.toggle("active", !isHours);
+      minCard.setAttribute("aria-label", `Minute ${mm}`);
+    }
+    if (hourValEl) hourValEl.textContent = hh;
+    if (minValEl) minValEl.textContent = mm;
     const hourInput = this.shadowRoot.querySelector("#hour-input");
     const minInput = this.shadowRoot.querySelector("#min-input");
     if (hourInput && hourInput !== this.shadowRoot.activeElement) {
@@ -10752,11 +10759,11 @@ var MdTimePicker = class extends HTMLElement {
                   <span class="input-sublabel">Minute</span>
                 </div>
               ` : `
-                <button class="time-card active" id="hour-card" type="button" aria-label="Select hour">
+                <button class="time-card active" id="hour-card" type="button" aria-label="Hour ${hh}">
                   <span class="time-val" id="hour-val">${hh}</span>
                 </button>
                 <div class="time-separator">:</div>
-                <button class="time-card" id="min-card" type="button" aria-label="Select minute">
+                <button class="time-card" id="min-card" type="button" aria-label="Minute ${mm}">
                   <span class="time-val" id="min-val">${mm}</span>
                 </button>
               `}

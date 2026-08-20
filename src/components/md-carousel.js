@@ -424,7 +424,7 @@ export class MdCarousel extends HTMLElement {
               role="option"
               aria-selected="${idx === 0 ? 'true' : 'false'}"
               tabindex="0"
-              aria-label="${escapeHtml(it.title || '')} - ${escapeHtml(it.subtitle || '')}">
+              aria-label="${it.badge ? `${escapeHtml(it.badge)} - ` : ''}${escapeHtml(it.title || '')} - ${escapeHtml(it.subtitle || '')}">
               <div class="card-bg" style="background-color: ${escapeHtml(it.bg || '#333')}; ${it.image ? `background-image: url('${escapeHtml(it.image)}');` : ''}"></div>
               <div class="card-overlay"></div>
               <div class="card-content">

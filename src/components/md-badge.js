@@ -24,7 +24,7 @@ const defaultStyle = `
   .badge {
     box-sizing: border-box;
     background-color: var(--md-sys-color-error, #B3261E);
-    color: #FFFFFF !important;
+    color: var(--md-sys-color-on-error, #FFFFFF);
     border-radius: 9999px;
     display: flex;
     align-items: center;
@@ -35,7 +35,8 @@ const defaultStyle = `
     pointer-events: none;
     font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
     font-size: var(--md-sys-typescale-label-small-size, 11px);
-    font-weight: 700;
+    font-weight: var(--md-sys-typescale-label-small-weight, 500);
+    letter-spacing: var(--md-sys-typescale-label-small-tracking, 0.5px);
     line-height: 1;
     user-select: none;
   }
