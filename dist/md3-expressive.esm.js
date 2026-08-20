@@ -2515,6 +2515,7 @@ var MdSlider = class extends HTMLElement {
     root.setAttribute("aria-valuenow", String(this.value));
     root.setAttribute("aria-valuemin", String(this.min));
     root.setAttribute("aria-valuemax", String(this.max));
+    root.setAttribute("aria-label", this.getAttribute("aria-label") || this.getAttribute("label") || "Slider");
     this._renderStops();
   }
   _renderStops() {
@@ -2651,7 +2652,7 @@ var MdSlider = class extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle7}</style>`}
-      <div class="slider-root" role="slider" tabindex="0" aria-orientation="horizontal">
+      <div class="slider-root" role="slider" tabindex="0" aria-orientation="horizontal" aria-label="Slider">
         <div class="track-box">
           <div class="active-track"></div>
           <div class="stops"></div>
@@ -2904,6 +2905,7 @@ var MdSwitch = class extends HTMLElement {
     if (!root || !track) return;
     root.setAttribute("aria-checked", isChecked ? "true" : "false");
     root.setAttribute("aria-disabled", isDisabled ? "true" : "false");
+    root.setAttribute("aria-label", this.getAttribute("aria-label") || this.getAttribute("label") || "Switch");
     root.tabIndex = isDisabled ? -1 : 0;
     if (isDisabled) root.classList.add("disabled");
     else root.classList.remove("disabled");
@@ -2950,7 +2952,7 @@ var MdSwitch = class extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle8}</style>`}
-      <div class="switch-root" role="switch" tabindex="0" aria-checked="false">
+      <div class="switch-root" role="switch" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute("aria-label") || this.getAttribute("label") || "Switch")}">
         <div class="track">
           <div class="handle-container">
             <div class="state-layer"></div>
@@ -3754,6 +3756,7 @@ var MdCheckbox = class extends HTMLElement {
     } else {
       root.setAttribute("aria-checked", this.checked ? "true" : "false");
     }
+    root.setAttribute("aria-label", this.getAttribute("aria-label") || this.getAttribute("label") || "Checkbox");
   }
   _setup() {
     this._abortController?.abort();
@@ -3793,7 +3796,7 @@ var MdCheckbox = class extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle10}</style>`}
-      <div class="chk-root" role="checkbox" tabindex="0" aria-checked="false">
+      <div class="chk-root" role="checkbox" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute("aria-label") || this.getAttribute("label") || "Checkbox")}">
         <div class="box">
           <svg viewBox="0 0 18 18" aria-hidden="true">
             <path class="mark-check" d="M 4 9.5 L 7.5 13 L 14 5"></path>
@@ -4001,6 +4004,7 @@ var MdRadioButton = class extends HTMLElement {
     if (!root || !ring) return;
     root.setAttribute("aria-checked", isChecked ? "true" : "false");
     root.setAttribute("aria-disabled", isDisabled ? "true" : "false");
+    root.setAttribute("aria-label", this.getAttribute("aria-label") || this.getAttribute("label") || this.getAttribute("value") || "Radio button");
     root.tabIndex = isDisabled ? -1 : 0;
     if (isDisabled) root.classList.add("disabled");
     else root.classList.remove("disabled");
@@ -4058,7 +4062,7 @@ var MdRadioButton = class extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle11}</style>`}
-      <div class="radio-root" role="radio" tabindex="0" aria-checked="false">
+      <div class="radio-root" role="radio" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute("aria-label") || this.getAttribute("label") || this.getAttribute("value") || "Radio button")}">
         <div class="ring">
           <div class="dot"></div>
         </div>
@@ -6029,7 +6033,7 @@ var defaultStyle17 = `
   .badge {
     box-sizing: border-box;
     background-color: var(--md-sys-color-error, #B3261E);
-    color: var(--md-sys-color-on-error, #FFFFFF);
+    color: #FFFFFF !important;
     border-radius: 9999px;
     display: flex;
     align-items: center;
@@ -6040,7 +6044,7 @@ var defaultStyle17 = `
     pointer-events: none;
     font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
     font-size: var(--md-sys-typescale-label-small-size, 11px);
-    font-weight: var(--md-sys-typescale-label-small-weight, 500);
+    font-weight: 700;
     line-height: 1;
     user-select: none;
   }
@@ -10776,7 +10780,7 @@ var MdTimePicker = class extends HTMLElement {
           <!-- Clock Dial (Rendered in Dial Mode) -->
           ${!isInputMode ? `
             <div class="dial-section">
-              <div class="clock-face" role="slider" aria-label="Clock Dial" aria-valuemin="0" aria-valuemax="59">
+              <div class="clock-face" role="region" aria-label="Clock Dial">
                 <div class="dial-center-dot"></div>
                 <div class="clock-arm" id="clock-arm">
                   <div class="clock-hand-line"></div>
@@ -10871,7 +10875,7 @@ var MdList = class extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${listDefaultStyle}</style>`}
-      <div class="list ${escapeHtml(this.variant)}" role="list">
+      <div class="list ${escapeHtml(this.variant)}" role="group" aria-label="${escapeHtml(this.getAttribute("aria-label") || "List")}">
         <slot></slot>
       </div>
     `;

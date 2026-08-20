@@ -13,6 +13,7 @@
  */
 
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { escapeHtml } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
 const defaultStyle = `
@@ -204,6 +205,7 @@ export class MdRadioButton extends HTMLElement {
 
     root.setAttribute('aria-checked', isChecked ? 'true' : 'false');
     root.setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
+    root.setAttribute('aria-label', this.getAttribute('aria-label') || this.getAttribute('label') || this.getAttribute('value') || 'Radio button');
     root.tabIndex = isDisabled ? -1 : 0;
 
     if (isDisabled) root.classList.add('disabled');
@@ -272,7 +274,7 @@ export class MdRadioButton extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="radio-root" role="radio" tabindex="0" aria-checked="false">
+      <div class="radio-root" role="radio" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute('aria-label') || this.getAttribute('label') || this.getAttribute('value') || 'Radio button')}">
         <div class="ring">
           <div class="dot"></div>
         </div>

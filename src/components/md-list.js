@@ -80,7 +80,7 @@ export class MdList extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${listDefaultStyle}</style>`}
-      <div class="list ${escapeHtml(this.variant)}" role="list">
+      <div class="list ${escapeHtml(this.variant)}" role="group" aria-label="${escapeHtml(this.getAttribute('aria-label') || 'List')}">
         <slot></slot>
       </div>
     `;

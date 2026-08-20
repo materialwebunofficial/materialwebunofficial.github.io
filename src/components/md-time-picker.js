@@ -944,7 +944,7 @@ export class MdTimePicker extends HTMLElement {
           <!-- Clock Dial (Rendered in Dial Mode) -->
           ${!isInputMode ? `
             <div class="dial-section">
-              <div class="clock-face" role="slider" aria-label="Clock Dial" aria-valuemin="0" aria-valuemax="59">
+              <div class="clock-face" role="region" aria-label="Clock Dial">
                 <div class="dial-center-dot"></div>
                 <div class="clock-arm" id="clock-arm">
                   <div class="clock-hand-line"></div>

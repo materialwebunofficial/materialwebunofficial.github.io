@@ -2342,12 +2342,14 @@ md-fab-menu[open] {
   gap: 10px;
 }
 
-.token-chip {
+.token-chip,
+.tokens-chips-grid .token-chip {
   height: 42px;
   padding: 0 12px;
   border-radius: var(--md-sys-shape-corner-full, 21px);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.2px;
   text-shadow: 0 0 1px rgba(0, 0, 0, 0.2);
   font-family: inherit;
   display: flex;

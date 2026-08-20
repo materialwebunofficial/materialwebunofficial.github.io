@@ -249,6 +249,7 @@ export class MdSwitch extends HTMLElement {
 
     root.setAttribute('aria-checked', isChecked ? 'true' : 'false');
     root.setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
+    root.setAttribute('aria-label', this.getAttribute('aria-label') || this.getAttribute('label') || 'Switch');
     root.tabIndex = isDisabled ? -1 : 0;
 
     if (isDisabled) root.classList.add('disabled');
@@ -305,7 +306,7 @@ export class MdSwitch extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="switch-root" role="switch" tabindex="0" aria-checked="false">
+      <div class="switch-root" role="switch" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute('aria-label') || this.getAttribute('label') || 'Switch')}">
         <div class="track">
           <div class="handle-container">
             <div class="state-layer"></div>

@@ -351,6 +351,7 @@ export class MdSlider extends HTMLElement {
     root.setAttribute('aria-valuenow', String(this.value));
     root.setAttribute('aria-valuemin', String(this.min));
     root.setAttribute('aria-valuemax', String(this.max));
+    root.setAttribute('aria-label', this.getAttribute('aria-label') || this.getAttribute('label') || 'Slider');
 
     this._renderStops();
   }
@@ -506,7 +507,7 @@ export class MdSlider extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="slider-root" role="slider" tabindex="0" aria-orientation="horizontal">
+      <div class="slider-root" role="slider" tabindex="0" aria-orientation="horizontal" aria-label="Slider">
         <div class="track-box">
           <div class="active-track"></div>
           <div class="stops"></div>

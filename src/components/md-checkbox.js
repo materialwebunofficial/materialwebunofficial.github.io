@@ -13,6 +13,7 @@
  */
 
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { escapeHtml } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
 const defaultStyle = `
@@ -275,6 +276,7 @@ export class MdCheckbox extends HTMLElement {
     } else {
       root.setAttribute('aria-checked', this.checked ? 'true' : 'false');
     }
+    root.setAttribute('aria-label', this.getAttribute('aria-label') || this.getAttribute('label') || 'Checkbox');
   }
 
   _setup() {
@@ -321,7 +323,7 @@ export class MdCheckbox extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="chk-root" role="checkbox" tabindex="0" aria-checked="false">
+      <div class="chk-root" role="checkbox" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute('aria-label') || this.getAttribute('label') || 'Checkbox')}">
         <div class="box">
           <svg viewBox="0 0 18 18" aria-hidden="true">
             <path class="mark-check" d="M 4 9.5 L 7.5 13 L 14 5"></path>
