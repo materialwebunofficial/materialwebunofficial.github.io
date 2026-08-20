@@ -1,6 +1,6 @@
 {
   "name": "@materialwebunofficial/md3e-web",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Unofficial Web Adaptation of Material Design 3 Expressive (M3 Expressive) - Web Components, Design Tokens, Spring Physics, and HCT Dynamic Theme Engine",
   "type": "module",
   "main": "./dist/md3-expressive.esm.js",
