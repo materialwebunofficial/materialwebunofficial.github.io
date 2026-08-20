@@ -221,6 +221,8 @@ export class MdFab extends HTMLElement {
     if (this.contentColor) fab.style.color = this.contentColor;
     const iconEl = fab.querySelector('.material-symbols-outlined');
     if (iconEl) iconEl.style.fontSize = `${d.icon}px`;
+    const fabAriaLabel = this.getAttribute('aria-label') || (isExt && this.label ? (this.icon ? `${this.icon} ${this.label}` : this.label) : (this.label || this.icon || 'Floating action button'));
+    fab.setAttribute('aria-label', fabAriaLabel);
     fab.disabled = this.disabled;
     fab.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
     fab.setAttribute('tabindex', this.disabled ? '-1' : '0');
@@ -246,12 +248,13 @@ export class MdFab extends HTMLElement {
     const isExt = this.isExtended;
     const c = this.color;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+    const fabAriaLabel = this.getAttribute('aria-label') || (isExt && this.label ? (this.icon ? `${this.icon} ${this.label}` : this.label) : (this.label || this.icon || 'Floating action button'));
 
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <button class="fab ${escapeHtml(c)} ${escapeHtml(this.variant)}${isExt ? ' extended' : ''}" ${this.disabled ? 'disabled' : ''}
         tabindex="${this.disabled ? -1 : 0}" role="button"
-        aria-label="${escapeHtml(this.getAttribute('aria-label') || this.icon)}"
+        aria-label="${escapeHtml(fabAriaLabel)}"
         aria-disabled="${this.disabled}">
         <span class="material-symbols-outlined" aria-hidden="true">${escapeHtml(this.icon)}</span>
         ${isExt && this.label ? `<span class="lbl">${escapeHtml(this.label)}</span>` : ''}

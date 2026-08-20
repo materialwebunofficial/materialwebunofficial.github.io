@@ -218,8 +218,34 @@ export function initShowcase() {
     }
   }
 
-  // Set initial active tab
-  document.body.setAttribute('data-active-tab', 'home');
+  // Set initial active tab synchronously from URL hash (prevents CLS)
+  const initialHash = (window.location.hash || '').replace('#', '').trim();
+  let initialTab = 'home';
+  if (initialHash === 'components' || initialHash === 'overview' || document.getElementById(initialHash)) {
+    initialTab = 'components';
+  } else if (initialHash === 'get-started' || initialHash === 'getstarted') {
+    initialTab = 'get-started';
+  }
+
+  document.body.setAttribute('data-active-tab', initialTab);
+  if (initialTab === 'components') {
+    document.body.classList.remove('drawer-collapsed');
+  } else {
+    document.body.classList.add('drawer-collapsed');
+  }
+
+  tabViews.forEach(view => {
+    view.classList.toggle('active', view.id === `tab-view-${initialTab}`);
+  });
+  railItems.forEach(item => {
+    item.classList.toggle('active', item.dataset.tab === initialTab);
+  });
+  mobileNavItems.forEach(item => {
+    item.classList.toggle('active', item.dataset.tab === initialTab);
+  });
+  drawerDestItems.forEach(item => {
+    item.classList.toggle('active', item.dataset.tab === initialTab);
+  });
 
 
   railItems.forEach(item => {
@@ -325,10 +351,7 @@ export function initShowcase() {
     }
 
     // Any other section anchor (e.g. #tabs, #segmented-buttons, #chips, #buttons, etc.)
-    switchTab('components', false, false);
-    setTimeout(() => {
-      navigateToSection(rawHash, false);
-    }, 60);
+    navigateToSection(rawHash, false);
   }
 
   window.addEventListener('hashchange', handleRouteFromHash);

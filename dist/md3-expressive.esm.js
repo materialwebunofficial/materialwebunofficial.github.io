@@ -1502,6 +1502,8 @@ var MdFab = class extends HTMLElement {
     if (this.contentColor) fab.style.color = this.contentColor;
     const iconEl = fab.querySelector(".material-symbols-outlined");
     if (iconEl) iconEl.style.fontSize = `${d.icon}px`;
+    const fabAriaLabel = this.getAttribute("aria-label") || (isExt && this.label ? this.icon ? `${this.icon} ${this.label}` : this.label : this.label || this.icon || "Floating action button");
+    fab.setAttribute("aria-label", fabAriaLabel);
     fab.disabled = this.disabled;
     fab.setAttribute("aria-disabled", this.disabled ? "true" : "false");
     fab.setAttribute("tabindex", this.disabled ? "-1" : "0");
@@ -1523,11 +1525,12 @@ var MdFab = class extends HTMLElement {
     const isExt = this.isExtended;
     const c = this.color;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+    const fabAriaLabel = this.getAttribute("aria-label") || (isExt && this.label ? this.icon ? `${this.icon} ${this.label}` : this.label : this.label || this.icon || "Floating action button");
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle4}</style>`}
       <button class="fab ${escapeHtml(c)} ${escapeHtml(this.variant)}${isExt ? " extended" : ""}" ${this.disabled ? "disabled" : ""}
         tabindex="${this.disabled ? -1 : 0}" role="button"
-        aria-label="${escapeHtml(this.getAttribute("aria-label") || this.icon)}"
+        aria-label="${escapeHtml(fabAriaLabel)}"
         aria-disabled="${this.disabled}">
         <span class="material-symbols-outlined" aria-hidden="true">${escapeHtml(this.icon)}</span>
         ${isExt && this.label ? `<span class="lbl">${escapeHtml(this.label)}</span>` : ""}
@@ -3380,6 +3383,7 @@ var MdTextField = class extends HTMLElement {
     input.disabled = this.disabled;
     input.type = this.type;
     input.placeholder = this.placeholder;
+    input.setAttribute("aria-label", this.label || this.getAttribute("aria-label") || "Text field");
     if (input.value !== this._value) input.value = this._value;
     if (labelEl) {
       labelEl.textContent = this.label;
@@ -3469,7 +3473,7 @@ var MdTextField = class extends HTMLElement {
             <label class="label" style="display: none;"></label>
             <div class="input-row">
               <span class="affix prefix" style="display: none;"></span>
-              <input type="${escapeHtml(this.type)}" value="${escapeHtml(this._value)}" placeholder="${escapeHtml(this.placeholder)}">
+              <input type="${escapeHtml(this.type)}" value="${escapeHtml(this._value)}" placeholder="${escapeHtml(this.placeholder)}" aria-label="${escapeHtml(this.label || this.getAttribute("aria-label") || "Text field")}">
               <span class="affix suffix" style="display: none;"></span>
             </div>
           </div>
@@ -10735,12 +10739,12 @@ var MdTimePicker = class extends HTMLElement {
             <div class="time-cards-row">
               ${isInputMode ? `
                 <div class="input-card-wrap">
-                  <input type="text" id="hour-input" class="time-input-field" maxlength="2" value="${hh}" />
+                  <input type="text" id="hour-input" class="time-input-field" maxlength="2" value="${hh}" aria-label="Hour" />
                   <span class="input-sublabel">Hour</span>
                 </div>
                 <div class="time-separator">:</div>
                 <div class="input-card-wrap">
-                  <input type="text" id="min-input" class="time-input-field" maxlength="2" value="${mm}" />
+                  <input type="text" id="min-input" class="time-input-field" maxlength="2" value="${mm}" aria-label="Minute" />
                   <span class="input-sublabel">Minute</span>
                 </div>
               ` : `

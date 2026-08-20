@@ -397,6 +397,7 @@ export class MdTextField extends HTMLElement {
     input.disabled = this.disabled;
     input.type = this.type;
     input.placeholder = this.placeholder;
+    input.setAttribute('aria-label', this.label || this.getAttribute('aria-label') || 'Text field');
     if (input.value !== this._value) input.value = this._value;
 
     if (labelEl) {
@@ -502,7 +503,7 @@ export class MdTextField extends HTMLElement {
             <label class="label" style="display: none;"></label>
             <div class="input-row">
               <span class="affix prefix" style="display: none;"></span>
-              <input type="${escapeHtml(this.type)}" value="${escapeHtml(this._value)}" placeholder="${escapeHtml(this.placeholder)}">
+              <input type="${escapeHtml(this.type)}" value="${escapeHtml(this._value)}" placeholder="${escapeHtml(this.placeholder)}" aria-label="${escapeHtml(this.label || this.getAttribute('aria-label') || 'Text field')}">
               <span class="affix suffix" style="display: none;"></span>
             </div>
           </div>

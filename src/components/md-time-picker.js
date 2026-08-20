@@ -907,12 +907,12 @@ export class MdTimePicker extends HTMLElement {
             <div class="time-cards-row">
               ${isInputMode ? `
                 <div class="input-card-wrap">
-                  <input type="text" id="hour-input" class="time-input-field" maxlength="2" value="${hh}" />
+                  <input type="text" id="hour-input" class="time-input-field" maxlength="2" value="${hh}" aria-label="Hour" />
                   <span class="input-sublabel">Hour</span>
                 </div>
                 <div class="time-separator">:</div>
                 <div class="input-card-wrap">
-                  <input type="text" id="min-input" class="time-input-field" maxlength="2" value="${mm}" />
+                  <input type="text" id="min-input" class="time-input-field" maxlength="2" value="${mm}" aria-label="Minute" />
                   <span class="input-sublabel">Minute</span>
                 </div>
               ` : `
