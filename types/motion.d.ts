@@ -18,12 +18,15 @@ export interface SpringResult {
 }
 
 export interface SpringKeyframesResult {
-  keyframes: Array<{ transform?: string; borderRadius?: string; offset: number }>;
+  keyframes: number[];
   duration: number;
 }
 
 export class SpringPhysics {
+  static setScheme(schemeName: 'expressive' | 'standard'): void;
+  static getScheme(element?: Element | null): string;
+  static getPreset(name: string, element?: Element | null): { dampingRatio: number; stiffness: number; mass: number };
   static solve(options: SpringOptions): SpringResult;
   static generateKeyframes(options: SpringOptions): SpringKeyframesResult;
-  static animate(element: HTMLElement, keyframes: Keyframe[], options?: KeyframeAnimationOptions): Animation;
+  static animateProperty(element: HTMLElement, property: string, from: number, to: number, presetName?: string): Animation | undefined;
 }

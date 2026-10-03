@@ -3,7 +3,7 @@
  *
  * Spec: MD3E-DESIGN-FOUNDATIONS-AND-COMPONENT-ANATOMY.md §6 & §11
  *   - 5 variants: filled, elevated, tonal, outlined, text
- *   - 5 Expressive sizes: xs (32dp), s (40dp), m (48dp), l (56dp), xl (64dp)
+ *   - AndroidX Expressive sizes: xs (32dp), s (40dp), m (56dp), l (96dp), xl (136dp)
  *   - Shape morphing on press: CornerFull (9999px) -> CornerSmall (8px)
  *   - Focus ring: 3px solid with 2px offset
  *   - State layer: hover (0.08), focus (0.10), press (0.10)
@@ -11,7 +11,7 @@
  *   - Form association (attachInternals), toggle mode, single-click guarantee
  */
 
-import { bindPress, pressScale, releaseScale, morphShape, createRipple } from '../motion/interactions.js';
+import { bindPress, morphShape, createRipple } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
@@ -35,7 +35,7 @@ const defaultStyle = `
     cursor: pointer;
     font-family: var(--md-sys-typescale-font-family, 'Roboto', system-ui, sans-serif);
     letter-spacing: 0.1px;
-    overflow: hidden;
+    overflow: visible;
     will-change: transform, border-radius;
     transition:
       background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
@@ -45,13 +45,9 @@ const defaultStyle = `
   }
 
   /* Focus Ring (§5.3) */
-  .btn:focus-visible::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border: 3px solid var(--md-sys-color-secondary, #625b71);
-    border-radius: inherit;
-    pointer-events: none;
+  .btn:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary, #625b71);
+    outline-offset: 2px;
   }
 
   /* Touch Target expand for small sizes (§4.2 - 48dp min) */
@@ -147,31 +143,69 @@ const defaultStyle = `
   /* Varyant: Outlined */
   .btn.outlined {
     background-color: transparent;
-    color: var(--md-sys-color-primary, #6750a4);
+    color: var(--md-sys-color-on-surface-variant, #49454f);
     border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
     box-shadow: var(--md-sys-elevation-level0, none);
   }
   .btn.outlined:active:not([disabled]) {
-    border-color: var(--md-sys-color-outline, #79747e);
+    border-color: var(--md-sys-color-outline-variant, #cac4d0);
   }
 
   /* Varyant: Text */
   .btn.text {
     background-color: transparent;
-    color: var(--md-sys-color-primary, #6750a4);
+    color: var(--md-sys-color-on-surface-variant, #49454f);
     box-shadow: var(--md-sys-elevation-level0, none);
   }
 
+  /* MDC DockedToolbar's theme overlay for ordinary/text buttons. */
+  .btn.text {
+    background-color: var(--md-toolbar-button-container, transparent);
+    color: var(--md-toolbar-button-content, var(--md-sys-color-on-surface-variant));
+  }
+  :host(:not([variant])) .btn.filled {
+    background-color: var(--md-toolbar-button-container, var(--md-sys-color-primary));
+    color: var(--md-toolbar-button-content, var(--md-sys-color-on-primary));
+  }
+  .btn.text.togglable.selected:not(:disabled) {
+    background-color: var(--md-toolbar-button-selected-container, transparent);
+    color: var(--md-toolbar-button-selected-content, var(--md-sys-color-on-surface-variant));
+  }
+  :host(:not([variant])) .btn.filled.togglable.selected:not(:disabled) {
+    background-color: var(--md-toolbar-button-selected-container, var(--md-sys-color-primary));
+    color: var(--md-toolbar-button-selected-content, var(--md-sys-color-on-primary));
+  }
+  .btn.text.togglable.selected:is(:hover,:focus-visible,:active):not(:disabled) {
+    color: var(--md-toolbar-button-interacting-content, var(--md-toolbar-button-selected-content, var(--md-sys-color-on-surface-variant)));
+  }
+  :host(:not([variant])) .btn.filled.togglable.selected:is(:hover,:focus-visible,:active):not(:disabled) {
+    color: var(--md-toolbar-button-interacting-content, var(--md-toolbar-button-selected-content, var(--md-sys-color-on-primary)));
+  }
+  :host(:not([variant])) .btn.filled:disabled {
+    background-color: var(--md-toolbar-button-container, color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent));
+    color: var(--md-toolbar-button-disabled-content, color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent));
+  }
+  :host(:not([variant])) .btn.filled.togglable:not(.selected):not(:disabled) {
+    background-color: var(--md-toolbar-button-container, var(--md-sys-color-surface-container));
+    color: var(--md-toolbar-button-content, var(--md-sys-color-on-surface-variant));
+  }
+  .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
+  .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-button-state-color, currentColor); }
+
   /* Toggle Selected States */
-  .btn.togglable.selected.filled {
+  .btn.togglable:not(.selected).filled:not(:disabled) {
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface-variant);
+  }
+  .btn.togglable.selected.filled:not(:disabled) {
     background-color: var(--md-sys-color-primary, #6750a4);
     color: var(--md-sys-color-on-primary, #ffffff);
   }
-  .btn.togglable.selected.tonal {
-    background-color: var(--md-sys-color-secondary-container, #e8def8);
-    color: var(--md-sys-color-on-secondary-container, #1d192b);
+  .btn.togglable.selected.tonal:not(:disabled) {
+    background-color: var(--md-sys-color-secondary, #625b71);
+    color: var(--md-sys-color-on-secondary, #ffffff);
   }
-  .btn.togglable.selected.outlined {
+  .btn.togglable.selected.outlined:not(:disabled) {
     background-color: var(--md-sys-color-inverse-surface, #313033);
     color: var(--md-sys-color-inverse-on-surface, #f4eff4);
     border-color: var(--md-sys-color-inverse-surface, #313033);
@@ -183,18 +217,22 @@ const defaultStyle = `
     box-shadow: none !important;
     pointer-events: none;
   }
-  .btn.filled:disabled, .btn.elevated:disabled, .btn.tonal:disabled {
+  .btn.filled:disabled, .btn.elevated:disabled {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+    color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent);
+  }
+  .btn.tonal:disabled {
     background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
     color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
   }
   .btn.outlined:disabled {
-    border-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+    border-color: var(--md-sys-color-outline-variant);
+    color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent);
     background-color: transparent;
   }
   .btn.text:disabled {
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
-    background-color: transparent;
+    color: var(--md-toolbar-button-disabled-content, color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent));
+    background-color: var(--md-toolbar-button-container, transparent);
   }
 
   .icon {
@@ -216,11 +254,11 @@ const defaultStyle = `
 const buttonSheet = createComponentSheet(defaultStyle);
 
 const SIZES = {
-  xs: { height: 32, pad: 12, iconSize: 16, iconGap: 4,  round: 16, square: 8,  press: 4,  fontSize: 12, lineHeight: 16, fontWeight: 500 },
+  xs: { height: 32, pad: 16, iconSize: 20, iconGap: 8,  round: 16, square: 12, press: 8, fontSize: 14, lineHeight: 20, fontWeight: 500 },
   s:  { height: 40, pad: 16, iconSize: 20, iconGap: 8,  round: 20, square: 12, press: 8,  fontSize: 14, lineHeight: 20, fontWeight: 500 },
-  m:  { height: 48, pad: 20, iconSize: 20, iconGap: 8,  round: 24, square: 12, press: 8,  fontSize: 14, lineHeight: 20, fontWeight: 500 },
-  l:  { height: 56, pad: 24, iconSize: 24, iconGap: 8,  round: 28, square: 16, press: 12, fontSize: 16, lineHeight: 24, fontWeight: 500 },
-  xl: { height: 64, pad: 32, iconSize: 28, iconGap: 12, round: 32, square: 28, press: 16, fontSize: 24, lineHeight: 32, fontWeight: 500 }
+  m:  { height: 56, pad: 24, iconSize: 24, iconGap: 8,  round: 28, square: 16, press: 12, fontSize: 16, lineHeight: 24, fontWeight: 500 },
+  l:  { height: 96, pad: 48, iconSize: 32, iconGap: 12, round: 48, square: 28, press: 16, fontSize: 24, lineHeight: 32, fontWeight: 400 },
+  xl: { height: 136, pad: 64, iconSize: 40, iconGap: 16, round: 68, square: 28, press: 16, fontSize: 32, lineHeight: 40, fontWeight: 400 }
 };
 
 export class MdButton extends HTMLElement {
@@ -256,6 +294,7 @@ export class MdButton extends HTMLElement {
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     this._sync();
+    if (name === 'selected') morphShape(this.shadowRoot.querySelector('.btn'), SIZES[this.size].press, this._getBaseRadius(), 'expressiveSpatialFast');
   }
 
   get variant() { return sanitizeAttribute(this.getAttribute('variant') || 'filled'); }
@@ -274,7 +313,7 @@ export class MdButton extends HTMLElement {
 
   _getBaseRadius() {
     const s = SIZES[this.size];
-    if (this.shape === 'square' || (this.toggle && this.selected)) return s.square;
+    if ((this.shape === 'square') !== (this.toggle && this.selected)) return s.square;
     return s.round;
   }
 
@@ -304,14 +343,12 @@ export class MdButton extends HTMLElement {
       onPress: (e) => {
         const s = SIZES[this.size];
         const baseR = this._getBaseRadius();
-        pressScale(btn, 0.96, 'expressiveSpatialFast');
         morphShape(btn, baseR, s.press, 'expressiveSpatialFast');
         createRipple(e, btn);
       },
       onRelease: () => {
         const s = SIZES[this.size];
         const baseR = this._getBaseRadius();
-        releaseScale(btn, 0.96, 'expressiveSpatialMedium');
         morphShape(btn, s.press, baseR, 'expressiveSpatialMedium');
       },
       onActivate: () => {
@@ -349,10 +386,11 @@ export class MdButton extends HTMLElement {
     btn.style.minHeight = `${s.height}px`;
     btn.style.padding = `0 ${s.pad}px`;
     btn.style.gap = `${s.iconGap}px`;
-    btn.style.fontSize = `${s.fontSize}px`;
-    btn.style.lineHeight = `${s.lineHeight}px`;
-    btn.style.fontWeight = `${s.fontWeight}`;
+    const typeRole = s.height >= 136 ? 'headline-large' : s.height >= 96 ? 'headline-small' : s.height >= 56 ? 'title-medium' : 'label-large';
+    btn.style.font = `var(--md-sys-typescale-${typeRole}, ${s.fontWeight} ${s.fontSize}px/${s.lineHeight}px Roboto, sans-serif)`;
+    btn.style.letterSpacing = `var(--md-sys-typescale-${typeRole}-tracking, ${s.height >= 96 ? 0 : s.height >= 56 ? 0.2 : 0.1}px)`;
     btn.style.borderRadius = `${baseR}px`;
+    btn.style.borderWidth = this.variant === 'outlined' ? `${this.size === 'xl' ? 3 : this.size === 'l' ? 2 : 1}px` : '0';
 
     const leadIcon = this.shadowRoot.querySelector('.lead-ico');
     const leadVal = this.icon;

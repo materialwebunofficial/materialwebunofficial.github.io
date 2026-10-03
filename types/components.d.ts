@@ -39,13 +39,44 @@ export class MdSlider extends HTMLElement {
   value: number;
   min: number;
   max: number;
+  /** Native interior steps; step adapts evenly spaced HTML increments. */
   step: number;
+  steps: number;
+  valueRange: [number, number] | string;
+  range: boolean;
+  rangeStart: number;
+  rangeEnd: number;
+  centered: boolean;
+  orientation: 'horizontal' | 'vertical';
+  /** Defaults to true. */
+  topToBottom: boolean;
+  labeled: boolean;
+  stops: boolean;
   disabled: boolean;
+  name: string;
+  /** @deprecated Compatibility attribute; all default tracks are 16dp. */
+  size: string;
+  readonly form: HTMLFormElement | null;
+  readonly labels: NodeListOf<HTMLLabelElement>;
+  readonly type: 'range';
 }
 
 export class MdSwitch extends HTMLElement {
-  selected: boolean;
+  checked: boolean;
   disabled: boolean;
+  icon: string;
+  name: string;
+  value: string;
+  required: boolean;
+  readonly form: HTMLFormElement | null;
+  readonly labels: NodeListOf<HTMLLabelElement>;
+  readonly validity: ValidityState;
+  readonly validationMessage: string;
+  readonly willValidate: boolean;
+  checkValidity(): boolean;
+  reportValidity(): boolean;
+  setCustomValidity(message: string): void;
+  readonly type: 'checkbox';
 }
 
 export class MdTextField extends HTMLElement {
@@ -61,20 +92,59 @@ export class MdCheckbox extends HTMLElement {
   checked: boolean;
   indeterminate: boolean;
   disabled: boolean;
+  error: boolean;
+  checkmarkStroke: number;
+  outlineStroke: number;
+  name: string;
+  value: string;
+  required: boolean;
+  readonly form: HTMLFormElement | null;
+  readonly labels: NodeListOf<HTMLLabelElement>;
+  readonly validity: ValidityState;
+  readonly validationMessage: string;
+  readonly willValidate: boolean;
+  checkValidity(): boolean;
+  reportValidity(): boolean;
+  setCustomValidity(message: string): void;
+  readonly type: 'checkbox';
 }
 
 export class MdRadioButton extends HTMLElement {
   checked: boolean;
-  value: string;
-  name: string;
+  selected: boolean;
   disabled: boolean;
+  name: string;
+  value: string;
+  required: boolean;
+  readonly form: HTMLFormElement | null;
+  readonly labels: NodeListOf<HTMLLabelElement>;
+  readonly validity: ValidityState;
+  readonly validationMessage: string;
+  readonly willValidate: boolean;
+  checkValidity(): boolean;
+  reportValidity(): boolean;
+  setCustomValidity(message: string): void;
+  readonly type: 'radio';
 }
 
 export class MdProgressIndicator extends HTMLElement {
-  variant: 'linear' | 'circular';
-  type: 'standard' | 'wavy';
+  type: 'linear' | 'circular';
+  variant: 'standard' | 'wavy';
   value: number | null; // null for indeterminate
+  progress: number | null;
   max: number;
+  indeterminate: boolean;
+  strokeWidth: number;
+  trackStrokeWidth: number;
+  strokeCap: 'round' | 'butt' | 'square';
+  trackStrokeCap: 'round' | 'butt' | 'square';
+  gapSize: number;
+  stopSize: number;
+  amplitude: number | null;
+  wavelength: number;
+  waveSpeed: number;
+  color: string;
+  trackColor: string;
 }
 
 export class MdLoadingIndicator extends HTMLElement {
@@ -129,17 +199,76 @@ export class MdTopAppBar extends HTMLElement {
 
 export class MdBottomAppBar extends HTMLElement {}
 
+export interface NavigationBarItem {
+  icon?: string;
+  selectedIcon?: string;
+  label?: string | null;
+  ariaLabel?: string;
+  iconPosition?: 'top' | 'start';
+  disabled?: boolean;
+  enabled?: boolean;
+}
 export class MdNavigationBar extends HTMLElement {
-  selectedIndex: number;
+  items: NavigationBarItem[];
+  selected: number;
+  iconPosition: 'top' | 'start';
+  arrangement: 'equal-weight' | 'centered';
+  disabled: boolean;
+  enabled: boolean;
+  containerColor: string;
+  contentColor: string;
+  /** Compatibility height override; default ShortNavigationBar is64px. */
+  tall: boolean;
+  /** Legacy attribute; Top items remain on a horizontal bar. */
+  vertical: boolean;
+  /** Supplied labels are always visible, including inactive items. */
+  alwaysShowLabel: boolean;
 }
 
+export interface NavigationDrawerItem {
+  icon?: string;
+  selectedIcon?: string;
+  label?: string | null;
+  ariaLabel?: string;
+  badge?: string | number | null;
+  /** Web extensions; public AndroidX NavigationDrawerItem has no enabled argument. */
+  disabled?: boolean;
+  enabled?: boolean;
+}
 export class MdNavigationDrawer extends HTMLElement {
-  open: boolean;
+  items: NavigationDrawerItem[];
+  selected: number;
+  variant: 'standard' | 'modal' | 'dismissible';
   modal: boolean;
+  open: boolean;
+  headline: string;
+  /** Web extension: public NavigationDrawerItem does not expose enabled. */
+  disabled: boolean;
+  enabled: boolean;
+  gesturesEnabled: boolean;
+  scrimColor: string;
+  drawerContainerColor: string;
+  drawerContentColor: string;
+  show(): void;
+  close(): void;
 }
 
 export class MdNavigationRail extends HTMLElement {
-  selectedIndex: number;
+  items: NavigationBarItem[];
+  selected: number;
+  expanded: boolean;
+  /** Compatibility width override; public WideNavigationRail defaults to96px. */
+  narrow: boolean;
+  /** Explicit legacy icon placement; omit to follow expanded. */
+  itemLayout: 'vertical' | 'horizontal';
+  /** Omit to place icons above labels when collapsed, beside them when expanded. */
+  iconPosition: 'top' | 'start' | null;
+  arrangement: 'top' | 'center' | 'bottom';
+  disabled: boolean;
+  enabled: boolean;
+  containerColor: string;
+  contentColor: string;
+  alwaysShowLabel: boolean;
 }
 
 export class MdSegmentedButton extends HTMLElement {
@@ -166,20 +295,108 @@ export class MdTimePicker extends HTMLElement {
   use24Hour: boolean;
 }
 
-export class MdList extends HTMLElement {}
-export class MdListItem extends HTMLElement {
-  headline?: string;
-  supportingText?: string;
+export interface ListItemColorsOptions {
+  containerColor?: string;
+  contentColor?: string;
+  leadingContentColor?: string;
+  trailingContentColor?: string;
+  overlineContentColor?: string;
+  supportingContentColor?: string;
+  disabledContainerColor?: string;
+  disabledContentColor?: string;
+  disabledLeadingContentColor?: string;
+  disabledTrailingContentColor?: string;
+  disabledOverlineContentColor?: string;
+  disabledSupportingContentColor?: string;
+  selectedContainerColor?: string;
+  selectedContentColor?: string;
+  selectedLeadingContentColor?: string;
+  selectedTrailingContentColor?: string;
+  selectedOverlineContentColor?: string;
+  selectedSupportingContentColor?: string;
+  draggedContainerColor?: string;
+  draggedContentColor?: string;
+  draggedLeadingContentColor?: string;
+  draggedTrailingContentColor?: string;
+  draggedOverlineContentColor?: string;
+  draggedSupportingContentColor?: string;
 }
 
+export type ListItemCornerSize = number | [number, number, number, number];
+export interface ListItemShapesOptions {
+  shape?: ListItemCornerSize;
+  selectedShape?: ListItemCornerSize;
+  pressedShape?: ListItemCornerSize;
+  focusedShape?: ListItemCornerSize;
+  hoveredShape?: ListItemCornerSize;
+  draggedShape?: ListItemCornerSize;
+}
+export class MdList extends HTMLElement {
+  variant: 'standard' | 'segmented';
+  selectionMode: 'none' | 'single' | 'multiple';
+}
+export class MdListItem extends HTMLElement {
+  variant: 'standard' | 'segmented';
+  selectionMode: 'none' | 'single' | 'multiple';
+
+  headline: string;
+  supportingText: string;
+  overline: string;
+  trailingText: string;
+  icon: string;
+  trailingIcon: string;
+  avatar: string;
+  image: string;
+  selected: boolean;
+  checked: boolean;
+  interactive: boolean;
+  enabled: boolean;
+  disabled: boolean;
+  dragged: boolean;
+  href: string;
+  shape: string;
+  verticalAlignment: 'auto' | 'top' | 'center' | 'bottom';
+  colors: ListItemColorsOptions;
+  shapes: ListItemShapesOptions;
+}
+
+export type MenuVariant = 'standard' | 'vibrant' | 'dropdown';
+export type MenuSelectionMode = 'none' | 'single' | 'multiple';
+export type MenuCornerShape = number | [number, number, number, number];
+export interface MenuItemData {
+  label?: string; headline?: string; value?: string; icon?: string; leadingIcon?: string;
+  trailing?: string; trailingText?: string; supportingText?: string;
+  selectedIcon?: string; checkedIcon?: string; disabled?: boolean;
+  selected?: boolean; checked?: boolean; selectionMode?: MenuSelectionMode;
+}
+export interface MenuItemColorsOptions {
+  textColor?: string; leadingIconColor?: string; trailingContentColor?: string;
+  trailingIconColor?: string; containerColor?: string;
+  selectedTextColor?: string; selectedLeadingIconColor?: string;
+  selectedTrailingContentColor?: string; selectedTrailingIconColor?: string; selectedContainerColor?: string;
+  disabledTextColor?: string; disabledLeadingIconColor?: string;
+  disabledTrailingContentColor?: string; disabledTrailingIconColor?: string; disabledContainerColor?: string;
+}
 export class MdMenu extends HTMLElement {
-  open: boolean;
-  show(): void;
-  close(): void;
+  open: boolean; expanded: boolean; enabled: boolean; disabled: boolean; checked: boolean;
+  label: string; variant: MenuVariant; items: MenuItemData[]; selectionMode: MenuSelectionMode;
+  offsetX: number; offsetY: number; containerColor: string;
+  anchorPosition: 'above' | 'below' | 'start' | 'end' | 'left' | 'right';
+  horizontalArrangement: 'menu' | 'start' | 'end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
+  show(options?: {focus?: boolean}): void;
+  close(): void; toggle(): void;
+}
+export class MdMenuGroup extends HTMLElement {
+  label: string; variant: MenuVariant; containerColor: string; selectionMode: MenuSelectionMode;
+  shapes: {shape?: MenuCornerShape; inactiveShape?: MenuCornerShape};
 }
 export class MdMenuItem extends HTMLElement {
-  headline?: string;
-  disabled: boolean;
+  headline: string; label: string; value: string;
+  icon: string; leadingIcon: string; trailingIcon: string; trailingText: string; supportingText: string;
+  selectedIcon: string; checkedIcon: string; selected: boolean; checked: boolean;
+  disabled: boolean; enabled: boolean; hasSubmenu: boolean;
+  selectionMode: MenuSelectionMode; variant: MenuVariant; colors: MenuItemColorsOptions;
+  shapes: {shape?: MenuCornerShape; selectedShape?: MenuCornerShape};
 }
 
 export class MdSearchBar extends HTMLElement {
@@ -187,21 +404,122 @@ export class MdSearchBar extends HTMLElement {
   placeholder?: string;
 }
 
+export interface TabItemData {
+  label?: string; icon?: string; accessibleLabel?: string; panel?: string;
+  disabled?: boolean; enabled?: boolean; iconPosition?: 'top' | 'start';
+  selectedContentColor?: string; unselectedContentColor?: string;
+}
 export class MdTabs extends HTMLElement {
-  selectedIndex: number;
+  tabs: TabItemData[];
+  selected: number; selectedIndex: number; selectedTabIndex: number; activeTab: number;
+  variant: 'primary' | 'secondary'; iconPosition: 'top' | 'start';
+  scrollable: boolean; minTabWidth: number; edgePadding: number;
+  enabled: boolean; disabled: boolean;
+  containerColor: string; contentColor: string; selectedContentColor: string; unselectedContentColor: string;
+  /** Compatibility metadata only; the source has no pill Tab indicator. */
+  pill: boolean;
+}
+/** Declarative data for its parent MdTabs. */
+export class MdTab extends HTMLElement { label: string; icon: string; selected: boolean; disabled: boolean; }
+
+export type ToolbarExitDirection = 'start' | 'end' | 'top' | 'bottom';
+export interface ToolbarScrollDelta {x: number; y: number;}
+export interface ToolbarSpringSpec {stiffness: number; dampingRatio: number; visibilityThreshold?: number;}
+export class AndroidFlingDecay {
+  constructor(options?: {density?: number; friction?: number});
+  readonly density: number; readonly friction: number;
+  info(velocity: number): {velocity: number; distance: number; duration: number};
+  target(from: number, velocity: number): number;
+  sample(time: number, from: number, velocity: number): {position: number; velocity: number};
+}
+export class FloatingToolbarState {
+  constructor(options?: {offsetLimit?: number; offset?: number; contentOffset?: number});
+  offsetLimit: number; offset: number; contentOffset: number; readonly collapsedFraction: number;
+  postScroll(consumedY: number): ToolbarScrollDelta;
+  drag(delta: number, direction?: ToolbarExitDirection, rtl?: boolean): void;
+  placement(direction?: ToolbarExitDirection, rtl?: boolean): ToolbarScrollDelta;
+  updateLimit(options: {direction?: ToolbarExitDirection; rtl?: boolean; x: number; y: number; width: number; height: number; parentWidth: number; parentHeight: number}): void;
+}
+export interface ToolbarExpansionOptions {expanded?: boolean; reverseLayout?: boolean; expandThreshold?: number; collapseThreshold?: number; density?: number; onExpand?: () => void; onCollapse?: () => void;}
+export class ToolbarScrollExpansion {
+  constructor(options?: ToolbarExpansionOptions);
+  expanded: boolean; reverseLayout: boolean; expandThreshold: number; collapseThreshold: number;
+  readonly contentOffset: number; readonly threshold: number;
+  update(options?: Omit<ToolbarExpansionOptions, 'density'>): void;
+  postScroll(consumedY: number): ToolbarScrollDelta;
+}
+export class ToolbarSettling {
+  constructor(state: FloatingToolbarState, velocity: number, options?: {snapSpec?: ToolbarSpringSpec; decay?: AndroidFlingDecay});
+  readonly done: boolean; readonly returnedVelocity: number;
+  sampleFrame(now: number): {phase: string; time: number; value: number; velocity: number; offset: number; canceled: boolean} | null;
+  finish(): void;
+}
+export class FloatingToolbarScrollBehavior {
+  constructor(options?: {exitDirection?: ToolbarExitDirection; state?: FloatingToolbarState; snapSpec?: ToolbarSpringSpec; decay?: AndroidFlingDecay});
+  readonly exitDirection: ToolbarExitDirection; readonly state: FloatingToolbarState; readonly snapSpec: ToolbarSpringSpec; readonly decay: AndroidFlingDecay;
+  onPostScroll(consumed: ToolbarScrollDelta): ToolbarScrollDelta;
+  onPostFling(available: ToolbarScrollDelta): ToolbarSettling;
+  settle(velocity: number): ToolbarSettling;
 }
 
-export class MdToolbar extends HTMLElement {}
+/** Toolbar padding in dp-equivalent CSS pixels; strings use top/end/bottom/start. */
+export type ToolbarContentPadding = number | string |
+  {start?: number; top?: number; end?: number; bottom?: number} |
+  {left?: number; top?: number; right?: number; bottom?: number};
+
+export interface ToolbarCornerSize {readonly unit: 'px' | 'dp' | 'percent'; readonly value: number;}
+/** Logical TS/TE/BE/BS corners; absolute shapes use physical TL/TR/BR/BL. */
+export type ToolbarShape = {readonly type: 'rectangle'} | {
+  readonly type: 'rounded' | 'cut'; readonly absolute?: boolean;
+  readonly corners?: number | ToolbarCornerSize | readonly [number | ToolbarCornerSize, number | ToolbarCornerSize, number | ToolbarCornerSize, number | ToolbarCornerSize];
+};
+
+export class MdToolbar extends HTMLElement {
+  variant: 'docked' | 'floating'; orientation: 'horizontal' | 'vertical'; color: 'vibrant' | 'standard';
+  expanded: boolean; fabPosition: 'start' | 'end' | 'top' | 'bottom';
+  containerColor: string; contentColor: string; fabContainerColor: string; fabContentColor: string;
+  get shape(): ToolbarShape;
+  /** Descriptor, 'full', 'rectangle' or JSON; null restores the variant default. */
+  set shape(value: ToolbarShape | string | null | undefined);
+  get contentPadding(): ToolbarContentPadding;
+  set contentPadding(value: ToolbarContentPadding | null | undefined);
+  /** With-FAB override; falls back to contentPadding when absent. */
+  get toolbarContentPadding(): ToolbarContentPadding;
+  set toolbarContentPadding(value: ToolbarContentPadding | null | undefined);
+  expandedShadowElevation: number; collapsedShadowElevation: number;
+  animationSpec: string | {stiffness: number; dampingRatio: number; visibilityThreshold?: number};
+  horizontalArrangement: 'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly';
+  /** Deprecated compatibility metadata; source FloatingToolbar has no height-collapse API. */
+  expandedHeight: number; collapsedHeight: number;
+  expand(): void; collapse(): void; toggle(): void;
+  touchExplorationEnabled: boolean; readonly effectiveExpanded: boolean;
+  scrollBehavior: FloatingToolbarScrollBehavior | null;
+  scrollExpansion: ToolbarScrollExpansion | null;
+  scrollTarget: Element | Window | null;
+  forceCollapse(value?: boolean): void;
+  postScroll(consumed: ToolbarScrollDelta): ToolbarScrollDelta;
+  postFling(available?: ToolbarScrollDelta): Promise<ToolbarScrollDelta>;
+}
 
 export class MdFabMenu extends HTMLElement {
   open: boolean;
 }
 
-export class MdTheme extends HTMLElement {
-  seed: string;
-  themeScheme: 'expressive' | 'standard';
-  dark: boolean;
+export class MdExpressiveTheme extends HTMLElement {
+  scheme: 'expressive' | 'standard';
+  colorMode: 'light' | 'dark' | 'auto';
+  contrast: 'reduced' | 'standard' | 'medium' | 'high';
+  primarySeed: string;
+  customPalette: Record<string, string> | null;
+  fontFamily: string;
+  static applyGlobal(options?: Partial<{ scheme: 'expressive' | 'standard'; colorMode: 'light' | 'dark'; contrast: string; motionScheme: 'expressive' | 'standard'; primarySeed: string }>): void;
+  static toggleScheme(): 'expressive' | 'standard';
+  static toggleColorMode(): 'light' | 'dark';
+  static getTheme(): { scheme: string; colorMode: string; contrast: string; motionScheme: string; primarySeed: string };
+  motionScheme: 'expressive' | 'standard';
 }
+
+export class MdTheme extends MdExpressiveTheme {}
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -238,10 +556,13 @@ declare global {
     'md-list': MdList;
     'md-list-item': MdListItem;
     'md-menu': MdMenu;
+  'md-menu-group': MdMenuGroup;
     'md-menu-item': MdMenuItem;
     'md-search-bar': MdSearchBar;
     'md-tabs': MdTabs;
+    'md-tab': MdTab;
     'md-toolbar': MdToolbar;
     'md-theme': MdTheme;
+    'md-expressive-theme': MdExpressiveTheme;
   }
 }

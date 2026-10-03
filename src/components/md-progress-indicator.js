@@ -1,719 +1,221 @@
-/**
- * Material Design 3 Expressive (M3 Expressive) Web Component: <md-progress-indicator>
- *
- * 100% FAITHFUL WEB IMPLEMENTATION OF ANDROIDX COMPOSE:
- * - androidx.compose.material3.ProgressIndicator.kt
- * - androidx.compose.material3.WavyProgressIndicator.kt
- * - androidx.compose.material3.tokens.LinearProgressIndicatorTokens.kt
- * - androidx.compose.material3.tokens.CircularProgressIndicatorTokens.kt
- *
- * Variants & Modes:
- * 1. type="linear" variant="standard" (4dp height, 100% responsive width, 4dp stop dot, 4dp gap)
- * 2. type="linear" variant="wavy"     (10dp height, 100% responsive width, 3dp amplitude, 40dp/20dp wavelength, 4dp gap)
- * 3. type="circular" variant="standard" (48dp size, 40dp diameter, 4dp stroke, 4dp gap)
- * 4. type="circular" variant="wavy"     (48dp size, 8-wave continuous sinusoid, 3dp amplitude, 4dp gap)
- */
+import {observeThemeContext} from '../theme/theme-context.js';
+import {cubicBezier} from '../motion/easing.js';
+import {createComponentSheet, adoptSheet} from '../utils/styles.js';
+import {linearIndeterminateFractions, circularIndeterminateState, standardLinearLayout,
+  standardCircularLayout, linearWavyLayout, linearWaveSegments} from './progress-indicator-layout.js';
+import {circularProgressCubics, centerProgressCubics, measureProgressPath, progressPathSegment} from './progress-indicator-path.js';
 
-import { createComponentSheet, adoptSheet } from '../utils/styles.js';
-
+/** AndroidX progress defaults, drawing geometry and animation schedules adapted to Canvas. */
 const defaultStyle = `
-  :host {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    display: inline-block;
-    vertical-align: middle;
-    outline: none;
-  }
-
-  :host([type="linear"]) {
-    display: block;
-    width: 100%;
-  }
-
-  .progress-root {
-    position: relative;
-    width: 48px;
-    height: 48px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    overflow: visible;
-  }
-
-  :host([type="linear"]) .progress-root {
-    display: block;
-    width: 100%;
-  }
-
-  canvas {
-    display: block;
-    width: 48px;
-    height: 48px;
-    pointer-events: none;
-  }
-
-  :host([type="linear"]) canvas {
-    width: 100%;
-  }
+  :host { display:block; width:100%; vertical-align:middle; outline:none; }
+  :host([type="circular"]) { display:inline-block; width:auto; }
+  .progress-root { position:relative; display:block; width:100%; overflow:visible; }
+  canvas { display:block; pointer-events:none; }
+  .color-probe { position:absolute; width:0; height:0; visibility:hidden; pointer-events:none; }
 `;
-
-const progressIndicatorSheet = createComponentSheet(defaultStyle);
+const sheet = createComponentSheet(defaultStyle);
+const clamp = x => Math.max(0, Math.min(1, x));
+const finite = (value, fallback, valid = () => true) => Number.isFinite(value) && valid(value) ? value : fallback;
 
 export class MdProgressIndicator extends HTMLElement {
   static get observedAttributes() {
-    return [
-      'type', 'variant', 'value', 'progress', 'indeterminate', 'max',
-      'amplitude', 'wavelength', 'stroke-width', 'gap-size', 'track-color', 'stop-size'
-    ];
+    return ['type','variant','value','progress','indeterminate','max','amplitude','wavelength',
+      'wave-speed','stroke-width','track-stroke-width','stroke-cap','track-stroke-cap',
+      'gap-size','color','track-color','stop-size','aria-label','dir'];
   }
-
   constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    adoptSheet(this.shadowRoot, progressIndicatorSheet);
-    this._rendered = false;
-    this._rafId = null;
-    this._startTime = 0;
-    this._activeColor = '#6750A4';
-    this._trackColor = '#E8DEF8';
-    this._colorDirty = true;
-    this._observer = null;
-    this._resizeObserver = null;
-    this._isVisible = true;
-    this._onThemeChange = () => { this._colorDirty = true; };
-    this._cachedWidth = 240;
-    this._animatedAmplitude = null;
-    this._lastFrameTime = 0;
+    super();this.attachShadow({mode:'open'});adoptSheet(this.shadowRoot,sheet);
+    this._rafId=null;this._isVisible=true;this._cachedWidth=240;this._colorDirty=true;
+    this._motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
+    this._onMotionChange=()=>this._startAnimation();
+    this._onThemeChange=()=>{this._colorDirty=true;this._startAnimation();};
   }
-
   connectedCallback() {
-    if (!this._rendered) {
-      this.render();
-      this._rendered = true;
+    if(!this._canvas)this.render();
+    this._resetMotion();this._colorDirty=true;
+    this._stopThemeWatch=observeThemeContext(this,this._onThemeChange);
+    this._motionPreference.addEventListener('change',this._onMotionChange);
+    if(typeof IntersectionObserver!=='undefined'){
+      this._observer=new IntersectionObserver(entries=>{
+        this._isVisible=entries[0]?.isIntersecting??true;
+        if(this._isVisible)this._startAnimation();else this._stopAnimation();
+      });this._observer.observe(this);
     }
-    this._colorDirty = true;
-    if (typeof window !== 'undefined') {
-      window.addEventListener('theme-color-change', this._onThemeChange);
+    if(typeof ResizeObserver!=='undefined'){
+      this._resizeObserver=new ResizeObserver(()=>this._startAnimation());this._resizeObserver.observe(this);
     }
-    this._setupIntersectionObserver();
-    this._setupResizeObserver();
-    this._startAnimation();
+    this._syncDimensions();this._startAnimation();
   }
-
   disconnectedCallback() {
-    this._stopAnimation();
-    if (this._observer) {
-      this._observer.disconnect();
-      this._observer = null;
+    this._stopAnimation();this._observer?.disconnect();this._resizeObserver?.disconnect();
+    this._observer=null;this._resizeObserver=null;this._stopThemeWatch?.();this._stopThemeWatch=null;
+    this._motionPreference.removeEventListener('change',this._onMotionChange);
+  }
+  attributeChangedCallback(name,oldValue,newValue) {
+    if(!this._canvas||oldValue===newValue)return;
+    const mode=this.type+'/'+this.variant+'/'+this.indeterminate;
+    if(this._mode!==mode)this._resetMotion();
+    if(name==='color'||name==='track-color'||name==='type'||name==='variant'||name==='indeterminate'||name==='value'||name==='progress'||name==='dir')this._colorDirty=true;
+    this._syncDimensions();this._startAnimation();
+  }
+  _optional(name,value){if(value==null)this.removeAttribute(name);else this.setAttribute(name,String(value));}
+  get type(){return this.getAttribute('type')==='circular'?'circular':'linear';}set type(v){this._optional('type',v);}
+  get variant(){return this.getAttribute('variant')==='wavy'?'wavy':'standard';}set variant(v){this._optional('variant',v);}
+  get max(){return finite(parseFloat(this.getAttribute('max')),100,v=>v>0);}set max(v){this._optional('max',v);}
+  get value(){const value=parseFloat(this.getAttribute('value')??this.getAttribute('progress'));return Number.isNaN(value)?null:Math.max(0,Math.min(this.max,value));}
+  set value(v){if(v==null){this.removeAttribute('value');this.removeAttribute('progress');}else this.setAttribute('value',String(v));}
+  get progress(){return this.value;}set progress(v){this.value=v;}
+  get indeterminate(){return this.hasAttribute('indeterminate')||this.value===null;}set indeterminate(v){this.toggleAttribute('indeterminate',!!v);}
+  get fraction(){return this.indeterminate?0:clamp(this.value/this.max);}
+  get strokeWidth(){return finite(parseFloat(this.getAttribute('stroke-width')),4,v=>v>0);}set strokeWidth(v){this._optional('stroke-width',v);}
+  get trackStrokeWidth(){return finite(parseFloat(this.getAttribute('track-stroke-width')),this.strokeWidth,v=>v>0);}set trackStrokeWidth(v){this._optional('track-stroke-width',v);}
+  get strokeCap(){const cap=this.getAttribute('stroke-cap');return cap==='butt'||cap==='square'?cap:'round';}set strokeCap(v){this._optional('stroke-cap',v);}
+  get trackStrokeCap(){const cap=this.getAttribute('track-stroke-cap');return cap==='butt'||cap==='square'||cap==='round'?cap:this.strokeCap;}set trackStrokeCap(v){this._optional('track-stroke-cap',v);}
+  get gapSize(){return finite(parseFloat(this.getAttribute('gap-size')),4,v=>v>=0);}set gapSize(v){this._optional('gap-size',v);}
+  get stopSize(){return finite(parseFloat(this.getAttribute('stop-size')),4,v=>v>=0);}set stopSize(v){this._optional('stop-size',v);}
+  /** A fraction of available wave height, matching the native amplitude parameter. */
+  get amplitude(){const value=parseFloat(this.getAttribute('amplitude'));return Number.isFinite(value)?clamp(value):null;}set amplitude(v){this._optional('amplitude',v);}
+  get wavelength(){return finite(parseFloat(this.getAttribute('wavelength')),this.type==='circular'?15:this.indeterminate?20:40,v=>v>0);}set wavelength(v){this._optional('wavelength',v);}
+  get waveSpeed(){return finite(parseFloat(this.getAttribute('wave-speed')),this.wavelength);}set waveSpeed(v){this._optional('wave-speed',v);}
+  get color(){return this.getAttribute('color')||'var(--md-sys-color-primary)';}set color(v){this._optional('color',v);}
+  get trackColor(){return this.getAttribute('track-color')||(this.type==='circular'&&this.variant==='standard'&&this.indeterminate?'transparent':'var(--md-sys-color-secondary-container)');}set trackColor(v){this._optional('track-color',v);}
+
+  _resetMotion() {
+    this._mode=this.type+'/'+this.variant+'/'+this.indeterminate;this._startTime=performance.now();
+    this._animatedAmplitude=null;this._amplitudeRun=null;this._waveRun=null;this._waveOffset=0;
+    this._morphRequired=false;this._circleCache=null;
+  }
+  _getWidth(){
+    if(this.type==='circular')return this.variant==='wavy'?48:40;
+    const width=this.clientWidth;if(width>0)this._cachedWidth=width;return this._cachedWidth;
+  }
+  _syncDimensions(){
+    if(!this._canvas)return;
+    const width=this._getWidth(),height=this.type==='circular'?width:this.variant==='wavy'?10:this.strokeWidth,dpr=devicePixelRatio||1;
+    this._width=width;this._height=height;
+    const w=Math.max(1,Math.round(width*dpr)),h=Math.max(1,Math.round(height*dpr));
+    if(this._canvas.width!==w)this._canvas.width=w;if(this._canvas.height!==h)this._canvas.height=h;
+    this._root.style.width=this.type==='linear'?'100%':width+'px';this._root.style.height=height+'px';
+    this._canvas.style.width=width+'px';this._canvas.style.height=height+'px';
+    this._root.setAttribute('aria-label',this.getAttribute('aria-label')||'Progress indicator');
+    this._root.setAttribute('aria-busy',String(this.indeterminate));
+    if(this.indeterminate){for(const attr of ['aria-valuenow','aria-valuemin','aria-valuemax'])this._root.removeAttribute(attr);}
+    else{this._root.setAttribute('aria-valuenow',String(this.value));this._root.setAttribute('aria-valuemin','0');this._root.setAttribute('aria-valuemax',String(this.max));}
+  }
+  _resolveColors(){
+    if(!this._colorDirty)return;
+    this._rtl=getComputedStyle(this).direction==='rtl';
+    const resolve=value=>{this._probe.style.color='';this._probe.style.color=value;return getComputedStyle(this._probe).color;};
+    this._activeColor=resolve(this.color);this._trackColor=resolve(this.trackColor);this._colorDirty=false;
+  }
+  _amplitudeAt(target,now){
+    if(this._animatedAmplitude===null||this._motionPreference.matches){this._amplitudeRun=null;return this._animatedAmplitude=target;}
+    if(this._amplitudeRun){
+      const run=this._amplitudeRun,t=clamp((now-run.start)/500);
+      this._animatedAmplitude=run.from+(run.to-run.from)*cubicBezier(...(run.to>run.from?[.2,0,0,1]:[.3,0,.8,.15]),t);
+      if(t<1)return this._animatedAmplitude;
+      this._animatedAmplitude=run.to;this._amplitudeRun=null;
     }
-    if (this._resizeObserver) {
-      this._resizeObserver.disconnect();
-      this._resizeObserver = null;
-    }
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('theme-color-change', this._onThemeChange);
-    }
+    // Native amplitude jobs finish before accepting a subsequent target.
+    if(this._animatedAmplitude!==target){this._amplitudeRun={from:this._animatedAmplitude,to:target,start:now};this._morphRequired=true;}
+    return this._animatedAmplitude;
   }
-
-  attributeChangedCallback(name, oldVal, newVal) {
-    if (!this._rendered || oldVal === newVal) return;
-    if (name === 'type' || name === 'variant') {
-      this.render();
-    }
-    if (name === 'track-color') {
-      this._colorDirty = true;
-    }
-    if (name === 'stroke-width' || name === 'amplitude' || name === 'type' || name === 'variant') {
-      this._syncDimensions();
-    }
+  _offsetAt(amplitude,now,vertices=1){
+    if(this._motionPreference.matches||this.waveSpeed<=0){this._waveRun=null;return this._waveOffset=0;}
+    if(amplitude<=0){this._waveRun=null;return this._waveOffset;}
+    const duration=Math.max(50,Math.round(Math.fround(Math.fround(Math.fround(this.wavelength/this.waveSpeed)*1000)*vertices)));
+    if(this._waveRun){const run=this._waveRun;this._waveOffset=(run.from+Math.max(0,now-run.start)/run.duration)%1;}
+    if(!this._waveRun||this._waveRun.duration!==duration)this._waveRun={from:this._waveOffset,start:now,duration};
+    return this._waveOffset;
   }
-
-  _setupIntersectionObserver() {
-    if (typeof IntersectionObserver === 'undefined') return;
-    this._observer = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      this._isVisible = entry ? entry.isIntersecting : true;
-      if (this._isVisible) {
-        if (!this._rafId) this._startAnimation();
-      } else {
-        this._stopAnimation();
-      }
-    }, { threshold: 0 });
-    this._observer.observe(this);
+  _startAnimation(){
+    this._stopAnimation();if(!this.isConnected||!this._canvas)return;
+    this._syncDimensions();this._draw(this._canvas.getContext('2d'),performance.now());
+    if(!this._motionPreference.matches&&this._isVisible&&this._needsAnimation())this._rafId=requestAnimationFrame(now=>this._frame(now));
   }
-
-  _setupResizeObserver() {
-    if (typeof ResizeObserver === 'undefined') return;
-    this._resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const measured = entry.contentRect.width;
-        if (measured > 0 && Math.abs(measured - this._cachedWidth) > 1) {
-          this._cachedWidth = measured;
-          this._syncDimensions();
-        }
-      }
-    });
-    this._resizeObserver.observe(this);
+  _frame(now){
+    this._rafId=null;if(!this.isConnected||!this._isVisible)return;
+    this._draw(this._canvas.getContext('2d'),now);
+    if(!this._motionPreference.matches&&this._needsAnimation())this._rafId=requestAnimationFrame(time=>this._frame(time));
   }
-
-  _getWidth() {
-    if (this.type === 'circular') return 48;
-    const measured = this.clientWidth || this.getBoundingClientRect()?.width || 0;
-    if (measured > 0) {
-      this._cachedWidth = measured;
-      return measured;
-    }
-    return this._cachedWidth || 240;
-  }
-
-  _resolveColors() {
-    if (this.hasAttribute('track-color')) {
-      this._trackColor = this.getAttribute('track-color');
-    } else if (this._colorDirty || !this._trackColor) {
-      const computed = getComputedStyle(this);
-      this._trackColor = computed.getPropertyValue('--md-sys-color-secondary-container').trim() ||
-                         computed.getPropertyValue('--md-sys-color-surface-container-highest').trim() || '#E8DEF8';
-    }
-    if (!this._colorDirty && this._activeColor) return;
-    const computed = getComputedStyle(this);
-    this._activeColor = computed.getPropertyValue('--md-sys-color-primary').trim() || '#6750A4';
-    this._colorDirty = false;
-  }
-
-  get strokeWidth() {
-    const sw = parseFloat(this.getAttribute('stroke-width'));
-    return isNaN(sw) || sw <= 0 ? 4.0 : sw;
-  }
-  set strokeWidth(v) {
-    if (v === null || v === undefined) this.removeAttribute('stroke-width');
-    else this.setAttribute('stroke-width', String(v));
-  }
-
-  get gapSize() {
-    const gs = parseFloat(this.getAttribute('gap-size'));
-    return isNaN(gs) || gs < 0 ? 4.0 : gs;
-  }
-  set gapSize(v) {
-    if (v === null || v === undefined) this.removeAttribute('gap-size');
-    else this.setAttribute('gap-size', String(v));
-  }
-
-  get trackColor() {
-    return this.getAttribute('track-color') || this._trackColor || '#E8DEF8';
-  }
-  set trackColor(v) {
-    if (v === null || v === undefined) this.removeAttribute('track-color');
-    else this.setAttribute('track-color', String(v));
-  }
-
-  get stopSize() {
-    const ss = parseFloat(this.getAttribute('stop-size'));
-    return isNaN(ss) || ss < 0 ? 4.0 : ss;
-  }
-  set stopSize(v) {
-    if (v === null || v === undefined) this.removeAttribute('stop-size');
-    else this.setAttribute('stop-size', String(v));
-  }
-
-  get amplitude() {
-    const amp = parseFloat(this.getAttribute('amplitude'));
-    return isNaN(amp) ? null : amp;
-  }
-  set amplitude(v) {
-    if (v === null || v === undefined) this.removeAttribute('amplitude');
-    else this.setAttribute('amplitude', String(v));
-  }
-
-  get wavelength() {
-    const wl = parseFloat(this.getAttribute('wavelength'));
-    return isNaN(wl) ? null : wl;
-  }
-  set wavelength(v) {
-    if (v === null || v === undefined) this.removeAttribute('wavelength');
-    else this.setAttribute('wavelength', String(v));
-  }
-
-  get type() {
-    return this.getAttribute('type') || 'linear'; // 'linear' | 'circular'
-  }
-  set type(v) {
-    this.setAttribute('type', v);
-  }
-
-  get variant() {
-    return this.getAttribute('variant') || 'standard'; // 'standard' | 'wavy'
-  }
-  set variant(v) {
-    this.setAttribute('variant', v);
-  }
-
-  get max() {
-    const m = parseFloat(this.getAttribute('max'));
-    return isNaN(m) || m <= 0 ? 100 : m;
-  }
-  set max(v) {
-    this.setAttribute('max', String(v));
-  }
-
-  get value() {
-    const v = parseFloat(this.getAttribute('value') ?? this.getAttribute('progress'));
-    if (isNaN(v)) return null;
-    return Math.min(this.max, Math.max(0, v));
-  }
-  set value(v) {
-    if (v === null || v === undefined) {
-      this.removeAttribute('value');
-      this.removeAttribute('progress');
-    } else {
-      this.setAttribute('value', String(v));
-    }
-  }
-
-  get indeterminate() {
-    return this.hasAttribute('indeterminate') || this.value === null;
-  }
-  set indeterminate(v) {
-    if (v) this.setAttribute('indeterminate', '');
-    else this.removeAttribute('indeterminate');
-  }
-
-  get fraction() {
-    if (this.indeterminate) return 0;
-    return Math.max(0, Math.min(1, this.value / this.max));
-  }
-
-  _startAnimation() {
-    this._stopAnimation();
-    this._startTime = performance.now();
-
-    const canvas = this.shadowRoot.querySelector('canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    const loop = (now) => {
-      this._draw(ctx, now);
-      this._rafId = requestAnimationFrame(loop);
-    };
-
-    this._rafId = requestAnimationFrame(loop);
-  }
-
-  _stopAnimation() {
-    if (this._rafId) {
-      cancelAnimationFrame(this._rafId);
-      this._rafId = null;
-    }
-  }
-
-  _syncDimensions() {
-    const canvas = this.shadowRoot.querySelector('canvas');
-    if (!canvas) return;
-
-    const isLinear = this.type === 'linear';
-    const isWavy = this.variant === 'wavy';
-    const strokeWidth = this.strokeWidth;
-    const amplitudeMax = this.amplitude !== null ? this.amplitude : 3.0;
-
-    const w = this._getWidth();
-    const h = isLinear ? (isWavy ? Math.max(10, Math.round(amplitudeMax * 2 + strokeWidth + 2)) : Math.max(4, Math.round(strokeWidth))) : 48;
-
-    const dpr = window.devicePixelRatio || 1;
-    const requiredW = Math.round(w * dpr);
-    const requiredH = Math.round(h * dpr);
-
-    if (canvas.width !== requiredW || canvas.height !== requiredH) {
-      canvas.width = requiredW;
-      canvas.height = requiredH;
-      canvas.style.width = isLinear ? '100%' : `${w}px`;
-      canvas.style.height = `${h}px`;
-    }
-
-    const root = this.shadowRoot.querySelector('.progress-root');
-    if (root) {
-      root.style.width = isLinear ? '100%' : `${w}px`;
-      root.style.height = `${h}px`;
-      if (this.indeterminate) {
-        root.setAttribute('aria-busy', 'true');
-        root.removeAttribute('aria-valuenow');
-      } else {
-        root.setAttribute('aria-busy', 'false');
-        root.setAttribute('aria-valuenow', String(Math.round(this.fraction * 100)));
-        root.setAttribute('aria-valuemin', '0');
-        root.setAttribute('aria-valuemax', '100');
-      }
-    }
-  }
-
+  _needsAnimation(){return this.indeterminate||this.variant==='wavy'&&(!!this._amplitudeRun||this._animatedAmplitude>0&&this.waveSpeed>0);}
+  _stopAnimation(){if(this._rafId!==null)cancelAnimationFrame(this._rafId);this._rafId=null;}
   _draw(ctx, now) {
-    const isLinear = this.type === 'linear';
-    const isWavy = this.variant === 'wavy';
-    const isIndet = this.indeterminate;
-    const p = this.fraction;
-
-    this._resolveColors();
-    const activeColor = this._activeColor;
-    const trackColor = this._trackColor;
-
-    const strokeWidth = this.strokeWidth;
-    const gapSize = this.gapSize;
-    const stopSize = this.stopSize;
-    const amplitudeMax = this.amplitude !== null ? this.amplitude : 3.0;
-
-    const dpr = window.devicePixelRatio || 1;
-    const w = this._getWidth();
-    const h = isLinear ? (isWavy ? Math.max(10, Math.round(amplitudeMax * 2 + strokeWidth + 2)) : Math.max(4, Math.round(strokeWidth))) : 48;
-    const centerY = isLinear ? h / 2 : 24.0;
-
-    const requiredW = Math.round(w * dpr);
-    const requiredH = Math.round(h * dpr);
-    const canvas = ctx.canvas;
-
-    if (canvas.width !== requiredW || canvas.height !== requiredH) {
-      canvas.width = requiredW;
-      canvas.height = requiredH;
-      canvas.style.width = isLinear ? '100%' : `${w}px`;
-      canvas.style.height = `${h}px`;
-    }
-
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    const elapsed = (now - this._startTime) / 1000; // in seconds
-
-    const dt = this._lastFrameTime > 0 ? Math.min((now - this._lastFrameTime) / 1000, 0.05) : 0.016;
-    this._lastFrameTime = now;
-
-    if (isLinear) {
-      if (isWavy) {
-        // ==========================================
-        // 1. LINEAR WAVY PROGRESS INDICATOR
-        // ==========================================
-        const wavelength = this.wavelength !== null ? this.wavelength : (isIndet ? 20.0 : 40.0); // Indeterminate = 20dp, Determinate = 40dp
-        const waveSpeed = wavelength; // 1 wavelength per second
-        const waveOffset = (elapsed * waveSpeed) % wavelength;
-        const adjustedGapSize = gapSize + strokeWidth; // Round cap compensation (Android ProgressIndicator.kt §171)
-
-        // Calculate target amplitude according to AndroidX Compose specs
-        let targetAmp = amplitudeMax;
-        if (!isIndet) {
-          targetAmp = (p <= 0.1 || p >= 0.95) ? 0 : amplitudeMax;
-        }
-
-        // Smooth amplitude animation (500ms easing per Compose Increasing/Decreasing spec)
-        if (this._animatedAmplitude === null) {
-          this._animatedAmplitude = targetAmp;
-        } else {
-          const smoothSpeed = targetAmp > this._animatedAmplitude ? 7.0 : 9.0;
-          this._animatedAmplitude += (targetAmp - this._animatedAmplitude) * (1 - Math.exp(-smoothSpeed * dt));
-        }
-
-        const currentAmp = this._animatedAmplitude;
-        const waveY = (x) => centerY + currentAmp * Math.sin(((x - waveOffset) * 2 * Math.PI) / wavelength);
-
-        if (isIndet) {
-          // Dual indeterminate moving wave segments
-          const tCycle = (elapsed * 0.7) % 2.0; // 2-second cycle
-          const head1 = Math.min(w, Math.max(0, (tCycle / 1.2) * w));
-          const tail1 = Math.min(w, Math.max(0, ((tCycle - 0.4) / 1.2) * w));
-
-          // Draw full wavy track
-          ctx.beginPath();
-          ctx.strokeStyle = trackColor;
-          ctx.lineWidth = strokeWidth;
-          for (let x = 0; x <= w; x += 1) {
-            const y = waveY(x);
-            if (x === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-          ctx.stroke();
-
-          // Draw active indeterminate wave
-          if (head1 > tail1) {
-            ctx.beginPath();
-            ctx.strokeStyle = activeColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.moveTo(tail1, waveY(tail1));
-            for (let x = tail1 + 1; x < head1; x += 1) {
-              ctx.lineTo(x, waveY(x));
-            }
-            ctx.lineTo(head1, waveY(head1));
-            ctx.stroke();
-          }
-        } else {
-          // Determinate Mode (AndroidX Compose: Active is wavy, Track is FLAT line, Stop Dot is on centerY)
-          const activeWidth = p * w;
-          const trackStart = Math.min(w, activeWidth + adjustedGapSize);
-          const stopX = w - stopSize / 2;
-          const trackEnd = Math.max(trackStart, w - stopSize - gapSize);
-
-          // Draw Track (Flat line on centerY)
-          if (trackStart < trackEnd) {
-            ctx.beginPath();
-            ctx.strokeStyle = trackColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.moveTo(trackStart, centerY);
-            ctx.lineTo(trackEnd, centerY);
-            ctx.stroke();
-          }
-
-          // Draw Active Wave (Subpixel smooth lineTo)
-          if (activeWidth > 0) {
-            ctx.beginPath();
-            ctx.strokeStyle = activeColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.moveTo(0, waveY(0));
-            const stepPx = 1;
-            for (let x = stepPx; x < activeWidth; x += stepPx) {
-              ctx.lineTo(x, waveY(x));
-            }
-            ctx.lineTo(activeWidth, waveY(activeWidth));
-            ctx.stroke();
-          }
-
-          // Draw Stop Indicator dot on flat track line (centerY)
-          if (p < 0.99) {
-            ctx.beginPath();
-            ctx.fillStyle = activeColor;
-            ctx.arc(stopX, centerY, stopSize / 2, 0, 2 * Math.PI);
-            ctx.fill();
-          }
-        }
-      } else {
-        // ==========================================
-        // 2. LINEAR STANDARD PROGRESS INDICATOR
-        // ==========================================
-        const centerY = 2.0;
-        const adjustedGapSize = gapSize + strokeWidth; // Round cap compensation
-
-        if (isIndet) {
-          const minX = strokeWidth / 2;
-          const maxX = w - strokeWidth / 2;
-          const range = Math.max(1, maxX - minX);
-
-          // Full background track (round caps at minX / maxX)
-          ctx.beginPath();
-          ctx.strokeStyle = trackColor;
-          ctx.lineWidth = strokeWidth;
-          ctx.moveTo(minX, centerY);
-          ctx.lineTo(maxX, centerY);
-          ctx.stroke();
-
-          // Active Indeterminate Capsule (bounded inside [minX, maxX] so round caps are never clipped)
-          const tCycle = (elapsed * 0.7) % 1.8;
-          const head = minX + Math.min(range, Math.max(0, (tCycle / 1.1) * range));
-          const tail = minX + Math.min(range, Math.max(0, ((tCycle - 0.45) / 1.1) * range));
-
-          if (head > tail) {
-            ctx.beginPath();
-            ctx.strokeStyle = activeColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.moveTo(tail, centerY);
-            ctx.lineTo(head, centerY);
-            ctx.stroke();
-          }
-        } else {
-          // Determinate Mode
-          const minX = strokeWidth / 2;
-          const maxX = w - strokeWidth / 2;
-          const activeW = minX + p * (maxX - minX);
-          const trackStart = Math.min(maxX, activeW + adjustedGapSize);
-
-          // Track
-          if (trackStart < maxX) {
-            ctx.beginPath();
-            ctx.strokeStyle = trackColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.moveTo(trackStart, centerY);
-            ctx.lineTo(maxX, centerY);
-            ctx.stroke();
-          }
-
-          // Active Bar
-          if (activeW > minX) {
-            ctx.beginPath();
-            ctx.strokeStyle = activeColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.moveTo(minX, centerY);
-            ctx.lineTo(activeW, centerY);
-            ctx.stroke();
-          }
-
-          // Stop Dot
-          if (p < 0.99) {
-            ctx.beginPath();
-            ctx.fillStyle = activeColor;
-            ctx.arc(w - stopSize / 2, centerY, stopSize / 2, 0, 2 * Math.PI);
-            ctx.fill();
-          }
-        }
+    if(!ctx)return;this._resolveColors();
+    const w=this._width,h=this._height,sw=this.strokeWidth,ts=this.trackStrokeWidth;
+    const elapsed=this._motionPreference.matches?650:Math.max(0,now-this._startTime);
+    const indet=this.indeterminate,p=this.fraction;
+    const target=this.amplitude??(indet?1:p<=.1||p>=.95?0:1);
+    const amplitude=this.variant==='wavy'?(this.type==='circular'&&indet?target:this._amplitudeAt(target,now)):0;
+    const dpr=devicePixelRatio||1;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.save();
+    if(this.type==='linear'){
+      if(this._rtl){ctx.translate(w,this.variant==='wavy'?h:0);ctx.scale(-1,this.variant==='wavy'?-1:1);}
+      const fractions=indet?linearIndeterminateFractions(elapsed):null;
+      if(this.variant==='standard'){
+        const layout=standardLinearLayout({width:w,height:h,progress:p,fractions,gap:this.gapSize,stop:this.stopSize,cap:this.strokeCap});
+        this._lastLayout=layout;this._lines(ctx,layout.tracks,this._trackColor,sw,layout.cap,h/2);
+        this._lines(ctx,layout.active,this._activeColor,sw,layout.cap,h/2);this._stop(ctx,layout.stop,this.strokeCap);
+      }else{
+        const layout=linearWavyLayout({width:w,height:h,stroke:sw,trackStroke:ts,fractions:fractions||[0,p],gap:this.gapSize,stop:this.stopSize,cap:this.strokeCap,trackCap:this.trackStrokeCap});
+        this._lastLayout=layout;this._lines(ctx,layout.tracks,this._trackColor,ts,this.trackStrokeCap,h/2);
+        const offset=this._offsetAt(amplitude,now);
+        ctx.strokeStyle=this._activeColor;ctx.lineWidth=sw;ctx.lineCap=this.strokeCap;
+        for(const [start,end] of layout.active){const segments=linearWaveSegments(start,end,{height:h,stroke:sw,wavelength:this.wavelength,amplitude,offset});
+          if(!segments.length)continue;ctx.beginPath();ctx.moveTo(...segments[0][0]);for(const c of segments)ctx.quadraticCurveTo(...c[1],...c[2]);ctx.stroke();}
+        this._stop(ctx,layout.stop,this.trackStrokeCap);
       }
-    } else {
-      // ==========================================
-      // 3. CIRCULAR INDICATOR (STANDARD & WAVY)
-      // ==========================================
-      const center = 24.0;
-      const radius = Math.max(4, center - strokeWidth - 2);
-
-      if (isWavy) {
-        // CIRCULAR WAVY (Expressive)
-        const amplitudeMax = this.amplitude !== null ? this.amplitude : 3.0;
-        const numWaves = 8; // 8-wave continuous closed sinusoid
-        // Calculate target amplitude according to AndroidX Compose specs
-        let targetAmp = amplitudeMax;
-        if (!isIndet) {
-          targetAmp = (p <= 0.1 || p >= 0.95) ? 0 : amplitudeMax;
-        }
-
-        if (this._animatedAmplitude === null) {
-          this._animatedAmplitude = targetAmp;
-        } else {
-          const smoothSpeed = targetAmp > this._animatedAmplitude ? 7.0 : 9.0;
-          this._animatedAmplitude += (targetAmp - this._animatedAmplitude) * (1 - Math.exp(-smoothSpeed * dt));
-        }
-
-        const currentAmp = this._animatedAmplitude;
-
-        const waveSpeed = Math.PI / 4; // 45° / second rotation
-        const phaseOffset = elapsed * waveSpeed;
-
-        const getPoint = (theta) => {
-          const r = radius + currentAmp * Math.sin(numWaves * theta - phaseOffset);
-          return {
-            x: center + r * Math.cos(theta),
-            y: center + r * Math.sin(theta)
-          };
-        };
-
-        if (isIndet) {
-          // Continuous spinning circular wavy
-          const spinOffset = elapsed * 1.5;
-          const startAngle = spinOffset;
-          const sweepAngle = Math.PI * 1.4;
-
-          // Track
-          ctx.beginPath();
-          ctx.strokeStyle = trackColor;
-          ctx.lineWidth = strokeWidth;
-          const trackSteps = 180;
-          for (let i = 0; i <= trackSteps; i++) {
-            const angle = (i / trackSteps) * 2 * Math.PI;
-            const pt = getPoint(angle);
-            if (i === 0) ctx.moveTo(pt.x, pt.y);
-            else ctx.lineTo(pt.x, pt.y);
-          }
-          ctx.stroke();
-
-          // Active Arc
-          ctx.beginPath();
-          ctx.strokeStyle = activeColor;
-          ctx.lineWidth = strokeWidth;
-          const activeSteps = 120;
-          for (let i = 0; i <= activeSteps; i++) {
-            const angle = startAngle + (i / activeSteps) * sweepAngle;
-            const pt = getPoint(angle);
-            if (i === 0) ctx.moveTo(pt.x, pt.y);
-            else ctx.lineTo(pt.x, pt.y);
-          }
-          ctx.stroke();
-        } else {
-          // Determinate Circular Wavy
-          const sweepAngle = p * 2 * Math.PI;
-          const adjustedGapAngle = ((gapSize + strokeWidth) / (2 * Math.PI * radius)) * 2 * Math.PI; // Round cap compensation (Android)
-          const gapSweep = Math.min(sweepAngle, adjustedGapAngle);
-          const startAngle = -Math.PI / 2;
-
-          // Track (Flat circular arc — GAP AT BOTH ENDS, Android ProgressIndicator.kt §549-550)
-          if (p < 0.99 && (startAngle + sweepAngle + gapSweep < startAngle + 2 * Math.PI - gapSweep)) {
-            ctx.beginPath();
-            ctx.strokeStyle = trackColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.arc(center, center, radius, startAngle + sweepAngle + gapSweep, startAngle + 2 * Math.PI - gapSweep);
-            ctx.stroke();
-          }
-
-          // Active Wavy Arc
-          if (sweepAngle > 0.05) {
-            ctx.beginPath();
-            ctx.strokeStyle = activeColor;
-            ctx.lineWidth = strokeWidth;
-            const activeSteps = Math.max(10, Math.floor((sweepAngle / (2 * Math.PI)) * 180));
-            for (let i = 0; i <= activeSteps; i++) {
-              const angle = startAngle + (i / activeSteps) * sweepAngle;
-              const pt = getPoint(angle);
-              if (i === 0) ctx.moveTo(pt.x, pt.y);
-              else ctx.lineTo(pt.x, pt.y);
-            }
-            ctx.stroke();
-          }
-        }
-      } else {
-        // CIRCULAR STANDARD (Material 3)
-        const startAngle = -Math.PI / 2;
-
-        if (isIndet) {
-          // Full background track circle (100% M3 Parity)
-          ctx.beginPath();
-          ctx.strokeStyle = trackColor;
-          ctx.lineWidth = strokeWidth;
-          ctx.arc(center, center, radius, 0, 2 * Math.PI);
-          ctx.stroke();
-
-          // Active Spinning Arc with round caps
-          const spin = (elapsed * 2.0) % (2 * Math.PI);
-          ctx.beginPath();
-          ctx.strokeStyle = activeColor;
-          ctx.lineWidth = strokeWidth;
-          ctx.arc(center, center, radius, spin, spin + Math.PI * 1.3);
-          ctx.stroke();
-        } else {
-          const sweep = p * 2 * Math.PI;
-          const adjustedGapAngle = ((gapSize + strokeWidth) / (2 * Math.PI * radius)) * 2 * Math.PI; // Round cap compensation
-          const gapSweep = Math.min(sweep, adjustedGapAngle);
-
-          // Track (GAP AT BOTH ENDS — Android ProgressIndicator.kt §549-550)
-          if (p < 0.99 && (startAngle + sweep + gapSweep < startAngle + 2 * Math.PI - gapSweep)) {
-            ctx.beginPath();
-            ctx.strokeStyle = trackColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.arc(center, center, radius, startAngle + sweep + gapSweep, startAngle + 2 * Math.PI - gapSweep);
-            ctx.stroke();
-          }
-
-          // Active Arc
-          if (sweep > 0.02) {
-            ctx.beginPath();
-            ctx.strokeStyle = activeColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.arc(center, center, radius, startAngle, startAngle + sweep);
-            ctx.stroke();
-          }
-        }
-      }
-    }
+    }else if(this.variant==='standard'){
+      const state=indet?circularIndeterminateState(elapsed):{progress:p,rotation:270};
+      const layout=standardCircularLayout({size:w,stroke:sw,progress:state.progress,rotation:state.rotation,gap:this.gapSize,cap:this.strokeCap});
+      this._lastLayout=layout;
+      this._arc(ctx,w/2,layout.radius,layout.trackStart,layout.trackSweep,this._trackColor,sw,this.strokeCap);
+      this._arc(ctx,w/2,layout.radius,layout.start,layout.sweep,this._activeColor,sw,this.strokeCap);
+    }else this._drawCircularWave(ctx,now,elapsed,amplitude);
     ctx.restore();
   }
-
-  render() {
-    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="progress-root" role="progressbar" aria-label="Progress indicator">
-        <canvas></canvas>
-      </div>
-    `;
-
+  _lines(ctx,lines,color,width,cap,y){
+    ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap=cap;
+    for(const [a,b]of lines){
+      if(a===b){ctx.fillStyle=color;if(cap==='round'){ctx.beginPath();ctx.arc(a,y,width/2,0,2*Math.PI);ctx.fill();}else if(cap==='square')ctx.fillRect(a-width/2,y-width/2,width,width);continue;}
+      ctx.beginPath();ctx.moveTo(a,y);ctx.lineTo(b,y);ctx.stroke();
+    }
+  }
+  _stop(ctx,stop,cap){if(!stop)return;ctx.fillStyle=this._activeColor;
+    if(cap==='round'){ctx.beginPath();ctx.arc(stop.x,stop.y,stop.size/2,0,2*Math.PI);ctx.fill();}
+    else ctx.fillRect(stop.x-stop.size/2,stop.y-stop.size/2,stop.size,stop.size);
+  }
+  _arc(ctx,center,radius,start,sweep,color,width,cap){
+    if(sweep===0||radius<=0)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap=cap;
+    ctx.beginPath();ctx.arc(center,center,radius,start*Math.PI/180,(start+sweep)*Math.PI/180,sweep<0);ctx.stroke();
+  }
+  _drawCircularWave(ctx,now,elapsed,amplitude){
+    const size=this._width,sw=this.strokeWidth,ts=this.trackStrokeWidth;
+    if(this.indeterminate&&amplitude>0&&amplitude<1)this._morphRequired=true;
+    const vertices=Math.max(5,Math.round(2*Math.PI*(size/2-sw/2)/this.wavelength));
+    const key=[size,sw,vertices,amplitude,this._morphRequired].join('/');
+    if(this._circleCache?.key!==key){
+      const progress=measureProgressPath(centerProgressCubics(circularProgressCubics(vertices,amplitude,this._morphRequired),size,sw));
+      const track=measureProgressPath(centerProgressCubics(circularProgressCubics(vertices,0,false,true),size,sw));
+      this._circleCache={key,progress,track};
+    }
+    const {progress,track}=this._circleCache,state=this.indeterminate?circularIndeterminateState(elapsed):{progress:this.fraction,rotation:0};
+    const stop=state.progress*progress.length,cap=(this.strokeCap==='butt'&&this.trackStrokeCap==='butt')?0:Math.max(sw/2,ts/2);
+    const spacing=2*Math.min(stop,cap)+Math.min(stop,this.gapSize);
+    const offset=amplitude>0?this._offsetAt(amplitude,now,vertices):0;
+    this._lastLayout={vertices,amplitude,offset,progress:state.progress,spacing};
+    if(this.indeterminate){ctx.translate(size/2,size/2);ctx.rotate((state.rotation+90)*Math.PI/180);ctx.translate(-size/2,-size/2);}
+    this._cubics(ctx,progressPathSegment(track,state.progress*track.length+spacing,track.length-spacing),this._trackColor,ts,this.trackStrokeCap);
+    ctx.save();ctx.translate(size/2,size/2);ctx.rotate(-offset*2*Math.PI);ctx.translate(-size/2,-size/2);
+    this._cubics(ctx,progressPathSegment(progress,offset*progress.length,(offset+state.progress)*progress.length),this._activeColor,sw,this.strokeCap);ctx.restore();
+  }
+  _cubics(ctx,segments,color,width,cap){
+    if(!segments.length)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap=cap;
+    ctx.beginPath();ctx.moveTo(...segments[0][0]);for(const c of segments)ctx.bezierCurveTo(...c[1],...c[2],...c[3]);ctx.stroke();
+  }
+  render(){
+    this.shadowRoot.innerHTML=`${this.shadowRoot.adoptedStyleSheets?.length?'':`<style>${defaultStyle}</style>`}<div class="progress-root" role="progressbar"><canvas aria-hidden="true"></canvas><span class="color-probe" aria-hidden="true"></span></div>`;
+    this._root=this.shadowRoot.querySelector('.progress-root');this._canvas=this.shadowRoot.querySelector('canvas');this._probe=this.shadowRoot.querySelector('.color-probe');
     this._syncDimensions();
   }
 }
-
-if (!customElements.get('md-progress-indicator')) {
-  customElements.define('md-progress-indicator', MdProgressIndicator);
-}
+if(!customElements.get('md-progress-indicator'))customElements.define('md-progress-indicator',MdProgressIndicator);

@@ -29,6 +29,16 @@ AppBarTokens, ToolbarTokens, MotionScheme, SpringPhysics), interaction states,
 and API surfaces in this library are adapted from the official AndroidX
 Compose Material 3 Kotlin implementation.
 
+Loading indicator cubic geometry and morph pairs are generated from AndroidX
+graphics-shapes (RoundedPolygon, Morph and their helpers), MaterialShapes.kt,
+and LoadingIndicator.kt at revision a095da93f8e98dea8748ceed79ea8427aade245f.
+Spring completion timing is generated from animation-core/SpringEstimation.kt.
+The generator substitutes minimal Compose geometry adapters for standalone JVM
+execution; the browser interpolates exported cubic pairs and renders them on Canvas.
+See tools/androidx-shapes for the reproducible generator and source hash manifest.
+The canonical SVG shape catalog in src/tokens/shapes.js is generated from the
+same normalized MaterialShapes polygons. Legacy hexagon remains a web extension.
+
 ===============================================================================
 3. Material Components for Android (MDC-Android)
 ===============================================================================
@@ -55,4 +65,224 @@ used in the theme system are based on Google's Material Color Utilities.
 Copyright Google LLC.
 Website: https://fonts.google.com/icons
 Licensed under the Apache License, Version 2.0.
-Roboto and Google Sans typography tokens are trademarks and copyrights of Google LLC.
+The local Roboto text font is covered separately by the SIL Open Font License below.
+
+Material Color Utilities runtime
+Copyright 2021-2026 Google LLC. Licensed under Apache-2.0.
+The generated src/theme/material-color-utilities.js bundles unmodified algorithms
+from @material/material-color-utilities version 0.4.0. Its upstream license is
+included in tools/material-color-utilities/LICENSE; notices remain in the module.
+Reproducible download, integrity verification and bundling: tools/material-color-utilities.
+
+Roboto text font
+Copyright 2011 The Roboto Project Authors (https://github.com/googlefonts/roboto-classic).
+Licensed under the SIL Open Font License, Version 1.1; see src/fonts/Roboto-OFL.txt
+(also distributed as dist/fonts/Roboto-OFL.txt). Vendored from google/fonts at
+1c627bfa375fc51cf86fabeca4f6e08a95f0aa5c and losslessly compressed as WOFF2.
+No font subsetting or outline modification is applied.
+
+Typography token catalog
+Copyright 2021 The Android Open Source Project. Apache-2.0.
+TypeScaleTokens.kt and TypefaceTokens.kt at the AndroidX revision listed above
+are included in test/fixtures/androidx. Generated catalog/CSS: tools/androidx-typography.
+
+Selection motion duration estimator
+Copyright 2020 The Android Open Source Project. Apache-2.0.
+src/motion/spring-duration.js ports SpringEstimation.kt from AndroidX revision
+a095da93f8e98dea8748ceed79ea8427aade245f. Original sources and independently
+generated Kotlin fixtures are in test/fixtures/androidx/motion;
+see tools/androidx-motion for reproduction and bridge details.
+
+Navigation rail measurement
+Copyright 2024 The Android Open Source Project. Apache-2.0.
+src/components/navigation-rail-layout.js adapts AnimatedMeasurePolicy and
+placeAnimatedLabelAndIcon from NavigationItem.kt at the AndroidX revision above.
+Original sources: test/fixtures/androidx/navigation; extracted Kotlin policy
+oracle and platform measurement adapters: tools/androidx-navigation.
+
+Navigation label color motion
+Copyright 2019 The Android Open Source Project. Apache-2.0.
+src/motion/color-motion.js adapts the ColorVectorConverter channel order,
+drawing constraints and VectorizedFloatAnimationSpec shared spring duration.
+Original source references/hashes: test/fixtures/androidx/color and motion.
+The browser performs CSS color conversion; it is not a port of AndroidX packed
+color storage. Independent Kotlin vector trajectory fixtures: tools/androidx-motion.
+
+Navigation drawer geometry and motion
+Copyright 2020-2024 The Android Open Source Project. Apache-2.0.
+src/components/md-navigation-drawer.js adapts NavigationDrawer.kt's sheet/item
+geometry, horizontalScaleUp/horizontalScaleDown and offset scrim fraction at the
+AndroidX revision above. Original sources/hashes: test/fixtures/androidx/navigation-drawer.
+src/motion/drawer-motion.js adapts its gesture target thresholds, captured256ms
+FloatTweenSpec, FastOutSlowIn cubic/fastCbrt and default exponential decay.
+src/motion/velocity-tracker.js adapts VelocityTracker1D/polyFitLeastSquares and
+Lsq2VelocityTracker's event history/UP stop rule (Copyright2019-2025 AOSP).
+src/motion/touch-slop.js adapts horizontal TouchSlopDetector and
+ViewConfiguration.pointerSlop (Copyright2020 AOSP). Original source references,
+flags and independently compiled threshold/offset cases: tools/androidx-drawer.
+Independent Kotlin samples: tools/androidx-drawer. Native dialog modal behavior
+and pointer input delivery are web adaptations; platform view configuration,
+closed-container routing, multi-drawer ownership and predictive back remain under audit.
+
+Tab measurement, indicator placement and scroll consumption
+Copyright 2019-2022 The Android Open Source Project. Apache-2.0.
+src/components/tab-layout.js adapts Tab.kt, TabRow.kt and Scroll.kt at the
+AndroidX revision above. MdTabs applies their public geometry, defaults and motion
+roles using native web fonts/input/panels. Original licensed sources and SHA
+references: test/fixtures/androidx/tabs. Independent unchanged-body Kotlin
+projection and host adapter details: tools/androidx-tabs; spring trajectories:
+tools/androidx-motion. Generic Compose content/modifier APIs and exact platform
+font/ripple/focus/hit routing are outside the currently verified tab core.
+
+Floating toolbar measurement, balanced padding and visibility placement
+Copyright 2020-2024 The Android Open Source Project. Apache-2.0.
+src/components/toolbar-layout.js and md-toolbar.js adapt FloatingToolbar.kt and
+EnterExitTransition.kt at the AndroidX revision above. Docked colors adapt MDC
+DockedToolbarLayout resources at 60ff09436d5d477a4b9d02940f31eb01e1250620.
+Original licensed files, URLs and SHA references: test/fixtures/androidx/toolbars
+and test/fixtures/mdc/toolbars. Unchanged-body Kotlin projections and explicit
+host measurement/animation adapters: tools/androidx-toolbars. Native focus/input,
+slot metrics and CSS shadows are web adaptations, not Android renderer ports.
+
+Floating toolbar scrolling and Android spline decay
+Copyright 2020-2024 The Android Open Source Project. Apache-2.0.
+src/components/toolbar-scroll.js and src/motion/android-fling.js adapt
+FloatingToolbar.kt, SplineBasedDecay.kt, FlingCalculator.kt and
+SplineBasedFloatDecayAnimationSpec.kt at the pinned AndroidX revision above.
+Original source/URL/SHA fixtures, including Android16 ViewConfiguration friction:
+test/fixtures/androidx/toolbar-scroll. Whole-body projections, shared original
+spring implementation and host clock/modifier adapters: tools/androidx-toolbar-scroll.
+Browser scroll delivery, CSS parent coordinates, pointer capture and native
+focus/accessibility management are explicit web adaptations.
+
+Floating toolbar parent constraints and padded scroll measurement
+Copyright 2019-2024 The Android Open Source Project. Apache-2.0.
+src/components/toolbar-layout.js and md-toolbar.js adapt FloatingToolbar.kt,
+Constraints.kt, Size.kt, Padding.kt, Scroll.kt and Placeable.kt at the pinned
+AndroidX revision above. Licensed originals with URLs/SHA references:
+test/fixtures/androidx/toolbar-constraints. Original-body Kotlin measurement
+and placement projection with explicit content/intrinsic/tree adapters:
+tools/androidx-toolbar-constraints. CSS allocation is a browser adaptation;
+Compose Row/Column/composition and platform rendering are not executed.
+
+Floating toolbar Row/Column and minimum interactive measurement
+Copyright 2019-2024 The Android Open Source Project. Apache-2.0.
+src/components/row-column-layout.js, toolbar-layout.js and md-toolbar.js adapt
+Row.kt, Column.kt, RowColumnMeasurePolicy.kt, RowColumnImpl.kt, Arrangement.kt,
+Alignment.kt and InteractiveComponentSize.kt at the pinned AndroidX revision.
+Licensed originals, URLs and SHA references: test/fixtures/androidx/toolbar-row.
+Original-body Kotlin policies, intrinsic helpers, modifiers and placement
+execute through tools/androidx-toolbar-row. Slotted leaf/font measurement,
+explicit group alignment lines, sampled animation values and CSS allocation
+are host adapters; the complete Compose UI and rendering pipeline is not run.
+
+Floating toolbar inherited alignment lines
+Copyright 2021-2024 The Android Open Source Project. Apache-2.0.
+src/components/row-column-layout.js and toolbar-layout.js adapt
+LayoutNodeAlignmentLines.kt, AlignmentLine.kt and the source coordinator get/
+parent mapping at the pinned AndroidX revision. Licensed originals, URLs and
+SHA references: test/fixtures/androidx/toolbar-alignment. Unchanged-body Kotlin
+projection with explicit coordinator/owner/identity-layer/deferred-placement
+adapters: tools/androidx-toolbar-alignment. Full Compose scheduling, arbitrary
+custom providers/layers and platform rendering remain separate audit boundaries.
+
+Floating toolbar omitted inner Row/Column alignment
+-------------------------------------------------------------------------------
+src/components/row-column-layout.js, toolbar-layout.js and md-toolbar.js adapt
+the omitted inner Row Top/Column logical Start defaults while retaining explicit
+Scope.align overrides and centered outer groups from FloatingToolbar.kt at
+AndroidX revision a095da93f8e98dea8748ceed79ea8427aade245f. Licensed originals,
+URLs and SHA references: test/fixtures/androidx/toolbar-inner-alignment. Original
+default-policy factories and shared modifier/coordinator projections execute
+through tools/androidx-toolbar-inner-alignment. Remember/leaf measurement,
+visibility sampling and owner scheduling are explicit host boundaries; full
+Compose runtime/input/rendering is not executed.
+
+Floating toolbar two-dimensional size motion and visibility composition
+Copyright 2019-2025 The Android Open Source Project. Apache-2.0.
+src/motion/size-motion.js, toolbar-layout.js and md-toolbar.js adapt vectorized
+IntSize springs, converted-value/Float-velocity retargeting and ordinary
+AnimatedVisibility composition/disposal at the pinned AndroidX revision.
+Twelve licensed originals, URLs and SHA references:
+test/fixtures/androidx/toolbar-size-motion. Original-body vector/spring/converter/
+TargetBasedAnimation/Transition/gate and shared native modifier projections:
+tools/androidx-toolbar-size-motion. Clock/derived-state/scheduling and CSS/DOM
+are explicit host adapters; full Compose runtime and platform rendering are not run.
+
+Floating toolbar configurable content padding and modifier intrinsic fallback
+Copyright 2019-2024 The Android Open Source Project. Apache-2.0.
+src/components/toolbar-padding.js, toolbar-layout.js and md-toolbar.js adapt
+logical/absolute PaddingValues, per-edge Float Dp rounding, and configurable
+padding from FloatingToolbar.kt and Padding.kt at AndroidX revision
+a095da93f8e98dea8748ceed79ea8427aade245f. Four unchanged licensed originals,
+including Density.kt and LayoutModifierNode.kt, with exact URLs/SHA references:
+test/fixtures/androidx/toolbar-padding. Complete original padding-value bodies,
+Dp.roundToPx and ordinary default modifier intrinsic bodies execute through
+tools/androidx-toolbar-padding, reusing independently verified original toolbar,
+Row/Column, coordinator, scroll and Placeable projections. Density-1 scopes,
+opaque with-FAB content, finite intrinsic inputs and browser allocation are
+explicit hosts; full Compose runtime, native child cross layout, unbounded
+intrinsic approximation and platform renderer equivalence are not claimed.
+
+Floating toolbar native with-FAB Row/Column content
+Copyright 2019-2024 The Android Open Source Project. Apache-2.0.
+src/components/toolbar-layout.js and md-toolbar.js adapt the centered with-FAB
+Row/Column content tree, child parent data, native minimum-interactive/SizeNode
+body constraints, weighted intrinsic reservation and scroll extent from the
+pinned AndroidX sources. Seven unchanged originals with exact URLs/SHA references:
+test/fixtures/androidx/toolbar-fab-content, including Layout.kt's LargeDimension
+for unbounded default modifier intrinsic queries. Original factories, policies,
+intrinsic methods and shared modifier/coordinator/padding/scroll/placement bodies
+execute through tools/androidx-toolbar-fab-content. Generic leaf metrics/lines,
+density-1 scopes, empty intrinsic storage and owner/scheduling are explicit hosts;
+full Compose runtime, text shaping, custom layers and platform rendering/input
+are separate boundaries. Private CSS placement, overflow extent and zero-width
+RTL scroll handling are browser adapters. An inert transparent extent element
+retains source main-axis scrolling when generic content has zero cross size;
+it does not alter measured group/child bounds and is hidden in other modes.
+
+Compose toolbar corner shapes
+Copyright 2019-2025 The Android Open Source Project. Apache-2.0.
+src/shapes/corner-shape.js adapts CornerBasedShape, CornerSize, RoundedCornerShape,
+CutCornerShape and absolute variants, CircleShape/RectangleShape defaults, and
+RoundRect point containment at AndroidX revision
+a095da93f8e98dea8748ceed79ea8427aade245f. Twenty-two unchanged licensed originals,
+URLs and SHA references: test/fixtures/androidx/corner-shapes. The public web
+descriptor/parser, CSS rounded/polygon clipping and src/shapes/outline-shadow.js
+SVG shadow are browser adapters. Native Android Path/Skia rasterization, arbitrary
+Compose Shape implementations and graphics-layer shadow/input rendering are not
+executed by this port or its JVM geometry projection.
+
+Progress indicator geometry and shapes
+Copyright 2021-2024 The Android Open Source Project. Apache-2.0.
+src/components/progress-indicator-layout.js, progress-indicator-path.js and
+md-progress-indicator.js adapt ProgressIndicator.kt, WavyProgressIndicator.kt,
+LinearWavyProgressModifiers.kt, CircularWavyProgressModifiers.kt and ShapeUtil.kt
+at AndroidX revision a095da93f8e98dea8748ceed79ea8427aade245f. Nine unchanged
+licensed source/token files with URLs and SHA references are under
+test/fixtures/androidx/progress-indicators. tools/androidx-progress executes
+source standard drawing bodies through a density-1 draw recorder and the shared
+pinned graphics-shapes runtime; src/tokens/progress-morphs.js contains its native
+circle/star/Morph coefficients. Rotational wedge reconstruction, quadratic/cubic
+path measurement, CSS color resolution, Canvas drawing/ARIA and lifecycle are
+browser adapters. Native Skia rasterization, complete Compose animation/runtime
+scheduling and polygon construction beyond generated counts remain boundaries.
+
+Slider track/tick/stop geometry and snapping in src/components/slider-layout.js
+are adapted from AndroidX Material3 Slider.kt / SliderTokens.kt at revision
+a095da93f8e98dea8748ceed79ea8427aade245f (Copyright 2022 The Android Open
+Source Project, Apache License 2.0). Original sources, URLs and hashes are in
+test/fixtures/androidx/sliders; tools/androidx-sliders executes unchanged
+source bodies for reference drawing fixtures.
+
+Slider pointer dispatch, slop and canceled-drag completion
+Copyright 2019-2022 The Android Open Source Project. Apache-2.0.
+src/components/slider-layout.js and md-slider.js also adapt SliderState's scalar
+pixel-to-user dispatch, onPress, RangeSliderState.onDrag/updateMinMaxPx and
+sliderTapModifier/rangeSliderPressDragModifier from
+the same Slider.kt, plus gesture threshold and cancellation behavior from
+Foundation Draggable.kt / DragGestureDetector.kt at the revision above. All four
+unchanged licensed originals are pinned in test/fixtures/androidx/sliders.
+tools/androidx-sliders executes unchanged scalar dispatch bodies through a
+density-1 field host; browser pointer events, labels, forms and focus delegation
+are web adapters. The full Compose gesture/coroutine runtime is not executed.

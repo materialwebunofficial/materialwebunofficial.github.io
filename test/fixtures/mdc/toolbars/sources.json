@@ -1,0 +1,133 @@
+{
+  "repository": "material-components/material-components-android",
+  "revision": "60ff09436d5d477a4b9d02940f31eb01e1250620",
+  "commitDate": "2026-09-14T20:07:53Z",
+  "sources": [
+    {
+      "file": "dockedtoolbar__DockedToolbarLayout.java",
+      "path": "lib/java/com/google/android/material/dockedtoolbar/DockedToolbarLayout.java",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/dockedtoolbar/DockedToolbarLayout.java",
+      "sha256": "4b3148fb8e7e642789652c0e8a2f16e9397d5af2d6ca7c82acae1590dc8e0ac5"
+    },
+    {
+      "file": "dockedtoolbar__res__values__styles.xml",
+      "path": "lib/java/com/google/android/material/dockedtoolbar/res/values/styles.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/dockedtoolbar/res/values/styles.xml",
+      "sha256": "445cfabd17ff9ca477814fe7e175101e3aaff365a69d23612b69ddaa60959280"
+    },
+    {
+      "file": "dockedtoolbar__res__values__attrs.xml",
+      "path": "lib/java/com/google/android/material/dockedtoolbar/res/values/attrs.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/dockedtoolbar/res/values/attrs.xml",
+      "sha256": "c18e10320fb10674c1c0a79ec667d5f5e583fe4f5ae4b45eecb4e302b6b7d2dd"
+    },
+    {
+      "file": "floatingtoolbar__FloatingToolbarLayout.java",
+      "path": "lib/java/com/google/android/material/floatingtoolbar/FloatingToolbarLayout.java",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/floatingtoolbar/FloatingToolbarLayout.java",
+      "sha256": "1877d7ae35442d1351a3b6dfa34cd8a6f958d7183bf29cae3d92355420717e60"
+    },
+    {
+      "file": "floatingtoolbar__res__values__styles.xml",
+      "path": "lib/java/com/google/android/material/floatingtoolbar/res/values/styles.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/floatingtoolbar/res/values/styles.xml",
+      "sha256": "09e52f9cc68f74946a8ee5403a76fbbf788ff1a22463755b069b8ea46fb0af72"
+    },
+    {
+      "file": "floatingtoolbar__res__values__attrs.xml",
+      "path": "lib/java/com/google/android/material/floatingtoolbar/res/values/attrs.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/floatingtoolbar/res/values/attrs.xml",
+      "sha256": "30881acd932cff96005762d8ccebc21c7e09e0ada34d5be360f99428db1f8a63"
+    },
+    {
+      "file": "docs__components__DockedToolbar.md",
+      "path": "docs/components/DockedToolbar.md",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/docs/components/DockedToolbar.md",
+      "sha256": "1e2fe7149810c773587d47c5d000180d4e47bf36f594ae9a37054c30f3ef185b"
+    },
+    {
+      "file": "docs__components__FloatingToolbar.md",
+      "path": "docs/components/FloatingToolbar.md",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/docs/components/FloatingToolbar.md",
+      "sha256": "c54be345d7d965ddabe0ee2da488484b0e0d589ecf8258967910381b5af05bd9"
+    },
+    {
+      "file": "color__res__color__m3_standard_toolbar_button_text_color_selector.xml",
+      "path": "lib/java/com/google/android/material/color/res/color/m3_standard_toolbar_button_text_color_selector.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/color/m3_standard_toolbar_button_text_color_selector.xml",
+      "sha256": "ac1bd36c67110276b6baa61d1631e2bdc9370358068018311ef6bdbfd537f320"
+    },
+    {
+      "file": "color__res__color__m3_standard_toolbar_icon_button_container_color_selector.xml",
+      "path": "lib/java/com/google/android/material/color/res/color/m3_standard_toolbar_icon_button_container_color_selector.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/color/m3_standard_toolbar_icon_button_container_color_selector.xml",
+      "sha256": "f92e64e5f6cc4eb9ff850b3919bc51f2893676c16181983ba13f3c152873bbbf"
+    },
+    {
+      "file": "color__res__color__m3_standard_toolbar_icon_button_icon_color_selector.xml",
+      "path": "lib/java/com/google/android/material/color/res/color/m3_standard_toolbar_icon_button_icon_color_selector.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/color/m3_standard_toolbar_icon_button_icon_color_selector.xml",
+      "sha256": "f6466e6a3ee02350e2056d39bca1500836ffa0f5dca67946847d578fb42b91f7"
+    },
+    {
+      "file": "color__res__color__m3_standard_toolbar_icon_button_ripple_color_selector.xml",
+      "path": "lib/java/com/google/android/material/color/res/color/m3_standard_toolbar_icon_button_ripple_color_selector.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/color/m3_standard_toolbar_icon_button_ripple_color_selector.xml",
+      "sha256": "4f298bcd5aa29ac217c0c046f10425b006421fbfb10dc6638f36d4ac0be6686e"
+    },
+    {
+      "file": "color__res__color__m3_vibrant_toolbar_button_text_color_selector.xml",
+      "path": "lib/java/com/google/android/material/color/res/color/m3_vibrant_toolbar_button_text_color_selector.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/color/m3_vibrant_toolbar_button_text_color_selector.xml",
+      "sha256": "a663f1c4416a57593254545e1792a7200cfcbb5e3822e087d78cbf9a67d499ee"
+    },
+    {
+      "file": "color__res__color__m3_vibrant_toolbar_icon_button_container_color_selector.xml",
+      "path": "lib/java/com/google/android/material/color/res/color/m3_vibrant_toolbar_icon_button_container_color_selector.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/color/m3_vibrant_toolbar_icon_button_container_color_selector.xml",
+      "sha256": "6ce68366217c39d0152e06862266fdd07c79400d25aef17c864aff740784833a"
+    },
+    {
+      "file": "color__res__color__m3_vibrant_toolbar_icon_button_icon_color_selector.xml",
+      "path": "lib/java/com/google/android/material/color/res/color/m3_vibrant_toolbar_icon_button_icon_color_selector.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/color/m3_vibrant_toolbar_icon_button_icon_color_selector.xml",
+      "sha256": "aa5ed6646fee9e54792725642422b400ca8c81133a6979e77eaefd2c7973693d"
+    },
+    {
+      "file": "color__res__color__m3_vibrant_toolbar_icon_button_ripple_color_selector.xml",
+      "path": "lib/java/com/google/android/material/color/res/color/m3_vibrant_toolbar_icon_button_ripple_color_selector.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/color/m3_vibrant_toolbar_icon_button_ripple_color_selector.xml",
+      "sha256": "47a51e9180c92359b8708cc6fff4f0100d36a599acdf42c5bcac864df80fec66"
+    },
+    {
+      "file": "dockedtoolbar__res__values__tokens.xml",
+      "path": "lib/java/com/google/android/material/dockedtoolbar/res/values/tokens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/dockedtoolbar/res/values/tokens.xml",
+      "sha256": "cd093b42780a5f0f3c75f7518ebf3f113921761f68dbde08b33f10acb417c361"
+    },
+    {
+      "file": "floatingtoolbar__res__values__tokens.xml",
+      "path": "lib/java/com/google/android/material/floatingtoolbar/res/values/tokens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/floatingtoolbar/res/values/tokens.xml",
+      "sha256": "5b682fb67985228cdcc408f2c72eff9e834660ec77fc48f5f4a1bb6f0eda5599"
+    },
+    {
+      "file": "floatingtoolbar__res__values__dimens.xml",
+      "path": "lib/java/com/google/android/material/floatingtoolbar/res/values/dimens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/floatingtoolbar/res/values/dimens.xml",
+      "sha256": "25692883b43599605a0400926e38539892d75b6d74db0f9f77980944bb54bed8"
+    },
+    {
+      "file": "resources__res__values__standard_toolbar_tokens.xml",
+      "path": "lib/java/com/google/android/material/resources/res/values/standard_toolbar_tokens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/resources/res/values/standard_toolbar_tokens.xml",
+      "sha256": "d0774580655e65c8960e9218f71969e0e3481287a677fa84b419ee661555ccbf"
+    },
+    {
+      "file": "resources__res__values__vibrant_toolbar_tokens.xml",
+      "path": "lib/java/com/google/android/material/resources/res/values/vibrant_toolbar_tokens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/resources/res/values/vibrant_toolbar_tokens.xml",
+      "sha256": "4a1141964b071a1d84a185abab11a77094ee27ba60dd4d360ae55847986ed13c"
+    }
+  ]
+}

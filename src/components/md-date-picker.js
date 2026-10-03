@@ -23,7 +23,7 @@ const defaultStyle = `
     outline: none;
     box-sizing: border-box;
     user-select: none;
-    font-family: var(--md-sys-typescale-font-family, 'Roboto', 'Roboto Flex', system-ui, sans-serif);
+    font-family: var(--md-sys-typescale-font-family, 'Roboto', system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;
   }
   :host([inline]) {
@@ -185,7 +185,7 @@ const defaultStyle = `
   }
 
   .formatted-date {
-    font: var(--md-sys-typescale-headline-large, 400 32px/40px Roboto Flex, sans-serif);
+    font: var(--md-sys-typescale-headline-large, 400 32px/40px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-headline-large-tracking, 0px);
     color: var(--md-sys-color-on-surface, #1D1B20);
   }

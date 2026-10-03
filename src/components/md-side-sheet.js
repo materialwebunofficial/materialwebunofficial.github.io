@@ -1,8 +1,14 @@
 /**
- * md-side-sheet — M3 Side Sheet (spec §6) — STANDART M3 (ayrı token yok → NavigationDrawer + Scrim)
+ * Material Design 3 Expressive (MD3E) Web Component: <md-side-sheet>
+ *
+ * Spec: M3 Side Sheet (spec §6)
  * 360dp width, CornerLargeEnd mirrored (16/0/0/16) for right-side, modal surface-container-low / Level1.
- * role=dialog + aria-modal, Escape closes, scrim click closes, basic focus trap.
+ * Features:
+ *  - Slide-in from right edge (or left if position="left") with MD3E spring physics.
+ *  - Slide-out to right edge on close with smooth scrim fade.
+ *  - role=dialog + aria-modal, Escape closes, scrim click closes, focus trap.
  */
+
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -10,10 +16,17 @@ import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 const defaultStyle = `
   :host {
     -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none; outline: none; display: contents; }
+    -webkit-touch-callout: none;
+    outline: none;
+    display: contents;
+  }
   :host(:not([open])) .scrim,
-  :host(:not([open])) .sheet { display: none !important; }
-  :host([open]) .scrim { display: block !important; }
+  :host(:not([open])) .sheet {
+    display: none !important;
+  }
+  :host([open]) .scrim {
+    display: block !important;
+  }
 
   .scrim {
     position: fixed;
@@ -30,78 +43,93 @@ const defaultStyle = `
     box-sizing: border-box;
     position: fixed;
     inset-block: 0;
+    top: 0;
+    bottom: 0;
     z-index: 2001;
     display: flex;
     flex-direction: column;
-    width: 360px;                 /* ContainerWidth 360dp (drawer token) */
+    width: 360px;
     max-width: 100vw;
-    padding: 16px;
-    background-color: var(--md-sys-color-surface-container-low, #F7F2FA);
-    box-shadow: var(--md-sys-elevation-level-1, 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15));
+    padding: 20px;
+    background-color: var(--md-sys-color-surface-container-low, #211F26);
+    color: var(--md-sys-color-on-surface, #E6E0E9);
+    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.25));
     overflow-y: auto;
+    will-change: transform;
   }
-  /* Right-side: CornerLargeStart 16/0/0/16 */
+
+  /* Right-side: CornerLargeStart 28/0/0/28 */
   :host([position="right"]) .sheet,
   :host(:not([position])) .sheet {
-    inset-inline-end: 0;
-    border-radius: var(--md-sys-shape-corner-large, 16px) 0 0 var(--md-sys-shape-corner-large, 16px);
+    right: 0;
+    left: auto;
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px) 0 0 var(--md-sys-shape-corner-extra-large, 28px);
   }
-  /* Left-side: CornerLargeEnd 0/16/16/0 */
+
+  /* Left-side: CornerLargeEnd 0/28/28/0 */
   :host([position="left"]) .sheet {
-    inset-inline-start: 0;
-    border-radius: 0 var(--md-sys-shape-corner-large, 16px) var(--md-sys-shape-corner-large, 16px) 0;
+    left: 0;
+    right: auto;
+    border-radius: 0 var(--md-sys-shape-corner-extra-large, 28px) var(--md-sys-shape-corner-extra-large, 28px) 0;
   }
 
   .header {
-    display: flex; align-items: center; gap: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     min-height: 48px;
+    margin-bottom: 12px;
   }
+
   .headline {
     flex: 1 1 auto;
-    font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface-variant, #49454F);
+    font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface, #E6E0E9);
   }
+
   .close {
-    width: 40px; height: 40px;      /* touch target */
-    display: inline-flex; align-items: center; justify-content: center;
-    border: none; background: transparent; cursor: pointer; outline: none;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
     border-radius: var(--md-sys-shape-corner-full, 9999px);
     color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-      color var(--md-sys-motion-duration-short2, 100ms) ease;
+    transition: background-color var(--md-sys-motion-duration-short2, 100ms) ease,
+                color var(--md-sys-motion-duration-short2, 100ms) ease,
+                transform 120ms cubic-bezier(0.2, 0, 0, 1.2);
   }
   .close:hover {
     background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 10%, transparent);
     color: var(--md-sys-color-on-surface, #E6E0E9);
   }
-  .close.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 15%, transparent); }
-  .close:focus { outline: none; }
+  .close:active {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 15%, transparent);
+    transform: scale(0.92);
+  }
   .close:focus-visible {
-    outline: 3px solid var(--md-sys-color-primary, #D0BCFF);
-    outline-offset: 2px;
+    outline: 2px solid var(--md-sys-color-primary, #D0BCFF);
   }
 
-  .material-symbols-rounded, .mat-sym {
-    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-    font-weight: normal;
-    font-style: normal;
+  .material-symbols-rounded, .mat-sym, .close-icon {
+    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif !important;
     font-size: 24px;
     line-height: 1;
     display: inline-block;
-    text-transform: none;
-    letter-spacing: normal;
-    word-wrap: normal;
-    white-space: nowrap;
-    direction: ltr;
+    text-transform: none !important;
+    font-feature-settings: 'liga' 1;
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
   }
 
   .content {
     flex: 1 1 auto;
-    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
   }
 `;
 
@@ -127,7 +155,20 @@ export class MdSideSheet extends HTMLElement {
   get open() { return this.hasAttribute('open'); }
   set open(v) { v ? this.setAttribute('open', '') : this.removeAttribute('open'); }
   get modal() { return this.hasAttribute('modal'); }
-  get position() { return sanitizeAttribute(this.getAttribute('position') || 'right'); }
+  get selected() { return this.getAttribute('selected') || ''; }
+  set selected(v) { this.setAttribute('selected', v); }
+
+  get position() { return this.getAttribute('position') || 'right'; }
+  set position(v) {
+    if (v === null || v === undefined) this.removeAttribute('position');
+    else this.setAttribute('position', v);
+  }
+
+  get headline() { return this.getAttribute('headline') || ''; }
+  set headline(v) {
+    if (v === null || v === undefined) this.removeAttribute('headline');
+    else this.setAttribute('headline', v);
+  }
 
   get gesturesEnabled() { return this.getAttribute('gestures-enabled') !== 'false'; }
   set gesturesEnabled(v) {
@@ -153,30 +194,26 @@ export class MdSideSheet extends HTMLElement {
     else this.setAttribute('drawer-content-color', v);
   }
 
-  get selected() { return this.hasAttribute('selected'); }
-  set selected(v) {
-    if (v) this.setAttribute('selected', '');
-    else this.removeAttribute('selected');
-  }
-
   connectedCallback() {
-    if (!this._rendered) { this.render(); this._rendered = true; this.setupInteractions(); }
+    if (!this._rendered) {
+      this.render();
+      this._rendered = true;
+      this.setupInteractions();
+    }
     if (this.open) this._activate();
   }
 
   disconnectedCallback() {
-    document.removeEventListener('keydown', this._onKeydown);
     this._abortController?.abort();
     this._abortController = null;
+    this._deactivate();
   }
 
   attributeChangedCallback(name, oldV, newV) {
     if (!this._rendered || oldV === newV) return;
-    if (name === 'open') this.open ? this._activate() : this._deactivate();
-    else if (name === 'headline') {
-      const h = this.shadowRoot.querySelector('.headline');
-      if (h) h.textContent = newV || '';
-    } else if (name === 'scrim-color' || name === 'drawer-container-color' || name === 'drawer-content-color' || name === 'position') {
+    if (name === 'open') {
+      this.open ? this._activate() : this._deactivate();
+    } else if (name === 'headline' || name === 'position' || name === 'drawer-container-color' || name === 'drawer-content-color') {
       this.render();
       this.setupInteractions();
     }
@@ -184,45 +221,99 @@ export class MdSideSheet extends HTMLElement {
 
   show() { this.open = true; }
 
+  close() {
+    if (!this.open) return;
+    const sheet = this.shadowRoot.querySelector('.sheet');
+    const scrim = this.shadowRoot.querySelector('.scrim');
+
+    if (sheet && scrim) {
+      const isLeft = this.position === 'left';
+      const exitTransform = isLeft ? 'translateX(-100%)' : 'translateX(100%)';
+      sheet.style.transition = 'transform 250ms cubic-bezier(0.3, 0, 0, 1)';
+      sheet.style.transform = exitTransform;
+      scrim.style.transition = 'opacity 250ms linear';
+      scrim.style.opacity = '0';
+
+      setTimeout(() => {
+        this.open = false;
+        sheet.style.transform = '';
+        sheet.style.transition = '';
+        scrim.style.opacity = '';
+        scrim.style.transition = '';
+        this._deactivate();
+        this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+      }, 250);
+    } else {
+      this.open = false;
+      this._deactivate();
+      this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+    }
+  }
+
+  toggle() { this.open ? this.close() : this.show(); }
+
   render() {
-    const headline = this.getAttribute('headline') || '';
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+    const headline = this.headline;
+    const drawerContainerColor = this.drawerContainerColor;
+    const drawerContentColor = this.drawerContentColor;
 
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="scrim" part="scrim"></div>
-      <aside class="sheet" role="dialog" aria-modal="${this.modal ? 'true' : 'false'}"
-        aria-label="${escapeHtml(this.getAttribute('aria-label') || headline || 'Side sheet')}">
-        <div class="header">
-          <span class="headline">${escapeHtml(headline)}</span>
-          <button class="close" type="button" aria-label="Close">
-            <span class="material-symbols-rounded">close</span>
+      <aside class="sheet" role="dialog" aria-modal="true"
+        aria-label="${escapeHtml(headline || 'Side Sheet')}"
+        style="${drawerContainerColor ? `background-color: ${sanitizeAttribute(drawerContainerColor)};` : ''}${drawerContentColor ? `color: ${sanitizeAttribute(drawerContentColor)};` : ''}"
+        part="sheet">
+        <div class="header" part="header">
+          <span class="headline" part="headline">${escapeHtml(headline)}</span>
+          <button class="close" type="button" aria-label="Close" part="close-button">
+            <span class="close-icon material-symbols-outlined">close</span>
           </button>
         </div>
-        <div class="content"><slot></slot></div>
+        <div class="content" part="content"><slot></slot></div>
       </aside>
     `;
   }
 
   _focusable() {
     const s = this.shadowRoot.querySelector('.sheet');
+    if (!s) return [];
     return [...s.querySelectorAll('button:not([disabled]),[tabindex]:not([tabindex="-1"]),a[href],input,select,textarea')];
-  }
-
-  close() {
-    this.open = false;
-    this._deactivate();
-    this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
   }
 
   _activate() {
     document.removeEventListener('keydown', this._onKeydown);
     document.addEventListener('keydown', this._onKeydown);
     document.body.style.overflow = 'hidden';
+
+    const sheet = this.shadowRoot.querySelector('.sheet');
+    const scrim = this.shadowRoot.querySelector('.scrim');
+
+    if (scrim) {
+      scrim.style.opacity = '0';
+      scrim.style.transition = 'opacity 250ms ease';
+      requestAnimationFrame(() => {
+        scrim.style.opacity = '0.4';
+      });
+    }
+
+    if (sheet) {
+      const isLeft = this.position === 'left';
+      const enterFrom = isLeft ? 'translateX(-100%)' : 'translateX(100%)';
+      sheet.style.transform = enterFrom;
+      sheet.style.transition = 'transform 350ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1))';
+      requestAnimationFrame(() => {
+        sheet.style.transform = 'translateX(0)';
+      });
+      setTimeout(() => {
+        sheet.style.transition = '';
+        if (scrim) scrim.style.transition = '';
+      }, 350);
+    }
+
     const f = this._focusable();
     if (f.length) f[0].focus({ preventScroll: true });
-    const sheet = this.shadowRoot.querySelector('.sheet');
-    if (sheet) SpringPhysics.animateProperty(sheet, 'scale', 0.97, 1.0, 'expressiveSpatialMedium');
   }
 
   _deactivate() {
@@ -256,38 +347,10 @@ export class MdSideSheet extends HTMLElement {
         this.close();
       };
       scrim.addEventListener('click', onScrimDismiss, { signal });
-      scrim.addEventListener('pointerdown', onScrimDismiss, { signal });
-      scrim.addEventListener('touchstart', onScrimDismiss, { signal, passive: false });
     }
 
-    const el = this.shadowRoot.querySelector('.close');
-    if (!el) return;
-    let pressed = false;
-    el.addEventListener('pointerdown', (e) => {
-      el.setPointerCapture?.(e.pointerId);
-      pressed = true;
-      el.classList.add('pressed');
-      SpringPhysics.animateProperty(el, 'scale', 1.0, 0.92, 'expressiveSpatialFast');
-    }, { signal });
-    const release = () => {
-      if (!pressed) return;
-      pressed = false;
-      el.classList.remove('pressed');
-      SpringPhysics.animateProperty(el, 'scale', 0.92, 1.0, 'expressiveSpatialMedium');
-    };
-    el.addEventListener('pointerup', release, { signal });
-    el.addEventListener('pointercancel', release, { signal });
-    el.addEventListener('click', () => this.close(), { signal });
-    el.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      el.classList.add('pressed');
-      SpringPhysics.animateProperty(el, 'scale', 1.0, 0.92, 'expressiveSpatialFast');
-    }, { signal });
-    el.addEventListener('keyup', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      el.classList.remove('pressed');
-      SpringPhysics.animateProperty(el, 'scale', 0.92, 1.0, 'expressiveSpatialMedium');
-    }, { signal });
+    const closeBtn = this.shadowRoot.querySelector('.close');
+    closeBtn?.addEventListener('click', () => this.close(), { signal });
   }
 }
 

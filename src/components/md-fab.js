@@ -8,13 +8,13 @@
  *   Elevation: rest L3, hover L4, focus/press L3.
  *
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md & docs/SECURITY-AND-A11Y-SPEC.md
- *   - Hover = CSS only (box-shadow/elevation). Press = JS spring scale.
+ *   - Hover elevation and content-color state layer; press ripple without whole-button scaling.
  *   - Single release via setPointerCapture (bindPress). NO pointerleave release.
  *   - Single focus ring (:focus-visible). Keyboard Enter/Space via native <button>.
  *   - XSS sanitization and AbortSignal memory safety.
  */
 
-import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
@@ -35,7 +35,7 @@ const defaultStyle = `
     box-sizing: border-box;
     color: var(--md-sys-color-on-primary, #fff);
     background-color: var(--md-sys-color-primary, #6750A4);
-    box-shadow: none;
+    box-shadow: var(--md-sys-elevation-level-3);
     min-width: 56px;
     height: 56px;
     padding: 0 16px;
@@ -56,7 +56,14 @@ const defaultStyle = `
     outline-offset: 2px;
   }
 
-  .fab:not([disabled]):hover { box-shadow: none; }
+  .fab:not([disabled]):hover { box-shadow: var(--md-sys-elevation-level-4); }
+  .fab:not([disabled]):active { box-shadow: var(--md-sys-elevation-level-3); }
+  :host([lowered]) .fab { box-shadow: var(--md-sys-elevation-level-1); }
+  :host([lowered]) .fab:hover:not([disabled]) { box-shadow: var(--md-sys-elevation-level-2); }
+  :host([lowered]) .fab.pressed:not([disabled]) { box-shadow: var(--md-sys-elevation-level-1); }
+  .fab::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; pointer-events: none; }
+  .fab:hover::before { opacity: 0.08; }
+  .fab:focus-visible::before, .fab.pressed::before { opacity: 0.1; }
 
   /* Color roles (§4.3) */
   .fab.primary      { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); }
@@ -67,12 +74,23 @@ const defaultStyle = `
   .fab.tertiary-container  { background-color: var(--md-sys-color-tertiary-container, #FFD8E4); color: var(--md-sys-color-on-tertiary-container, #31111D); }
 
   .fab[disabled] {
-    opacity: 0.38;
+    opacity: 1;
     cursor: not-allowed;
     box-shadow: none;
     background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent) !important;
-    color: var(--md-sys-color-on-surface-variant, #49454F) !important;
+    color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent) !important;
   }
+  .fab[disabled]::before { opacity: 0; }
+  /* FloatingToolbarDefaults FAB helper supplies baseline shape/icon and L2/L3. */
+  .fab:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-3)); }
+  .fab:not([disabled]):hover { box-shadow: var(--md-toolbar-fab-hover-shadow, var(--md-sys-elevation-level-4)); }
+  .fab:not([disabled]):active, .fab.pressed:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-3)); }
+  :host([lowered]) .fab:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-1)); }
+  :host([lowered]) .fab:not([disabled]):hover { box-shadow: var(--md-toolbar-fab-hover-shadow, var(--md-sys-elevation-level-2)); }
+  :host([lowered]) .fab:not([disabled]):active, :host([lowered]) .fab.pressed:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-1)); }
+  .fab.primary-container { background-color: var(--md-toolbar-fab-container, var(--md-sys-color-primary-container)); color: var(--md-toolbar-fab-content, var(--md-sys-color-on-primary-container)); }
+  :host([slot="fab"]) .fab { transition: none; }
+  .fab::after { content: ''; position: absolute; min-width: 48px; min-height: 48px; width: 100%; height: 100%; }
 
   .fab .material-symbols-outlined {
     font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
@@ -85,6 +103,17 @@ const defaultStyle = `
     -webkit-font-smoothing: antialiased;
   }
   .fab .lbl { white-space: nowrap; }
+  /* Ink lives in this shadow root; document styles cannot animate it. */
+  .md-ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: var(--md-sys-state-pressed-opacity, 0.1);
+    transform: scale(0);
+    animation: fab-ripple 450ms var(--md-sys-motion-easing-emphasized-decelerate, cubic-bezier(.05,.7,.1,1)) forwards;
+    pointer-events: none;
+  }
+  @keyframes fab-ripple { to { transform: scale(2.5); opacity: 0; } }
 `;
 
 const fabSheet = createComponentSheet(defaultStyle);
@@ -92,14 +121,14 @@ const fabSheet = createComponentSheet(defaultStyle);
 // §4.1 / §4.2 — FAB diameters, shapes (Corner*), icon sizes.
 const FAB = {
   small:   { h: 40,  r: 12, icon: 24, padX: 0  },
-  medium:  { h: 80,  r: 16, icon: 28, padX: 0  },
+  medium:  { h: 80,  r: 20, icon: 28, padX: 0  },
   large:   { h: 96,  r: 28, icon: 32, padX: 0  },
   baseline: { h: 56, r: 16, icon: 24, padX: 0  },
 };
 // Extended FAB diameters (§4.2).
 const EXT = {
   small:   { h: 56,  r: 16, icon: 24, padX: 16 },
-  medium:  { h: 80,  r: 16, icon: 28, padX: 26 },
+  medium:  { h: 80,  r: 20, icon: 28, padX: 26 },
   large:   { h: 96,  r: 28, icon: 32, padX: 28 },
   baseline: { h: 56, r: 16, icon: 24, padX: 16 },
 };
@@ -118,7 +147,8 @@ export class MdFab extends HTMLElement {
   }
 
   connectedCallback() {
-    if (!this._rendered) { this.render(); this._setup(); this._rendered = true; }
+    if (!this._rendered) { this.render(); this._rendered = true; }
+    this._setup();
     this._sync();
   }
 
@@ -142,7 +172,7 @@ export class MdFab extends HTMLElement {
     else this.setAttribute('variant', val);
   }
 
-  get color() { return sanitizeAttribute(this.getAttribute('color') || 'primary'); }
+  get color() { return sanitizeAttribute(this.getAttribute('color') || 'primary-container'); }
   set color(val) {
     if (val === null || val === undefined) this.removeAttribute('color');
     else this.setAttribute('color', val);
@@ -212,15 +242,19 @@ export class MdFab extends HTMLElement {
     if (!fab) return;
     const d = this._dims();
     const isExt = this.isExtended;
-    fab.style.minWidth = `${d.h}px`;
-    fab.style.width = isExt ? 'auto' : `${d.h}px`;
-    fab.style.height = `${d.h}px`;
+    fab.style.minWidth = `var(--md-toolbar-fab-size, ${d.h}px)`;
+    fab.style.width = isExt ? 'auto' : `var(--md-toolbar-fab-size, ${d.h}px)`;
+    fab.style.height = `var(--md-toolbar-fab-size, ${d.h}px)`;
     fab.style.padding = isExt ? `0 ${d.padX}px` : '0';
-    fab.style.borderRadius = `${d.r}px`;
+    fab.style.borderRadius = `var(--md-toolbar-fab-shape, ${d.r}px)`;
+    fab.style.gap = `${d.h === 96 ? 20 : d.h === 80 ? 16 : 8}px`;
+    const typeRole = d.h === 96 ? 'headline-small' : d.h === 80 ? 'title-large' : isExt && this.size !== 'baseline' ? 'title-medium' : 'label-large';
+    fab.style.font = `var(--md-sys-typescale-${typeRole})`;
+    fab.style.letterSpacing = `var(--md-sys-typescale-${typeRole}-tracking)`;
     if (this.containerColor) fab.style.backgroundColor = this.containerColor;
     if (this.contentColor) fab.style.color = this.contentColor;
     const iconEl = fab.querySelector('.material-symbols-outlined');
-    if (iconEl) iconEl.style.fontSize = `${d.icon}px`;
+    if (iconEl) iconEl.style.fontSize = `var(--md-toolbar-fab-icon-size, ${d.icon}px)`;
     const fabAriaLabel = this.getAttribute('aria-label') || (isExt && this.label ? (this.icon ? `${this.icon} ${this.label}` : this.label) : (this.label || this.icon || 'Floating action button'));
     fab.setAttribute('aria-label', fabAriaLabel);
     fab.disabled = this.disabled;
@@ -238,8 +272,7 @@ export class MdFab extends HTMLElement {
 
     bindPress(fab, {
       disabled: () => this.disabled,
-      onPress: () => pressScale(fab, 0.92, 'expressiveSpatialFast'),
-      onRelease: () => releaseScale(fab, 0.92, 'expressiveSpatialMedium'),
+      onPress: event => createRipple(event, fab),
       signal
     });
   }
@@ -252,7 +285,7 @@ export class MdFab extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <button class="fab ${escapeHtml(c)} ${escapeHtml(this.variant)}${isExt ? ' extended' : ''}" ${this.disabled ? 'disabled' : ''}
+      <button part="button" class="fab ${escapeHtml(c)} ${escapeHtml(this.variant)}${isExt ? ' extended' : ''}" ${this.disabled ? 'disabled' : ''}
         tabindex="${this.disabled ? -1 : 0}" role="button"
         aria-label="${escapeHtml(fabAriaLabel)}"
         aria-disabled="${this.disabled}">

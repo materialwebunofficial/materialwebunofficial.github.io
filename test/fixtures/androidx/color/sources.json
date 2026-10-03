@@ -1,0 +1,14 @@
+{
+  "ColorVectorConverter.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/ColorVectorConverter.kt",
+    "sha256": "3ff31ad9217f13e9421a4dee0ad0cbf3cc8a1284879dd2b021323bba737d7f93"
+  },
+  "Oklab.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Oklab.kt",
+    "sha256": "9a44dd54caed071c9722bf1d3dab07b3a07ffe7ae998e6e50395684b956c6075"
+  },
+  "Color.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt",
+    "sha256": "3b8bbdd5ccc4a3200b1cedef5ff4f91574a4db508b3ac2d9ae3e465eec8468e7"
+  }
+}

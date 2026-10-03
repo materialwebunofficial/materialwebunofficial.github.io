@@ -1,0 +1,40 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "LayoutNodeAlignmentLines.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNodeAlignmentLines.kt",
+      "sha256": "7ce0eeec0de3ecab61fe8c32335adbe6fff645e1f82893a62a17a9b6bd298bfd"
+    },
+    {
+      "file": "LayoutModifierNodeCoordinator.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutModifierNodeCoordinator.kt",
+      "sha256": "a38e9756f47b83a6035d50da0eb7b76fb8c52ae30b8a03cbc2f69ea29bba0269"
+    },
+    {
+      "file": "InnerNodeCoordinator.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/InnerNodeCoordinator.kt",
+      "sha256": "73bd82ac22dd92be81fb25bbf319c2afd6c8c2d37d95f90f3be3ed546cedd8be"
+    },
+    {
+      "file": "NodeCoordinator.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/NodeCoordinator.kt",
+      "sha256": "4b5e401afd4e97b546b5869dfa0e7da3fdb2ba5d5be2c325f665239dc2c23a7b"
+    },
+    {
+      "file": "AlignmentLine.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/AlignmentLine.kt",
+      "sha256": "01788861b61ffe2bdec63f8e2ef61686d9f49373d4322b57090f606357c3f76f"
+    },
+    {
+      "file": "LookaheadDelegate.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LookaheadDelegate.kt",
+      "sha256": "0246e75497bda3faa86fdaf8b89fdc0758e84f897c6047da57598b7a5a9cf77e"
+    },
+    {
+      "file": "MeasurePassDelegate.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/MeasurePassDelegate.kt",
+      "sha256": "bdb0fde2027758e3b62357c717943439bf23498b24b03f7638a34084e4663097"
+    }
+  ]
+}

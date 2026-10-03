@@ -1,0 +1,192 @@
+/*
+ * Copyright 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@file:JvmName("ComposeRuntimeFlags")
+
+package androidx.compose.ui
+
+import androidx.compose.ui.ComposeUiFlags.isInitialFocusOnFocusableAvailable
+import androidx.compose.ui.ComposeUiFlags.isViewFocusFixEnabled
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmName
+
+/**
+ * This is a collection of flags which are used to guard against regressions in some of the
+ * "riskier" refactors or new feature support that is added to this module. These flags are always
+ * "on" in the published artifact of this module, however these flags allow end consumers of this
+ * module to toggle them "off" in case this new path is causing a regression.
+ *
+ * These flags are considered temporary, and there should be no expectation for these flags be
+ * around for an extended period of time. If you have a regression that one of these flags fixes, it
+ * is strongly encouraged for you to file a bug ASAP.
+ *
+ * **Usage:**
+ *
+ * In order to turn a feature off in a debug environment, it is recommended to set this to false in
+ * as close to the initial loading of the application as possible. Changing this value after compose
+ * library code has already been loaded can result in undefined behavior.
+ *
+ *      class MyApplication : Application() {
+ *          override fun onCreate() {
+ *              ComposeUiFlags.SomeFeatureEnabled = false
+ *              super.onCreate()
+ *          }
+ *      }
+ *
+ * In order to turn this off in a release environment, it is recommended to additionally utilize R8
+ * rules which force a single value for the entire build artifact. This can result in the new code
+ * paths being completely removed from the artifact, which can often have nontrivial positive
+ * performance impact.
+ *
+ *      -assumevalues class androidx.compose.ui.ComposeUiFlags {
+ *          public static int isRectTrackingEnabled return false
+ *      }
+ */
+@ExperimentalComposeUiApi
+public object ComposeUiFlags {
+
+    /**
+     * This enables fixes for View focus. The changes are large enough to require a flag to allow
+     * disabling them.
+     */
+    // TODO: b/455588830
+    @field:Suppress("MutableBareField") @JvmField public var isViewFocusFixEnabled: Boolean = false
+
+    /**
+     * This flag enables an alternate approach to fixing the issues addressed by the
+     * [isViewFocusFixEnabled] flag.
+     */
+    // TODO: b/455592447
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isBypassUnfocusableComposeViewEnabled: Boolean = true
+
+    /** Enable initial focus when a focusable is added to a screen with no focusable content. */
+    // TODO: b/455601824
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isInitialFocusOnFocusableAvailable: Boolean = false
+
+    /**
+     * Enable focus restoration, by always saving focus. This flag depends on
+     * [isInitialFocusOnFocusableAvailable] also being true.
+     */
+    // TODO: b/485962036
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isFocusRestorationEnabled: Boolean = false
+
+    /**
+     * Enables a change where off-screen children of the partially visible merging nodes (e.g. a
+     * Text node of a Button) inside scrollable container are now also reported in the semantics
+     * tree for Accessibility needs.
+     *
+     * Enabled is correct, and it should be enabled in all apps.
+     */
+    // TODO: b/484259656
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isAccessibilityShouldIncludeOffscreenChildrenEnabled: Boolean = true
+
+    /**
+     * Enable the integration of [LocalUiMediaScope] at the root compose view which provides various
+     * signals for adapting the UI across different devices.
+     *
+     * This feature is experimental and is disabled by default.
+     */
+    // TODO: b/485160699 - Remove once the API goes stable
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isMediaQueryIntegrationEnabled: Boolean = false
+
+    /**
+     * Enables hit test to continue searching for "semantic nodes" if the initial node that is hit
+     * is unimportant from an accessibility semantics node point of view.
+     */
+    // TODO: b/487663967
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isSkipNonImportantSemanticsNodesHitTestEnabled: Boolean = true
+
+    /**
+     * This flag controls whether the fix for velocity tracker usage in Draggable and related
+     * classes is enabled to a) properly track velocity per pointer and b) make sure to also take
+     * the pointer events into account that don't move at the beginning of the gesture in order to
+     * increase the stability of the computed velocity.
+     */
+    // TODO: Remove this flag once it has soaked (b/501080937)
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isTriggerMoveEventsWhenLocationHasNotChangedEnabled: Boolean = true
+
+    /** Fixes trackpad pan gestures (CLASSIFICATION_TWO_FINGER_SWIPE). */
+    // TODO: b/535296682 - Cleanup feature flag
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isTrackpadPanHoverFixEnabled: Boolean = true
+
+    /**
+     * Enables re-interpreting trackpad pinch gestures (CLASSIFICATION_PINCH) as mouse events with
+     * scale factor, rather than passing through fake finger touch events.
+     */
+    // TODO: b/519714278 - Cleanup feature flag
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isTrackpadPinchReinterpretationEnabled: Boolean = true
+
+    /**
+     * Reduce provided CompositionLocals by letting them pull from LocalOwner /
+     * LocalAndroidComposeView dynamically when unprovided, instead of eagerly providing all of
+     * them.
+     */
+    // TODO: b/523295932 - Cleanup feature flag
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isMinimalistLocalsEnabled: Boolean = true
+
+    /**
+     * Enables calculating velocity from two sample points instead of returning zero. This changes
+     * how velocity is calculated for flings, which may affect scrolling, nested scrolling, and
+     * similar gesture behaviors. Please file a bug report if disabling this flag resolves the
+     * issue.
+     *
+     * Note: This flag currently no-ops; the feature will be added in a future change.
+     */
+    // TODO: b/530873034 - Cleanup feature flag
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isVelocityTrackerMinSampleSizeFixEnabled: Boolean = true
+
+    /**
+     * If enabled, [androidx.compose.ui.graphics.vector.VectorPainter] will use a shared cache to
+     * reuse [androidx.compose.ui.graphics.vector.DrawCache] instances across different painters
+     * using the same [androidx.compose.ui.graphics.vector.ImageVector].
+     *
+     * This reduces redundant texture uploads and improves performance when the same vector is used
+     * multiple times within a composition tree, such as in a LazyColumn.
+     *
+     * Note: This flag currently no-ops; the feature will be added in a future change.
+     */
+    // TODO: b/493138866 - Clean feature flag
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isVectorDrawCacheSharingEnabled: Boolean = true
+
+    /** Guard for Hardware Navigation system default behavior in Compose. */
+    // TODO(b/520209822): Cleanup once proven stable.
+    @field:Suppress("MutableBareField")
+    @JvmField
+    public var isHardwareNavigationHandlingEnabled: Boolean = false
+}

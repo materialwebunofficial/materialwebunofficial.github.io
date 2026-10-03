@@ -1,0 +1,25 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Slider.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Slider.kt",
+      "sha256": "b26b472f358d33f852044fbf36f7cc851960a02df8475cc012bd0d6556b3fe01"
+    },
+    {
+      "file": "SliderTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SliderTokens.kt",
+      "sha256": "40089ceef55302211cc6e1812b69560ea1e362d85a742c9c79abb1f4076e26ff"
+    },
+    {
+      "file": "Draggable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/Draggable.kt",
+      "sha256": "b39ec8e3b85ab3b4783f24e34986b72eaa08c3fd1881b6b416c128450ce23783"
+    },
+    {
+      "file": "DragGestureDetector.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/DragGestureDetector.kt",
+      "sha256": "0f0dd9dfb274a6f1f04183dc5c9a1faf552bd75b29817a703594f2d4cd008557"
+    }
+  ]
+}

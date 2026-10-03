@@ -1,0 +1,25 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "FloatingToolbar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/FloatingToolbar.kt",
+      "sha256": "7c014d29baef68f505a624b26e4c264bce2e7f72726d29dfcc09869c81142598"
+    },
+    {
+      "file": "Padding.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Padding.kt",
+      "sha256": "0298988edd2e18978fbfea177e5b69526acabe7de1621cb8dc5e866df4e31a55"
+    },
+    {
+      "file": "LayoutModifierNode.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutModifierNode.kt",
+      "sha256": "65e08c2aefe6c2fe25fb20143fac3c61c8a24308ae35dec9c391e5ade85d4360"
+    },
+    {
+      "file": "Density.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Density.kt",
+      "sha256": "a5679631f5f2b3ade41efd93c9e4f1d09fe3f23a2acabbe905dc96acef52b6f5"
+    }
+  ]
+}

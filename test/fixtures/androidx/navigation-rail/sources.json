@@ -1,0 +1,37 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "files": {
+    "WideNavigationRail.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/WideNavigationRail.kt",
+      "sha256": "d29cabe67bcdda8fb746c21fbba28d860d430c9632184f89fd8fc5251b04a6b9"
+    },
+    "NavigationRail.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/NavigationRail.kt",
+      "sha256": "a9964532f667caa1dcfdd7bdc960411c4987ba3225a03b4d2909ef333ff77d1d"
+    },
+    "NavigationRailCollapsedTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationRailCollapsedTokens.kt",
+      "sha256": "544ca112073d1a07c36700bdabb33170e2973d544090ce1d69ea60a1494ab532"
+    },
+    "NavigationRailExpandedTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationRailExpandedTokens.kt",
+      "sha256": "d090f4e5e99e2b404e6a1a2724d8bc43dac3db972728860d0fe77a337dda3f28"
+    },
+    "NavigationRailColorTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationRailColorTokens.kt",
+      "sha256": "1e75bbbdfd5e349da0d69b56d135568203b6c771c9c5d8052afefde5938877ee"
+    },
+    "NavigationRailHorizontalItemTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationRailHorizontalItemTokens.kt",
+      "sha256": "d45c4cf6d9d9d7e643fe7ef1fe5f333ccb72152fd845d4f79808dde08917427a"
+    },
+    "NavigationRailVerticalItemTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationRailVerticalItemTokens.kt",
+      "sha256": "b9e13bcdf3b1614079cfb08265a36bbd4628c3d30b0db29cf29d270c6d5f532e"
+    },
+    "NavigationRailBaselineItemTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationRailBaselineItemTokens.kt",
+      "sha256": "d42b05316d9f3dd91d6cd7408f94d833f41e1b4b890e07d5e042d84d00d115a2"
+    }
+  }
+}

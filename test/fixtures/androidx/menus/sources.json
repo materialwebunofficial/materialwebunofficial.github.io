@@ -1,0 +1,85 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Menu.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Menu.kt",
+      "sha256": "f6fe29552c15e79a2a102d65fc450bb60c34816cbda0580e98c8539588ce2938"
+    },
+    {
+      "file": "MenuDefaults.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/MenuDefaults.kt",
+      "sha256": "dfc6c3c97ca24d7427acb9fe922f2aa0d4529f95a5f4007fc19bbd071f127852"
+    },
+    {
+      "file": "MenuTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/MenuTokens.kt",
+      "sha256": "3accb63fef4e6d12477bdd5b2f77c776740ec79e0a8c765a3547305e6bcd846c"
+    },
+    {
+      "file": "StandardMenuTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/StandardMenuTokens.kt",
+      "sha256": "2842b052921ba2a4bfae374f9650d4b47b9b71a76be9f7ca79cad6c140fd514e"
+    },
+    {
+      "file": "VibrantMenuTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/VibrantMenuTokens.kt",
+      "sha256": "aeac45794cfc759148405370522e125c544e99329c2bf0c7825c2c5d60eaaab5"
+    },
+    {
+      "file": "SegmentedMenuTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SegmentedMenuTokens.kt",
+      "sha256": "847777c2729e0b753e1be3dd2c4b2b085b25df6c9062ccc858902f768860cdbb"
+    },
+    {
+      "file": "AndroidMenu.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/androidMain/kotlin/androidx/compose/material3/AndroidMenu.android.kt",
+      "sha256": "78e4994e3772d58e594972fd902ba42bdba7e56bc9faa64534a4c57febe05d9c"
+    },
+    {
+      "file": "MenuSamples.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/samples/src/main/java/androidx/compose/material3/samples/MenuSamples.kt",
+      "sha256": "e2852b1d0e631cc865319c8c8001e5f2493589b5b730b63fbbc729cf8768acb7"
+    },
+    {
+      "file": "MenuPosition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/MenuPosition.kt",
+      "sha256": "c2f77f3d5da46fd9c82c7fa06a1a52c87ae12bcfddd0a462cd4e66211516a33f"
+    },
+    {
+      "file": "ListTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ListTokens.kt",
+      "sha256": "bc69140567eaa2780a9d945ef7b7e299e92214b9434a9b566708ac46e31bc463"
+    },
+    {
+      "file": "ComposeMaterial3Flags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
+      "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    },
+    {
+      "file": "ElevationTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ElevationTokens.kt",
+      "sha256": "b0613cc2c1e30fb62da126f82f5870f7231e3cf4117f36132e466e1827de0a3c"
+    },
+    {
+      "file": "Surface.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Surface.kt",
+      "sha256": "b82221978167354d62462943bade5838beb4724a71155209d75debc6003bd9e2"
+    },
+    {
+      "file": "InteractiveComponentSize.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/InteractiveComponentSize.kt",
+      "sha256": "fb19262a174f765f71ac43a7a44c3398d40b8b550043c034bcd0700b5799245a"
+    },
+    {
+      "file": "ShapeTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ShapeTokens.kt",
+      "sha256": "02178111f81c7f03135cc7157040fa903180e212fd52b8f686b4304080efb5a3"
+    },
+    {
+      "file": "MotionScheme.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/MotionScheme.kt",
+      "sha256": "95fcf8d94c5885a16d82eab986ce4c1b02a8f09f59784d03a9fab168529ff270"
+    }
+  ]
+}

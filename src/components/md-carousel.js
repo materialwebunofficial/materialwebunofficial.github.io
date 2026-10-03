@@ -129,7 +129,7 @@ const defaultStyle = `
   }
 
   .title {
-    font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto Flex, sans-serif);
+    font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-title-large-tracking, 0px);
     white-space: nowrap;
     overflow: hidden;

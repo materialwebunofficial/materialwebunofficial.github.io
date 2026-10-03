@@ -1,0 +1,30 @@
+{
+  "Checkbox.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Checkbox.kt",
+    "sha256": "13b16c178c8886411ce53cdc290abd858fd559610130d401ba48f8e82db109ee"
+  },
+  "RadioButton.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/RadioButton.kt",
+    "sha256": "6a1eb283c6a56bcb2cd479207b1713292283a372d87f99f1e4f1af8b4bfeea9e"
+  },
+  "Switch.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Switch.kt",
+    "sha256": "fe82a452ef737ed9fbcfa1f56e5f636cb562aaa077994d3248974fba65796ab8"
+  },
+  "ComposeMaterial3Flags.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
+    "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+  },
+  "tokens/CheckboxTokens.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/CheckboxTokens.kt",
+    "sha256": "0ef211982f2719e7efa43f2c859141c6eb55261b82f142cd2fd740b60209dc50"
+  },
+  "tokens/RadioButtonTokens.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/RadioButtonTokens.kt",
+    "sha256": "6b29406301b2f20d5fd83fb740850e77a048422992577763d8d40deebd6031be"
+  },
+  "tokens/SwitchTokens.kt": {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SwitchTokens.kt",
+    "sha256": "02e6a40ac3b295782066f7d6de65badab2070240f56f7eb03d482cc0b6f32c85"
+  }
+}

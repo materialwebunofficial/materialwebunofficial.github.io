@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { SpringPhysics } from '../../src/motion/spring-physics.js';
+import { MATERIAL_SHAPES_SVG_PATHS, MATERIAL_SHAPE_NAMES } from '../../src/tokens/shapes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,12 +38,14 @@ const requiredFiles = [
   'src/tokens/colors.css',
   'src/tokens/typography.css',
   'src/tokens/shapes.css',
+  'src/tokens/shapes.js',
   'src/tokens/elevation.css',
   'src/tokens/motion.css',
   'src/motion/spring-physics.js',
   'src/motion/interactions.js',
   'src/theme/hct-color-engine.js',
   'src/utils/security.js',
+  'src/components/md-shape.js',
   'src/components/md-button.js',
   'src/components/md-split-button.js',
   'src/components/md-icon-button.js',
@@ -52,6 +55,11 @@ const requiredFiles = [
   'src/components/md-slider.js',
   'src/components/md-switch.js',
   'src/components/md-text-field.js',
+  'src/components/md-select.js',
+  'src/components/md-autocomplete.js',
+  'src/components/md-paginator.js',
+  'src/components/md-expansion-panel.js',
+  'src/components/md-stepper.js',
   'src/components/md-checkbox.js',
   'src/components/md-radio-button.js',
   'src/components/md-progress-indicator.js',
@@ -90,8 +98,23 @@ requiredFiles.forEach(relPath => {
   }
 });
 
-// 2. Audit Spring Physics Engine
-console.log('\n⚡ Phase 2: Spring Physics Engine Mathematical Verification...');
+// 2. Audit 35 Canonical Shapes
+console.log('\n📐 Phase 2: 35 Canonical Material Shapes Catalog Verification...');
+if (MATERIAL_SHAPE_NAMES.length === 35) {
+  logPass(`All 35 canonical Google Material Shapes loaded (count = ${MATERIAL_SHAPE_NAMES.length})`);
+} else {
+  logFail(`Expected 35 shapes, got ${MATERIAL_SHAPE_NAMES.length}`);
+}
+['sunny', '4-leaf-clover', '6-sided-cookie', 'burst', 'puffy', 'heart', 'gem', 'flower'].forEach(shName => {
+  if (MATERIAL_SHAPES_SVG_PATHS[shName]) {
+    logPass(`Shape SVG path exists and valid for: ${shName}`);
+  } else {
+    logFail(`Missing shape: ${shName}`);
+  }
+});
+
+// 3. Audit Spring Physics Engine
+console.log('\n⚡ Phase 3: Spring Physics Engine Mathematical Verification...');
 try {
   const underdamped = SpringPhysics.solve({
     from: 0,
@@ -124,17 +147,19 @@ try {
   logFail(`Spring Physics Engine exception`, err);
 }
 
-// 3. Audit Web Component Export Registration
-console.log('\n🧩 Phase 3: Web Component Registration & Export Audit...');
+// 4. Audit Web Component Export Registration
+console.log('\n🧩 Phase 4: Web Component Registration & Export Audit...');
 const componentClasses = [
-  'MdButton', 'MdSplitButton', 'MdIconButton', 'MdFab', 'MdCard', 'MdChip',
-  'MdSlider', 'MdSwitch', 'MdTextField', 'MdCheckbox', 'MdRadioButton',
-  'MdProgressIndicator', 'MdLoadingIndicator', 'MdBottomSheet', 'MdBottomAppBar',
-  'MdSnackbar', 'MdTooltip', 'MdBadge', 'MdTopAppBar', 'MdNavigationBar',
-  'MdNavigationDrawer', 'MdNavigationRail', 'MdSegmentedButton', 'MdDialog',
-  'MdDivider', 'MdCarousel', 'MdDatePicker', 'MdTimePicker', 'MdList',
-  'MdListItem', 'MdMenu', 'MdMenuItem', 'MdSearchBar', 'MdSideSheet',
-  'MdTabs', 'MdToolbar', 'MdFabMenu', 'MdExpressiveTheme', 'MdTheme'
+  'MdShape', 'MdButton', 'MdSplitButton', 'MdIconButton', 'MdFab', 'MdCard', 'MdChip',
+  'MdSlider', 'MdSwitch', 'MdTextField', 'MdSelect', 'MdOption', 'MdAutocomplete',
+  'MdPaginator', 'MdExpansionPanel', 'MdStepper', 'MdStep',
+  'MdCheckbox', 'MdRadioButton', 'MdProgressIndicator', 'MdLoadingIndicator',
+  'MdBottomSheet', 'MdBottomAppBar', 'MdSnackbar', 'MdTooltip', 'MdBadge',
+  'MdTopAppBar', 'MdNavigationBar', 'MdNavigationDrawer', 'MdNavigationRail',
+  'MdSegmentedButton', 'MdDialog', 'MdDivider', 'MdCarousel', 'MdDatePicker',
+  'MdTimePicker', 'MdList', 'MdListItem', 'MdMenu', 'MdMenuItem',
+  'MdSearchBar', 'MdSideSheet', 'MdTabs', 'MdToolbar', 'MdFabMenu',
+  'MdExpressiveTheme', 'MdTheme'
 ];
 
 const indexJs = fs.readFileSync(path.join(projectRoot, 'src/index.js'), 'utf-8');

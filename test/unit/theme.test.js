@@ -1,6 +1,8 @@
 /**
  * Unit tests for HCT Color Engine and Tonal Palette Generation
  */
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
 import {
   rgbToHct,
@@ -78,7 +80,7 @@ test('generateM3Scheme produces full light and dark schemes', () => {
   }
 });
 
-test('MD3_PRESETS contains standard presets', () => {
+test('MD3_PRESETS contains showcase seed suggestions', () => {
   if (!Array.isArray(MD3_PRESETS) || MD3_PRESETS.length === 0) {
     throw new Error('Missing expected MD3 presets array');
   }
@@ -86,6 +88,43 @@ test('MD3_PRESETS contains standard presets', () => {
   if (!baseline || baseline.hex.toUpperCase() !== '#6750A4') {
     throw new Error('Missing or invalid baseline preset');
   }
+});
+
+test('128 dynamic schemes match published MCU 0.4.0 / spec 2025', () => {
+  const fixture = JSON.parse(fs.readFileSync(new URL('../fixtures/material-color-utilities/schemes.json', import.meta.url)));
+  assert.equal(fixture.cases.length, 128);
+  for (const sample of fixture.cases) {
+    const actual = generateM3Scheme(sample.seed, sample.dark, sample.variant, sample.contrast);
+    const rgb = hexToRgb(sample.seed);
+    assert.deepEqual(rgbToHct(rgb.r, rgb.g, rgb.b), sample.hct);
+    for (const [role, value] of Object.entries(sample.colors)) {
+      const key = '--md-sys-color-' + role.replace(/[A-Z]/g, c => '-' + c.toLowerCase());
+      assert.equal(actual[key], value, `${sample.seed}/${sample.variant}/${sample.dark}/${sample.contrast}/${role}`);
+    }
+    assert.equal(Object.keys(actual).length, Object.keys(sample.colors).length + 3);
+  }
+});
+
+test('HCT resolves saturated RGB without the previous Lab clipping', () => {
+  for (let r = 0; r <= 255; r += 51) for (let g = 0; g <= 255; g += 51) for (let b = 0; b <= 255; b += 51) {
+    const hct = rgbToHct(r,g,b);
+    assert.deepEqual(hctToRgb(hct.hue,hct.chroma,hct.tone),{r,g,b});
+  }
+  const red = rgbToHct(255,0,0);
+  assert.ok(Math.abs(red.hue - 27.408) < 0.001);
+  assert.ok(Math.abs(red.chroma - 113.357) < 0.001);
+});
+
+test('Fractional palette tones and invalid seed fallback are deterministic', () => {
+  const palette = new TonalPalette(270,48);
+  assert.notEqual(palette.tone(40.4),palette.tone(40));
+  assert.deepEqual(hexToRgb('#abc'),{r:170,g:187,b:204});
+  for (const bad of ['#12345g','red','',null,'123456garbage']) {
+    assert.deepEqual(hexToRgb(bad),{r:103,g:80,b:164});
+  }
+  const palettes = createTonalPalettes('#6750a4');
+  assert.equal(palettes.hct.hue,rgbToHct(103,80,164).hue);
+  for (const preset of MD3_PRESETS) assert.equal(hctToHex(preset.hue,preset.chroma,preset.tone),preset.hex.toLowerCase());
 });
 
 console.log('\n================================================================');

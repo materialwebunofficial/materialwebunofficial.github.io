@@ -1,0 +1,40 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "ListItem.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ListItem.kt",
+      "sha256": "a3efd1f692ba8dd96acf1f4b749b273414079a8ae1b3cb09b99b5c09f6c68f99"
+    },
+    {
+      "file": "ListTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ListTokens.kt",
+      "sha256": "bc69140567eaa2780a9d945ef7b7e299e92214b9434a9b566708ac46e31bc463"
+    },
+    {
+      "file": "ListItemDefaults.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ListItemDefaults.kt",
+      "sha256": "7148da3f6d803a9b59a7706970205705c333877a624b6e15948786a5b1e32edb"
+    },
+    {
+      "file": "ReorderListTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ReorderListTokens.kt",
+      "sha256": "561c1b8e69013a79a6c7a5e38ed82fd4004818b86da4197090e0233ae9bdf188"
+    },
+    {
+      "file": "ComposeMaterial3Flags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
+      "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    },
+    {
+      "file": "ElevationTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ElevationTokens.kt",
+      "sha256": "b0613cc2c1e30fb62da126f82f5870f7231e3cf4117f36132e466e1827de0a3c"
+    },
+    {
+      "file": "ListSamples.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/samples/src/main/java/androidx/compose/material3/samples/ListSamples.kt",
+      "sha256": "2bd9a1bb0e2466bcc7e99079e69aad40d0048ff72d74826ea72ccc8744467701"
+    }
+  ]
+}

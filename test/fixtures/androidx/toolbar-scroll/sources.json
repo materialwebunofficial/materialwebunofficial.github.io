@@ -1,0 +1,60 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "SplineBasedDecay.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/SplineBasedDecay.kt",
+      "sha256": "abfb366fe94b09a97f88011439f761282101d42bfe161bb1bfe6c3357965861c"
+    },
+    {
+      "file": "FlingCalculator.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/FlingCalculator.kt",
+      "sha256": "40fa8d3a1e78a9160b57a1ef777dd1f8e77a701cf4a77479e94c6680776d6522"
+    },
+    {
+      "file": "SplineBasedFloatDecayAnimationSpec.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/SplineBasedFloatDecayAnimationSpec.kt",
+      "sha256": "dce7fd07521bb118185eca66e2d20bf7d6a172c9522c9c92abee638e710e124d"
+    },
+    {
+      "file": "DefaultDecayAnimationSpec.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/DefaultDecayAnimationSpec.kt",
+      "sha256": "ad90faf3e7ed98f7c13e47a05ff5d5c09a0c69354ed4f331818ae7b1300335ca"
+    },
+    {
+      "file": "SplineBasedFloatDecayAnimationSpec.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/androidMain/kotlin/androidx/compose/animation/SplineBasedFloatDecayAnimationSpec.android.kt",
+      "sha256": "b7d7e997c5ee3edc3bb318255a8efe03c446a4c46385f77eadd805a83ae3af32"
+    },
+    {
+      "file": "AndroidActualDefaultDecayAnimationSpec.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/androidMain/kotlin/androidx/compose/animation/AndroidActualDefaultDecayAnimationSpec.android.kt",
+      "sha256": "ffe8d1a348b0472ee3ab8a0ffbffb7a624c28aeca1113b5393419ee103e153ea"
+    },
+    {
+      "file": "Animation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Animation.kt",
+      "sha256": "8d396494fd09afc5dda90b6e48327cf86f07b823539e25cbfac9248e23dae6ca"
+    },
+    {
+      "file": "SuspendAnimation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SuspendAnimation.kt",
+      "sha256": "4301f943eae91b09f85855e889b1cf96f35c59bb3aafbd4809650de2ecde911a"
+    },
+    {
+      "file": "DecayAnimationSpec.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/DecayAnimationSpec.kt",
+      "sha256": "a58091f3b1c11e2c401fc283f0f076f36410617ba6ef5d467c649cdc0d5c1f53"
+    },
+    {
+      "file": "ViewConfiguration.java",
+      "url": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-16.0.0_r1/core/java/android/view/ViewConfiguration.java",
+      "sha256": "d3d3534d68b2397ec5f8622da4043aed779b935d37456522c2e5d4387e20388a"
+    },
+    {
+      "file": "FloatingToolbar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/FloatingToolbar.kt",
+      "sha256": "7c014d29baef68f505a624b26e4c264bce2e7f72726d29dfcc09869c81142598"
+    }
+  ]
+}

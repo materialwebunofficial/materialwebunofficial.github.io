@@ -14,7 +14,16 @@ export function createComponentSheet(cssText) {
   if (typeof CSSStyleSheet !== 'undefined' && typeof CSSStyleSheet.prototype.replaceSync === 'function') {
     try {
       const sheet = new CSSStyleSheet();
-      sheet.replaceSync(cssText);
+      sheet.replaceSync(cssText + `
+        @media (prefers-reduced-motion: reduce) {
+          :host, *, *::before, *::after {
+            transition-duration: 0s !important;
+            animation-duration: 0.001ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+          }
+        }
+      `);
       return sheet;
     } catch (_) {
       return null;

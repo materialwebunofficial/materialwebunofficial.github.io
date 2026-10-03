@@ -39,7 +39,7 @@ export function rgbToHct(r: number, g: number, b: number): HctColor;
 export function hctToRgb(hue: number, chroma: number, tone: number): RgbColor;
 export function hctToHex(hue: number, chroma: number, tone: number): string;
 
-export function createTonalPalettes(source: string | HctColor, schemeType?: 'expressive' | 'standard'): {
+export function createTonalPalettes(source: string | HctColor, schemeType?: 'expressive' | 'standard', isDark?: boolean, contrastLevel?: number): {
   primary: TonalPalette;
   secondary: TonalPalette;
   tertiary: TonalPalette;
@@ -50,9 +50,9 @@ export function createTonalPalettes(source: string | HctColor, schemeType?: 'exp
   schemeType: string;
 };
 
-export function generateM3Scheme(source: string | HctColor, isDark?: boolean, schemeType?: 'expressive' | 'standard'): M3SchemeTokens;
-export function applyDynamicTheme(source: string | HctColor, isDark?: boolean | null, schemeType?: 'expressive' | 'standard' | null, target?: HTMLElement | null): M3SchemeTokens;
+export function generateM3Scheme(source: string | HctColor, isDark?: boolean, schemeType?: 'expressive' | 'standard', contrastLevel?: number): M3SchemeTokens;
+export function applyDynamicTheme(source: string | HctColor, isDark?: boolean | null, schemeType?: 'expressive' | 'standard' | null, target?: HTMLElement | null, contrastLevel?: number | null): M3SchemeTokens;
 
 export const MD3_PRESETS: M3Preset[];
-export function getActiveSeedHex(): string;
-export function getActiveHct(): HctColor;
+export function getActiveSeedHex(target?: HTMLElement | null): string;
+export function getActiveHct(target?: HTMLElement | null): HctColor;

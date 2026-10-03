@@ -47,6 +47,7 @@
   /* --- Neutral & Surface Group --- */
   --md-sys-color-background: #fef7ff;
   --md-sys-color-on-background: #1d1b20;
+  --md-sys-color-surface-tint: var(--md-sys-color-primary);
   --md-sys-color-surface: #fef7ff;
   --md-sys-color-on-surface: #1d1b20;
   --md-sys-color-surface-variant: #e7e0ec;
@@ -127,6 +128,7 @@
   /* --- Neutral & Surface Group --- */
   --md-sys-color-background: #141218;
   --md-sys-color-on-background: #e6e0e9;
+  --md-sys-color-surface-tint: var(--md-sys-color-primary);
   --md-sys-color-surface: #141218;
   --md-sys-color-on-surface: #e6e0e9;
   --md-sys-color-surface-variant: #49454f;
@@ -162,4 +164,15 @@
   --md-sys-state-focus-state-layer-opacity: 0.10;
   --md-sys-state-pressed-state-layer-opacity: 0.10;
   --md-sys-state-dragged-state-layer-opacity: 0.16;
+}
+
+/* AndroidX expressiveLightColorScheme: the static Expressive baseline changes
+   only these four on-container roles to palette tone 30. Dynamic MCU palette
+   variants are generated independently by the HCT adapter. */
+:root:not([data-theme="dark"]):not([data-theme-scheme="standard"]),
+[data-theme="light"][data-theme-scheme="expressive"] {
+  --md-sys-color-on-primary-container: #4f378b;
+  --md-sys-color-on-secondary-container: #4a4458;
+  --md-sys-color-on-tertiary-container: #633b48;
+  --md-sys-color-on-error-container: #8c1d18;
 }

@@ -1,0 +1,50 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "CircularProgressIndicatorTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/CircularProgressIndicatorTokens.kt",
+      "sha256": "19fa92975b296b5bc0a3f22ab533619c67e9747cd665e239eb4f88fcb98c013c"
+    },
+    {
+      "file": "CircularWavyProgressModifiers.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/CircularWavyProgressModifiers.kt",
+      "sha256": "2c92c9765d35b2b8f0498da7ec51a8e9c7cc15da479d9c0ad2af1a691a2da88e"
+    },
+    {
+      "file": "LinearProgressIndicatorTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/LinearProgressIndicatorTokens.kt",
+      "sha256": "43c6931eb19698ce8bc1b520882bae4d08e1bb1f7228a054664fac4090858f71"
+    },
+    {
+      "file": "LinearWavyProgressModifiers.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/LinearWavyProgressModifiers.kt",
+      "sha256": "219d396a3e923ab305cf99d61cf7c6d4870244bc0e10139224088dbc079e8121"
+    },
+    {
+      "file": "MotionTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/MotionTokens.kt",
+      "sha256": "58bf152e5f81d8bcb80f1475a2e3c54535873245f41d005ab5c797cdd5dc6ebc"
+    },
+    {
+      "file": "ProgressIndicator.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ProgressIndicator.kt",
+      "sha256": "d8fc0fb57f963f651809736201002d322cf7c49c3fd4b401613a76513696263f"
+    },
+    {
+      "file": "ProgressIndicatorTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ProgressIndicatorTokens.kt",
+      "sha256": "6e576f0947414aee1bcf35bd291c52facc5dbcedf8ab80947aea14dd05ab2bdc"
+    },
+    {
+      "file": "ShapeUtil.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/ShapeUtil.kt",
+      "sha256": "894f8cc0121eb13b92e7f28aaa06c04a06b89bfbb7d423f09c8787d68b02c0d5"
+    },
+    {
+      "file": "WavyProgressIndicator.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/WavyProgressIndicator.kt",
+      "sha256": "d968b8e289c5d1346fa3d2dc92892c9bb3c90abaa4f5a8224925abd00ad0f5d0"
+    }
+  ]
+}

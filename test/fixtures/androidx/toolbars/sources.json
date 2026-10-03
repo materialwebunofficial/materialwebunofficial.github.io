@@ -1,0 +1,72 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "FloatingToolbar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/FloatingToolbar.kt",
+      "sha256": "7c014d29baef68f505a624b26e4c264bce2e7f72726d29dfcc09869c81142598"
+    },
+    {
+      "file": "MotionScheme.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/MotionScheme.kt",
+      "sha256": "95fcf8d94c5885a16d82eab986ce4c1b02a8f09f59784d03a9fab168529ff270"
+    },
+    {
+      "file": "FloatingToolbarTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FloatingToolbarTokens.kt",
+      "sha256": "1c1485693112cdf4012fa78f4d44f48d3c1c0fd72aa9e3f727f54160b4c3271f"
+    },
+    {
+      "file": "FabBaselineTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabBaselineTokens.kt",
+      "sha256": "481552f1e35f77b27cb81bfd78fa8c6552a9efb29d4fa603f75d67132e0a2414"
+    },
+    {
+      "file": "FabMediumTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabMediumTokens.kt",
+      "sha256": "49888769965e3fe97d91d445ee8c66ad7b50f163fdd3dd91f0aa79fc76e8604b"
+    },
+    {
+      "file": "ShapeTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ShapeTokens.kt",
+      "sha256": "02178111f81c7f03135cc7157040fa903180e212fd52b8f686b4304080efb5a3"
+    },
+    {
+      "file": "ElevationTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ElevationTokens.kt",
+      "sha256": "b0613cc2c1e30fb62da126f82f5870f7231e3cf4117f36132e466e1827de0a3c"
+    },
+    {
+      "file": "FloatingToolbarSamples.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/samples/src/main/java/androidx/compose/material3/samples/FloatingToolbarSamples.kt",
+      "sha256": "c1646dc55434794d75bfc0f7fd9203277b3e9b4e24d380f052061d75a323e45d"
+    },
+    {
+      "file": "EnterExitTransition.kt",
+      "path": "compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/EnterExitTransition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/EnterExitTransition.kt",
+      "sha256": "4b395c9289a7f678ad748a0f61a256789c9988309a919b0ab16a4066f9d70f03"
+    },
+    {
+      "file": "AnimatedVisibility.kt",
+      "path": "compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/AnimatedVisibility.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/AnimatedVisibility.kt",
+      "sha256": "b55662adb92b5b8c9803b9b567474323b17f3592069c045ffd7fc6c2756d8516"
+    },
+    {
+      "file": "Dp.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Dp.kt",
+      "sha256": "9173b0a7104ca22731bf185438fae68646ca6350d7a84ad610281a48fa9ad96a"
+    },
+    {
+      "file": "MathHelpers.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt",
+      "sha256": "ce262ffce1cdc0ab8231e03bcd1cbf7eef0c015da84fb223552e4097057e13fa"
+    },
+    {
+      "file": "VisibilityThresholds.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/VisibilityThresholds.kt",
+      "sha256": "ffa081b98cf497dbbe70ce969f93cd3c252064323206c0fa86db0e4800ba85fa"
+    }
+  ]
+}

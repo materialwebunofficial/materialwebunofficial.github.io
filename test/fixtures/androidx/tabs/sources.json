@@ -1,0 +1,75 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Tab.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Tab.kt",
+      "sha256": "29d1a0799bd5b87e19dc684c9ccd07f0be42339a55fb460f7d0847339db9974c"
+    },
+    {
+      "file": "TabRow.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TabRow.kt",
+      "sha256": "b58cff3a2f57f0bff6a59bac33722b4dd1dab5ece0b2c27cb0a2442877c379e3"
+    },
+    {
+      "file": "MotionScheme.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/MotionScheme.kt",
+      "sha256": "95fcf8d94c5885a16d82eab986ce4c1b02a8f09f59784d03a9fab168529ff270"
+    },
+    {
+      "file": "PrimaryNavigationTabTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/PrimaryNavigationTabTokens.kt",
+      "sha256": "4aaa987e35e573287909ffda53c13cceb5f43e1fc95fc1e3056b295d897ce957"
+    },
+    {
+      "file": "SecondaryNavigationTabTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SecondaryNavigationTabTokens.kt",
+      "sha256": "0c34a26bf5eff2cc6318a532a211e9c25e88c02fc05c0fd1b4bbb3c7057e5f74"
+    },
+    {
+      "file": "TypeScaleTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TypeScaleTokens.kt",
+      "sha256": "7ca6378374d78da8a1091d2ee4a4c228f70d0daef65dfd51c18b58f7d9679ba4"
+    },
+    {
+      "file": "TabSamples.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/samples/src/main/java/androidx/compose/material3/samples/TabSamples.kt",
+      "sha256": "921c11ff3f3b622a02b65809a96555c585eb7c17be988c69ebdd12ef24a838d6"
+    },
+    {
+      "file": "Placeable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Placeable.kt",
+      "sha256": "3cad263d6cb7b61c391156ead157ec81e61f83d5b7f9455bb300c527d46387b5"
+    },
+    {
+      "file": "Divider.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Divider.kt",
+      "sha256": "36444f0f0f9447f39d0bbf665d36788bbfb69a9c954f6e4040fa63a11723ebbc"
+    },
+    {
+      "file": "DividerTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/DividerTokens.kt",
+      "sha256": "3e4729399cfdc37d2f44ea9ffc2336ac7c80e8479ed012f5f9e52d1f9c7f7826"
+    },
+    {
+      "file": "Scroll.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Scroll.kt",
+      "sha256": "0fb9339eb24a9b437875d0e001bb376f1447fcaf9186f6bed5ba721fce03a326"
+    },
+    {
+      "file": "ScrollExtensions.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/ScrollExtensions.kt",
+      "sha256": "9b86728f4dc6a054ce405f0d46e50a4818c18c880489af75df16d1cfac133709"
+    },
+    {
+      "file": "Alignment.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Alignment.kt",
+      "sha256": "bf2e150a8f21de8088dba5f7007c5e2afd5e4ee2c73eca6c43d93a0132977fc1"
+    },
+    {
+      "file": "Arrangement.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Arrangement.kt",
+      "sha256": "5c472ce87f456cd5b6c176088aab58dd18f1343b1a25c41c6ec0495d2d55d0d2"
+    }
+  ]
+}

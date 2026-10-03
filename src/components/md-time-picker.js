@@ -21,7 +21,7 @@ const defaultStyle = `
     outline: none;
     box-sizing: border-box;
     user-select: none;
-    font-family: var(--md-sys-typescale-font-family, 'Roboto', 'Roboto Flex', system-ui, sans-serif);
+    font-family: var(--md-sys-typescale-font-family, 'Roboto', system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;
   }
   :host([inline]) {
@@ -155,12 +155,12 @@ const defaultStyle = `
   }
 
   .time-val {
-    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
+    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
   }
 
   .time-separator {
-    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
+    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
     color: var(--md-sys-color-on-surface, #1D1B20);
     line-height: 80px;
@@ -183,7 +183,7 @@ const defaultStyle = `
     border: 2px solid transparent;
     background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
     color: var(--md-sys-color-on-surface, #1D1B20);
-    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto Flex, sans-serif);
+    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
     text-align: center;
     outline: none;

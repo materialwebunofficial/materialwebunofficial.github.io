@@ -56,6 +56,7 @@ const defaultStyle = `
 
   /* Medium flexible 112dp, HeadlineMedium(28) + LabelLarge(14) */
   .bar[data-variant="medium-flexible"] { min-height: 112px; }
+  :host([subtitle]:not([subtitle=""])) .bar[data-variant="medium-flexible"] { min-height: 136px; }
   .bar[data-variant="medium-flexible"] .headline {
     font: var(--md-sys-typescale-headline-medium, 400 28px/36px Roboto, sans-serif);
   }
@@ -70,7 +71,8 @@ const defaultStyle = `
   }
 
   /* Large flexible 152dp, DisplaySmall(36) + TitleMedium(16) */
-  .bar[data-variant="large-flexible"] { min-height: 152px; }
+  .bar[data-variant="large-flexible"] { min-height: 120px; }
+  :host([subtitle]:not([subtitle=""])) .bar[data-variant="large-flexible"] { min-height: 152px; }
   .bar[data-variant="large-flexible"] .headline {
     font: var(--md-sys-typescale-display-small, 400 36px/44px Roboto, sans-serif);
   }

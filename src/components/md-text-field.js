@@ -178,6 +178,14 @@ const defaultStyle = `
     line-height: var(--md-sys-typescale-body-large-line-height, 24px);
     user-select: none;
     white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--md-sys-motion-duration-short2, 150ms) ease,
+                visibility var(--md-sys-motion-duration-short2, 150ms) ease;
+  }
+  .field-box.floating .affix {
+    opacity: 1;
+    visibility: visible;
   }
   .affix.prefix { margin-right: 4px; }
   .affix.suffix { margin-left: 4px; }
@@ -217,6 +225,45 @@ const defaultStyle = `
   .tf-root.disabled .field-box { pointer-events: none; }
 `;
 
+const CURRENCY_MAP = {
+  USD: { symbol: '$', code: 'USD' },
+  EUR: { symbol: '€', code: 'EUR' },
+  TRY: { symbol: '₺', code: 'TRY' },
+  TL:  { symbol: '₺', code: 'TRY' },
+  GBP: { symbol: '£', code: 'GBP' },
+  JPY: { symbol: '¥', code: 'JPY' },
+  CNY: { symbol: '¥', code: 'CNY' },
+  RMB: { symbol: '¥', code: 'CNY' },
+  CAD: { symbol: 'CA$', code: 'CAD' },
+  AUD: { symbol: 'A$', code: 'AUD' },
+  CHF: { symbol: 'CHF', code: 'CHF' },
+  INR: { symbol: '₹', code: 'INR' },
+  KRW: { symbol: '₩', code: 'KRW' },
+  RUB: { symbol: '₽', code: 'RUB' },
+  BRL: { symbol: 'R$', code: 'BRL' },
+  SEK: { symbol: 'kr', code: 'SEK' },
+  NOK: { symbol: 'kr', code: 'NOK' },
+  DKK: { symbol: 'kr', code: 'DKK' },
+  PLN: { symbol: 'zł', code: 'PLN' },
+  SAR: { symbol: '﷼', code: 'SAR' },
+  AED: { symbol: 'د.إ', code: 'AED' },
+  ILS: { symbol: '₪', code: 'ILS' },
+  BTC: { symbol: '₿', code: 'BTC' },
+  ETH: { symbol: 'Ξ', code: 'ETH' }
+};
+
+function resolveCurrency(currStr) {
+  if (!currStr || typeof currStr !== 'string') return null;
+  const clean = currStr.trim().toUpperCase();
+  if (CURRENCY_MAP[clean]) return CURRENCY_MAP[clean];
+  try {
+    const formatted = new Intl.NumberFormat('en', { style: 'currency', currency: clean }).formatToParts(0);
+    const sym = formatted.find(p => p.type === 'currency')?.value;
+    if (sym) return { symbol: sym, code: clean };
+  } catch (_) {}
+  return null;
+}
+
 const textFieldSheet = createComponentSheet(defaultStyle);
 
 export class MdTextField extends HTMLElement {
@@ -226,7 +273,7 @@ export class MdTextField extends HTMLElement {
     return [
       'label', 'value', 'placeholder', 'variant', 'type', 'disabled',
       'error', 'error-text', 'supporting-text', 'icon', 'leading-icon',
-      'trailing-icon', 'prefix-text', 'suffix-text', 'maxlength', 'name', 'required',
+      'trailing-icon', 'prefix-text', 'suffix-text', 'currency', 'maxlength', 'name', 'required',
       'single-line', 'min-lines', 'max-lines', 'read-only', 'readonly', 'is-error', 'label-position'
     ];
   }
@@ -334,12 +381,54 @@ export class MdTextField extends HTMLElement {
     else this.setAttribute('label-position', val);
   }
 
+  get currency() { return this.getAttribute('currency') || ''; }
+  set currency(val) {
+    if (val === null || val === undefined) this.removeAttribute('currency');
+    else this.setAttribute('currency', val);
+  }
+
   get errorText() { return this.getAttribute('error-text') || ''; }
   get supportingText() { return this.getAttribute('supporting-text') || ''; }
   get icon() { return this.getAttribute('icon') || this.getAttribute('leading-icon') || ''; }
   get trailingIcon() { return this.getAttribute('trailing-icon') || ''; }
-  get prefixText() { return this.getAttribute('prefix-text') || ''; }
-  get suffixText() { return this.getAttribute('suffix-text') || ''; }
+
+  get prefixText() {
+    if (this.hasAttribute('prefix-text')) {
+      return this.getAttribute('prefix-text') || '';
+    }
+    // Auto-resolve from currency attribute if present
+    if (this.currency) {
+      const info = resolveCurrency(this.currency);
+      if (info) return info.symbol;
+    }
+    // Auto-resolve if suffix-text matches a known currency code
+    if (this.hasAttribute('suffix-text')) {
+      const suffix = this.getAttribute('suffix-text') || '';
+      const info = resolveCurrency(suffix);
+      if (info) return info.symbol;
+    }
+    return '';
+  }
+  set prefixText(val) {
+    if (val === null || val === undefined) this.removeAttribute('prefix-text');
+    else this.setAttribute('prefix-text', val);
+  }
+
+  get suffixText() {
+    if (this.hasAttribute('suffix-text')) {
+      return this.getAttribute('suffix-text') || '';
+    }
+    // Auto-resolve from currency attribute if present
+    if (this.currency) {
+      const info = resolveCurrency(this.currency);
+      if (info) return info.code;
+    }
+    return '';
+  }
+  set suffixText(val) {
+    if (val === null || val === undefined) this.removeAttribute('suffix-text');
+    else this.setAttribute('suffix-text', val);
+  }
   get maxlength() {
     const m = parseInt(this.getAttribute('maxlength'), 10);
     return isNaN(m) ? null : m;

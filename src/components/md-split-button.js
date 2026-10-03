@@ -4,21 +4,22 @@
  * Spec: research/MD3E-actions-inputs-research.md §2 (Split Button — Expressive new)
  *   Common (leading) button + separate menu (trailing) icon button.
  *   Sizes XS/S/M/L/XL = 32/40/56/96/136dp. Between-gap 2dp. Outer corners CornerFull.
- *   Inner corners morph (grow) on hover/press and the menu button spins + morphs on open.
+ *   Inner corners morph on press and the menu button spins + morphs on open.
  *   Color styles: filled / tonal / elevated / outlined (leading = button, trailing = icon button).
  *
- * Contract: Hover = CSS only. Press = JS spring scale (bindPress, setPointerCapture,
- *   NO pointerleave release). Single focus ring. Keyboard Enter/Space + Escape to close.
+ * Interaction: content-color hover layer; pressed/checked shape morph.
+ * Single focus ring, expanded hit target and keyboard menu navigation.
  */
 
-import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { bindPress } from '../motion/interactions.js';
+import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
 const defaultStyle = `
   :host { display: inline-block; outline: none; position: relative; vertical-align: middle; user-select: none; }
 
-  .split-container { display: inline-flex; align-items: center; gap: 2px; position: relative; }
+  .split-container { display: inline-flex; align-items: center; gap: var(--split-gap, 2px); position: relative; }
 
   .btn-left, .btn-right {
     position: relative;
@@ -31,7 +32,7 @@ const defaultStyle = `
     cursor: pointer;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    height: 40px;
+    height: var(--split-height, 40px);
     font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
     font-size: var(--md-sys-typescale-label-large-size, 14px);
     font-weight: var(--md-sys-typescale-label-large-weight, 500);
@@ -40,7 +41,7 @@ const defaultStyle = `
     outline: none;
     transition:
       background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-      border-radius var(--md-sys-motion-duration-medium1, 300ms) var(--md-sys-motion-easing-expressive-spatial, ease),
+      border-radius var(--md-sys-motion-effect-medium-duration, 250ms) var(--md-sys-motion-effect-medium-easing, ease),
       box-shadow var(--md-sys-motion-duration-medium1, 300ms) var(--md-sys-motion-easing-expressive-spatial, ease);
     will-change: transform, border-radius;
   }
@@ -50,14 +51,18 @@ const defaultStyle = `
     outline-offset: 2px;
   }
 
-  .btn-left  { padding: 0 16px; border-radius: 9999px 4px 4px 9999px; }
-  .btn-right { width: 40px; padding: 0 9px; border-radius: 4px 9999px 9999px 4px; font-size: 22px; }
+  .btn-left  { gap: var(--split-label-gap, 8px); padding-block: 0; padding-inline: var(--split-leading-start, 16px) var(--split-leading-end, 12px); border-radius: 9999px var(--split-inner, 4px) var(--split-inner, 4px) 9999px; font: var(--split-label-font); letter-spacing: var(--split-label-tracking); }
+  .btn-right { width: var(--split-trailing-width, 48px); padding: 0; border-radius: var(--split-inner, 4px) 9999px 9999px var(--split-inner, 4px); }
+  .btn-left::before, .btn-right::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; pointer-events: none; }
+  .btn-left:hover::before, .btn-right:hover::before { opacity: 0.08; }
+  .btn-left.pressed::before, .btn-right.pressed::before, .btn-left:focus-visible::before, .btn-right:focus-visible::before { opacity: 0.1; }
+  .btn-left::after, .btn-right::after { content: ''; position: absolute; width: 100%; height: max(100%, 48px); min-width: 48px; }
 
   .material-symbols-outlined {
     font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
     font-weight: normal;
     font-style: normal;
-    font-size: 22px;
+    font-size: var(--split-icon, 22px);
     line-height: 1;
     display: inline-block;
     white-space: nowrap;
@@ -66,50 +71,76 @@ const defaultStyle = `
   }
 
   /* Inner corner morphs larger on hover/press */
-  .btn-left:hover  { border-radius: 9999px 12px 12px 9999px; }
-  .btn-right:hover { border-radius: 12px 9999px 9999px 12px; }
-  .btn-left.pressed  { border-radius: 9999px 12px 12px 9999px; }
-  .btn-right.pressed { border-radius: 12px 9999px 9999px 12px; }
+  .btn-left.pressed { border-radius: 9999px var(--split-pressed, 12px) var(--split-pressed, 12px) 9999px; }
+  .btn-right.pressed { border-radius: var(--split-pressed, 12px) 9999px 9999px var(--split-pressed, 12px); }
 
   .chevron { display: inline-block; transition: transform 0.2s var(--md-sys-motion-easing-expressive-spatial, ease); }
-  .btn-right.open { border-radius: 50% 9999px 9999px 50% !important; }
+  .btn-right.open:not(.pressed) { border-radius: 9999px; }
+  .btn-right.open::before { opacity: 0.1; }
   .btn-right.open .chevron { transform: rotate(180deg); }
+  .btn-left .material-symbols-outlined { font-size: var(--split-leading-icon, 20px); }
+  :host(:dir(rtl)) .btn-left { border-radius: var(--split-inner, 4px) 9999px 9999px var(--split-inner, 4px); }
+  :host(:dir(rtl)) .btn-right { border-radius: 9999px var(--split-inner, 4px) var(--split-inner, 4px) 9999px; }
+  :host(:dir(rtl)) .btn-left.pressed { border-radius: var(--split-pressed, 12px) 9999px 9999px var(--split-pressed, 12px); }
+  :host(:dir(rtl)) .btn-right.pressed { border-radius: 9999px var(--split-pressed, 12px) var(--split-pressed, 12px) 9999px; }
+  :host(:dir(rtl)) .btn-right.open:not(.pressed) { border-radius: 9999px; }
 
-  /* Variants */
-  .v-filled .btn-left   { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
-  .v-filled .btn-left:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
-  .v-filled .btn-right  { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
-  .v-filled .btn-right:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
-  .v-filled .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 88%, black); }
-
-  .v-tonal .btn-left   { background-color: var(--md-sys-color-secondary-container, #E8DEF8); color: var(--md-sys-color-on-secondary-container, #1D192B); }
-  .v-tonal .btn-left:hover { background-color: color-mix(in srgb, var(--md-sys-color-secondary-container, #E8DEF8) 92%, black); }
-  .v-tonal .btn-right  { background-color: var(--md-sys-color-secondary-container, #E8DEF8); color: var(--md-sys-color-on-secondary-container, #1D192B); }
-  .v-tonal .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-secondary-container, #E8DEF8) 88%, black); }
-
-  .v-elevated .btn-left   { background-color: var(--md-sys-color-surface-container-low, #F7F2FA); color: var(--md-sys-color-primary, #6750A4); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
-  .v-elevated .btn-left:hover { box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,.15)); }
-  .v-elevated .btn-right  { background-color: var(--md-sys-color-surface-container-low, #F7F2FA); color: var(--md-sys-color-primary, #6750A4); box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,.15)); }
-  .v-elevated .btn-right.open { background-color: color-mix(in srgb, var(--md-sys-color-surface-container-low, #F7F2FA) 92%, black); }
-
-  .v-outlined .btn-left   { background-color: transparent; color: var(--md-sys-color-on-surface-variant, #49454F); border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0); }
-  .v-outlined .btn-left:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454F) 8%, transparent); }
-  .v-outlined .btn-right  { background-color: transparent; color: var(--md-sys-color-on-surface-variant, #49454F); border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0); }
-  .v-outlined .btn-right.open { background-color: var(--md-sys-color-inverse-surface, #322F35); color: var(--md-sys-color-inverse-on-surface, #F5EFF7); border-color: var(--md-sys-color-inverse-surface, #322F35); }
+  /* SplitButton uses ButtonColors; checked adds a content-color state layer. */
+  .v-filled .btn-left, .v-filled .btn-right {
+    background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: none;
+  }
+  .v-tonal .btn-left, .v-tonal .btn-right {
+    background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); box-shadow: none;
+  }
+  .v-filled :is(.btn-left,.btn-right):hover, .v-tonal :is(.btn-left,.btn-right):hover { box-shadow: var(--md-sys-elevation-level-1); }
+  .v-filled :is(.btn-left,.btn-right).pressed, .v-tonal :is(.btn-left,.btn-right).pressed { box-shadow: none; }
+  .v-elevated .btn-left, .v-elevated .btn-right {
+    background: var(--md-sys-color-surface-container-low); color: var(--md-sys-color-primary); box-shadow: var(--md-sys-elevation-level-1);
+  }
+  .v-elevated :is(.btn-left,.btn-right):hover { box-shadow: var(--md-sys-elevation-level-2); }
+  .v-elevated :is(.btn-left,.btn-right).pressed { box-shadow: var(--md-sys-elevation-level-1); }
+  .v-outlined .btn-left, .v-outlined .btn-right {
+    background: transparent; color: var(--md-sys-color-on-surface-variant); border: 1px solid var(--md-sys-color-outline-variant);
+  }
+  :host([disabled]) :is(.btn-left,.btn-right) {
+    opacity: 1; box-shadow: none; pointer-events: none;
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+    color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent);
+  }
+  :host([disabled]) .v-tonal :is(.btn-left,.btn-right) {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  }
+  :host([disabled]) .v-outlined :is(.btn-left,.btn-right) { background: transparent; }
+  :host([disabled]) :is(.btn-left,.btn-right)::before { opacity: 0; }
 
   /* Dropdown menu */
   .dropdown-menu {
-    display: none;
-    position: absolute; top: 100%; right: 0; margin-top: 8px;
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: 8px;
     background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
     color: var(--md-sys-color-on-surface, #1D1B20);
-    border-radius: 16px; padding: 8px 0; min-width: 140px;
+    border-radius: 16px;
+    padding: 8px 0;
+    min-width: 150px;
     box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
-    opacity: 0; pointer-events: none; transform: translateY(-8px) scale(0.96);
-    transition: opacity 0.15s ease, transform 0.15s var(--md-sys-motion-easing-expressive-spatial, ease);
-    z-index: 100; text-align: left;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-8px) scale(0.92, 0.85);
+    transform-origin: top right;
+    /* Visibility changes synchronously so keyboard focus can enter on open. */
+    z-index: 100;
+    text-align: left;
   }
-  .dropdown-menu.open { display: block; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+  .dropdown-menu.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1, 1);
+  }
 
   .menu-item {
     display: flex; align-items: center; gap: 12px; padding: 10px 16px;
@@ -128,14 +159,14 @@ const splitButtonSheet = createComponentSheet(defaultStyle);
 const SIZE = {
   xs:  { h: 32,  leadPadX: 12, leadPadT: 10, icon: 22, inner: 4  },
   s:   { h: 40,  leadPadX: 16, leadPadT: 12, icon: 22, inner: 4  },
-  m:   { h: 56,  leadPadX: 24, leadPadT: 24, icon: 26, inner: 6  },
+  m:   { h: 56,  leadPadX: 24, leadPadT: 24, icon: 26, inner: 4  },
   l:   { h: 96,  leadPadX: 48, leadPadT: 48, icon: 38, inner: 8  },
-  xl:  { h: 136, leadPadX: 64, leadPadT: 64, icon: 50, inner: 10 },
+  xl:  { h: 136, leadPadX: 64, leadPadT: 64, icon: 50, inner: 12 },
 };
 
 export class MdSplitButton extends HTMLElement {
   static get observedAttributes() {
-    return ['size', 'variant', 'label', 'icon', 'open', 'items', 'spacing'];
+    return ['size', 'variant', 'label', 'icon', 'open', 'items', 'spacing', 'disabled'];
   }
 
   constructor() {
@@ -148,7 +179,8 @@ export class MdSplitButton extends HTMLElement {
   }
 
   connectedCallback() {
-    if (!this._rendered) { this.render(); this._setup(); this._rendered = true; }
+    if (!this._rendered) { this.render(); this._rendered = true; }
+    this._setup();
     document.addEventListener('click', this._docClick);
     this._sync();
   }
@@ -161,7 +193,7 @@ export class MdSplitButton extends HTMLElement {
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
-    if (name === 'size' || name === 'variant' || name === 'icon' || name === 'items' || name === 'spacing') { this.render(); this._setup(); }
+    if (name === 'size' || name === 'variant' || name === 'icon' || name === 'label' || name === 'items' || name === 'spacing') { this.render(); this._setup(); }
     this._sync();
   }
 
@@ -180,6 +212,8 @@ export class MdSplitButton extends HTMLElement {
   }
 
   _dim() { return SIZE[this.size]; }
+  get disabled() { return this.hasAttribute('disabled'); }
+  set disabled(value) { this.toggleAttribute('disabled', Boolean(value)); }
 
   _parseItems() {
     const raw = this.getAttribute('items');
@@ -203,28 +237,109 @@ export class MdSplitButton extends HTMLElement {
   }
 
   openMenu() {
+    if (this.disabled) return;
+    this._closing = false;
+    this.shadowRoot.querySelector('.dropdown-menu')?._springAnim?.cancel();
     document.querySelectorAll('md-split-button[open]').forEach(sb => {
       if (sb !== this) sb.close();
     });
-    this.setAttribute('open', '');
+    if (this.open) this._sync();
+    else this.setAttribute('open', '');
   }
 
   toggle() {
-    this.open ? this.close() : this.openMenu();
+    this.open && !this._closing ? this.close() : this.openMenu();
   }
 
   close() {
-    this.removeAttribute('open');
+    if (!this.open || this._closing) return;
+    this._closing = true;
+    const menu = this.shadowRoot.querySelector('.dropdown-menu');
+    if (menu && this.isConnected) {
+      menu._springAnim?.cancel?.();
+      const anim = menu.animate([
+        { transform: 'scale(1, 1) translateY(0)', opacity: 1 },
+        { transform: 'scale(0.9, 0.82) translateY(-8px)', opacity: 0 }
+      ], {
+        duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150,
+        easing: 'cubic-bezier(0.4, 0, 1, 1)',
+        fill: 'forwards'
+      });
+      menu._springAnim = anim;
+      anim.onfinish = () => {
+        this._closing = false;
+        this.removeAttribute('open');
+        menu.style.visibility = 'hidden';
+        menu.style.pointerEvents = 'none';
+        menu._springAnim = null;
+        anim.cancel();
+      };
+    } else {
+      this._closing = false;
+      this.removeAttribute('open');
+    }
   }
 
   _sync() {
+    const d = this._dim();
+    const container = this.shadowRoot.querySelector('.split-container');
+    const vars = {
+      'height': `${d.h}px`, 'gap': `${this.spacing}px`,
+      'leading-start': `${d.leadPadX}px`, 'leading-end': `${d.leadPadT}px`,
+      'trailing-width': `${Math.max(48, d.h)}px`, 'icon': `${d.icon}px`,
+      'leading-icon': `${d.h >= 136 ? 40 : d.h >= 96 ? 32 : d.h >= 56 ? 24 : 20}px`,
+      'label-gap': `${d.h >= 136 ? 16 : d.h >= 96 ? 12 : 8}px`,
+      'inner': `${d.inner}px`, 'pressed': `${this.size === 'xs' ? 8 : d.h >= 96 ? 20 : 12}px`,
+      'label-tracking': `var(--md-sys-typescale-${d.h >= 136 ? 'headline-large' : d.h >= 96 ? 'headline-small' : d.h >= 56 ? 'title-medium' : 'label-large'}-tracking)`,
+      'label-font': `var(--md-sys-typescale-${d.h >= 136 ? 'headline-large' : d.h >= 96 ? 'headline-small' : d.h >= 56 ? 'title-medium' : 'label-large'})`
+    };
+    if (container) for (const [key, value] of Object.entries(vars)) container.style.setProperty(`--split-${key}`, value);
+    this.shadowRoot.querySelectorAll('.btn-left,.btn-right').forEach(el => {
+      el.tabIndex = this.disabled ? -1 : 0;
+      el.setAttribute('aria-disabled', String(this.disabled));
+    });
     const right = this.shadowRoot.querySelector('.btn-right');
     const menu = this.shadowRoot.querySelector('.dropdown-menu');
     if (right) {
       right.setAttribute('aria-expanded', this.open ? 'true' : 'false');
+      right.setAttribute('aria-pressed', String(this.open));
       right.classList.toggle('open', this.open);
     }
-    if (menu) menu.classList.toggle('open', this.open);
+    if (menu) {
+      menu.inert = !this.open || this.disabled;
+      if (this.open) {
+        menu.style.visibility = 'visible';
+        menu.style.pointerEvents = 'auto';
+
+        const { keyframes, duration } = SpringPhysics.generateKeyframes({
+          from: 0.62,
+          to: 1.0,
+          ...SpringPhysics.getPreset('expressiveSpatialFast', this)
+        });
+
+        const animKeyframes = keyframes.map((scale, i) => {
+          const progress = i / (keyframes.length - 1);
+          const opacity = Math.min(1, progress * 4.0);
+          const ty = (1 - scale) * 16;
+          return {
+            transform: `scale(${scale.toFixed(4)}) translateY(${-ty.toFixed(2)}px)`,
+            opacity: opacity.toFixed(3)
+          };
+        });
+
+        menu._springAnim?.cancel?.();
+        const anim = menu.animate(animKeyframes, {
+          duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : duration,
+          easing: 'linear',
+          fill: 'forwards'
+        });
+        menu._springAnim = anim;
+      } else {
+        menu._springAnim?.cancel();
+        menu.style.visibility = 'hidden';
+        menu.style.pointerEvents = 'none';
+      }
+    }
   }
 
   _docClick(e) {
@@ -250,8 +365,6 @@ export class MdSplitButton extends HTMLElement {
       }, { signal });
       bindPress(left, {
         disabled: () => this.disabled,
-        onPress: () => pressScale(left, 0.95, 'expressiveSpatialFast'),
-        onRelease: () => releaseScale(left, 0.95, 'expressiveSpatialMedium'),
         signal
       });
     }
@@ -264,8 +377,6 @@ export class MdSplitButton extends HTMLElement {
       }, { signal });
       bindPress(right, {
         disabled: () => this.disabled,
-        onPress: () => pressScale(right, 0.95, 'expressiveSpatialFast'),
-        onRelease: () => releaseScale(right, 0.95, 'expressiveSpatialMedium'),
         signal
       });
     }
@@ -275,6 +386,25 @@ export class MdSplitButton extends HTMLElement {
       if (e.key === 'Escape' && this.open) {
         this.close();
         right && right.focus();
+        e.preventDefault();
+        return;
+      }
+      const target = e.composedPath()[0];
+      if (target === right && ['ArrowDown','ArrowUp'].includes(e.key)) {
+        e.preventDefault();
+        this.openMenu();
+        const items = [...this.shadowRoot.querySelectorAll('.menu-item')];
+        (e.key === 'ArrowUp' ? items.at(-1) : items[0])?.focus();
+      } else if (this.open && target.classList?.contains('menu-item')) {
+        const items = [...this.shadowRoot.querySelectorAll('.menu-item')];
+        const index = items.indexOf(target);
+        if (['ArrowDown','ArrowUp','Home','End'].includes(e.key)) {
+          e.preventDefault();
+          const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length-1 : (index + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+          items[next]?.focus();
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault(); target.click();
+        } else if (e.key === 'Tab') this.close();
       }
     }, { signal });
 
@@ -285,8 +415,10 @@ export class MdSplitButton extends HTMLElement {
     // Menu item activation.
     this.shadowRoot.querySelectorAll('.menu-item').forEach((item, i) => {
       item.addEventListener('click', () => {
+        if (this.disabled) return;
         this.dispatchEvent(new CustomEvent('menu-select', { detail: { index: i, label: item.dataset.label }, bubbles: true }));
         this.close();
+        right?.focus();
       }, { signal });
     });
   }

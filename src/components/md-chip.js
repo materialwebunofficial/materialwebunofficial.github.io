@@ -12,7 +12,7 @@
  *   - Memory safety via AbortSignal
  */
 
-import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
@@ -64,7 +64,7 @@ const defaultStyle = `
   .chip::after {
     content: '';
     position: absolute;
-    inset: calc((48px - 100%) / 2) 0;
+    inset: min(0px, calc((100% - 48px) / 2)) 0;
     pointer-events: auto;
   }
 
@@ -82,10 +82,10 @@ const defaultStyle = `
     opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
   }
   .chip:focus-visible:not(.disabled)::before {
-    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.12);
+    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.10);
   }
   .chip.pressed:not(.disabled)::before {
-    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
+    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.10);
   }
 
   .chip.assist,
@@ -120,11 +120,16 @@ const defaultStyle = `
     box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,0.15));
   }
 
-  .chip.disabled {
+  .chip.disabled, .chip.disabled.selected {
     cursor: not-allowed;
-    opacity: 0.38;
+    opacity: 1;
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+    border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
     box-shadow: none;
   }
+  .chip.elevated.selected:not(.disabled) { background: var(--md-sys-color-secondary-container); }
+  .chip.elevated.pressed:not(.disabled) { box-shadow: var(--md-sys-elevation-level-1); }
+  .chip.disabled.selected, .chip.disabled.elevated { background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent); border-color: transparent; }
 
   .lbl {
     display: inline-flex;
@@ -145,7 +150,7 @@ const defaultStyle = `
     height: 24px;
     border-radius: 50%;
     object-fit: cover;
-    margin-left: -4px;
+    margin-inline-start: -4px;
   }
 
   .ico {
@@ -163,6 +168,10 @@ const defaultStyle = `
   .chip.selected .ico {
     color: var(--md-sys-color-on-secondary-container, #1D192B);
   }
+  .chip.input:not(.selected) .ico { color: var(--md-sys-color-on-surface-variant); }
+  .chip.input.selected:not(.disabled) .leading-ico { color: var(--md-sys-color-primary); }
+  .chip .trailing-ico, .chip .remove-btn .ico { color: inherit; }
+  .chip.disabled .ico { color: inherit; }
 
   .remove-btn {
     display: inline-flex;
@@ -172,8 +181,10 @@ const defaultStyle = `
     border: none;
     background: transparent;
     padding: 0;
-    margin-left: -2px;
-    margin-right: -6px;
+    margin-inline-start: -2px;
+    margin-inline-end: -6px;
+    position: relative;
+    z-index: 1;
     cursor: pointer;
     color: inherit;
     border-radius: 9999px;
@@ -184,6 +195,7 @@ const defaultStyle = `
   .remove-btn:hover {
     background-color: color-mix(in srgb, currentColor 12%, transparent);
   }
+  .remove-btn:focus-visible { outline: 3px solid var(--md-sys-color-secondary); outline-offset: 2px; }
 `;
 
 const chipSheet = createComponentSheet(defaultStyle);
@@ -221,7 +233,7 @@ export class MdChip extends HTMLElement {
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
-    if (name === 'variant' || name === 'removable' || name === 'horizontal-arrangement' || name === 'container-color' || name === 'content-color') {
+    if (name === 'variant' || name === 'removable' || name === 'trailing-icon' || name === 'horizontal-arrangement' || name === 'container-color' || name === 'content-color') {
       this.render();
       this._setup();
     }
@@ -271,10 +283,15 @@ export class MdChip extends HTMLElement {
     const leadingIcon = this.shadowRoot.querySelector('.leading-ico');
     if (!chip) return;
 
-    const isFilter = this.variant === 'filter';
+    const isFilter = this.variant === 'filter' || this.variant === 'input';
     chip.className = `chip ${this.variant}${this.elevated ? ' elevated' : ''}${this.selected ? ' selected' : ''}${this.disabled ? ' disabled' : ''}`;
     chip.setAttribute('tabindex', this.disabled ? '-1' : '0');
     chip.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
+    chip.style.backgroundColor = this.disabled ? '' : this.containerColor;
+    chip.style.color = this.disabled ? '' : this.contentColor;
+    chip.style.justifyContent = ({start:'flex-start',end:'flex-end',center:'center','space-between':'space-between'})[this.horizontalArrangement] || 'flex-start';
+    const removeButton = this.shadowRoot.querySelector('.remove-btn');
+    if (removeButton) { removeButton.disabled = this.disabled; removeButton.tabIndex = this.disabled ? -1 : 0; }
 
     if (isFilter) {
       chip.setAttribute('role', 'checkbox');
@@ -300,17 +317,9 @@ export class MdChip extends HTMLElement {
     const removeBtn = this.shadowRoot.querySelector('.remove-btn');
     if (!chip) return;
 
-    const press = () => {
-      pressScale(chip, 0.95, 'expressiveSpatialFast');
-    };
-
-    const release = () => {
-      releaseScale(chip, 0.95, 'expressiveSpatialMedium');
-    };
-
     const activate = () => {
       if (this.disabled) return;
-      if (this.variant === 'filter') {
+      if (this.variant === 'filter' || this.variant === 'input') {
         this.selected = !this.selected;
         this._sync();
         this.dispatchEvent(new CustomEvent('change', {
@@ -323,8 +332,8 @@ export class MdChip extends HTMLElement {
 
     bindPress(chip, {
       disabled: () => this.disabled,
-      onPress: press,
-      onRelease: release,
+      ignoreEvent: e => e.composedPath().includes(removeBtn),
+      onPress: e => createRipple(e, chip),
       onActivate: activate,
       signal
     });

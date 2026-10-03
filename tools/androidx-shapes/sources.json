@@ -1,0 +1,73 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": {
+    "CornerRounding.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/CornerRounding.kt",
+      "sha256": "34bedb721dc71b52989e3e22f0ea4f985170437105197d9ff4edc35550386cca"
+    },
+    "Cubic.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/Cubic.kt",
+      "sha256": "1572aac091511117d81632abc5f9ba8ae82426fc28a7198bee6f150058843067"
+    },
+    "FeatureDetector.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/FeatureDetector.kt",
+      "sha256": "f3525ebede482d4655b1ce806d9f0b41808cebd3f077982e2d2611cdc61d36ac"
+    },
+    "FeatureMapping.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/FeatureMapping.kt",
+      "sha256": "de6fea388dca4bc9a5b05edfa7cac37f60cbbf6865f59c91b02d75e2b70804ca"
+    },
+    "Features.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/Features.kt",
+      "sha256": "2e2940dc27b84c2a8d9f196323d62d0d7441483315b0932a6ea8cd42ccc34fb6"
+    },
+    "FeatureSerializer.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/FeatureSerializer.kt",
+      "sha256": "007bb82f8328c45034bf6acb67f48d770788cdfe85de0802e8ac5fe211892898"
+    },
+    "FloatMapping.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/FloatMapping.kt",
+      "sha256": "eab80a210d726054ff7941517427975d9642b8b6b170314bbfefbb7c1ab6db07"
+    },
+    "Morph.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/Morph.kt",
+      "sha256": "9439b5a842a1c9f84d285944126186064a1a3a8d352941336b58b85102ce1492"
+    },
+    "Point.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/Point.kt",
+      "sha256": "8001571066738237348f244b3a79c35c4124ccaea02cc5f4350c76ff67ef878f"
+    },
+    "PolygonMeasure.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/PolygonMeasure.kt",
+      "sha256": "c9eab345f38cbf6dd7b32134544c1228198e478e4f3a7b0fe53d5e74841e50f4"
+    },
+    "PolygonValidation.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/PolygonValidation.kt",
+      "sha256": "7b67751e4684890eb35375a8d969fccbf5a2c1328fd7511417de72a264ba3afc"
+    },
+    "RoundedPolygon.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/RoundedPolygon.kt",
+      "sha256": "15be176fde87c926d259be8eb22aa80209430fa373fabc510fef33185203f48f"
+    },
+    "Shapes.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/Shapes.kt",
+      "sha256": "d633d0ca8fbe2bfe831a5cadf441ed0e0f8d589959d3b6ec74f80d43a0958c3e"
+    },
+    "SvgPathParser.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/SvgPathParser.kt",
+      "sha256": "bf11329eb15b58928d175e7ad5fad00d07f4a8f310f81ae2bf3783bff72d6a9f"
+    },
+    "Utils.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/Utils.kt",
+      "sha256": "6622b6920c80f661120c57ce56a190e24a2e41cb5912ec80d1b22eb0729b14ff"
+    },
+    "MaterialShapes.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/MaterialShapes.kt",
+      "sha256": "08c29828003344914ee0d6783f213b37caae650175cd004ba321eaf3a7d6e434"
+    },
+    "SpringEstimation.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SpringEstimation.kt",
+      "sha256": "7527111793fa8946d37fa684421f245a8d38b9c2445619a9bc784ca5c7367b12"
+    }
+  }
+}

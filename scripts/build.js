@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
+import './generate-motion-tokens.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,7 +39,8 @@ let concatenatedCss = '/* Material Design 3 Expressive (M3 Expressive) Bundled T
 for (const file of cssFiles) {
   const filePath = path.join(rootDir, file);
   if (fs.existsSync(filePath)) {
-    concatenatedCss += `/* --- ${file} --- */\n` + fs.readFileSync(filePath, 'utf8') + '\n\n';
+    const css = fs.readFileSync(filePath, 'utf8').replaceAll("url('../fonts/", "url('./fonts/");
+    concatenatedCss += `/* --- ${file} --- */\n` + css + '\n\n';
   } else {
     console.warn(`⚠️ Warning: CSS file not found: ${file}`);
   }
@@ -95,6 +97,13 @@ if (fs.existsSync(fontsSrcDir)) {
     fs.copyFileSync(path.join(fontsSrcDir, font), path.join(fontsDistDir, font));
   }
   console.log(`  ✅ Copied ${fontFiles.length} font files to dist/fonts/`);
+}
+const textFontsSrcDir = path.join(rootDir, 'src/fonts');
+if (fs.existsSync(textFontsSrcDir)) {
+  fs.mkdirSync(fontsDistDir, { recursive: true });
+  for (const filename of fs.readdirSync(textFontsSrcDir)) {
+    fs.copyFileSync(path.join(textFontsSrcDir, filename), path.join(fontsDistDir, filename));
+  }
 }
 
 // 6. Copy TypeScript definitions to dist/

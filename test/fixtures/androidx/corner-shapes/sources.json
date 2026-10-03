@@ -1,0 +1,115 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "FloatingToolbar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/FloatingToolbar.kt",
+      "sha256": "7c014d29baef68f505a624b26e4c264bce2e7f72726d29dfcc09869c81142598"
+    },
+    {
+      "file": "CornerBasedShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CornerBasedShape.kt",
+      "sha256": "7a333ffcc12a168d35160227b315531e721c6ecd8db6b3b9bec1f0570b38fcdb"
+    },
+    {
+      "file": "RoundedCornerShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/RoundedCornerShape.kt",
+      "sha256": "4d11b16cc55106431762f18e98516925003e1d8776e757879043b71ea5323d43"
+    },
+    {
+      "file": "CutCornerShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CutCornerShape.kt",
+      "sha256": "f2fabc9267f71bf5dad2de2864a92c5959b748d951a9fba762db918755411f48"
+    },
+    {
+      "file": "CornerSize.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CornerSize.kt",
+      "sha256": "841638470f1b0d55960d14f9dd84bd8d4f7bfb8aed6ba1ad3595d48c40050268"
+    },
+    {
+      "file": "AbsoluteRoundedCornerShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/AbsoluteRoundedCornerShape.kt",
+      "sha256": "607b8978373e3d29f81af6a3450015ddad805617203c0619f19a31357b19ac08"
+    },
+    {
+      "file": "AbsoluteCutCornerShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/AbsoluteCutCornerShape.kt",
+      "sha256": "cd8aa7d667bc2cfbfae0e999fb5ecd005ee49aed010b0f8b50bd128d4d6ed013"
+    },
+    {
+      "file": "RoundRect.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/RoundRect.kt",
+      "sha256": "b006067f21eea7bcf7a58b01271ee125f67bf1e4f8ba0ca15f68fbe6f60f29d0"
+    },
+    {
+      "file": "CornerRadius.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/CornerRadius.kt",
+      "sha256": "f8ecc87ffa8b82a11417b88401419e19c5b5554fbc4e7951ca8d2c17f86474ac"
+    },
+    {
+      "file": "Size.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Size.kt",
+      "sha256": "02483756d1762e19c626c8fc764a6aa302e00f4f10410d7340e7e14698665021"
+    },
+    {
+      "file": "Rect.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Rect.kt",
+      "sha256": "7d0dd1d2840a962dfdfad56a97afc23ea80a415772c9450e715fac8beb297759"
+    },
+    {
+      "file": "Offset.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Offset.kt",
+      "sha256": "653c7d2f9c8067543efdeb0e223176be432ce3d489a50d0d309e330c8e805456"
+    },
+    {
+      "file": "Outline.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Outline.kt",
+      "sha256": "cbfa36f70e8594224993e34e655ecd05cb824294dae6dcf9a91553b87ea6a904"
+    },
+    {
+      "file": "Shape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Shape.kt",
+      "sha256": "22033f87eb5614035285128a312ce431df8c23d99105e1b578663ccd9bde638a"
+    },
+    {
+      "file": "RectangleShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/RectangleShape.kt",
+      "sha256": "49587157c2a9f36174a9138ac0e5ccc65d25e77aee670260a68e9335447904f8"
+    },
+    {
+      "file": "MathHelpers.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt",
+      "sha256": "ce262ffce1cdc0ab8231e03bcd1cbf7eef0c015da84fb223552e4097057e13fa"
+    },
+    {
+      "file": "AndroidPath.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/androidMain/kotlin/androidx/compose/ui/graphics/AndroidPath.android.kt",
+      "sha256": "73707610c782ae6864900050d0c92c5d02329d106ebe1a183945e75fdae52d0b"
+    },
+    {
+      "file": "Density.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Density.kt",
+      "sha256": "a5679631f5f2b3ade41efd93c9e4f1d09fe3f23a2acabbe905dc96acef52b6f5"
+    },
+    {
+      "file": "Dp.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Dp.kt",
+      "sha256": "9173b0a7104ca22731bf185438fae68646ca6350d7a84ad610281a48fa9ad96a"
+    },
+    {
+      "file": "Shapes.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Shapes.kt",
+      "sha256": "a2e3730b1b09ffc682be9016f1770c414b517e9e0997359cc5098caedfd88753"
+    },
+    {
+      "file": "Surface.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Surface.kt",
+      "sha256": "b82221978167354d62462943bade5838beb4724a71155209d75debc6003bd9e2"
+    },
+    {
+      "file": "FloatingToolbarTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FloatingToolbarTokens.kt",
+      "sha256": "1c1485693112cdf4012fa78f4d44f48d3c1c0fd72aa9e3f727f54160b4c3271f"
+    }
+  ]
+}

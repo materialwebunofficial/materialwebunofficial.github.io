@@ -1,0 +1,35 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "FloatingToolbar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/FloatingToolbar.kt",
+      "sha256": "7c014d29baef68f505a624b26e4c264bce2e7f72726d29dfcc09869c81142598"
+    },
+    {
+      "file": "Placeable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Placeable.kt",
+      "sha256": "3cad263d6cb7b61c391156ead157ec81e61f83d5b7f9455bb300c527d46387b5"
+    },
+    {
+      "file": "Scroll.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Scroll.kt",
+      "sha256": "0fb9339eb24a9b437875d0e001bb376f1447fcaf9186f6bed5ba721fce03a326"
+    },
+    {
+      "file": "Constraints.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Constraints.kt",
+      "sha256": "c9337b89da4fa61175cea4f15ec4a602049e5c91015153c90f479a6bdf4b340c"
+    },
+    {
+      "file": "Size.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Size.kt",
+      "sha256": "9395b271dbb93f6b0038f5af0b96ed50ec6aa3ff257c20eac5d748465bcab15f"
+    },
+    {
+      "file": "Padding.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Padding.kt",
+      "sha256": "0298988edd2e18978fbfea177e5b69526acabe7de1621cb8dc5e866df4e31a55"
+    }
+  ]
+}

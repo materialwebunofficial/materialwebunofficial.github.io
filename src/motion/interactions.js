@@ -18,13 +18,14 @@ import { SpringPhysics } from './spring-physics.js';
 export function createRipple(event, containerElement) {
   if (!containerElement || !event) return;
   const rect = containerElement.getBoundingClientRect();
+  if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const circle = document.createElement('span');
   const diameter = Math.max(rect.width, rect.height) * 1.5;
   const radius = diameter / 2;
 
   circle.style.width = circle.style.height = `${diameter}px`;
-  const clientX = event.clientX !== undefined ? event.clientX : rect.left + rect.width / 2;
-  const clientY = event.clientY !== undefined ? event.clientY : rect.top + rect.height / 2;
+  const clientX = event.type?.startsWith('pointer') ? event.clientX : rect.left + rect.width / 2;
+  const clientY = event.type?.startsWith('pointer') ? event.clientY : rect.top + rect.height / 2;
 
   circle.style.left = `${clientX - rect.left - radius}px`;
   circle.style.top = `${clientY - rect.top - radius}px`;
@@ -33,7 +34,15 @@ export function createRipple(event, containerElement) {
   const existing = containerElement.querySelector('.md-ripple-effect');
   if (existing) existing.remove();
 
-  containerElement.appendChild(circle);
+  // Clip only the ink, so the focus outline and expanded hit area remain visible.
+  let ink = containerElement.querySelector('.md-ink');
+  if (!ink) {
+    ink = document.createElement('span');
+    ink.className = 'md-ink';
+    ink.style.cssText = 'position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none';
+    containerElement.appendChild(ink);
+  }
+  ink.appendChild(circle);
 
   setTimeout(() => {
     circle.remove();
@@ -67,6 +76,7 @@ export function morphShape(el, from, to, preset = 'expressiveSpatialMedium') {
  * @param {() => void}    [opts.onPress]  Fired on press start (scale down / shape morph).
  * @param {() => void}    [opts.onRelease] Fired on release/cancel (scale up / shape morph back).
  * @param {() => void}    [opts.onActivate] Fired once per committed activation.
+ * @param {(event: Event) => boolean} [opts.ignoreEvent] Leaves nested controls' events untouched.
  * @param {AbortSignal}   [opts.signal]   Optional abort signal for event cleanup.
  */
 export function bindPress(el, {
@@ -74,45 +84,75 @@ export function bindPress(el, {
   onPress,
   onRelease,
   onActivate,
+  ignoreEvent = () => false,
   signal
 } = {}) {
   if (!el) return;
   let isPressed = false;
+  let pointerId = null;
+  let canceledClick = false;
+  const native = el.matches('button, input, a[href]');
 
   const start = (e) => {
-    if (disabled() || isPressed) return;
+    if (ignoreEvent(e) || disabled() || isPressed) return;
     if (e && e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e?.isPrimary === false) return;
     isPressed = true;
+    canceledClick = false;
     try {
       if (e && typeof e.pointerId === 'number') {
         el.setPointerCapture(e.pointerId);
+        pointerId = e.pointerId;
       }
     } catch (_) {}
     el.classList.add('pressed');
     onPress?.(e);
   };
 
-  const end = (shouldActivate = false) => {
+  const end = () => {
     if (!isPressed) return;
     isPressed = false;
     el.classList.remove('pressed');
     onRelease?.();
-    if (shouldActivate) {
-      onActivate?.();
+    if (pointerId !== null) {
+      try { el.releasePointerCapture(pointerId); } catch (_) {}
+      pointerId = null;
     }
   };
 
   const listenerOptions = signal ? { signal } : {};
 
   el.addEventListener('pointerdown', start, listenerOptions);
-  el.addEventListener('pointerup', () => end(true), listenerOptions);
-  el.addEventListener('pointercancel', () => end(false), listenerOptions);
+  el.addEventListener('pointerup', e => {
+    if (pointerId !== null && e.pointerId !== pointerId) return;
+    const r = el.getBoundingClientRect();
+    const hit = el.getRootNode().elementFromPoint?.(e.clientX, e.clientY);
+    // Pseudo-elements extend small controls to a 48dp touch target. Hit testing
+    // includes that target, unlike the visual border box used as a fallback.
+    canceledClick = hit ? !el.contains(hit) : e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+    end();
+  }, listenerOptions);
+  el.addEventListener('pointercancel', () => { canceledClick = true; end(); }, listenerOptions);
+  el.addEventListener('lostpointercapture', end, listenerOptions);
+  el.addEventListener('blur', end, listenerOptions);
+  el.addEventListener('click', e => {
+    if (ignoreEvent(e)) return;
+    if (disabled() || canceledClick) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      canceledClick = false;
+      return;
+    }
+    onActivate?.(e);
+  }, { ...listenerOptions, capture: true });
+  signal?.addEventListener('abort', end, { once: true });
 
   el.addEventListener('keydown', (e) => {
+    if (ignoreEvent(e)) return;
     if (disabled()) return;
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
       if (e.repeat) return;
-      if (e.key === ' ' || e.key === 'Spacebar') {
+      if (!native && (e.key === ' ' || e.key === 'Spacebar')) {
         e.preventDefault(); // Prevent page scroll on space
       }
       start(e);
@@ -120,12 +160,14 @@ export function bindPress(el, {
   }, listenerOptions);
 
   el.addEventListener('keyup', (e) => {
-    if (disabled()) return;
+    if (ignoreEvent(e)) return;
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-      if (e.key === ' ' || e.key === 'Spacebar') {
+      if (!native && (e.key === ' ' || e.key === 'Spacebar')) {
         e.preventDefault();
       }
-      end(true);
+      const activate = isPressed && !disabled();
+      end();
+      if (!native && activate) el.click();
     }
   }, listenerOptions);
 }

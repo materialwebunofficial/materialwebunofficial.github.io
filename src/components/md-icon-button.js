@@ -9,7 +9,7 @@
  *   - Toggle mode (toggle, selected, checked), icon / selected-icon switching
  */
 
-import { createRipple, bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { createRipple, bindPress, morphShape } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
@@ -22,13 +22,16 @@ const defaultStyle = `
   }
 
   .btn {
-    position: relative;
+    position: var(--md-toolbar-control-position, relative);
+    left: var(--md-toolbar-control-x, auto);
+    top: var(--md-toolbar-control-y, auto);
     width: 40px;
     height: 40px;
     min-width: 40px;
     min-height: 40px;
     border-radius: var(--md-sys-shape-corner-full, 9999px);
     border: none;
+    padding: 0;
     outline: none;
     box-sizing: border-box;
     display: inline-flex;
@@ -37,7 +40,7 @@ const defaultStyle = `
     cursor: pointer;
     user-select: none;
     background: transparent;
-    overflow: hidden;
+    overflow: visible;
     transition:
       background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
       color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
@@ -45,13 +48,9 @@ const defaultStyle = `
   }
 
   /* Focus Ring */
-  .btn:focus-visible::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border: 3px solid var(--md-sys-color-secondary, #625b71);
-    border-radius: inherit;
-    pointer-events: none;
+  .btn:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary, #625b71);
+    outline-offset: 2px;
   }
 
   /* Touch Target: 48dp minimum */
@@ -180,6 +179,25 @@ const defaultStyle = `
     background: transparent;
   }
 
+  /* Toolbar local content and MDC standard/vibrant themed icon-button styles. */
+  .btn.standard {
+    color: var(--md-toolbar-icon-content, var(--md-sys-color-on-surface-variant, #49454f));
+    background: var(--md-toolbar-icon-container, transparent);
+  }
+  .btn.standard.togglable.selected {
+    color: var(--md-toolbar-icon-selected-content, var(--md-sys-color-primary, #6750a4));
+    background: var(--md-toolbar-icon-selected-container, transparent);
+  }
+  .btn.standard.togglable.selected:is(:hover,:focus-visible,:active):not(:disabled) {
+    color: var(--md-toolbar-icon-interacting-content, var(--md-toolbar-icon-selected-content, var(--md-sys-color-primary, #6750a4)));
+  }
+  .btn.standard:disabled {
+    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+    background: var(--md-toolbar-icon-container, transparent);
+  }
+  .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
+  .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-icon-state-color, currentColor); }
+
   .icon {
     display: inline-flex;
     align-items: center;
@@ -198,16 +216,16 @@ const defaultStyle = `
 const iconButtonSheet = createComponentSheet(defaultStyle);
 
 const SIZES = {
-  xs: { size: 32, iconSize: 18 },
-  s:  { size: 40, iconSize: 24 },
-  m:  { size: 56, iconSize: 28 },
-  l:  { size: 96, iconSize: 40 },
-  xl: { size: 136, iconSize: 56 }
+  xs: { size: 32, iconSize: 20, narrow: 4, pad: 6, wide: 10, square: 12, press: 8 },
+  s:  { size: 40, iconSize: 24, narrow: 4, pad: 8, wide: 14, square: 12, press: 8 },
+  m:  { size: 56, iconSize: 24, narrow: 12, pad: 16, wide: 24, square: 16, press: 12 },
+  l:  { size: 96, iconSize: 32, narrow: 16, pad: 32, wide: 48, square: 28, press: 16 },
+  xl: { size: 136, iconSize: 40, narrow: 32, pad: 48, wide: 72, square: 28, press: 16 }
 };
 
 export class MdIconButton extends HTMLElement {
   static get observedAttributes() {
-    return ['variant', 'size', 'toggle', 'selected', 'checked', 'disabled', 'icon', 'selected-icon', 'aria-label'];
+    return ['variant', 'size', 'width', 'shape', 'toggle', 'selected', 'checked', 'disabled', 'icon', 'selected-icon', 'aria-label', 'aria-controls', 'aria-expanded'];
   }
 
   constructor() {
@@ -242,6 +260,7 @@ export class MdIconButton extends HTMLElement {
       }
     }
     this._sync();
+    if (name === 'selected') morphShape(this.shadowRoot.querySelector('.btn'), SIZES[this.size].press, this._getBaseRadius(), 'expressiveSpatialFast');
   }
 
   get variant() { return sanitizeAttribute(this.getAttribute('variant') || 'standard'); }
@@ -262,6 +281,10 @@ export class MdIconButton extends HTMLElement {
   set disabled(v) { v ? this.setAttribute('disabled', '') : this.removeAttribute('disabled'); }
   get icon() { return this.getAttribute('icon') || ''; }
   get selectedIcon() { return this.getAttribute('selected-icon') || this.icon; }
+  _getBaseRadius() {
+    const s = SIZES[this.size];
+    return (this.getAttribute('shape') === 'square') !== (this.toggle && this.selected) ? s.square : s.size / 2;
+  }
 
   _render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
@@ -285,11 +308,11 @@ export class MdIconButton extends HTMLElement {
     bindPress(btn, {
       disabled: () => this.disabled,
       onPress: (e) => {
-        pressScale(btn, 0.90, 'expressiveSpatialFast');
+        morphShape(btn, this._getBaseRadius(), SIZES[this.size].press, 'expressiveSpatialFast');
         createRipple(e, btn);
       },
       onRelease: () => {
-        releaseScale(btn, 0.90, 'expressiveSpatialMedium');
+        morphShape(btn, SIZES[this.size].press, this._getBaseRadius(), 'expressiveSpatialFast');
       },
       onActivate: () => {
         if (this.disabled) return;
@@ -314,13 +337,20 @@ export class MdIconButton extends HTMLElement {
     btn.setAttribute('tabindex', this.disabled ? '-1' : '0');
     btn.setAttribute('role', 'button');
     btn.setAttribute('aria-label', sanitizeAttribute(this.getAttribute('aria-label') || this.icon || 'icon button'));
+    for (const name of ['aria-controls', 'aria-expanded']) {
+      if (this.hasAttribute(name)) btn.setAttribute(name, this.getAttribute(name));
+      else btn.removeAttribute(name);
+    }
     if (this.toggle) btn.setAttribute('aria-pressed', this.selected ? 'true' : 'false');
     else btn.removeAttribute('aria-pressed');
 
-    btn.style.width = `${s.size}px`;
-    btn.style.height = `${s.size}px`;
-    btn.style.minWidth = `${s.size}px`;
-    btn.style.minHeight = `${s.size}px`;
+    const width = s.iconSize + 2 * (s[this.getAttribute('width')] ?? s.pad);
+    btn.style.width = `clamp(var(--md-toolbar-control-min-width, 0px), ${width}px, var(--md-toolbar-control-max-width, ${width}px))`;
+    btn.style.height = `clamp(var(--md-toolbar-control-min-height, 0px), ${s.size}px, var(--md-toolbar-control-max-height, ${s.size}px))`;
+    btn.style.minWidth = btn.style.width;
+    btn.style.minHeight = btn.style.height;
+    btn.style.borderRadius = `${this._getBaseRadius()}px`;
+    btn.style.borderWidth = this.variant === 'outlined' ? `${this.size === 'xl' ? 3 : this.size === 'l' ? 2 : 1}px` : '0';
 
     const iconSlot = this.shadowRoot.querySelector('.icon');
     if (iconSlot) {

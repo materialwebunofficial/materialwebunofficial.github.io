@@ -3,12 +3,14 @@
  *
  * Implements Android Compose's:
  * - MotionScheme.expressive() — Underdamped spatial springs (bouncy overshoot)
- * - MotionScheme.standard()   — Critically damped standard springs (no overshoot)
+ * - MotionScheme.standard()   — Damping ratio 0.9 for spatial motion
  *
  * Reference:
  * https://developer.android.com/reference/kotlin/androidx/compose/material3/MaterialExpressiveTheme.composable
  * https://developer.android.com/reference/kotlin/androidx/compose/material3/MotionScheme
  */
+
+import { themeSetting } from '../theme/theme-context.js';
 
 export const SPRING_SPECS = {
   // Spatial: Konum, boyut, shape morphing (Hafif esneme ve organik oturma)
@@ -26,28 +28,18 @@ export const SPRING_SPECS = {
  * İkinci dereceden yay diferansiyel denklemi simülasyonu (rAF animatörü)
  */
 export function animateSpring(from, to, spec = SPRING_SPECS.spatialDefault, onUpdate) {
-  let current = from;
-  let velocity = 0;
-  const k = spec.stiffness;
-  const c = 2 * spec.damping * Math.sqrt(k);
-  let lastTime = performance.now();
+  if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    onUpdate(to);
+    return () => {};
+  }
+  const start = performance.now();
   let rafId = null;
-
   function step(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.032);
-    lastTime = now;
-
-    const displacement = current - to;
-    const springForce = -k * displacement;
-    const dampingForce = -c * velocity;
-    const acceleration = springForce + dampingForce;
-
-    velocity += acceleration * dt;
-    current += velocity * dt;
-
-    onUpdate(current);
-
-    if (Math.abs(current - to) > 0.1 || Math.abs(velocity) > 0.1) {
+    const { position, velocity } = SpringPhysics.solve({ from, to,
+      stiffness: spec.stiffness, dampingRatio: spec.damping,
+      time: (now - start) / 1000 });
+    onUpdate(position);
+    if (Math.abs(position - to) > 0.001 || Math.abs(velocity) > 0.001) {
       rafId = requestAnimationFrame(step);
     } else {
       onUpdate(to);
@@ -61,31 +53,26 @@ export function animateSpring(from, to, spec = SPRING_SPECS.spatialDefault, onUp
 export class SpringPhysics {
   static SCHEMES = {
     expressive: {
-      spatialSlow: { dampingRatio: 0.70, stiffness: 250, mass: 1.0 },
-      spatialMedium: { dampingRatio: 0.70, stiffness: 450, mass: 1.0 },
-      spatialFast: { dampingRatio: 0.75, stiffness: 800, mass: 1.0 },
+      spatialSlow: { dampingRatio: 0.8, stiffness: 200, mass: 1.0 },
+      spatialMedium: { dampingRatio: 0.8, stiffness: 380, mass: 1.0 },
+      spatialFast: { dampingRatio: 0.6, stiffness: 800, mass: 1.0 },
       effectSlow: { dampingRatio: 1.00, stiffness: 800, mass: 1.0 },
-      effectFast: { dampingRatio: 1.00, stiffness: 1400, mass: 1.0 }
+      effectMedium: { dampingRatio: 1.00, stiffness: 1600, mass: 1.0 },
+      effectFast: { dampingRatio: 1.00, stiffness: 3800, mass: 1.0 }
     },
     standard: {
-      spatialSlow: { dampingRatio: 1.00, stiffness: 300, mass: 1.0 },
-      spatialMedium: { dampingRatio: 1.00, stiffness: 700, mass: 1.0 },
-      spatialFast: { dampingRatio: 1.00, stiffness: 1400, mass: 1.0 },
-      effectSlow: { dampingRatio: 1.00, stiffness: 1600, mass: 1.0 },
+      spatialSlow: { dampingRatio: 0.9, stiffness: 300, mass: 1.0 },
+      spatialMedium: { dampingRatio: 0.9, stiffness: 700, mass: 1.0 },
+      spatialFast: { dampingRatio: 0.9, stiffness: 1400, mass: 1.0 },
+      effectSlow: { dampingRatio: 1.00, stiffness: 800, mass: 1.0 },
+      effectMedium: { dampingRatio: 1.00, stiffness: 1600, mass: 1.0 },
       effectFast: { dampingRatio: 1.00, stiffness: 3800, mass: 1.0 }
     }
   };
 
-  static PRESETS = {
-    expressiveSpatialSlow: { dampingRatio: 0.70, stiffness: 250, mass: 1.0 },
-    expressiveSpatialMedium: { dampingRatio: 0.70, stiffness: 450, mass: 1.0 },
-    expressiveSpatialFast: { dampingRatio: 0.75, stiffness: 800, mass: 1.0 },
-    expressiveEffectSlow: { dampingRatio: 1.00, stiffness: 800, mass: 1.0 },
-    expressiveEffectFast: { dampingRatio: 1.00, stiffness: 1400, mass: 1.0 },
-    standardSpatialSlow: { dampingRatio: 1.00, stiffness: 300, mass: 1.0 },
-    standardSpatialMedium: { dampingRatio: 1.00, stiffness: 700, mass: 1.0 },
-    standardSpatialFast: { dampingRatio: 1.00, stiffness: 1400, mass: 1.0 }
-  };
+  static PRESETS = Object.fromEntries(Object.entries(this.SCHEMES).flatMap(([scheme, specs]) =>
+    Object.entries(specs).map(([role, spec]) => [scheme + role[0].toUpperCase() + role.slice(1), spec])));
+  static _animations = new WeakMap();
 
   static _activeScheme = 'expressive';
 
@@ -95,7 +82,11 @@ export class SpringPhysics {
     }
   }
 
-  static getScheme() {
+  static getScheme(element = null) {
+    if (element) {
+      const local = themeSetting(element, 'data-motion-scheme') || themeSetting(element, 'data-theme-scheme');
+      if (this.SCHEMES[local]) return local;
+    }
     if (typeof document !== 'undefined') {
       const docScheme = document.documentElement.getAttribute('data-motion-scheme') ||
                         document.documentElement.getAttribute('data-theme-scheme');
@@ -104,8 +95,8 @@ export class SpringPhysics {
     return this._activeScheme;
   }
 
-  static getPreset(name) {
-    const currentScheme = this.getScheme();
+  static getPreset(name, element = null) {
+    const currentScheme = this.getScheme(element);
 
     // Direct match first
     if (this.PRESETS[name]) {
@@ -123,7 +114,7 @@ export class SpringPhysics {
       : this.PRESETS.expressiveSpatialMedium;
   }
 
-  static solve({ from, to, velocity = 0, dampingRatio = 0.7, stiffness = 450, mass = 1.0, time }) {
+  static solve({ from, to, velocity = 0, dampingRatio = 0.8, stiffness = 380, mass = 1.0, time }) {
     const x0 = from - to;
     const v0 = velocity;
     const omegaN = Math.sqrt(stiffness / mass);
@@ -168,11 +159,11 @@ export class SpringPhysics {
     }
   }
 
-  static generateKeyframes({ from = 0, to = 1, velocity = 0, dampingRatio = 0.7, stiffness = 450, mass = 1.0, fps = 60 }) {
+  static generateKeyframes({ from = 0, to = 1, velocity = 0, dampingRatio = 0.8, stiffness = 380, mass = 1.0, fps = 120 }) {
     const keyframes = [];
     const dt = 1 / fps;
     let t = 0;
-    const maxTime = 1.2;
+    const maxTime = 10;
     const threshold = 0.001;
 
     let position = from;
@@ -186,38 +177,53 @@ export class SpringPhysics {
       keyframes.push(position);
 
       if (Math.abs(position - to) < threshold && Math.abs(currentVelocity) < threshold && t > 0.08) {
-        keyframes.push(to);
+        keyframes[keyframes.length - 1] = to;
         break;
       }
 
       t += dt;
     }
 
-    return { keyframes, duration: Math.max(120, Math.round(t * 1000)) };
+    keyframes[keyframes.length - 1] = to;
+    return { keyframes, duration: Math.round((keyframes.length - 1) * dt * 1000) };
   }
 
   static animateProperty(element, property, from, to, presetName = 'expressiveSpatialMedium') {
     if (!element) return;
-    const preset = this.getPreset(presetName);
+    const preset = this.getPreset(presetName, element);
+    let states = this._animations.get(element);
+    if (!states) this._animations.set(element, states = new Map());
+    const previous = states.get(property);
+    let velocity = 0;
+    if (previous) {
+      const time = Math.max(0, Number(previous.anim.currentTime ?? 0)) / 1000;
+      const current = this.solve({ ...previous.spec, time });
+      from = current.position;
+      velocity = current.velocity;
+      previous.anim.cancel();
+    }
+    const write = value => {
+      if (property === 'scale') element.style.scale = value === 1 ? '' : String(value);
+      else if (property === 'border-radius') element.style.borderRadius = `${Math.max(0, value)}px`;
+      else element.style[property] = ['opacity', 'zIndex', 'flexGrow', 'flexShrink'].includes(property) ? String(value) : `${value}px`;
+    };
+    if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      write(to);
+      states.delete(property);
+      return;
+    }
+    const spec = { from, to, velocity, ...preset };
     const { keyframes, duration } = this.generateKeyframes({
-      from,
-      to,
-      dampingRatio: preset.dampingRatio,
-      stiffness: preset.stiffness,
-      mass: preset.mass
+      ...spec
     });
 
     const animationKeyframes = keyframes.map(val => {
-      if (property === 'scale') return { transform: `scale(${val.toFixed(4)})` };
-      if (property === 'border-radius') return { borderRadius: `${val.toFixed(2)}px` };
+      if (property === 'scale') return { scale: val.toFixed(5) };
+      if (property === 'border-radius') return { borderRadius: `${Math.max(0, val).toFixed(3)}px` };
       const obj = {};
-      obj[property] = val;
+      obj[property] = ['opacity', 'zIndex', 'flexGrow', 'flexShrink'].includes(property) ? val : `${val}px`;
       return obj;
     });
-
-    if (element._activeSpringAnim) {
-      try { element._activeSpringAnim.cancel(); } catch (_) {}
-    }
 
     const anim = element.animate(animationKeyframes, {
       duration,
@@ -226,20 +232,17 @@ export class SpringPhysics {
     });
 
     element._activeSpringAnim = anim;
+    states.set(property, { anim, spec });
+    anim.oncancel = () => {
+      if (states.get(property)?.anim === anim) states.delete(property);
+      if (element._activeSpringAnim === anim) element._activeSpringAnim = null;
+    };
 
     anim.onfinish = () => {
-      if (property === 'scale') {
-        if (to === 1.0) {
-          element.style.transform = '';
-        } else {
-          element.style.transform = `scale(${to})`;
-        }
-      } else if (property === 'border-radius') {
-        element.style.borderRadius = `${to}px`;
-      } else {
-        element.style[property] = typeof to === 'number' ? `${to}px` : to;
-      }
-      element._activeSpringAnim = null;
+      if (states.get(property)?.anim !== anim) return;
+      write(to);
+      states.delete(property);
+      if (element._activeSpringAnim === anim) element._activeSpringAnim = null;
     };
 
     return anim;

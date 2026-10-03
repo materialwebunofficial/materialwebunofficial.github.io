@@ -11,7 +11,9 @@
  */
 
 import { SpringPhysics } from '../motion/spring-physics.js';
-import { applyDynamicTheme, getActiveSeedHex, MD3_PRESETS } from '../theme/hct-color-engine.js';
+import { applyDynamicTheme, generateM3Scheme, getActiveSeedHex, hexToRgb, rgbToHct, hctToHex } from '../theme/hct-color-engine.js';
+import { themeParent, themeSetting, observeThemeContext, setThemeLayer, removeThemeLayer } from '../theme/theme-context.js';
+import { typographyOverrides } from '../theme/typography.js';
 import { safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
@@ -27,7 +29,7 @@ const themeSheet = createComponentSheet(defaultStyle);
 
 export class MdExpressiveTheme extends HTMLElement {
   static get observedAttributes() {
-    return ['scheme', 'color-mode', 'contrast', 'motion-scheme', 'primary-seed', 'custom-palette', 'font-family'];
+    return ['scheme', 'color-mode', 'contrast', 'motion-scheme', 'primary-seed', 'custom-palette', 'font-family', 'global'];
   }
 
   constructor() {
@@ -38,44 +40,69 @@ export class MdExpressiveTheme extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    this._media = matchMedia('(prefers-color-scheme: dark)');
+    this._onColorPreference = () => this._sync();
+    this._media.addEventListener('change', this._onColorPreference);
+    this._stopThemeWatch = observeThemeContext(this, () => this._sync(), { includeSelf: false });
     this._sync();
+  }
+
+  disconnectedCallback() {
+    this._stopThemeWatch?.();
+    this._media?.removeEventListener('change', this._onColorPreference);
+    this._releaseScope();
+  }
+
+  _releaseScope() {
+    if (!this._target) return;
+    const target = this._target;
+    removeThemeLayer(target, this);
+    this._target = null;
+    this._signature = null;
+    this._globalDefaults = null;
+    target.dispatchEvent(new CustomEvent('theme-color-change', { detail: { target }, bubbles: true, composed: true }));
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
-    if (oldVal === newVal) return;
+    if (oldVal === newVal || !this.isConnected) return;
     this._sync();
   }
 
+  _inheritedSetting(name, fallback) {
+    if (this.hasAttribute('global') && this._globalDefaults) return this._globalDefaults[name] ?? fallback;
+    return themeSetting(themeParent(this), name, fallback);
+  }
+
   get scheme() {
-    return this.getAttribute('scheme') || 'expressive';
+    return this.getAttribute('scheme') || this._inheritedSetting('data-theme-scheme', 'expressive');
   }
   set scheme(v) {
     this.setAttribute('scheme', v);
   }
 
   get colorMode() {
-    return this.getAttribute('color-mode') || 'dark';
+    return this.getAttribute('color-mode') || this._inheritedSetting('data-theme', 'light');
   }
   set colorMode(v) {
     this.setAttribute('color-mode', v);
   }
 
   get contrast() {
-    return this.getAttribute('contrast') || 'standard';
+    return this.getAttribute('contrast') || this._inheritedSetting('data-contrast', 'standard');
   }
   set contrast(v) {
     this.setAttribute('contrast', v);
   }
 
   get motionScheme() {
-    return this.getAttribute('motion-scheme') || this.scheme;
+    return this.getAttribute('motion-scheme') || this._inheritedSetting('data-motion-scheme', this.scheme);
   }
   set motionScheme(v) {
     this.setAttribute('motion-scheme', v);
   }
 
   get primarySeed() {
-    return this.getAttribute('primary-seed') || getActiveSeedHex();
+    return this.getAttribute('primary-seed') || this._inheritedSetting('data-seed-color', getActiveSeedHex());
   }
   set primarySeed(v) {
     this.setAttribute('primary-seed', v);
@@ -101,7 +128,8 @@ export class MdExpressiveTheme extends HTMLElement {
   /**
    * Apply global theme state to the document root element
    */
-  static applyGlobal({ scheme = 'expressive', colorMode = 'dark', contrast = 'standard', motionScheme, primarySeed } = {}) {
+  static applyGlobal(options = {}) {
+    const { scheme, colorMode, contrast, motionScheme, primarySeed } = { ...this.getTheme(), ...options };
     const root = document.documentElement;
     root.setAttribute('data-theme', colorMode);
     root.setAttribute('data-theme-scheme', scheme);
@@ -131,8 +159,7 @@ export class MdExpressiveTheme extends HTMLElement {
   static toggleScheme() {
     const current = document.documentElement.getAttribute('data-theme-scheme') || 'expressive';
     const next = current === 'expressive' ? 'standard' : 'expressive';
-    const colorMode = document.documentElement.getAttribute('data-theme') || 'dark';
-    this.applyGlobal({ scheme: next, colorMode });
+    this.applyGlobal({ scheme: next, motionScheme: next });
     return next;
   }
 
@@ -142,8 +169,7 @@ export class MdExpressiveTheme extends HTMLElement {
   static toggleColorMode() {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
     const next = current === 'dark' ? 'light' : 'dark';
-    const scheme = document.documentElement.getAttribute('data-theme-scheme') || 'expressive';
-    this.applyGlobal({ scheme, colorMode: next });
+    this.applyGlobal({ colorMode: next });
     return next;
   }
 
@@ -161,40 +187,52 @@ export class MdExpressiveTheme extends HTMLElement {
   }
 
   _sync() {
+    if (!this.isConnected) return;
     const target = this.hasAttribute('global') ? document.documentElement : this;
-    target.setAttribute('data-theme', this.colorMode);
-    target.setAttribute('data-theme-scheme', this.scheme);
-    target.setAttribute('data-contrast', this.contrast);
-    target.setAttribute('data-motion-scheme', this.motionScheme);
-
-    if (this.hasAttribute('primary-seed') || target === document.documentElement) {
-      applyDynamicTheme(this.primarySeed, this.colorMode === 'dark', this.scheme, target);
-    }
-
-    if (this.fontFamily) {
-      target.style.setProperty('--md-sys-typescale-font-family', this.fontFamily);
-    }
-
-    if (this.customPalette && typeof this.customPalette === 'object') {
-      for (const [k, v] of Object.entries(this.customPalette)) {
-        target.style.setProperty(`--md-sys-color-${k}`, v);
+    if (this._target && this._target !== target) this._releaseScope();
+    if (!this._target) {
+      this._target = target;
+      if (target === document.documentElement) {
+        const defaults = { 'data-theme': 'light', 'data-theme-scheme': 'expressive',
+          'data-contrast': 'standard', 'data-motion-scheme': 'expressive', 'data-seed-color': getActiveSeedHex() };
+        this._globalDefaults = Object.fromEntries(['data-theme','data-theme-scheme','data-contrast','data-motion-scheme','data-seed-color']
+          .map(name => [name,target.getAttribute(name) ?? defaults[name]]));
       }
     }
-
-    if (this.hasAttribute('global')) {
-      SpringPhysics.setScheme(this.motionScheme);
+    const scheme = this.scheme;
+    const colorMode = this.colorMode === 'auto' ? (this._media.matches ? 'dark' : 'light') : this.colorMode;
+    const contrast = this.contrast;
+    const contrastLevel = ({ reduced: -1, standard: 0, medium: 0.5, high: 1 })[contrast] ?? (Number(contrast) || 0);
+    const motionScheme = this.motionScheme;
+    const rgb = hexToRgb(this.primarySeed), hct = rgbToHct(rgb.r,rgb.g,rgb.b);
+    const primarySeed = hctToHex(hct.hue,hct.chroma,hct.tone);
+    const tokens = generateM3Scheme(primarySeed, colorMode === 'dark', scheme, contrastLevel);
+    // Nested themes inherit the actual parent palette, including custom roles.
+    // Regenerate only when an explicit color input requests a new color scheme.
+    const inheritColors = target === this && !['primary-seed','scheme','color-mode','contrast'].some(name => this.hasAttribute(name));
+    if (inheritColors) {
+      const parent = themeParent(this);
+      if (parent) {
+        const computed = getComputedStyle(parent);
+        for (const key of Object.keys(tokens)) tokens[key] = computed.getPropertyValue(key).trim() || tokens[key];
+      }
     }
-
-    this.dispatchEvent(new CustomEvent('theme-change', {
-      detail: {
-        scheme: this.scheme,
-        colorMode: this.colorMode,
-        contrast: this.contrast,
-        motionScheme: this.motionScheme
-      },
-      bubbles: true,
-      composed: true
-    }));
+    const custom = this.customPalette;
+    if (custom && typeof custom === 'object') for (const [key,value] of Object.entries(custom)) {
+      if (/^[a-z][a-z0-9-]*$/.test(key) && typeof value === 'string' && CSS.supports('color',value)) tokens[`--md-sys-color-${key}`] = value;
+    }
+    const styles = { ...tokens };
+    if (this.fontFamily && CSS.supports('font-family', this.fontFamily)) Object.assign(styles, typographyOverrides(this.fontFamily));
+    const attributes = { 'data-theme': colorMode, 'data-theme-scheme': scheme,
+      'data-contrast': contrast, 'data-motion-scheme': motionScheme, 'data-seed-color': primarySeed };
+    const signature = JSON.stringify({styles,attributes});
+    if (this._signature === signature) return;
+    this._signature = signature;
+    setThemeLayer(target, this, {styles,attributes});
+    const detail = { target, scheme, colorMode, contrast, motionScheme, primarySeed, seedHex: primarySeed, hct, tokens };
+    // Notify after generated roles, overrides and typography are all in place.
+    target.dispatchEvent(new CustomEvent('theme-color-change', { detail, bubbles: true, composed: true }));
+    this.dispatchEvent(new CustomEvent('theme-change', { detail, bubbles: true, composed: true }));
   }
 
   render() {
@@ -211,8 +249,9 @@ export class MdExpressiveTheme extends HTMLElement {
  */
 export class MdTheme extends MdExpressiveTheme {
   get scheme() {
-    return this.getAttribute('scheme') || 'standard';
+    return this.getAttribute('scheme') || this._inheritedSetting('data-theme-scheme', 'standard');
   }
+  set scheme(value) { this.setAttribute('scheme', value); }
 }
 
 if (!customElements.get('md-expressive-theme')) {

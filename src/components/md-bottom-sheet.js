@@ -1,8 +1,11 @@
 /**
- * md-bottom-sheet — M3 Bottom Sheet (spec §11) — STANDART M3 (SheetBottomTokens)
- * surface-container-low, CornerExtraLargeTop (28dp top / 0 bottom), elevation Level1,
+ * Material Design 3 Expressive (MD3E) Web Component: <md-bottom-sheet>
+ *
+ * Spec: M3 Bottom Sheet (spec §11) — STANDART M3 (SheetBottomTokens)
+ * surface-container-low, CornerExtraLargeTop (28dp top / 0 bottom), elevation Level3,
  * drag handle 32x4dp on-surface-variant. Modal: role=dialog + aria-modal, scrim, Escape closes.
  */
+
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -10,9 +13,17 @@ import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 const defaultStyle = `
   :host {
     -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none; outline: none; display: contents; }
-  :host(:not([open])) .scrim, :host(:not([open])) .sheet { display: none !important; }
-  :host([open]) .scrim { display: block !important; }
+    -webkit-touch-callout: none;
+    outline: none;
+    display: contents;
+  }
+  :host(:not([open])) .scrim,
+  :host(:not([open])) .sheet {
+    display: none !important;
+  }
+  :host([open]) .scrim {
+    display: block !important;
+  }
 
   .scrim {
     position: fixed;
@@ -39,7 +50,6 @@ const defaultStyle = `
     align-items: stretch;
     max-height: 85vh;
     padding: 0 24px calc(56px + env(safe-area-inset-bottom, 24px));
-    /* CornerExtraLargeTop 28/28/0/0 */
     border-radius: var(--md-sys-shape-corner-extra-large, 28px) var(--md-sys-shape-corner-extra-large, 28px) 0 0;
     background-color: var(--md-sys-color-surface-container-low, #1D1B20);
     color: var(--md-sys-color-on-surface, #E6E0E9);
@@ -48,23 +58,28 @@ const defaultStyle = `
     will-change: transform;
   }
 
-  /* Skirt extension at bottom so dragging upwards never exposes background beneath */
+  /* Seamless skirt extension with 2px overlap to eliminate subpixel gaps */
   .sheet::after {
     content: '';
     position: absolute;
-    top: 100%;
+    top: calc(100% - 2px);
     left: 0;
     right: 0;
-    height: 100vh;
+    height: 120vh;
     background-color: inherit;
     pointer-events: none;
   }
 
   .handle-area {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 40px;                    /* touch target */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
     padding: 12px 0 8px;
-    border: none; background: transparent; cursor: grab; outline: none;
+    border: none;
+    background: transparent;
+    cursor: grab;
+    outline: none;
     width: 100%;
     touch-action: none;
     user-select: none;
@@ -77,7 +92,8 @@ const defaultStyle = `
     border-radius: var(--md-sys-shape-corner-full, 9999px);
   }
   .handle {
-    width: 32px; height: 4px;            /* drag handle 32x4dp */
+    width: 32px;
+    height: 4px;
     border-radius: var(--md-sys-shape-corner-full, 9999px);
     background-color: var(--md-sys-color-on-surface-variant, #CAC4D0);
     opacity: 0.4;
@@ -189,73 +205,128 @@ export class MdBottomSheet extends HTMLElement {
     else this.setAttribute('sheet-swipe-enabled', 'false');
   }
 
+  get headline() { return this.getAttribute('headline') || ''; }
+  set headline(v) {
+    if (v === null || v === undefined) this.removeAttribute('headline');
+    else this.setAttribute('headline', v);
+  }
+
   connectedCallback() {
-    if (!this._rendered) { this.render(); this._rendered = true; this.setupInteractions(); }
+    if (!this._rendered) {
+      this.render();
+      this._rendered = true;
+      this.setupInteractions();
+    }
     if (this.open) this._activate();
   }
 
   disconnectedCallback() {
-    document.removeEventListener('keydown', this._onKeydown);
     this._abortController?.abort();
     this._abortController = null;
+    this._deactivate();
   }
 
   attributeChangedCallback(name, oldV, newV) {
     if (!this._rendered || oldV === newV) return;
-    if (name === 'open') this.open ? this._activate() : this._deactivate();
-    else if (name === 'headline') {
-      const h = this.shadowRoot.querySelector('.headline');
-      if (h) h.textContent = newV || '';
-    } else if (name === 'container-color' || name === 'content-color' || name === 'scrim-color' || name === 'sheet-max-width') {
+    if (name === 'open') {
+      this.open ? this._activate() : this._deactivate();
+    } else if (name === 'headline' || name === 'sheet-max-width' || name === 'container-color' || name === 'content-color') {
       this.render();
       this.setupInteractions();
     }
   }
 
   show() { this.open = true; }
+
   close() {
-    this.open = false;
-    this._deactivate();
-    this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+    if (!this.open) return;
+    const sheet = this.shadowRoot.querySelector('.sheet');
+    const scrim = this.shadowRoot.querySelector('.scrim');
+
+    if (sheet && scrim) {
+      sheet.style.transition = 'transform 260ms cubic-bezier(0.3, 0, 0, 1)';
+      sheet.style.transform = 'translateY(100%)';
+      scrim.style.transition = 'opacity 260ms linear';
+      scrim.style.opacity = '0';
+
+      setTimeout(() => {
+        this.open = false;
+        sheet.style.transform = '';
+        sheet.style.transition = '';
+        scrim.style.opacity = '';
+        scrim.style.transition = '';
+        this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+      }, 260);
+    } else {
+      this.open = false;
+      this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+    }
   }
 
+  toggle() { this.open ? this.close() : this.show(); }
+
   render() {
-    const headline = this.getAttribute('headline') || '';
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
+    const headline = this.headline;
+    const maxWidth = this.sheetMaxWidth;
+    const containerColor = this.containerColor;
+    const contentColor = this.contentColor;
 
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="scrim" part="scrim"></div>
-      <div class="sheet" role="dialog" aria-modal="${this.modal ? 'true' : 'false'}"
-        aria-label="${escapeHtml(this.getAttribute('aria-label') || headline || 'Bottom sheet')}">
-        <button class="handle-area" type="button" aria-label="Drag handle">
-          <span class="handle"></span>
+      <div class="sheet" role="dialog" aria-modal="true"
+        aria-label="${escapeHtml(headline || 'Bottom Sheet')}"
+        style="${maxWidth ? `max-width: ${sanitizeAttribute(maxWidth)};` : ''}${containerColor ? `background-color: ${sanitizeAttribute(containerColor)};` : ''}${contentColor ? `color: ${sanitizeAttribute(contentColor)};` : ''}"
+        part="sheet">
+        <button class="handle-area" type="button" aria-label="Drag handle" part="handle-area">
+          <div class="handle" part="handle"></div>
         </button>
-        <div class="headline">${escapeHtml(headline)}</div>
-        <div class="content"><slot></slot></div>
+        ${headline ? `<div class="headline" part="headline">${escapeHtml(headline)}</div>` : ''}
+        <div class="content" part="content">
+          <slot></slot>
+        </div>
       </div>
     `;
   }
 
   _focusable() {
     const s = this.shadowRoot.querySelector('.sheet');
+    if (!s) return [];
     return [...s.querySelectorAll('button:not([disabled]),[tabindex]:not([tabindex="-1"]),a[href],input,select,textarea')];
   }
 
   _activate() {
     document.addEventListener('keydown', this._onKeydown);
     document.body.style.overflow = 'hidden';
-    const f = this._focusable();
-    if (f.length) f[0].focus({ preventScroll: true });
+
     const sheet = this.shadowRoot.querySelector('.sheet');
+    const scrim = this.shadowRoot.querySelector('.scrim');
+
+    if (scrim) {
+      scrim.style.opacity = '0';
+      scrim.style.transition = 'opacity 250ms ease';
+    }
+
     if (sheet) {
       sheet.style.transform = 'translateY(100%)';
-      sheet.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)';
+      sheet.style.transition = 'none';
+      void sheet.offsetHeight; // Force reflow to guarantee starting position
+
       requestAnimationFrame(() => {
+        sheet.style.transition = 'transform 380ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.3, 0.64, 1))';
         sheet.style.transform = 'translateY(0)';
+        if (scrim) scrim.style.opacity = '0.4';
       });
-      setTimeout(() => { sheet.style.transition = ''; }, 300);
+
+      setTimeout(() => {
+        sheet.style.transition = '';
+        if (scrim) scrim.style.transition = '';
+      }, 380);
     }
+
+    const f = this._focusable();
+    if (f.length) f[0].focus({ preventScroll: true });
   }
 
   _deactivate() {
@@ -265,7 +336,11 @@ export class MdBottomSheet extends HTMLElement {
 
   _onKeydown(e) {
     if (!this.open) return;
-    if (e.key === 'Escape') { e.preventDefault(); this.close(); return; }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.close();
+      return;
+    }
     if (e.key === 'Tab') {
       const f = this._focusable();
       if (!f.length) return;
@@ -289,8 +364,6 @@ export class MdBottomSheet extends HTMLElement {
         this.close();
       };
       scrim.addEventListener('click', onScrimDismiss, { signal });
-      scrim.addEventListener('pointerdown', onScrimDismiss, { signal });
-      scrim.addEventListener('touchstart', onScrimDismiss, { signal, passive: false });
     }
 
     const handleArea = this.shadowRoot.querySelector('.handle-area');
@@ -323,13 +396,14 @@ export class MdBottomSheet extends HTMLElement {
         sheet.style.transform = `translateY(${deltaY}px)`;
         if (scrim) {
           const sheetHeight = sheet.offsetHeight || 300;
-          const opacity = Math.max(0, 0.32 * (1 - deltaY / sheetHeight));
+          const opacity = Math.max(0, 0.4 * (1 - deltaY / sheetHeight));
           scrim.style.opacity = String(opacity);
         }
       } else {
-        // Dragging up: Elastic rubber-band displacement (skirt covers bottom)
+        // Dragging up: Elastic rubber-band displacement
         const rubberBand = deltaY * 0.35;
         sheet.style.transform = `translateY(${rubberBand}px)`;
+        if (scrim) scrim.style.opacity = '0.4';
       }
     };
 
@@ -344,10 +418,10 @@ export class MdBottomSheet extends HTMLElement {
 
       // Dismiss condition: dragged down > 80px OR flick downward > 0.4 px/ms
       if (deltaY > 80 || velocityY > 0.4) {
-        sheet.style.transition = 'transform 0.2s cubic-bezier(0.3, 0, 0, 1)';
+        sheet.style.transition = 'transform 0.22s cubic-bezier(0.3, 0, 0, 1)';
         sheet.style.transform = 'translateY(100%)';
         if (scrim) {
-          scrim.style.transition = 'opacity 0.2s linear';
+          scrim.style.transition = 'opacity 0.22s linear';
           scrim.style.opacity = '0';
         }
         setTimeout(() => {
@@ -359,14 +433,14 @@ export class MdBottomSheet extends HTMLElement {
             scrim.style.transition = '';
           }
           this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
-        }, 200);
+        }, 220);
       } else {
-        // Spring snap back to origin
-        sheet.style.transition = 'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        // Spring snap back to origin with genuine MD3E spring physics
+        sheet.style.transition = 'transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1)';
         sheet.style.transform = 'translateY(0px)';
         if (scrim) {
-          scrim.style.transition = 'opacity 0.2s linear';
-          scrim.style.opacity = '0.32';
+          scrim.style.transition = 'opacity 0.32s ease';
+          scrim.style.opacity = '0.4';
         }
         setTimeout(() => {
           sheet.style.transition = '';
@@ -374,7 +448,7 @@ export class MdBottomSheet extends HTMLElement {
             scrim.style.transition = '';
             scrim.style.opacity = '';
           }
-        }, 260);
+        }, 320);
       }
     };
 

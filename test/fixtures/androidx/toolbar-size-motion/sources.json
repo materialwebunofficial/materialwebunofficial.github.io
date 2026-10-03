@@ -1,0 +1,65 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "FloatingToolbar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/FloatingToolbar.kt",
+      "sha256": "7c014d29baef68f505a624b26e4c264bce2e7f72726d29dfcc09869c81142598"
+    },
+    {
+      "file": "AnimatedVisibility.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/AnimatedVisibility.kt",
+      "sha256": "b55662adb92b5b8c9803b9b567474323b17f3592069c045ffd7fc6c2756d8516"
+    },
+    {
+      "file": "EnterExitTransition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/EnterExitTransition.kt",
+      "sha256": "4b395c9289a7f678ad748a0f61a256789c9988309a919b0ab16a4066f9d70f03"
+    },
+    {
+      "file": "VectorizedAnimationSpec.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/VectorizedAnimationSpec.kt",
+      "sha256": "2a3857a7620fcb108972c8886d18a1620fc54247216db6070750c2755c8c9cf9"
+    },
+    {
+      "file": "AnimationSpec.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationSpec.kt",
+      "sha256": "62d3f0ca78b6620e8b220990036a9da083c7bd959f5a54945c60e449379a8884"
+    },
+    {
+      "file": "Transition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Transition.kt",
+      "sha256": "5ade64fe6a15ac29a0cc5946f4cb16587a6606a1d74acc97f1412c6d66ab5787"
+    },
+    {
+      "file": "FloatAnimationSpec.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/FloatAnimationSpec.kt",
+      "sha256": "7ffb94a9a8b62bbb65d653bdb21a71d974e57174513aae8fddb68cd183a33513"
+    },
+    {
+      "file": "SpringSimulation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SpringSimulation.kt",
+      "sha256": "78ccee541bba54e71666376819ec8b5e961421f0ea21ec34965da493827bf721"
+    },
+    {
+      "file": "SpringEstimation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SpringEstimation.kt",
+      "sha256": "7527111793fa8946d37fa684421f245a8d38b9c2445619a9bc784ca5c7367b12"
+    },
+    {
+      "file": "VectorConverters.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/VectorConverters.kt",
+      "sha256": "6cf233e50830c83521a9a4bc8ec7e76f1217fd45f4b6d6d3133ac4d3e938c901"
+    },
+    {
+      "file": "AnimationVectors.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationVectors.kt",
+      "sha256": "ec86b71dc22e8e4e47e7d9f48e9687e05d5e4e8e33af1b71e69bbd86dfe83e90"
+    },
+    {
+      "file": "Animation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Animation.kt",
+      "sha256": "8d396494fd09afc5dda90b6e48327cf86f07b823539e25cbfac9248e23dae6ca"
+    }
+  ]
+}

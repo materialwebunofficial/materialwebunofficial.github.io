@@ -1,0 +1,29 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "files": {
+    "NavigationBar.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/NavigationBar.kt",
+      "sha256": "25504d905f94172c3c3e553aa20b285b5166145c49ff448bada1d929962814d4"
+    },
+    "NavigationBarHorizontalItemTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationBarHorizontalItemTokens.kt",
+      "sha256": "909f9fa73a0d4df5b81607c3740ae60855f96c791c94ed9198ef942befd3c0c7"
+    },
+    "NavigationBarTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationBarTokens.kt",
+      "sha256": "9122765b9afe35e9dc8177416c789146ace27fc0c1d54cded31531bae7ba09b0"
+    },
+    "NavigationBarVerticalItemTokens.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/NavigationBarVerticalItemTokens.kt",
+      "sha256": "6ed401ca1cfb22e9c42ff2721b358477952051a70e414163c57fdea350b822a3"
+    },
+    "NavigationItem.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/NavigationItem.kt",
+      "sha256": "ec8a954c65c3658310d7cbd776b66704988362d7a99e28ea341ef983a4b41fc7"
+    },
+    "ShortNavigationBar.kt": {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ShortNavigationBar.kt",
+      "sha256": "986015cd8014dbc642203d23a78b243c4f4a47c286f4bfa8cf513e24b932f75a"
+    }
+  }
+}

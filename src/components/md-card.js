@@ -4,12 +4,12 @@
  * Spec: MD3E-DESIGN-FOUNDATIONS-AND-COMPONENT-ANATOMY.md §8 & §13
  *   - 3 variants: elevated, filled, outlined
  *   - 4 slots: header, media, default (body), actions
- *   - 12dp / 16dp corner radius with 16dp uniform padding
- *   - Interactive spring scale (0.98), state layer, hover elevation, focus ring
+ *   - 12dp corner radius with 16dp uniform padding
+ *   - Interactive state layer, hover elevation, focus ring
  *   - Full keyboard accessibility and ripple effect
  */
 
-import { createRipple, pressScale, releaseScale, bindPress } from '../motion/interactions.js';
+import { createRipple, bindPress } from '../motion/interactions.js';
 import { sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
@@ -114,6 +114,8 @@ const defaultStyle = `
   .card.filled.interactive:hover:not(.disabled) {
     box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
   }
+  .card.filled.interactive.pressed:not(.disabled), .card.outlined.interactive.pressed:not(.disabled) { box-shadow: none; }
+  .card.elevated.interactive.pressed:not(.disabled) { box-shadow: var(--md-sys-elevation-level-1); }
 
   /* Outlined Card (§8.2) */
   .card.outlined {
@@ -127,11 +129,14 @@ const defaultStyle = `
 
   /* Disabled State */
   .card.disabled {
-    opacity: 0.38;
+    opacity: 1;
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
     cursor: not-allowed;
-    box-shadow: none !important;
-    pointer-events: none;
+    box-shadow: none;
   }
+  .card.filled.disabled { background: color-mix(in srgb, var(--md-sys-color-surface-variant) 38%, var(--md-sys-color-surface-container-highest)); }
+  .card.elevated.disabled { background: var(--md-sys-color-surface); box-shadow: var(--md-sys-elevation-level-1); }
+  .card.outlined.disabled { border-color: color-mix(in srgb, var(--md-sys-color-outline) 12%, var(--md-sys-color-surface-container-low)); }
 
   /* Slot Layouts (§8.1) */
   ::slotted([slot="header"]) {
@@ -220,12 +225,6 @@ export class MdCard extends HTMLElement {
     const press = (e) => {
       if (!this.interactive || this.disabled) return;
       if (e) createRipple(e, card);
-      pressScale(card, 0.98, 'expressiveSpatialFast');
-    };
-
-    const release = () => {
-      if (!this.interactive || this.disabled) return;
-      releaseScale(card, 0.98, 'expressiveSpatialMedium');
     };
 
     const activate = () => {
@@ -240,12 +239,17 @@ export class MdCard extends HTMLElement {
       }));
     };
 
-    card.addEventListener('click', activate, { signal });
-
     bindPress(card, {
       disabled: () => !this.interactive || this.disabled,
+      ignoreEvent: e => {
+        for (const node of e.composedPath()) {
+          if (node === card) break;
+          if (node.matches?.('button,a[href],input,select,textarea,[role="button"],[role="checkbox"],[tabindex="0"]')) return true;
+        }
+        return false;
+      },
       onPress: press,
-      onRelease: release,
+      onActivate: activate,
       signal
     });
   }

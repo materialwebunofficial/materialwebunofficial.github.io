@@ -5,12 +5,14 @@
 
 import { SpringPhysics } from './motion/spring-physics.js';
 import { applyDynamicTheme, rgbToHct, hexToRgb, hctToHex } from './theme/hct-color-engine.js';
+import {FloatingToolbarScrollBehavior,ToolbarScrollExpansion} from './components/toolbar-scroll.js';
 
 const STORAGE_KEYS = {
   THEME_MODE: 'md3e_theme_mode',
   THEME_SCHEME: 'md3e_theme_scheme',
   MOTION_SCHEME: 'md3e_motion_scheme',
   HCT_STATE: 'md3e_hct_state',
+  HCT_VERSION: 'md3e_hct_version',
   SEED_HEX: 'md3e_seed_hex'
 };
 
@@ -43,7 +45,7 @@ export function initShowcase() {
   let savedThemeMode = 'dark';
   let savedThemeScheme = 'expressive';
   let savedMotionScheme = 'expressive';
-  let savedHct = { hue: 305, chroma: 52, tone: 40 };
+  let savedHct = rgbToHct(103, 80, 164);
 
   try {
     const mode = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
@@ -61,6 +63,13 @@ export function initShowcase() {
       if (typeof parsed.hue === 'number' && typeof parsed.chroma === 'number' && typeof parsed.tone === 'number') {
         savedHct = parsed;
       }
+    }
+    // Older releases persisted Lab-LCH under the HCT name. Preserve the selected
+    // sRGB seed, then recompute real HCT instead of interpreting old coordinates.
+    if (localStorage.getItem(STORAGE_KEYS.HCT_VERSION) !== 'mcu-0.4.0') {
+      const previousSeed = localStorage.getItem(STORAGE_KEYS.SEED_HEX) || '#6750a4';
+      const rgb = hexToRgb(previousSeed);
+      savedHct = rgbToHct(rgb.r, rgb.g, rgb.b);
     }
   } catch (_) {}
 
@@ -162,41 +171,42 @@ export function initShowcase() {
   syncSchemeButtonLabels();
   syncThemeButtonLabels();
 
-  // 2. Mobile Drawer & Scrim Wiring
-  const mobileDrawerToggle = document.getElementById('mobile-drawer-toggle');
-  const drawerScrim = document.getElementById('drawer-scrim');
-  if (mobileDrawerToggle) {
-    mobileDrawerToggle.addEventListener('click', () => {
-      document.body.classList.toggle('mobile-drawer-open');
-    });
+  // Use the audited drawer for responsive catalogue navigation.
+  const catalogueDrawer = document.getElementById('components-sub-nav');
+  const drawerToggles = [document.getElementById('mobile-drawer-toggle'), document.getElementById('rail-drawer-toggle')].filter(Boolean);
+  const permanentDrawer = window.matchMedia('(min-width: 1200px)');
+  function syncDrawerVariant() {
+    catalogueDrawer.close();
+    catalogueDrawer.variant = permanentDrawer.matches ? 'standard' : 'modal';
   }
-  if (drawerScrim) {
-    drawerScrim.addEventListener('click', () => {
-      document.body.classList.remove('mobile-drawer-open');
-    });
-  }
+  syncDrawerVariant();
+  permanentDrawer.addEventListener('change', syncDrawerVariant);
+  const syncDrawerToggles = () => {
+    // Gestures belong to the visible catalogue sheet, avoiding closed sibling demo drawers.
+    catalogueDrawer.gesturesEnabled = catalogueDrawer.open && !permanentDrawer.matches;
+    drawerToggles.forEach(button => button.setAttribute('aria-expanded', String(catalogueDrawer.open)));
+  };
+  new MutationObserver(syncDrawerToggles).observe(catalogueDrawer, { attributes: true, attributeFilter: ['open'] });
+  drawerToggles.forEach(button => button.addEventListener('click', () => {
+    if (catalogueDrawer.open) catalogueDrawer.close();
+    else catalogueDrawer.show();
+  }));
 
   // 3. Tab Switching Architecture (home, get-started, components)
-  const railItems = document.querySelectorAll('.rail-item');
-  const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-  const drawerDestItems = document.querySelectorAll('.drawer-dest-item');
+  const railNavigation = document.querySelector('md-navigation-rail.app-nav-rail');
+  const mobileNavigation = document.querySelector('md-navigation-bar.mobile-bottom-nav');
+  const primaryTabs = ['home', 'get-started', 'components'];
   const tabViews = document.querySelectorAll('.tab-view');
   const subNavLinks = document.querySelectorAll('.sub-nav-drawer a[href]');
 
   function switchTab(tabId, scrollToTop = true, updateHash = true) {
     document.body.setAttribute('data-active-tab', tabId);
 
-    railItems.forEach(item => {
-      item.classList.toggle('active', item.dataset.tab === tabId);
-    });
+    if (railNavigation) railNavigation.selected = primaryTabs.indexOf(tabId);
 
-    mobileNavItems.forEach(item => {
-      item.classList.toggle('active', item.dataset.tab === tabId);
-    });
+    if (mobileNavigation) mobileNavigation.selected = primaryTabs.indexOf(tabId);
 
-    drawerDestItems.forEach(item => {
-      item.classList.toggle('active', item.dataset.tab === tabId);
-    });
+    catalogueDrawer.selected = primaryTabs.indexOf(tabId);
 
     tabViews.forEach(view => {
       view.classList.toggle('active', view.id === `tab-view-${tabId}`);
@@ -208,7 +218,7 @@ export function initShowcase() {
       document.body.classList.add('drawer-collapsed');
     }
 
-    document.body.classList.remove('mobile-drawer-open');
+    catalogueDrawer.close();
     if (scrollToTop) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -237,33 +247,45 @@ export function initShowcase() {
   tabViews.forEach(view => {
     view.classList.toggle('active', view.id === `tab-view-${initialTab}`);
   });
-  railItems.forEach(item => {
-    item.classList.toggle('active', item.dataset.tab === initialTab);
-  });
-  mobileNavItems.forEach(item => {
-    item.classList.toggle('active', item.dataset.tab === initialTab);
-  });
-  drawerDestItems.forEach(item => {
-    item.classList.toggle('active', item.dataset.tab === initialTab);
-  });
+  if (railNavigation) railNavigation.selected = primaryTabs.indexOf(initialTab);
+  if (mobileNavigation) mobileNavigation.selected = primaryTabs.indexOf(initialTab);
+  catalogueDrawer.selected = primaryTabs.indexOf(initialTab);
 
 
-  railItems.forEach(item => {
-    item.addEventListener('click', () => {
-      switchTab(item.dataset.tab, true, true);
+  railNavigation?.addEventListener('change', event => {
+    const tabId = primaryTabs[event.detail.index];
+    if (tabId) switchTab(tabId, true, true);
+  });
+
+  mobileNavigation?.addEventListener('change', event => {
+    const tabId = primaryTabs[event.detail.index];
+    if (tabId) switchTab(tabId, true, true);
+  });
+
+  document.querySelectorAll('[data-toggle-rail]').forEach(button => {
+    button.addEventListener('click', () => {
+      const rail = document.getElementById(button.dataset.toggleRail);
+      if (!rail) return;
+      rail.expanded = !rail.expanded;
+      button.textContent = rail.expanded ? 'Collapse rail' : 'Expand rail';
     });
   });
 
-  mobileNavItems.forEach(item => {
-    item.addEventListener('click', () => {
-      switchTab(item.dataset.tab, true, true);
+  document.querySelectorAll('[data-open-drawer], [data-close-drawer]').forEach(button => {
+    button.addEventListener('click', () => {
+      const drawer = document.getElementById(button.dataset.openDrawer || button.dataset.closeDrawer);
+      if (!drawer) return;
+      if (button.hasAttribute('data-open-drawer')) drawer.show();
+      else drawer.close();
     });
   });
 
-  drawerDestItems.forEach(item => {
-    item.addEventListener('click', () => {
-      switchTab(item.dataset.tab, true, true);
-    });
+  catalogueDrawer.addEventListener('click', event => {
+    if (event.composedPath().some(node => node.matches?.('.item[role="tab"]'))) catalogueDrawer.close();
+  });
+  catalogueDrawer.addEventListener('change', event => {
+    const tabId = primaryTabs[event.detail.index];
+    if (tabId) switchTab(tabId, true, true);
   });
 
   // Generic navigation attribute handler: [data-navigate-tab]
@@ -276,33 +298,38 @@ export function initShowcase() {
   });
 
   // 4. Sub-Navigation Accordions & Links
-  document.querySelectorAll('.sub-nav-accordion-header').forEach(header => {
-    header.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const accordion = header.closest('.sub-nav-accordion');
-      if (accordion) {
-        accordion.classList.toggle('open');
-      }
-    });
+  function setAccordionOpen(accordion, open) {
+    accordion.classList.toggle('open', open);
+    accordion.querySelector('.sub-nav-accordion-header').setAttribute('aria-expanded', String(open));
+  }
+  document.querySelectorAll('.sub-nav-accordion').forEach(accordion => {
+    const header = accordion.querySelector('.sub-nav-accordion-header');
+    const content = accordion.querySelector('.sub-nav-accordion-content');
+    content.id = `catalogue-group-${accordion.dataset.group}`;
+    header.setAttribute('aria-controls', content.id);
+    header.setAttribute('aria-expanded', String(accordion.classList.contains('open')));
+    header.addEventListener('click', () => setAccordionOpen(accordion, !accordion.classList.contains('open')));
   });
+  function setSectionSelection(targetId) {
+    subNavLinks.forEach(link => {
+      const active = link.dataset.target === targetId;
+      link.classList.toggle('active', active);
+      if (active) {
+        link.setAttribute('aria-current', 'location');
+        const accordion = link.closest('.sub-nav-accordion');
+        if (accordion) setAccordionOpen(accordion, true);
+      } else link.removeAttribute('aria-current');
+    });
+  }
 
   function navigateToSection(targetId, smooth = true) {
     switchTab('components', false, false);
-    document.body.classList.remove('mobile-drawer-open');
     history.replaceState(null, '', `#${targetId}`);
 
     const targetEl = document.getElementById(targetId);
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'start' });
-      subNavLinks.forEach(l => {
-        const hrefId = (l.getAttribute('href') || '').replace('#', '');
-        const isActive = hrefId === targetId || l.dataset.target === targetId;
-        l.classList.toggle('active', isActive);
-        if (isActive) {
-          const accordion = l.closest('.sub-nav-accordion');
-          if (accordion) accordion.classList.add('open');
-        }
-      });
+      setSectionSelection(targetId);
     }
   }
 
@@ -319,7 +346,7 @@ export function initShowcase() {
   // Delegate in-page category title anchor clicks
   document.addEventListener('click', (e) => {
     const anchor = e.target.closest('a[href^="#"]');
-    if (!anchor || anchor.closest('.sub-nav-drawer') || anchor.closest('.rail-item')) return;
+    if (!anchor || anchor.closest('.sub-nav-drawer') || anchor.closest('.app-nav-rail')) return;
     const targetId = anchor.getAttribute('href')?.replace('#', '');
     if (targetId) {
       const targetEl = document.getElementById(targetId);
@@ -347,6 +374,7 @@ export function initShowcase() {
       switchTab('components', false, false);
       const overviewEl = document.getElementById('overview');
       if (overviewEl) overviewEl.scrollIntoView({ behavior: 'instant', block: 'start' });
+      setSectionSelection('overview');
       return;
     }
 
@@ -363,13 +391,7 @@ export function initShowcase() {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const id = entry.target.id;
-        subNavLinks.forEach(l => {
-          const hrefId = (l.getAttribute('href') || '').replace('#', '');
-          if (hrefId === id || l.dataset.target === id) {
-            subNavLinks.forEach(item => item.classList.remove('active'));
-            l.classList.add('active');
-          }
-        });
+        setSectionSelection(id);
       }
     });
   }, { rootMargin: '-20% 0px -70% 0px' });
@@ -617,6 +639,7 @@ export function initShowcase() {
 
     try {
       localStorage.setItem(STORAGE_KEYS.HCT_STATE, JSON.stringify(hctState));
+      localStorage.setItem(STORAGE_KEYS.HCT_VERSION, 'mcu-0.4.0');
       localStorage.setItem(STORAGE_KEYS.SEED_HEX, hex);
     } catch (_) {}
 
@@ -647,12 +670,13 @@ export function initShowcase() {
     const rgb = hexToRgb(hex);
     const hct = rgbToHct(rgb.r, rgb.g, rgb.b);
 
-    hctState.hue = Math.round(hct.hue);
-    hctState.chroma = Math.round(hct.chroma);
-    hctState.tone = Math.round(hct.tone);
+    hctState.hue = hct.hue;
+    hctState.chroma = hct.chroma;
+    hctState.tone = hct.tone;
 
     try {
       localStorage.setItem(STORAGE_KEYS.HCT_STATE, JSON.stringify(hctState));
+      localStorage.setItem(STORAGE_KEYS.HCT_VERSION, 'mcu-0.4.0');
       localStorage.setItem(STORAGE_KEYS.SEED_HEX, hex);
     } catch (_) {}
 
@@ -666,9 +690,9 @@ export function initShowcase() {
     if (chromaSlider) chromaSlider.value = hctState.chroma;
     if (toneSlider) toneSlider.value = hctState.tone;
 
-    if (hueValDisplay) hueValDisplay.textContent = `${hctState.hue}°`;
-    if (chromaValDisplay) chromaValDisplay.textContent = `${hctState.chroma}`;
-    if (toneValDisplay) toneValDisplay.textContent = `${hctState.tone}`;
+    if (hueValDisplay) hueValDisplay.textContent = `${Math.round(hctState.hue)}°`;
+    if (chromaValDisplay) chromaValDisplay.textContent = `${Math.round(hctState.chroma)}`;
+    if (toneValDisplay) toneValDisplay.textContent = `${Math.round(hctState.tone)}`;
 
     if (nativeColorPicker) nativeColorPicker.value = hex;
     if (hexCodeInput) hexCodeInput.value = hex.toUpperCase();
@@ -990,9 +1014,7 @@ export function initShowcase() {
 
   if (resetColorBtn) {
     resetColorBtn.addEventListener('click', () => {
-      hctState.hue = 300;
-      hctState.chroma = 48;
-      hctState.tone = 40;
+      Object.assign(hctState, rgbToHct(103, 80, 164));
       applyHctColor(true);
       if (hueSlider) hueSlider.value = 300;
       if (chromaSlider) chromaSlider.value = 48;
@@ -1074,6 +1096,7 @@ export function initShowcase() {
     const anchor = document.getElementById('ambientWaveAnchor');
     const canvas = document.getElementById('ambientWaveCanvas');
     if (!stageWrapper || !anchor || !canvas) return;
+    const ambientMotionPreference = matchMedia('(prefers-reduced-motion: reduce)');
 
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
@@ -1226,10 +1249,23 @@ export function initShowcase() {
     window.addEventListener('resize', buildTimeline, { passive: true });
 
     let startTime = performance.now();
+    let ambientPaused = false;
+    ambientMotionPreference.addEventListener('change', () => {
+      if (ambientPaused && !ambientMotionPreference.matches) {
+        ambientPaused = false;
+        startTime = performance.now();
+        requestAnimationFrame(draw);
+      }
+    });
 
     function draw(now) {
       const activeTab = document.body.getAttribute('data-active-tab') || 'home';
       const isMobile = window.innerWidth <= 839;
+      if (ambientMotionPreference.matches) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ambientPaused = true;
+        return;
+      }
       if (document.hidden || activeTab !== 'home' || isMobile) {
         requestAnimationFrame(draw);
         return;
@@ -1404,4 +1440,66 @@ export function initShowcase() {
 
   initAmbientSequentialWave();
 
+  // Floating toolbar state belongs to its caller, as in the Compose samples.
+  document.querySelectorAll('[data-toolbar-shape]').forEach(control => {
+    const toolbar = document.getElementById(control.dataset.toolbarShape);
+    if (!toolbar) return;
+    const shapes = [null, {type: 'rounded', corners: 16}, {type: 'cut', corners: 16}];
+    control.addEventListener('change', event => {
+      toolbar.shape = shapes[event.detail.selectedIndex] ?? null;
+    });
+  });
+  document.querySelectorAll('[data-toolbar-toggle]').forEach(control => {
+    const toolbar = document.getElementById(control.dataset.toolbarToggle);
+    if (!toolbar) return;
+    const noun = toolbar.id === 'drawing-toolbar' ? 'tools' : 'actions';
+    const update = () => {
+      control.setAttribute('label', `${toolbar.expanded ? 'Collapse' : 'Expand'} ${noun}`);
+      control.setAttribute('aria-expanded', String(toolbar.expanded));
+      const button = control.shadowRoot?.querySelector('button');
+      button?.setAttribute('aria-controls', toolbar.id);
+      button?.setAttribute('aria-expanded', String(toolbar.expanded));
+    };
+    control.addEventListener('click', () => toolbar.toggle());
+    toolbar.addEventListener('expanded-change', update);
+    update();
+  });
+  document.querySelectorAll('[data-toolbar-scroll]').forEach(toolbar => {
+    toolbar.scrollTarget=document.getElementById(toolbar.dataset.toolbarScroll);
+    if(toolbar.dataset.toolbarScrollMode==='expand'){
+      toolbar.scrollExpansion=new ToolbarScrollExpansion({expanded:toolbar.expanded,onExpand:()=>toolbar.expand(),onCollapse:()=>toolbar.collapse()});
+    }else toolbar.scrollBehavior=new FloatingToolbarScrollBehavior({exitDirection:'bottom'});
+  });
+
+  // Stepper Interactive Wizard Wiring
+  const stepper = document.getElementById('demo-stepper');
+  const prevBtn = document.getElementById('stepper-prev-btn');
+  const nextBtn = document.getElementById('stepper-next-btn');
+  const resetBtn = document.getElementById('stepper-reset-btn');
+
+  if (stepper) {
+    nextBtn?.addEventListener('click', () => {
+      stepper.next();
+    });
+    prevBtn?.addEventListener('click', () => {
+      stepper.prev();
+    });
+    resetBtn?.addEventListener('click', () => {
+      stepper.reset();
+    });
+  }
+
+  // Shapes Interactive Morph Wiring
+  const morphShape = document.getElementById('interactive-morph-shape');
+  const shapeButtons = document.querySelectorAll('.shape-btn');
+  shapeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const shapeName = btn.dataset.shape || btn.getAttribute('data-shape');
+      if (morphShape && shapeName) {
+        morphShape.setAttribute('name', shapeName);
+        shapeButtons.forEach(b => b.removeAttribute('selected'));
+        btn.setAttribute('selected', '');
+      }
+    });
+  });
 }

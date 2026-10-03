@@ -32,12 +32,20 @@ export { MdCarousel } from './components/md-carousel.js';
 export { MdDatePicker } from './components/md-date-picker.js';
 export { MdTimePicker } from './components/md-time-picker.js';
 export { MdList, MdListItem } from './components/md-list.js';
-export { MdMenu, MdMenuItem } from './components/md-menu.js';
+export { MdMenu, MdMenuItem, MdMenuGroup } from './components/md-menu.js';
 export { MdSearchBar } from './components/md-search-bar.js';
 export { MdSideSheet } from './components/md-side-sheet.js';
-export { MdTabs } from './components/md-tabs.js';
+export { MdTabs, MdTab } from './components/md-tabs.js';
 export { MdToolbar } from './components/md-toolbar.js';
+export { FloatingToolbarState, FloatingToolbarScrollBehavior, ToolbarScrollExpansion, ToolbarSettling } from './components/toolbar-scroll.js';
+export { AndroidFlingDecay } from './motion/android-fling.js';
 export { MdFabMenu } from './components/md-fab-menu.js';
+export { MdSelect, MdOption } from './components/md-select.js';
+export { MdAutocomplete } from './components/md-autocomplete.js';
+export { MdExpansionPanel, MdAccordion } from './components/md-expansion-panel.js';
+export { MdPaginator } from './components/md-paginator.js';
+export { MdShape } from './components/md-shape.js';
+export { MdStepper, MdStep, MdStepPanel } from './components/md-stepper.js';
 export { MdExpressiveTheme, MdTheme } from './components/md-theme.js';
 export {
   applyDynamicTheme,
