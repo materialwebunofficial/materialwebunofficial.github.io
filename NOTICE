@@ -286,3 +286,67 @@ unchanged licensed originals are pinned in test/fixtures/androidx/sliders.
 tools/androidx-sliders executes unchanged scalar dispatch bodies through a
 density-1 field host; browser pointer events, labels, forms and focus delegation
 are web adapters. The full Compose gesture/coroutine runtime is not executed.
+
+Material3 common ripple
+Copyright 2019-2026 The Android Open Source Project. Apache-2.0.
+src/motion/ripple-state.js and ripple.js adapt current material3-ripple
+CommonRippleNode/RippleAnimation geometry, channel durations, release behavior
+and concurrent exit handling at AndroidX revision
+a095da93f8e98dea8748ceed79ea8427aade245f. Unchanged originals, raw URLs, hashes
+and licenses are in test/fixtures/androidx/ripple. The scalar recorder also uses
+the pinned FloatTweenSpec, Easing, Bezier and math bodies already attributed
+above. Foundation Clickable.kt at the same revision supplies disable-time
+PressInteraction.Cancel behavior while retaining the indication node.
+DOM clipping, CSS relative color, event/AbortSignal lifetime and reduced
+motion are web adapters. Native Android RippleDrawable, full coroutine/frame
+scheduling, color packing and Skia rasterization are separate platform boundaries.
+
+src/motion/interaction-tween.js and fab-interactions.js adapt the unchanged
+internal Elevation.animateElevation/spec selectors, FAB interaction ordering
+and target calculation, and current Material3 Ripple state-layer ordering and
+spec selectors at the same revision. Normal/lowered defaults follow the pinned
+FabPrimaryContainerTokens and ElevationTokens. Native FloatTweenSpec and easing
+execute independently in tools/androidx-ripple/interaction-snapshot.mjs.
+src/motion/shadow-tween.js maps the scalar elevation to live CSS shadow tokens;
+it does not implement Android shadow rasterization. Browser focus-visible,
+event/frame delivery and reduced motion remain platform adapters.
+
+src/motion/fab-expansion.js and md-fab.js adapt the pinned AndroidX
+ExtendedFloatingActionButton sized Float and baseline AnimatedVisibility paths,
+including separate width/alpha springs, integer layout, current-value conversion,
+retargeted velocity and retained exiting content. FAB dimensions and recommended
+icon sizes follow the original tokens and FloatingActionButtonDefaults/samples.
+Unchanged originals, raw URLs, SHA-256 and licenses are under
+test/fixtures/androidx/fab and the existing ripple/motion/toolbar directories.
+tools/androidx-fab/snapshot.mjs executes the original finite spring, converter,
+Transition and baseline enter/exit policy bodies. Intrinsic text measurement,
+DOM clipping, event delivery, focus, reconnect and reduced motion are web
+adapters; full native constraints/placement, Compose scheduling and platform
+rasterization remain separate boundaries.
+
+src/theme/surface-color.js and md-fab.js adapt the pinned ColorScheme
+contentColorFor, surfaceColorAtElevation, Surface tonal-elevation policy and
+minimum-interactive measurement. Licensed originals and URL/SHA manifests are
+in test/fixtures/androidx/fab-surface. tools/androidx-fab/surface-snapshot.mjs
+executes unchanged sRGB Color constructor/compositor and ColorScheme bodies
+through explicit color-space/Dp/composition-local hosts. Native non-sRGB color
+conversion/packing, Compose constraint propagation and platform hit testing
+remain separate boundaries; CSS lengths, color resolution and context variables
+are web adapters.
+
+Loading indicator color defaults follow unchanged LoadingIndicator.kt and
+LoadingIndicatorTokens.kt at the same pinned AndroidX revision, cached with
+URL/SHA/license manifest under test/fixtures/androidx/loading-colors by
+tools/androidx-shapes/loading-color-sources.mjs. CSS color/expression resolution,
+contained-background attributes and live theme delivery are web adapters.
+
+md-bottom-app-bar.js adapts BottomAppBar/FlexibleBottomAppBar public defaults,
+Surface color/tonal policy, content padding and caller-content slots from the
+same pinned AndroidX AppBar.kt and BottomAppBar/DockedToolbar/AppBar tokens.
+Five unchanged originals with URL/SHA/license manifest are cached under
+test/fixtures/androidx/app-bars by tools/androidx-app-bars/fetch-sources.mjs.
+MdFab's bottom-app-bar elevation preset follows FloatingActionButtonDefaults.
+bottomAppBarFabElevation (all states 0dp), retained in the existing ripple
+FloatingActionButton source fixture. Native system insets, constrained Row
+measurement and optional nested-scroll/drag behavior remain platform/API
+boundaries; CSS safe-area insets, grouping and action events are web adapters.

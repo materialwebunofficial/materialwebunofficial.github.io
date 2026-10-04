@@ -44,12 +44,12 @@ const defaultStyle = `
     border-radius: var(--md-sys-shape-corner-full, 9999px);
     overflow: hidden;
     background-color: transparent;
-    transition: background-color 0.2s ease;
   }
 
   :host([variant="contained"]) .loading-root {
-    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    background-color: var(--md-sys-color-primary-container);
   }
+  .color-probe { position: absolute; visibility: hidden; pointer-events: none; }
 
   canvas {
     display: block;
@@ -67,7 +67,7 @@ const QUARTER_ROTATION = 90;          // 90° per step
 
 export class MdLoadingIndicator extends HTMLElement {
   static get observedAttributes() {
-    return ['variant', 'size', 'progress', 'indeterminate', 'color', 'track-color', 'stroke-cap', 'gap-size', 'stroke-width'];
+    return ['variant', 'size', 'progress', 'indeterminate', 'color', 'container-color', 'track-color', 'stroke-cap', 'gap-size', 'stroke-width'];
   }
 
   constructor() {
@@ -79,7 +79,7 @@ export class MdLoadingIndicator extends HTMLElement {
     this._startTime = 0;
     this._currentMorphIndex = 0;
     this._lastStepTime = 0;
-    this._cachedColor = '#6750A4';
+    this._cachedColor = null;
     this._colorDirty = true;
     this._observer = null;
     this._isVisible = true;
@@ -142,29 +142,13 @@ export class MdLoadingIndicator extends HTMLElement {
       return this._cachedColor;
     }
     const colorAttr = this.getAttribute('color');
-    let activeColor = '';
-
-    if (colorAttr && (colorAttr.startsWith('#') || colorAttr.startsWith('rgb') || colorAttr.startsWith('hsl'))) {
-      activeColor = colorAttr;
-    } else {
-      const computedStyle = getComputedStyle(this);
-      if (colorAttr === 'primary' && !isContained) {
-        activeColor = computedStyle.getPropertyValue('--md-sys-color-primary').trim() || '#D0BCFF';
-      } else if (colorAttr === 'secondary') {
-        activeColor = computedStyle.getPropertyValue('--md-sys-color-secondary').trim() || '#CCC2DC';
-      } else if (colorAttr === 'tertiary') {
-        activeColor = computedStyle.getPropertyValue('--md-sys-color-tertiary').trim() || '#EFB8C8';
-      } else if (colorAttr === 'on-primary-container') {
-        activeColor = computedStyle.getPropertyValue('--md-sys-color-on-primary-container').trim() || '#EADDFF';
-      } else if (isContained) {
-        activeColor = computedStyle.getPropertyValue('--md-sys-color-on-primary-container').trim() ||
-                      computedStyle.getPropertyValue('--md-sys-color-primary').trim() || '#EADDFF';
-      } else {
-        activeColor = computedStyle.getPropertyValue('--md-sys-color-primary').trim() || '#D0BCFF';
-      }
-    }
-
-    this._cachedColor = activeColor || '#D0BCFF';
+    const role = isContained ? 'on-primary-container' : 'primary';
+    const color = ['primary','secondary','tertiary','on-primary-container'].includes(colorAttr)
+      ? `var(--md-sys-color-${colorAttr})` : colorAttr && CSS.supports('color', colorAttr)
+        ? colorAttr : `var(--md-sys-color-${role})`;
+    this._probe.style.color = '';
+    this._probe.style.color = color;
+    this._cachedColor = getComputedStyle(this._probe).color;
     this._colorDirty = false;
     return this._cachedColor;
   }
@@ -172,6 +156,10 @@ export class MdLoadingIndicator extends HTMLElement {
   get variant() {
     return this.getAttribute('variant') || 'standalone'; // 'standalone' | 'contained'
   }
+  get color() { return this.getAttribute('color') || ''; }
+  set color(v) { if (v == null) this.removeAttribute('color'); else this.setAttribute('color', String(v)); }
+  get containerColor() { return this.getAttribute('container-color') || ''; }
+  set containerColor(v) { if (v == null) this.removeAttribute('container-color'); else this.setAttribute('container-color', String(v)); }
   set variant(v) {
     this.setAttribute('variant', v);
   }
@@ -201,7 +189,7 @@ export class MdLoadingIndicator extends HTMLElement {
   }
 
   get trackColor() {
-    return this.getAttribute('track-color') || 'var(--md-sys-color-secondary-container, #E8DEF8)';
+    return this.getAttribute('track-color') || 'var(--md-sys-color-secondary-container)';
   }
   set trackColor(v) {
     if (v === null || v === undefined) this.removeAttribute('track-color');
@@ -365,6 +353,7 @@ export class MdLoadingIndicator extends HTMLElement {
     const sz = this.sizePx;
     root.style.width = `${sz}px`;
     root.style.height = `${sz}px`;
+    root.style.backgroundColor = this.variant === 'contained' && CSS.supports('color', this.containerColor) ? this.containerColor : '';
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = sz * dpr;
@@ -393,10 +382,11 @@ export class MdLoadingIndicator extends HTMLElement {
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="loading-root" role="progressbar" aria-label="Loading indicator">
-        <canvas></canvas>
+        <canvas></canvas><span class="color-probe" aria-hidden="true"></span>
       </div>
     `;
 
+    this._probe = this.shadowRoot.querySelector('.color-probe');
     this._updateDimensions();
     this._syncProgress();
   }

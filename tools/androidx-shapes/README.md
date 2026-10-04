@@ -37,3 +37,10 @@ AndroidX source and derived data are Copyright The Android Open Source Project,
 licensed under Apache-2.0 (see the root LICENSE and NOTICE). Source headers remain
 in cached originals and generated JS. Export.kt's scale/sequence construction is
 adapted from LoadingIndicator.kt.
+
+`node tools/androidx-shapes/loading-color-sources.mjs` caches unchanged loading
+component/token originals and URL/SHA/license manifest for the live color
+adapter. `test/browser/loading-color.mjs` checks those hashes and reads the
+original token roles, then verifies actual Canvas fill across 12 theme scopes,
+standalone/contained defaults, custom CSS colors/backgrounds and morph-phase
+continuity. This color slice does not prove the whole public loading API.

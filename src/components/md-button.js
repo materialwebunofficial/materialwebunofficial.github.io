@@ -82,9 +82,6 @@ const defaultStyle = `
   .btn:focus-visible:not([disabled]) .state-layer {
     opacity: var(--md-sys-state-focus-opacity, 0.10);
   }
-  .btn:active:not([disabled]) .state-layer {
-    opacity: var(--md-sys-state-pressed-opacity, 0.10);
-  }
 
   /* Ripple Effect */
   .md-ripple-effect {
@@ -191,6 +188,7 @@ const defaultStyle = `
   }
   .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
   .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-button-state-color, currentColor); }
+  .md-ripple-effect { --md-ripple-color: var(--md-toolbar-button-state-color, currentColor); }
 
   /* Toggle Selected States */
   .btn.togglable:not(.selected).filled:not(:disabled) {

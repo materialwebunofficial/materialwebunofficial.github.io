@@ -1,0 +1,15 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "LoadingIndicator.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/LoadingIndicator.kt",
+      "sha256": "5b369a09cf80401620e49387116dad4d49dd785eb086bd917a1d1f52142ce8b9"
+    },
+    {
+      "file": "LoadingIndicatorTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/LoadingIndicatorTokens.kt",
+      "sha256": "58624ed41af880124a8c27055a56cc0c3694594bf1b12ea8c2fb1234db24b0cf"
+    }
+  ]
+}

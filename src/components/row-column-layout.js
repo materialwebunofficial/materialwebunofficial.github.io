@@ -20,10 +20,11 @@ export function layoutPlaceable(id,requested,constraints,children=[],data={}){
 export function minimumInteractiveLayout(o){
  const c={minWidth:o.minWidth??0,maxWidth:o.maxWidth??INF,minHeight:o.minHeight??0,maxHeight:o.maxHeight??INF};
  const width=clamp(o.width,c.minWidth,c.maxWidth),height=clamp(o.height,c.minHeight,c.maxHeight);
- const requested={width:Math.max(48,width),height:Math.max(48,height)};
+ const minimum=Math.max(0,round(o.minimum??48));
+ const requested={width:Math.max(minimum,width),height:Math.max(minimum,height)};
  const touch=layoutPlaceable('touch',requested,c);
  const body={x:touch.offset.x+round(f((requested.width-width)/2)),y:touch.offset.y+round(f((requested.height-height)/2)),width,height};
- return{size:touch.size,requested,body,lines:{top:Math.max(0,round(f((48-height)/2))),left:Math.max(0,round(f((48-width)/2)))}};
+ return{size:touch.size,requested,body,lines:{top:Math.max(0,round(f((minimum-height)/2))),left:Math.max(0,round(f((minimum-width)/2)))}};
 }
 export function axisConstraints(b,vertical){return vertical?{minWidth:b.minCross,maxWidth:b.maxCross,minHeight:b.minMain,maxHeight:b.maxMain}:{minWidth:b.minMain,maxWidth:b.maxMain,minHeight:b.minCross,maxHeight:b.maxCross};}
 export function layoutPlacements(node,x=0,y=0,result={}){

@@ -1,4 +1,4 @@
-// Execute unchanged SliderDefaults drawing helpers in a density-1 Kotlin recorder.
+// Execute unchanged SliderDefaults drawing and SliderState scalar bodies in a density-1 Kotlin host.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

@@ -19,10 +19,17 @@ export class MdIconButton extends HTMLElement {
 }
 
 export class MdFab extends HTMLElement {
-  variant: 'surface' | 'primary' | 'secondary' | 'tertiary';
-  size: 'small' | 'medium' | 'large';
-  label?: string;
+  variant: 'surface' | 'primary' | 'secondary' | 'tertiary' | 'extended';
+  color: 'primary' | 'secondary' | 'tertiary' | 'primary-container' | 'secondary-container' | 'tertiary-container' | 'surface';
+  size: 'small' | 'baseline' | 'medium' | 'large';
+  icon: string;
+  label: string;
+  containerColor: string;
+  contentColor: string;
+  expanded: boolean;
+  readonly isExtended: boolean;
   lowered: boolean;
+  elevation: 'default' | 'bottom-app-bar';
 }
 
 export class MdCard extends HTMLElement {
@@ -197,7 +204,18 @@ export class MdTopAppBar extends HTMLElement {
   headline?: string;
 }
 
-export class MdBottomAppBar extends HTMLElement {}
+export class MdBottomAppBar extends HTMLElement {
+  variant: 'standard' | 'flexible';
+  containerColor: string;
+  contentColor: string;
+  horizontalArrangement: 'start' | 'end' | 'center' | 'space-between' | 'space-around' | 'space-evenly' | 'fixed';
+  get expandedHeight(): number;
+  set expandedHeight(value: number | null | undefined);
+  get tonalElevation(): number;
+  set tonalElevation(value: number | null | undefined);
+  get contentPadding(): ToolbarContentPadding;
+  set contentPadding(value: ToolbarContentPadding | null | undefined);
+}
 
 export interface NavigationBarItem {
   icon?: string;

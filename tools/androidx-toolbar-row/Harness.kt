@@ -40,12 +40,16 @@ fun main(args:Array<String>){
   val icons=nativeIds.joinToString(prefix="{",postfix="}"){id->"\"$id\":${iconAt(LeafConstraints.values.getValue(id),origins.getValue(id)).json()}"}
   out.add("{\"input\":{\"vertical\":$vertical,\"rtl\":$rtl,\"main\":${profile.joinToString(prefix="[",postfix="]"){it.json()}},\"minMain\":${b[0]},\"maxMain\":${b[1]},\"minCross\":${b[2]},\"maxCross\":${b[3]},\"sample\":$sample,\"delta\":$delta,\"current\":\"$current\",\"padding\":$padding,\"top\":${lines[0]},\"left\":${lines[1]}},\"size\":${IntSize(p.width,p.height).json()},\"placements\":$placements,\"icons\":$icons}")
  }
- if(args[0]=="icon"){
-  val iconBounds=listOf(0 to 0,0 to 1,0 to 17,0 to 39,0 to 40,0 to 41,0 to 45,0 to 47,0 to 48,0 to 49,17 to 45,40 to 65,41 to 41,45 to 45,49 to 99,65 to Constraints.Infinity)
-  for(rtl in listOf(false,true))for(size in listOf(24 to 24,40 to 40,32 to 40,56 to 48,96 to 96))for(w in iconBounds)for(h in iconBounds){
+ if(args[0]=="icon"||args[0]=="icon-expressive"){
+  val expressive=args[0]=="icon-expressive"
+  val iconBounds=if(expressive)listOf(0 to Constraints.Infinity)else listOf(0 to 0,0 to 1,0 to 17,0 to 39,0 to 40,0 to 41,0 to 45,0 to 47,0 to 48,0 to 49,17 to 45,40 to 65,41 to 41,45 to 45,49 to 99,65 to Constraints.Infinity)
+  val sizes=if(expressive)listOf(28 to 32,32 to 32,40 to 32,32 to 40,40 to 40,52 to 40,48 to 56,56 to 56,72 to 56,64 to 96,96 to 96,128 to 96,104 to 136,136 to 136,184 to 136)else listOf(24 to 24,40 to 40,32 to 40,56 to 48,96 to 96)
+  for(minimum in if(expressive)listOf(0f,48f,49f,52f)else listOf(48f))for(rtl in listOf(false,true))for(size in sizes)for(w in iconBounds)for(h in iconBounds){
+   MinimumHost.size=minimum
    Host.rtl=rtl;Host.boxes.clear();Host.sizes.clear();val c=Constraints(w.first,w.second,h.first,h.second)
    val p=iconMeasure(c,size.first,size.second);with(Placeable.PlacementScope(0,IntOffset.Zero)){placeRoot(p)}
-   out.add("{\"input\":{\"rtl\":$rtl,\"width\":${size.first},\"height\":${size.second},\"minWidth\":${w.first},\"maxWidth\":${w.second},\"minHeight\":${h.first},\"maxHeight\":${h.second}},\"size\":${IntSize(p.width,p.height).json()},\"requested\":${p.measuredSize.json()},\"body\":${Host.boxes.getValue("body").json()},\"lines\":{\"top\":${p[MinimumInteractiveTopAlignmentLine]},\"left\":${p[MinimumInteractiveLeftAlignmentLine]}}}")
+   val local=if(expressive) "\"minimum\":$minimum," else ""
+   out.add("{\"input\":{$local\"rtl\":$rtl,\"width\":${size.first},\"height\":${size.second},\"minWidth\":${w.first},\"maxWidth\":${w.second},\"minHeight\":${h.first},\"maxHeight\":${h.second}},\"size\":${IntSize(p.width,p.height).json()},\"requested\":${p.measuredSize.json()},\"body\":${Host.boxes.getValue("body").json()},\"lines\":{\"top\":${p[MinimumInteractiveTopAlignmentLine]},\"left\":${p[MinimumInteractiveLeftAlignmentLine]}}}")
   }
  }
  println(out.joinToString(prefix="[",postfix="]"))

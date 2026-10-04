@@ -354,7 +354,7 @@ export class MdToolbar extends HTMLElement {
   for(let i=0;i<this._rowChildren.main.length;i++){
    const element=this._rowChildren.main[i],leaf=node.children[i].node,p=layout.placements['content-'+i],index=[...this.children].indexOf(element)+1;
    const ink=this._rowInputs.main[i].ink,body=ink?minimumInteractiveLayout({...ink,...leaf.constraints}).body:null;
-   const native=body?`--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;`:'';
+   const native=body?`--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;`:'';
    const rule=`:host([data-toolbar-content]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-row.x-leaf.offset.x}px!important;top:${p.y-row.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`;
    this._sizeStyle.sheet.insertRule(rule,this._sizeStyle.sheet.cssRules.length);
   }
@@ -397,7 +397,7 @@ export class MdToolbar extends HTMLElement {
     const element=this._rowChildren[name][i],id=name+i,leaf=findNode(layout.node,id),p=layout.placements[id];if(!leaf||!p)continue;
     const index=[...this.children].indexOf(element)+1;
     const ink=this._rowInputs[name][i].ink,body=ink?minimumInteractiveLayout({...ink,...leaf.constraints}).body:null;
-    const native=body?`--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;`:'';
+    const native=body?`--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;`:'';
     const rule=`:host([data-toolbar-row]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-rowBox.x-leaf.offset.x}px!important;top:${p.y-rowBox.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`;
     this._sizeStyle.sheet.insertRule(rule,this._sizeStyle.sheet.cssRules.length);
    }

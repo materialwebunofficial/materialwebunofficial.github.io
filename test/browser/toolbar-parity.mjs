@@ -58,7 +58,7 @@ export async function testToolbarParity(browser,base){
   // Theme roles stay local, and changing color leaves the focused native button intact.
   await el('fab').evaluate(n=>{n.expanded=true;n._savedButton=n.querySelector('md-fab').shadowRoot.querySelector('button');n._savedButton.focus();n.color='vibrant';});await run(32);
   assert.equal(await el('fab').evaluate(n=>n._savedButton===n.querySelector('md-fab').shadowRoot.activeElement),true);
-  assert.equal(await el('fab').evaluate(n=>getComputedStyle(n._savedButton).borderRadius),'16px');assert.equal(await el('fab').evaluate(n=>getComputedStyle(n._savedButton.querySelector('span')).fontSize),'24px');
+  assert.equal(await el('fab').evaluate(n=>getComputedStyle(n._savedButton).borderRadius),'16px');assert.equal(await el('fab').evaluate(n=>getComputedStyle(n._savedButton.querySelector('.material-symbols-outlined')).fontSize),'24px');
   const role=async(id,node,css)=>el(id).evaluate((n,{node,css})=>{const target=node==='fab'?n.querySelector('md-fab').shadowRoot.querySelector('button'):n.querySelector('md-icon-button').shadowRoot.querySelector('button');const probe=document.createElement('span');probe.style.color=`var(--md-sys-color-${css})`;n.append(probe);const expected=getComputedStyle(probe).color;probe.remove();return[target&&getComputedStyle(target).color,expected];},{node,css});
   const fabColors=await role('fab','fab','on-tertiary-container');assert.equal(fabColors[0],fabColors[1]);
   const colors=await role('docked','icon','on-secondary-container');assert.equal(colors[0],colors[1]);

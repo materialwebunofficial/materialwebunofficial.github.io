@@ -1,6 +1,6 @@
 """Execute original Row/Column measurement, intrinsic, alignment and toolbar modifiers."""
 from pathlib import Path
-import gzip, hashlib, json, os, subprocess
+import gzip, hashlib, json, os, subprocess, sys
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
@@ -76,7 +76,7 @@ for marker, prefix in [('SOURCE_COERCION', 'private fun onMeasuredSizeChanged()'
 (CACHE / 'Tree.kt').write_text(adapter)
 cp = str(RUNTIME / 'stdlib.jar')
 subprocess.run(['java', '-cp', str(RUNTIME / '*'), 'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler', '-no-stdlib', '-no-reflect', '-classpath', cp, '-jvm-target', '1.8', '-d', str(CACHE / 'oracle.jar'), *map(str, [CACHE / 'Policy.kt', CACHE / 'Constraints.kt', CACHE / 'Tree.kt', HERE / 'Adapter.kt', HERE / 'Harness.kt'])], check=True)
-for mode in ['row', 'toolbar', 'icon']:
+for mode in (['icon-expressive'] if '--icon-expressive-only' in sys.argv else ['row', 'toolbar', 'icon', 'icon-expressive']):
     result = subprocess.run(['java', '-cp', str(CACHE / 'oracle.jar') + os.pathsep + cp, 'androidx.compose.material3.HarnessKt', mode], capture_output=True, text=True, check=True)
     cases = json.loads(result.stdout)
     payload=(json.dumps(cases, separators=(',', ':')) + '\n').encode()

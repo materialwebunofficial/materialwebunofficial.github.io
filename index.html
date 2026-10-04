@@ -252,7 +252,7 @@
                   <span class="mat-sym live-cell-icon">progress_activity</span>
                   <span>Playful shapes</span>
                 </div>
-                <md-loading-indicator variant="contained" size="m" color="primary"></md-loading-indicator>
+                <md-loading-indicator variant="contained" size="m"></md-loading-indicator>
               </div>
 
               <div class="live-showcase-cell" style="flex: 2;">
@@ -833,14 +833,37 @@ document.querySelector('#my-element').animate(keyframes, {
 
           <div class="comp-card">
             <div class="comp-preview" style="width: 100%; padding: 0;">
-              <md-bottom-app-bar></md-bottom-app-bar>
+              <md-bottom-app-bar aria-label="Document actions">
+                <md-icon-button icon="menu" aria-label="Menu"></md-icon-button>
+                <md-icon-button icon="search" aria-label="Search"></md-icon-button>
+                <md-icon-button icon="edit" aria-label="Edit"></md-icon-button>
+                <md-fab slot="fab" icon="add" aria-label="Add document" color="secondary-container" elevation="bottom-app-bar"></md-fab>
+              </md-bottom-app-bar>
             </div>
             <div class="comp-info">
               <span class="comp-name">Bottom App Bar (80dp)</span>
-              <span class="comp-desc">Anchored bottom surface housing floating primary actions and navigation.</span>
+              <span class="comp-desc">Standard 80dp surface with start-aligned actions and an optional secondary-container FAB.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-bottom-app-bar&gt;&lt;/md-bottom-app-bar&gt;</code>
+              <code>&lt;md-bottom-app-bar aria-label='Document actions'&gt;&lt;md-icon-button icon='menu' aria-label='Menu'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='edit' aria-label='Edit'&gt;&lt;/md-icon-button&gt;&lt;md-fab slot='fab' icon='add' aria-label='Add document' color='secondary-container' elevation='bottom-app-bar'&gt;&lt;/md-fab&gt;&lt;/md-bottom-app-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <md-bottom-app-bar variant="flexible" aria-label="Flexible document actions">
+                <md-icon-button icon="menu" aria-label="Menu"></md-icon-button>
+                <md-icon-button icon="search" aria-label="Search"></md-icon-button>
+                <md-icon-button icon="favorite" aria-label="Favorite"></md-icon-button>
+                <md-icon-button icon="more_vert" aria-label="More options"></md-icon-button>
+              </md-bottom-app-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Flexible Bottom App Bar (64dp)</span>
+              <span class="comp-desc">Expressive bottom app bar with evenly distributed actions. A fixed arrangement uses centered 32dp spacing.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-bottom-app-bar variant='flexible' aria-label='Flexible document actions'&gt;&lt;md-icon-button icon='menu' aria-label='Menu'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='favorite' aria-label='Favorite'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-bottom-app-bar&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>
@@ -928,32 +951,37 @@ document.querySelector('#my-element').animate(keyframes, {
 
           <div class="comp-card" id="fabs">        <div class="comp-preview">
               <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
-                <md-fab variant="small" color="primary" icon="edit"></md-fab>
-                <md-fab variant="medium" color="primary" icon="add"></md-fab>
-                <md-fab variant="large" color="secondary-container" icon="brush"></md-fab>
-                <md-fab variant="medium" color="tertiary-container" icon="mic"></md-fab>
+                <md-fab size="small" color="primary-container" icon="edit" aria-label="Edit"></md-fab>
+                <md-fab size="baseline" color="primary-container" icon="add" aria-label="Create"></md-fab>
+                <md-fab size="medium" color="secondary-container" icon="brush" aria-label="Draw"></md-fab>
+                <md-fab size="large" color="tertiary-container" icon="mic" aria-label="Record"></md-fab>
               </div></div>
             <div class="comp-info">
               <span class="comp-name">Floating Action Buttons (FABs)</span>
-              <span class="comp-desc">Small (40dp), Medium (80dp), and Large (96dp) primary action buttons.</span>
+              <span class="comp-desc">Small (40dp), baseline (56dp), Medium (80dp), and Large (96dp) floating action buttons.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-fab variant=&quot;medium&quot; color=&quot;primary&quot; icon=&quot;add&quot;&gt;&lt;/md-fab&gt;</code>
+              <code>&lt;md-fab size=&quot;baseline&quot; color=&quot;primary-container&quot; icon=&quot;add&quot; aria-label=&quot;Create&quot;&gt;&lt;/md-fab&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>
 
           <div class="comp-card" id="extended-fabs">        <div class="comp-preview">
-              <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
-                <md-fab variant="extended" size="small" color="primary" icon="add" label="Compose"></md-fab>
-                <md-fab variant="extended" size="medium" color="secondary-container" icon="navigation" label="Navigate"></md-fab>
+              <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; max-width: 100%;">
+                <div id="extended-fab-examples" style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
+                  <md-fab variant="extended" size="small" color="primary-container" icon="edit" label="Write"></md-fab>
+                  <md-fab variant="extended" size="baseline" color="primary-container" icon="add" label="Compose"></md-fab>
+                  <md-fab variant="extended" size="medium" color="secondary-container" icon="navigation" label="Navigate"></md-fab>
+                  <md-fab variant="extended" size="large" color="tertiary-container" icon="mic" label="Record"></md-fab>
+                </div>
+                <md-button variant="tonal" size="s" data-fab-toggle="extended-fab-examples" label="Collapse labels" aria-expanded="true"></md-button>
               </div></div>
             <div class="comp-info">
               <span class="comp-name">Extended FABs</span>
-              <span class="comp-desc">Extended floating action buttons with clear text labels and icons.</span>
+              <span class="comp-desc">Keep the primary action in reach. Expand its label or collapse to the icon.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-fab variant=&quot;extended&quot; color=&quot;primary&quot; icon=&quot;add&quot; label=&quot;Compose&quot;&gt;&lt;/md-fab&gt;</code>
+              <code>&lt;md-fab variant=&quot;extended&quot; size=&quot;baseline&quot; icon=&quot;add&quot; label=&quot;Compose&quot;&gt;&lt;/md-fab&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>
@@ -1524,7 +1552,7 @@ document.querySelector('#my-element').animate(keyframes, {
                   <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Standalone</span>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                  <md-loading-indicator variant="contained" size="m" color="primary"></md-loading-indicator>
+                  <md-loading-indicator variant="contained" size="m"></md-loading-indicator>
                   <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Contained</span>
                 </div></div>
             </div>
@@ -1533,7 +1561,7 @@ document.querySelector('#my-element').animate(keyframes, {
               <span class="comp-desc">Standalone (transparent background) and Contained (circular container) morphing shapes.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-loading-indicator variant=&quot;contained&quot; size=&quot;m&quot; color=&quot;primary&quot;&gt;&lt;/md-loading-indicator&gt;</code>
+              <code>&lt;md-loading-indicator variant=&quot;contained&quot; size=&quot;m&quot;&gt;&lt;/md-loading-indicator&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>

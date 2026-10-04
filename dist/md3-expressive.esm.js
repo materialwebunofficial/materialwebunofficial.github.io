@@ -257,34 +257,436 @@ var SpringPhysics = class {
   }
 };
 
-// src/motion/interactions.js
-function createRipple(event, containerElement) {
-  if (!containerElement || !event) return;
-  const rect2 = containerElement.getBoundingClientRect();
-  if (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-  const circle = document.createElement("span");
-  const diameter = Math.max(rect2.width, rect2.height) * 1.5;
-  const radius2 = diameter / 2;
-  circle.style.width = circle.style.height = `${diameter}px`;
-  const clientX = event.type?.startsWith("pointer") ? event.clientX : rect2.left + rect2.width / 2;
-  const clientY = event.type?.startsWith("pointer") ? event.clientY : rect2.top + rect2.height / 2;
-  circle.style.left = `${clientX - rect2.left - radius2}px`;
-  circle.style.top = `${clientY - rect2.top - radius2}px`;
-  circle.classList.add("md-ripple-effect");
-  const existing = containerElement.querySelector(".md-ripple-effect");
-  if (existing) existing.remove();
-  let ink = containerElement.querySelector(".md-ink");
+// src/motion/spring-duration.js
+function springDuration({
+  from,
+  to,
+  velocity = 0,
+  stiffness = 380,
+  dampingRatio = 0.8,
+  visibilityThreshold = 0.01
+}) {
+  const f16 = Math.fround;
+  const displacement = f16(f16(f16(from) - f16(to)) / f16(visibilityThreshold));
+  const initialVelocity = f16(f16(velocity) / f16(visibilityThreshold));
+  const damping = f16(dampingRatio), k = f16(stiffness);
+  if (damping === 0) return 9223372036854;
+  if (displacement === 0 && initialVelocity === 0) return 0;
+  const b = 2 * damping * Math.sqrt(k);
+  const partial = b * b - 4 * k;
+  const real = partial < 0 ? 0 : Math.sqrt(partial);
+  const imaginary = partial < 0 ? Math.sqrt(Math.abs(partial)) : 0;
+  const r1 = (-b + real) * 0.5, r2 = (-b - real) * 0.5;
+  const p = Math.abs(displacement), v = displacement < 0 ? -initialVelocity : initialVelocity;
+  let seconds;
+  if (damping < 1) {
+    const c2 = (v - r1 * p) / (imaginary * 0.5);
+    seconds = Math.log(1 / Math.sqrt(p * p + c2 * c2)) / r1;
+  } else if (damping === 1) {
+    const c1 = p, c2 = v - r1 * p;
+    const t1 = Math.log(Math.abs(1 / c1)) / r1;
+    const guess = Math.log(Math.abs(1 / c2));
+    let t = guess;
+    for (let i = 0; i < 6; i++) t = guess - Math.log(Math.abs(t / r1));
+    let current = finiteMax(t1, t / r1);
+    const inflection2 = -(r1 * c1 + c2) / (r1 * c2);
+    const x = c1 * Math.exp(r1 * inflection2) + c2 * inflection2 * Math.exp(r1 * inflection2);
+    let delta = -1;
+    if (!(Number.isNaN(inflection2) || inflection2 <= 0)) {
+      if (inflection2 > 0 && -x < 1) {
+        if (c2 < 0 && c1 > 0) current = 0;
+      } else {
+        current = -2 / r1 - c1 / c2;
+        delta = 1;
+      }
+    }
+    seconds = newton(
+      current,
+      (t2) => (c1 + c2 * t2) * Math.exp(r1 * t2) + delta,
+      (t2) => (c2 * (r1 * t2 + 1) + c1 * r1) * Math.exp(r1 * t2)
+    );
+  } else {
+    const c2 = (r1 * p - v) / (r1 - r2), c1 = p - c2;
+    let current = finiteMax(Math.log(Math.abs(1 / c1)) / r1, Math.log(Math.abs(1 / c2)) / r2);
+    const inflection2 = Math.log(c1 * r1 / (-c2 * r2)) / (r2 - r1);
+    const x = c1 * Math.exp(r1 * inflection2) + c2 * Math.exp(r2 * inflection2);
+    let delta = -1;
+    if (!(Number.isNaN(inflection2) || inflection2 <= 0)) {
+      if (inflection2 > 0 && -x < 1) {
+        if (c2 > 0 && c1 < 0) current = 0;
+      } else {
+        current = Math.log(-(c2 * r2 * r2) / (c1 * r1 * r1)) / (r1 - r2);
+        delta = 1;
+      }
+    }
+    const derivative = (t) => c1 * r1 * Math.exp(r1 * t) + c2 * r2 * Math.exp(r2 * t);
+    seconds = Math.abs(derivative(current)) < 1e-4 ? current : newton(
+      current,
+      (t) => c1 * Math.exp(r1 * t) + c2 * Math.exp(r2 * t) + delta,
+      derivative
+    );
+  }
+  return Number.isNaN(seconds) ? 0 : Math.max(0, Math.trunc(seconds * 1e3));
+}
+function finiteMax(a, b) {
+  return !Number.isFinite(a) ? b : !Number.isFinite(b) ? a : Math.max(a, b);
+}
+function newton(current, value, derivative) {
+  let difference = Infinity;
+  for (let i = 0; difference > 1e-3 && i < 100; i++) {
+    const previous = current;
+    current -= value(current) / derivative(current);
+    difference = Math.abs(previous - current);
+  }
+  return current;
+}
+
+// src/motion/selection-motion.js
+var SpringValue = class {
+  constructor(value) {
+    this.value = this.target = value;
+    this.animation = null;
+  }
+  sample(now) {
+    const a = this.animation;
+    if (!a) return { position: this.value, velocity: 0 };
+    const elapsed = Math.max(0, now - a.start);
+    if (elapsed >= a.duration) {
+      this.value = this.target;
+      this.animation = null;
+      return { position: this.value, velocity: 0 };
+    }
+    if (a.snap) return { position: a.from, velocity: a.velocity };
+    const state = SpringPhysics.solve({
+      ...a,
+      from: Math.fround(a.from - a.to),
+      to: 0,
+      time: Math.floor(elapsed) / 1e3
+    });
+    return { position: Math.fround(state.position + a.to), velocity: Math.fround(state.velocity) };
+  }
+  to(target, spec, { now = performance.now(), snap = false, delay = 0, transition = false, velocity = null, roundInitial = false } = {}) {
+    if (target === this.target && velocity === null) return;
+    const current = this.sample(now);
+    if (transition && snap && this.animation) {
+      spec = { stiffness: 1500, dampingRatio: 1 };
+      snap = false;
+    }
+    this.target = target;
+    const a = {
+      from: roundInitial ? Math.round(current.position) : current.position,
+      to: target,
+      velocity: Math.fround(velocity ?? current.velocity),
+      stiffness: Math.fround(spec.stiffness),
+      dampingRatio: Math.fround(spec.dampingRatio),
+      visibilityThreshold: Math.fround(spec.visibilityThreshold ?? 0.01),
+      start: now,
+      snap
+    };
+    a.duration = snap ? delay : springDuration(a);
+    this.animation = a;
+    this.sample(now);
+  }
+  finish() {
+    this.value = this.target;
+    this.animation = null;
+  }
+};
+var SelectionMotion = class {
+  constructor(element2, initial, draw) {
+    this.element = element2;
+    this.channels = Object.fromEntries(Object.entries(initial).map(([key, value]) => [key, new SpringValue(value)]));
+    this.draw = draw;
+    this.raf = null;
+    this.disposed = false;
+    this.media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+    this.onPreference = () => {
+      if (this.media.matches) this.finish();
+    };
+    this.media?.addEventListener("change", this.onPreference);
+    this.render(performance.now());
+  }
+  set(updates) {
+    if (this.disposed) return;
+    const now = performance.now();
+    for (const [key, { value, role = "expressiveSpatialMedium", ...options }] of Object.entries(updates)) {
+      this.channels[key].to(value, SpringPhysics.getPreset(role, this.element), { ...options, now });
+    }
+    if (this.media?.matches) this.finish();
+    else this.tick(now);
+  }
+  render(now) {
+    if (this.disposed) return;
+    this.draw(Object.fromEntries(Object.entries(this.channels).map(([key, channel2]) => [key, channel2.sample(now).position])));
+  }
+  tick(now) {
+    if (this.disposed) return;
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.render(now);
+    if (Object.values(this.channels).some((channel2) => channel2.animation)) {
+      this.raf = requestAnimationFrame((time) => this.tick(time));
+    }
+  }
+  finish() {
+    if (this.disposed) return;
+    for (const channel2 of Object.values(this.channels)) channel2.finish();
+    this.tick(performance.now());
+  }
+  dispose() {
+    this.disposed = true;
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.media?.removeEventListener("change", this.onPreference);
+  }
+};
+function checkboxPath(fraction, gravitation) {
+  const points = [[4, 10], [8 + 2 * gravitation, 14 - 4 * gravitation], [16, 6 + 4 * gravitation]];
+  const lengths = [
+    Math.hypot(points[1][0] - 4, points[1][1] - 10),
+    Math.hypot(points[2][0] - points[1][0], points[2][1] - points[1][1])
+  ];
+  let remaining = Math.max(0, Math.min(1, fraction)) * (lengths[0] + lengths[1]);
+  if (remaining <= 0) return "";
+  let path = "M 4 10";
+  for (let i = 0; i < 2; i++) {
+    const portion = Math.min(1, remaining / lengths[i]);
+    path += ` L ${points[i][0] + (points[i + 1][0] - points[i][0]) * portion} ${points[i][1] + (points[i + 1][1] - points[i][1]) * portion}`;
+    remaining -= lengths[i];
+    if (remaining <= 0) break;
+  }
+  return path;
+}
+
+// src/motion/drawer-motion.js
+var f = Math.fround;
+var friction = f(-4.2);
+var threshold = f(0.1);
+var bits = new DataView(new ArrayBuffer(4));
+function fastCbrt(value) {
+  bits.setFloat32(0, value);
+  const raw = bits.getUint32(0);
+  const signedMask = raw + (raw >= 2147483648 ? 4294967296 : 0);
+  bits.setUint32(0, 709952852 + Math.trunc(signedMask / 3) >>> 0);
+  let estimate = bits.getFloat32(0);
+  for (let i = 0; i < 2; i++) estimate = f(estimate - f(f(estimate - f(value / f(estimate * estimate))) * f(1 / 3)));
+  return estimate;
+}
+function drawerEasing(fraction) {
+  if (fraction <= 0 || fraction >= 1) return fraction;
+  const progress = Math.max(f(fraction), f(11920929e-14));
+  const p0 = f(-progress), p12 = f(f(0.4) - progress), p22 = f(f(0.2) - progress), p3 = f(1 - progress);
+  const divisor = -p0 + 3 * f(p12 - p22) + p3;
+  const a = 3 * (p0 - 2 * p12 + p22) / divisor;
+  const b = 3 * f(p12 - p0) / divisor, c = p0 / divisor;
+  const o3 = (3 * b - a * a) / 9, q2 = (2 * a * a * a - 9 * a * b + 27 * c) / 54;
+  const root = Math.sqrt(q2 * q2 + o3 * o3 * o3);
+  const t = f(f(fastCbrt(f(-q2 + root)) - fastCbrt(f(q2 + root))) - a / 3);
+  const value = f(f(3 * f(f(f(f(f(f(1 / 3) - 1) * t) + 1) * t))) * t);
+  return Math.max(0, Math.min(1, value));
+}
+function drawerTarget(offset, width, velocity) {
+  if (offset >= 0) return 0;
+  if (offset <= -width) return -width;
+  if (Math.abs(velocity) >= 400) return velocity > 0 ? 0 : -width;
+  if (offset === -width * 0.5) return velocity > 0 ? 0 : -width;
+  return offset > -width * 0.5 ? 0 : -width;
+}
+function drawerDecayTarget(from, velocity) {
+  from = f(from);
+  velocity = f(velocity);
+  if (Math.abs(velocity) <= threshold) return from;
+  const duration = Math.log(Math.abs(f(threshold / velocity))) / friction * 1e3;
+  const ratio = f(velocity / friction);
+  return f(f(from - ratio) + f(ratio * f(Math.exp(friction * duration / 1e3))));
+}
+function drawerDecaySample(from, velocity, elapsed) {
+  from = f(from);
+  velocity = f(velocity);
+  const millis = Math.floor(Math.max(0, elapsed)), ratio = f(velocity / friction);
+  const position = f(f(from - ratio) + f(ratio * f(Math.exp(f(f(friction * millis) / 1e3)))));
+  const speed = f(velocity * f(Math.exp(f(f(millis / 1e3) * friction))));
+  return { position, velocity: speed };
+}
+function drawerTweenSample(from, to, velocity, elapsed) {
+  from = f(from);
+  to = f(to);
+  velocity = f(velocity);
+  const value = (time2) => {
+    const fraction = f(Math.max(0, Math.min(256, time2)) / 256);
+    const eased = drawerEasing(fraction);
+    return f(f(f(1 - eased) * from) + f(eased * to));
+  };
+  const time = Math.max(0, Math.min(256, elapsed)), position = value(time);
+  return { position, velocity: time === 0 ? velocity : f(f(position - value(time - 1)) * 1e3) };
+}
+var DrawerOffset = class extends SpringValue {
+  settle(target, velocity, now = performance.now()) {
+    const from = f(this.sample(now).position);
+    this.value = from;
+    this.target = target;
+    this.animation = null;
+    if (from === target) {
+      this.value = target;
+      return;
+    }
+    velocity = f(velocity);
+    const projected = drawerDecayTarget(from, velocity);
+    const canDecay = velocity !== 0 && velocity * (target - from) >= 0 && (velocity > 0 ? projected >= target : projected <= target);
+    this.animation = {
+      kind: canDecay ? "decay" : "tween",
+      from,
+      to: target,
+      velocity,
+      start: now,
+      duration: canDecay ? Math.max(0, Math.trunc(f(f(1e3 * f(Math.log(f(threshold / Math.abs(velocity))))) / friction))) : 256
+    };
+  }
+  sample(now) {
+    const a = this.animation;
+    if (!a?.kind) return super.sample(now);
+    const elapsed = Math.max(0, now - a.start);
+    const state = a.kind === "decay" ? drawerDecaySample(a.from, a.velocity, elapsed) : drawerTweenSample(a.from, a.to, a.velocity, elapsed);
+    const crossed = a.kind === "decay" && (a.velocity > 0 ? state.position >= a.to : state.position <= a.to);
+    if (crossed || elapsed >= a.duration) {
+      this.value = this.target;
+      this.animation = null;
+      return { position: this.value, velocity: 0 };
+    }
+    return state;
+  }
+};
+
+// src/motion/ripple-state.js
+var f2 = Math.fround;
+var lerp = (a, b, t) => f2(f2(f2(1 - t) * a) + f2(t * b));
+var RIPPLE_TIMING = Object.freeze({ fadeIn: 75, expand: 225, fadeOut: 150 });
+function rippleRadii(width, height, bounded = true) {
+  width = f2(width);
+  height = f2(height);
+  const start = f2(Math.max(width, height) * f2(0.3));
+  const end = f2(f2(Math.sqrt(f2(f2(width * width) + f2(height * height)))) / 2);
+  return { start, end: bounded ? f2(end + 10) : end };
+}
+function rippleFrame({ width, height, originX = width / 2, originY = height / 2, bounded = true, radius: radius2 }, elapsed, finishAt = null) {
+  const time = Math.max(0, Math.trunc(elapsed)), radii = rippleRadii(width, height, bounded);
+  const fraction = f2(Math.min(time, RIPPLE_TIMING.expand) / RIPPLE_TIMING.expand);
+  const fadingOut = finishAt !== null && time >= Math.max(RIPPLE_TIMING.expand, finishAt);
+  const fadeStart = finishAt === null ? Infinity : Math.max(RIPPLE_TIMING.expand, finishAt);
+  const alpha = fadingOut ? f2(Math.max(0, 1 - f2((time - fadeStart) / RIPPLE_TIMING.fadeOut))) : finishAt !== null && time >= finishAt && time < RIPPLE_TIMING.expand ? 1 : f2(Math.min(time / RIPPLE_TIMING.fadeIn, 1));
+  const x = f2(width / 2), y = f2(height / 2);
+  return {
+    radius: lerp(radii.start, radius2 === void 0 ? radii.end : f2(radius2), drawerEasing(fraction)),
+    x: lerp(bounded ? f2(originX) : x, x, fraction),
+    y: lerp(bounded ? f2(originY) : y, y, fraction),
+    alpha,
+    done: finishAt !== null && time >= fadeStart + RIPPLE_TIMING.fadeOut,
+    settled: time >= RIPPLE_TIMING.expand && !fadingOut
+  };
+}
+
+// src/motion/ripple.js
+var surfaces = /* @__PURE__ */ new WeakMap();
+var pressGroups = /* @__PURE__ */ new WeakMap();
+function collectPressRipples(event, group, callback) {
+  pressGroups.set(event, group);
+  try {
+    return callback();
+  } finally {
+    pressGroups.delete(event);
+  }
+}
+function createRipple(event, container) {
+  if (!event || !container) return;
+  let ripples = surfaces.get(container);
+  if (!ripples) {
+    ripples = /* @__PURE__ */ new Set();
+    surfaces.set(container, ripples);
+  }
+  for (const ripple of ripples) ripple.finish();
+  const rect2 = container.getBoundingClientRect(), width = container.clientWidth, height = container.clientHeight;
+  const pointer = event.type?.startsWith("pointer");
+  const originX = pointer && rect2.width ? (event.clientX - rect2.left) * width / rect2.width : width / 2;
+  const originY = pointer && rect2.height ? (event.clientY - rect2.top) * height / rect2.height : height / 2;
+  const geometry = { width, height, originX, originY };
+  let ink = container.querySelector(":scope > .md-ink");
   if (!ink) {
     ink = document.createElement("span");
     ink.className = "md-ink";
     ink.style.cssText = "position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none";
-    containerElement.appendChild(ink);
+    container.append(ink);
   }
-  ink.appendChild(circle);
-  setTimeout(() => {
+  const circle = document.createElement("span");
+  circle.className = "md-ripple-effect";
+  circle.style.cssText = "position:absolute;border-radius:50%;pointer-events:none;animation:none;transform:none;background:rgb(from var(--md-ripple-color, currentColor) r g b / 1);";
+  ink.append(circle);
+  const group = pressGroups.get(event), media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const start = performance.now();
+  let finishAt = null, raf = null, disposed = false;
+  const clock = () => Math.max(0, Math.trunc(performance.now() - start));
+  const schedule = () => {
+    if (!disposed && raf === null && !media?.matches) raf = requestAnimationFrame(tick);
+  };
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    if (raf !== null) cancelAnimationFrame(raf);
+    raf = null;
+    media?.removeEventListener("change", motionChange);
     circle.remove();
-  }, 450);
+    ripples.delete(controller);
+    group?.delete(controller);
+    if (!ink.childElementCount) ink.remove();
+    if (!ripples.size) surfaces.delete(container);
+  };
+  const paint = (time) => {
+    const frame = rippleFrame(geometry, time, finishAt);
+    circle.style.width = circle.style.height = `${frame.radius * 2}px`;
+    circle.style.left = `${frame.x - frame.radius}px`;
+    circle.style.top = `${frame.y - frame.radius}px`;
+    circle.style.opacity = `calc(var(--md-sys-state-pressed-opacity, 0.1) * ${frame.alpha})`;
+    return frame;
+  };
+  const tick = () => {
+    raf = null;
+    if (disposed) return;
+    if (!container.isConnected) {
+      dispose();
+      return;
+    }
+    const frame = paint(clock());
+    if (frame.done) dispose();
+    else if (!frame.settled) schedule();
+  };
+  const motionChange = () => {
+    if (raf !== null) {
+      cancelAnimationFrame(raf);
+      raf = null;
+    }
+    if (media?.matches) {
+      if (finishAt !== null) dispose();
+      else paint(RIPPLE_TIMING.expand);
+    } else schedule();
+  };
+  const controller = { finish() {
+    if (disposed || finishAt !== null) return;
+    finishAt = clock();
+    if (media?.matches) dispose();
+    else {
+      paint(clock());
+      schedule();
+    }
+  }, dispose };
+  ripples.add(controller);
+  group?.add(controller);
+  media?.addEventListener("change", motionChange);
+  paint(media?.matches ? RIPPLE_TIMING.expand : 0);
+  schedule();
+  if (!group) controller.finish();
+  return controller;
 }
+
+// src/motion/interactions.js
 function pressScale(el, scale2 = 0.95, preset = "expressiveSpatialFast") {
   if (!el) return;
   SpringPhysics.animateProperty(el, "scale", 1, scale2, preset);
@@ -309,6 +711,7 @@ function bindPress(el, {
   let isPressed = false;
   let pointerId = null;
   let canceledClick = false;
+  const pressRipples = /* @__PURE__ */ new Set();
   const native = el.matches("button, input, a[href]");
   const start = (e) => {
     if (ignoreEvent(e) || disabled() || isPressed) return;
@@ -316,21 +719,22 @@ function bindPress(el, {
     if (e?.isPrimary === false) return;
     isPressed = true;
     canceledClick = false;
+    if (typeof e?.pointerId === "number") pointerId = e.pointerId;
     try {
       if (e && typeof e.pointerId === "number") {
         el.setPointerCapture(e.pointerId);
-        pointerId = e.pointerId;
       }
     } catch (_) {
     }
     el.classList.add("pressed");
-    onPress?.(e);
+    collectPressRipples(e, pressRipples, () => onPress?.(e));
   };
   const end = () => {
     if (!isPressed) return;
     isPressed = false;
     el.classList.remove("pressed");
     onRelease?.();
+    for (const ripple of pressRipples) ripple.finish();
     if (pointerId !== null) {
       try {
         el.releasePointerCapture(pointerId);
@@ -348,11 +752,16 @@ function bindPress(el, {
     canceledClick = hit ? !el.contains(hit) : e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
     end();
   }, listenerOptions);
-  el.addEventListener("pointercancel", () => {
+  el.addEventListener("pointercancel", (e) => {
+    if (pointerId !== null && e.pointerId !== pointerId) return;
     canceledClick = true;
     end();
   }, listenerOptions);
-  el.addEventListener("lostpointercapture", end, listenerOptions);
+  el.addEventListener("lostpointercapture", (e) => {
+    if (pointerId !== null && e.pointerId !== pointerId) return;
+    if (isPressed) canceledClick = true;
+    end();
+  }, listenerOptions);
   el.addEventListener("blur", end, listenerOptions);
   el.addEventListener("click", (e) => {
     if (ignoreEvent(e)) return;
@@ -364,7 +773,21 @@ function bindPress(el, {
     }
     onActivate?.(e);
   }, { ...listenerOptions, capture: true });
-  signal?.addEventListener("abort", end, { once: true });
+  const clearRipples = () => {
+    for (const ripple of [...pressRipples]) ripple.dispose();
+  };
+  const disabledObserver = globalThis.MutationObserver ? new MutationObserver(() => {
+    if (disabled()) {
+      canceledClick = true;
+      end();
+    }
+  }) : null;
+  disabledObserver?.observe(el, { attributes: true, attributeFilter: ["disabled", "aria-disabled"] });
+  signal?.addEventListener("abort", () => {
+    end();
+    clearRipples();
+    disabledObserver?.disconnect();
+  }, { once: true });
   el.addEventListener("keydown", (e) => {
     if (ignoreEvent(e)) return;
     if (disabled()) return;
@@ -421,8 +844,8 @@ function safeJsonParse(raw, fallback = null) {
 function createComponentSheet(cssText) {
   if (typeof CSSStyleSheet !== "undefined" && typeof CSSStyleSheet.prototype.replaceSync === "function") {
     try {
-      const sheet6 = new CSSStyleSheet();
-      sheet6.replaceSync(cssText + `
+      const sheet7 = new CSSStyleSheet();
+      sheet7.replaceSync(cssText + `
         @media (prefers-reduced-motion: reduce) {
           :host, *, *::before, *::after {
             transition-duration: 0s !important;
@@ -432,17 +855,17 @@ function createComponentSheet(cssText) {
           }
         }
       `);
-      return sheet6;
+      return sheet7;
     } catch (_) {
       return null;
     }
   }
   return null;
 }
-function adoptSheet(shadowRoot, sheet6) {
-  if (sheet6 && shadowRoot && "adoptedStyleSheets" in shadowRoot) {
+function adoptSheet(shadowRoot, sheet7) {
+  if (sheet7 && shadowRoot && "adoptedStyleSheets" in shadowRoot) {
     try {
-      shadowRoot.adoptedStyleSheets = [sheet6];
+      shadowRoot.adoptedStyleSheets = [sheet7];
     } catch (_) {
     }
   }
@@ -515,9 +938,6 @@ var defaultStyle = `
   }
   .btn:focus-visible:not([disabled]) .state-layer {
     opacity: var(--md-sys-state-focus-opacity, 0.10);
-  }
-  .btn:active:not([disabled]) .state-layer {
-    opacity: var(--md-sys-state-pressed-opacity, 0.10);
   }
 
   /* Ripple Effect */
@@ -625,6 +1045,7 @@ var defaultStyle = `
   }
   .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
   .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-button-state-color, currentColor); }
+  .md-ripple-effect { --md-ripple-color: var(--md-toolbar-button-state-color, currentColor); }
 
   /* Toggle Selected States */
   .btn.togglable:not(.selected).filled:not(:disabled) {
@@ -1308,15 +1729,22 @@ if (!customElements.get("md-split-button")) {
 var defaultStyle3 = `
   :host {
     display: inline-flex;
+    position: relative;
     vertical-align: middle;
     outline: none;
     -webkit-tap-highlight-color: transparent;
   }
 
+  .touch-layout {
+    display: block; flex: none;
+    width: var(--md-toolbar-control-layout-width, max(0px, round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px), var(--_md-icon-button-width)));
+    height: var(--md-toolbar-control-layout-height, max(0px, round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px), var(--_md-icon-button-height)));
+  }
+
   .btn {
-    position: var(--md-toolbar-control-position, relative);
-    left: var(--md-toolbar-control-x, auto);
-    top: var(--md-toolbar-control-y, auto);
+    position: var(--md-toolbar-control-position, absolute);
+    left: var(--md-toolbar-control-x, round(nearest, max(0px, (round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px) - var(--_md-icon-button-width)) / 2), 1px));
+    top: var(--md-toolbar-control-y, round(nearest, max(0px, (round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px) - var(--_md-icon-button-height)) / 2), 1px));
     width: 40px;
     height: 40px;
     min-width: 40px;
@@ -1375,9 +1803,6 @@ var defaultStyle3 = `
   }
   .btn:focus-visible:not([disabled]) .state-layer {
     opacity: var(--md-sys-state-focus-opacity, 0.10);
-  }
-  .btn:active:not([disabled]) .state-layer {
-    opacity: var(--md-sys-state-pressed-opacity, 0.10);
   }
 
   /* Ripple */
@@ -1473,7 +1898,7 @@ var defaultStyle3 = `
 
   /* Toolbar local content and MDC standard/vibrant themed icon-button styles. */
   .btn.standard {
-    color: var(--md-toolbar-icon-content, var(--md-sys-color-on-surface-variant, #49454f));
+    color: var(--md-icon-button-content-color, var(--md-toolbar-icon-content, var(--md-sys-color-on-surface-variant, #49454f)));
     background: var(--md-toolbar-icon-container, transparent);
   }
   .btn.standard.togglable.selected {
@@ -1489,6 +1914,7 @@ var defaultStyle3 = `
   }
   .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
   .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-icon-state-color, currentColor); }
+  .md-ripple-effect { --md-ripple-color: var(--md-toolbar-icon-state-color, currentColor); }
 
   .icon {
     display: inline-flex;
@@ -1550,11 +1976,22 @@ var MdIconButton = class extends HTMLElement {
   get variant() {
     return sanitizeAttribute(this.getAttribute("variant") || "standard");
   }
+  set variant(v) {
+    if (v == null) this.removeAttribute("variant");
+    else this.setAttribute("variant", v);
+  }
   get size() {
     return SIZES2[this.getAttribute("size")] ? this.getAttribute("size") : "s";
   }
+  set size(v) {
+    if (v == null) this.removeAttribute("size");
+    else this.setAttribute("size", v);
+  }
   get toggle() {
     return this.hasAttribute("toggle");
+  }
+  set toggle(v) {
+    v ? this.setAttribute("toggle", "") : this.removeAttribute("toggle");
   }
   get selected() {
     return this.hasAttribute("selected") || this.hasAttribute("checked");
@@ -1582,8 +2019,16 @@ var MdIconButton = class extends HTMLElement {
   get icon() {
     return this.getAttribute("icon") || "";
   }
+  set icon(v) {
+    if (v == null) this.removeAttribute("icon");
+    else this.setAttribute("icon", v);
+  }
   get selectedIcon() {
     return this.getAttribute("selected-icon") || this.icon;
+  }
+  set selectedIcon(v) {
+    if (v == null) this.removeAttribute("selected-icon");
+    else this.setAttribute("selected-icon", v);
   }
   _getBaseRadius() {
     const s = SIZES2[this.size];
@@ -1593,10 +2038,10 @@ var MdIconButton = class extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle3}</style>`}
-      <button class="btn" type="button" part="button">
+      <span class="touch-layout"><button class="btn" type="button" part="button">
         <span class="state-layer"></span>
         <span class="icon"><slot></slot></span>
-      </button>
+      </button></span>
     `;
   }
   _bindEvents() {
@@ -1645,6 +2090,9 @@ var MdIconButton = class extends HTMLElement {
     btn.style.height = `clamp(var(--md-toolbar-control-min-height, 0px), ${s.size}px, var(--md-toolbar-control-max-height, ${s.size}px))`;
     btn.style.minWidth = btn.style.width;
     btn.style.minHeight = btn.style.height;
+    const layout = this.shadowRoot.querySelector(".touch-layout");
+    layout.style.setProperty("--_md-icon-button-width", btn.style.width);
+    layout.style.setProperty("--_md-icon-button-height", btn.style.height);
     btn.style.borderRadius = `${this._getBaseRadius()}px`;
     btn.style.borderWidth = this.variant === "outlined" ? `${this.size === "xl" ? 3 : this.size === "l" ? 2 : 1}px` : "0";
     const iconSlot = this.shadowRoot.querySelector(".icon");
@@ -1661,12 +2109,624 @@ if (!customElements.get("md-icon-button")) {
   customElements.define("md-icon-button", MdIconButton);
 }
 
+// src/motion/interaction-tween.js
+var f3 = Math.fround;
+function outgoingElevationEasing(fraction) {
+  if (fraction <= 0 || fraction >= 1) return fraction;
+  const progress = Math.max(f3(fraction), f3(11920929e-14));
+  const p0 = f3(-progress), p12 = f3(f3(0.4) - progress);
+  const p22 = f3(f3(0.6) - progress), p3 = f3(1 - progress);
+  const divisor = -p0 + 3 * f3(p12 - p22) + p3;
+  const a = 3 * (p0 - 2 * p12 + p22) / divisor;
+  const b = 3 * f3(p12 - p0) / divisor, c = p0 / divisor;
+  const o3 = (3 * b - a * a) / 9;
+  const q2 = (2 * a * a * a - 9 * a * b + 27 * c) / 54;
+  const root = Math.sqrt(q2 * q2 + o3 * o3 * o3);
+  const t = f3(f3(fastCbrt(f3(-q2 + root)) - fastCbrt(f3(q2 + root))) - a / 3);
+  const value = f3(f3(3 * f3(f3(f3(f3(f3(f3(1 / 3) - 1) * t) + 1) * t))) * t);
+  return Math.max(0, Math.min(1, value));
+}
+function elevationSpec(from, to) {
+  const known = (kind) => ["hover", "focus", "press", "drag"].includes(kind);
+  if (to !== null) return { duration: known(to) ? 120 : 0, easing: "incoming" };
+  return { duration: known(from) ? from === "hover" ? 120 : 150 : 0, easing: "outgoing" };
+}
+function stateLayerSpec(from, to) {
+  return { duration: to === "focus" || to === "drag" ? 45 : to === null && from === "drag" ? 150 : 15, easing: "linear" };
+}
+function interactionTween(from, to, elapsed, spec) {
+  from = f3(from);
+  to = f3(to);
+  const time = Math.max(0, Math.trunc(elapsed));
+  if (!spec.duration) return to;
+  const fraction = f3(Math.min(time, spec.duration) / spec.duration);
+  const factor = spec.easing === "incoming" ? drawerEasing(fraction) : spec.easing === "outgoing" ? outgoingElevationEasing(fraction) : fraction;
+  return f3(f3(f3(1 - factor) * from) + f3(to * factor));
+}
+var InteractionOrder = class {
+  constructor() {
+    this.active = [];
+  }
+  set(kind, active) {
+    const index = this.active.indexOf(kind);
+    if (active && index < 0) this.active.push(kind);
+    else if (!active && index >= 0) this.active.splice(index, 1);
+    else return false;
+    return true;
+  }
+  latest(includePress = true) {
+    return this.active.filter((kind) => includePress || kind !== "press").at(-1) ?? null;
+  }
+  clear() {
+    this.active.length = 0;
+  }
+};
+
+// src/motion/shadow-tween.js
+function splitLayers(text) {
+  let depth = 0, start = 0;
+  const layers = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "(") depth++;
+    else if (text[i] === ")") depth--;
+    else if (text[i] === "," && !depth) {
+      layers.push(text.slice(start, i));
+      start = i + 1;
+    }
+  }
+  layers.push(text.slice(start));
+  return layers;
+}
+function parseLayer(text) {
+  const lengths = [...text.matchAll(/(-?[\d.]+)px/g)].map((match) => Number(match[1]));
+  if (lengths.length < 2) return null;
+  while (lengths.length < 4) lengths.push(0);
+  const color = text.replace(/-?[\d.]+px/g, "").replace(/\binset\b/g, "").trim();
+  return { lengths, color: color || "currentColor", inset: /\binset\b/.test(text) };
+}
+function interpolateShadow(from, to, fraction) {
+  if (fraction <= 0) return from;
+  if (fraction >= 1) return to;
+  const a = from === "none" ? [] : splitLayers(from).map(parseLayer);
+  const b = to === "none" ? [] : splitLayers(to).map(parseLayer);
+  if ([...a, ...b].some((layer) => !layer)) return fraction < 0.5 ? from : to;
+  return Array.from({ length: Math.max(a.length, b.length) }, (_, index) => {
+    const left = a[index] || { lengths: [0, 0, 0, 0], color: "transparent", inset: b[index].inset };
+    const right = b[index] || { lengths: [0, 0, 0, 0], color: "transparent", inset: a[index].inset };
+    const lengths = left.lengths.map((value, i) => `${value + (right.lengths[i] - value) * fraction}px`).join(" ");
+    const color = left.color === right.color ? left.color : `color-mix(in srgb, ${left.color} ${(1 - fraction) * 100}%, ${right.color} ${fraction * 100}%)`;
+    return `${left.inset ? "inset " : ""}${lengths} ${color}`;
+  }).join(", ") || "none";
+}
+
+// src/motion/fab-interactions.js
+var Channel = class {
+  constructor(value) {
+    this.value = this.target = this.from = Math.fround(value);
+    this.spec = { duration: 0 };
+    this.start = 0;
+  }
+  sample(time) {
+    this.value = interactionTween(this.from, this.target, time - this.start, this.spec);
+    return this.value;
+  }
+  retarget(value, time, spec, snap = false) {
+    value = Math.fround(value);
+    if (!snap && value === this.target) return;
+    this.sample(time);
+    this.from = snap ? value : this.value;
+    this.target = value;
+    this.start = time;
+    this.spec = snap ? { duration: 0 } : spec;
+    if (snap) this.value = value;
+  }
+  running(time) {
+    return this.spec.duration > 0 && time - this.start < this.spec.duration;
+  }
+};
+function bindFabInteractions(button, { configuration, disabled, signal }) {
+  const order = new InteractionOrder();
+  const media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const now = () => performance.now();
+  let config = configuration(), elevationKind = null, layerKind = null;
+  const elevation = new Channel(config.rest), alpha = new Channel(0);
+  let raf = null, disposed = false;
+  const probes = ["restShadow", "hoverShadow"].map((key) => {
+    const probe = document.createElement("span");
+    probe.style.cssText = "display:none;pointer-events:none";
+    probe.setAttribute("aria-hidden", "true");
+    button.append(probe);
+    probe.style.boxShadow = config[key];
+    return probe;
+  });
+  const originalShadow = button.style.boxShadow;
+  let writtenShadow;
+  function paint(time) {
+    const value = elevation.sample(time);
+    if (value === 0 && disabled()) writtenShadow = "none";
+    else if (value === config.rest) writtenShadow = config.restShadow;
+    else if (value === config.hover) writtenShadow = config.hoverShadow;
+    else {
+      const fraction = (value - config.rest) / (config.hover - config.rest);
+      writtenShadow = interpolateShadow(getComputedStyle(probes[0]).boxShadow, getComputedStyle(probes[1]).boxShadow, fraction);
+    }
+    button.style.boxShadow = writtenShadow;
+    writtenShadow = button.style.boxShadow;
+    button.style.setProperty("--md-fab-state-alpha", String(alpha.sample(time)));
+    button.dataset.elevation = String(value);
+  }
+  function schedule() {
+    if (disposed) return;
+    if (media?.matches || !(elevation.running(now()) || alpha.running(now()))) {
+      if (raf !== null) cancelAnimationFrame(raf);
+      raf = null;
+      return;
+    }
+    if (raf === null) raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    raf = null;
+    if (disposed) return;
+    if (!button.isConnected) {
+      dispose();
+      return;
+    }
+    paint(now());
+    schedule();
+  }
+  function targetAlpha(kind) {
+    if (kind === null) return 0;
+    const property = kind === "focus" ? "focus" : kind === "drag" ? "dragged" : "hover";
+    const value = Number.parseFloat(getComputedStyle(button).getPropertyValue(`--md-sys-state-${property}-opacity`));
+    return Number.isFinite(value) ? value : kind === "hover" ? 0.08 : kind === "drag" ? 0.16 : 0.1;
+  }
+  function update2() {
+    const time = now(), nextElevation = order.latest(), nextLayer = order.latest(false);
+    const target = disabled() ? 0 : nextElevation === "hover" ? config.hover : config.rest;
+    if (nextElevation !== elevationKind || target !== elevation.target) {
+      elevation.retarget(target, time, elevationSpec(elevationKind, nextElevation), media?.matches || disabled());
+      elevationKind = nextElevation;
+    }
+    if (nextLayer !== layerKind) {
+      alpha.retarget(targetAlpha(nextLayer), time, stateLayerSpec(layerKind, nextLayer), media?.matches);
+      layerKind = nextLayer;
+    }
+    paint(time);
+    schedule();
+  }
+  function set(kind, active) {
+    if (disposed) return;
+    if (active && disabled()) return;
+    if (order.set(kind, active)) update2();
+  }
+  function focus() {
+    set("focus", button.matches(":focus-visible"));
+  }
+  function refresh() {
+    if (disposed) return;
+    const next = configuration(), changed = next.rest !== config.rest || next.hover !== config.hover;
+    config = next;
+    probes.forEach((probe, index) => {
+      probe.style.boxShadow = config[index ? "hoverShadow" : "restShadow"];
+    });
+    if (disabled()) order.clear();
+    if (changed) elevation.retarget(disabled() ? 0 : order.latest() === "hover" ? config.hover : config.rest, now(), { duration: 0 }, true);
+    update2();
+  }
+  const options = { signal };
+  button.addEventListener("pointerenter", (event) => {
+    if (event.pointerType !== "touch") set("hover", true);
+  }, options);
+  button.addEventListener("pointerleave", () => set("hover", false), options);
+  button.addEventListener("focus", focus, options);
+  button.addEventListener("blur", () => set("focus", false), options);
+  const motionChange = () => {
+    if (media?.matches) {
+      if (raf !== null) cancelAnimationFrame(raf);
+      raf = null;
+      elevation.retarget(elevation.target, now(), { duration: 0 }, true);
+      alpha.retarget(alpha.target, now(), { duration: 0 }, true);
+      paint(now());
+    } else schedule();
+  };
+  media?.addEventListener("change", motionChange);
+  const stopTheme = observeThemeContext(button.getRootNode().host, refresh);
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    if (raf !== null) cancelAnimationFrame(raf);
+    raf = null;
+    media?.removeEventListener("change", motionChange);
+    stopTheme();
+    probes.forEach((probe) => probe.remove());
+    if (button.style.boxShadow === writtenShadow) button.style.boxShadow = originalShadow;
+    button.style.removeProperty("--md-fab-state-alpha");
+    delete button.dataset.elevation;
+  }
+  signal.addEventListener("abort", dispose, { once: true });
+  paint(now());
+  return { press(active) {
+    focus();
+    set("press", active);
+  }, refresh, dispose };
+}
+
+// src/motion/fab-expansion.js
+var SizeValue = class extends SpringValue {
+  sample(now) {
+    const state = super.sample(now);
+    return { ...state, position: Math.max(0, Math.round(state.position)) };
+  }
+};
+var FabExpansion = class {
+  constructor(expanded, { baseline = false, labelWidth = 0, element: element2 = null } = {}) {
+    this.baseline = baseline;
+    this.element = element2;
+    this.expanded = expanded;
+    this.composed = expanded;
+    this.segment = expanded ? "steady" : "enter";
+    this.width = new (baseline ? SizeValue : SpringValue)(expanded ? baseline ? labelWidth : 1 : 0);
+    this.alpha = new SpringValue(expanded ? 1 : 0);
+  }
+  set(expanded, labelWidth, now) {
+    const changed = expanded !== this.expanded;
+    const entering = !this.composed;
+    const widthTarget = expanded ? this.baseline ? labelWidth : 1 : 0;
+    if (!changed && widthTarget === this.width.target) return;
+    this.expanded = expanded;
+    if (changed) this.segment = expanded ? entering ? "enter" : "reverse" : "exit";
+    if (expanded) this.composed = true;
+    const defaultSpring = { stiffness: 400, dampingRatio: 1 };
+    const widthSpec = this.baseline && (this.segment === "reverse" || this.segment === "steady") ? defaultSpring : SpringPhysics.getPreset(this.baseline && !expanded ? "expressiveSpatialMedium" : "expressiveSpatialFast", this.element);
+    const alphaSpec = this.baseline && (this.segment === "reverse" || this.segment === "steady") ? defaultSpring : SpringPhysics.getPreset(this.baseline && expanded ? "expressiveEffectMedium" : "expressiveEffectFast", this.element);
+    this.width.to(widthTarget, { ...widthSpec, visibilityThreshold: this.baseline && (this.segment === "reverse" || this.segment === "steady") ? 1 : 0.01 }, { now, roundInitial: this.baseline });
+    this.alpha.to(expanded ? 1 : 0, alphaSpec, { now });
+  }
+  sample(now) {
+    const width = this.width.sample(now).position;
+    const alpha = this.alpha.sample(now).position;
+    const running = Boolean(this.width.animation || this.alpha.animation);
+    if (!running) this.segment = "steady";
+    if (!this.expanded && !running) this.composed = false;
+    return { width, alpha: Math.max(0, Math.min(1, alpha)), running, composed: this.composed };
+  }
+  finish() {
+    this.width.finish();
+    this.alpha.finish();
+  }
+};
+function fabWidth(minimum, intrinsic, progress) {
+  return minimum + Math.round((intrinsic - minimum) * Math.fround(progress));
+}
+
+// src/components/row-column-layout.js
+var f4 = Math.fround;
+var INF = 2147483647;
+var clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+var int = (v) => clamp(Math.trunc(v), -2147483648, INF) || 0;
+var round = (v) => clamp(Math.round(v), -2147483648, INF) || 0;
+var bounds = (o) => ({ minMain: o.minMain ?? 0, maxMain: o.maxMain ?? INF, minCross: o.minCross ?? 0, maxCross: o.maxCross ?? INF });
+function layoutPlaceable(id, requested, constraints, children = [], data = {}) {
+  const size = { width: clamp(requested.width, constraints.minWidth, constraints.maxWidth), height: clamp(requested.height, constraints.minHeight, constraints.maxHeight) };
+  return { id, requested, size, constraints, offset: { x: int((size.width - requested.width) / 2), y: int((size.height - requested.height) / 2) }, children, ...data };
+}
+function minimumInteractiveLayout(o) {
+  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF };
+  const width = clamp(o.width, c.minWidth, c.maxWidth), height = clamp(o.height, c.minHeight, c.maxHeight);
+  const minimum = Math.max(0, round(o.minimum ?? 48));
+  const requested = { width: Math.max(minimum, width), height: Math.max(minimum, height) };
+  const touch = layoutPlaceable("touch", requested, c);
+  const body = { x: touch.offset.x + round(f4((requested.width - width) / 2)), y: touch.offset.y + round(f4((requested.height - height) / 2)), width, height };
+  return { size: touch.size, requested, body, lines: { top: Math.max(0, round(f4((minimum - height) / 2))), left: Math.max(0, round(f4((minimum - width) / 2))) } };
+}
+function axisConstraints(b, vertical) {
+  return vertical ? { minWidth: b.minCross, maxWidth: b.maxCross, minHeight: b.minMain, maxHeight: b.maxMain } : { minWidth: b.minMain, maxWidth: b.maxMain, minHeight: b.minCross, maxHeight: b.maxCross };
+}
+function layoutPlacements(node, x = 0, y = 0, result = {}) {
+  x += node.offset.x;
+  y += node.offset.y;
+  result[node.id] = { x, y, width: node.requested.width, height: node.requested.height };
+  for (const p of node.children) layoutPlacements(p.node, x + p.x, y + p.y, result);
+  return result;
+}
+function measureLayoutLeaf(id, input, constraints, vertical) {
+  if (input.ink) {
+    const interactive = minimumInteractiveLayout({ ...input.ink, ...constraints });
+    const body = interactive.body, offset = { x: int((interactive.size.width - interactive.requested.width) / 2), y: int((interactive.size.height - interactive.requested.height) / 2) };
+    const ink = layoutPlaceable(id + "-body", { width: body.width, height: body.height }, { minWidth: body.width, maxWidth: body.width, minHeight: body.height, maxHeight: body.height });
+    return layoutPlaceable(id, interactive.requested, constraints, [{ node: ink, x: body.x - offset.x, y: body.y - offset.y }], { line: input.line ?? null, interactiveLines: interactive.lines });
+  }
+  const natural = vertical ? { width: input.cross, height: input.main } : { width: input.main, height: input.cross };
+  const requested = input.required ? natural : { width: clamp(natural.width, constraints.minWidth, constraints.maxWidth), height: clamp(natural.height, constraints.minHeight, constraints.maxHeight) };
+  return layoutPlaceable(id, requested, constraints, [], { line: input.line ?? null });
+}
+function rowAlignmentLines(node) {
+  let top = null, left = null;
+  for (const p of node.children) {
+    const child = p.node, lines = child.interactiveLines;
+    if (!lines) continue;
+    const y = p.y + child.offset.y + lines.top + child.offset.y, x = p.x + child.offset.x + lines.left + child.offset.x;
+    top = top === null ? y : Math.min(top, y);
+    left = left === null ? x : Math.min(left, x);
+  }
+  return { top: top === null ? null : top + node.offset.y, left: left === null ? null : left + node.offset.x };
+}
+function arrange(main, sizes, name, rtl, vertical, spacing) {
+  const consumed = sizes.reduce((a, b) => a + b, 0), positions2 = sizes.map(() => 0), reverse = rtl && !vertical;
+  if (name === "spaced") {
+    let free = main, last = 0;
+    if (reverse) {
+      for (let i = 0; i < sizes.length; i++) {
+        positions2[i] = Math.max(0, free - sizes[i]);
+        last = Math.min(spacing, positions2[i]);
+        free = positions2[i] - last;
+      }
+      free += last;
+    } else {
+      let occupied = 0;
+      for (let i = 0; i < sizes.length; i++) {
+        positions2[i] = Math.min(occupied, main - sizes[i]);
+        last = Math.min(spacing, main - positions2[i] - sizes[i]);
+        occupied = positions2[i] + sizes[i] + last;
+      }
+      occupied -= last;
+      free = main - occupied;
+    }
+    if (free > 0) {
+      const group = round(f4(free / 2)), offset = reverse ? group - free : group;
+      for (let i = 0; i < sizes.length; i++) positions2[i] += offset;
+    }
+    return positions2;
+  }
+  let gap = 0, current = 0;
+  if (name === "center") current = f4((main - consumed) / 2);
+  else if (name === "end") current = main - consumed;
+  else if (name === "between") {
+    gap = f4((main - consumed) / Math.max(sizes.length - 1, 1));
+    if (reverse && sizes.length === 1) current = gap;
+  } else if (name === "around") {
+    gap = sizes.length ? f4((main - consumed) / sizes.length) : 0;
+    current = f4(gap / 2);
+  } else if (name === "evenly") {
+    gap = f4((main - consumed) / (sizes.length + 1));
+    current = gap;
+  }
+  if (reverse && name === "start") current = main - consumed;
+  if (reverse && name === "end") current = 0;
+  const order = reverse ? [...sizes.keys()].reverse() : [...sizes.keys()];
+  for (const i of order) {
+    positions2[i] = round(current);
+    current = f4(current + f4(f4(sizes[i]) + gap));
+  }
+  return positions2;
+}
+function crossPosition(input, size, item, vertical, rtl, before, line, defaultAlignment = "center") {
+  if (input.align === "line") {
+    if (line === null) return 0;
+    const delta = before - line;
+    return vertical && rtl ? size - item - delta : delta;
+  }
+  const alignment = input.align ?? defaultAlignment, bias = alignment === "start" ? -1 : alignment === "end" ? 1 : 0;
+  return round(f4(f4((size - item) / 2) * f4(1 + (vertical && rtl ? -bias : bias))));
+}
+function measureRowColumn(o, measure = (input, c, i) => measureLayoutLeaf("c" + i, input, c, !!o.vertical)) {
+  const vertical = !!o.vertical, rtl = !!o.rtl, b = bounds(o), inputs = o.children || [], spacing = o.arrangement === "spaced" ? 7 : 0;
+  const nodes = inputs.map(() => null), mainSizes = inputs.map(() => 0), crossSizes = inputs.map(() => 0);
+  let totalWeight = 0, fixed = 0, cross = 0, weightedCount = 0, lastSpacing = 0, relative = false;
+  const measureChild = (i, minMain, maxMain) => {
+    const input = inputs[i], desired = input.fillCrossFraction !== void 0 && b.maxCross !== INF ? round(f4(f4(input.fillCrossFraction) * f4(b.maxCross))) : null;
+    const c = axisConstraints({ minMain, maxMain, minCross: desired ?? 0, maxCross: desired ?? b.maxCross }, vertical);
+    const node = measure(input, c, i);
+    nodes[i] = node;
+    mainSizes[i] = node.size[vertical ? "height" : "width"];
+    crossSizes[i] = node.size[vertical ? "width" : "height"];
+    cross = Math.max(cross, crossSizes[i]);
+    return mainSizes[i];
+  };
+  for (let i = 0; i < inputs.length; i++) {
+    const weight = f4(inputs[i].weight || 0);
+    relative ||= inputs[i].align === "line";
+    if (weight > 0) {
+      totalWeight = f4(totalWeight + weight);
+      weightedCount++;
+    } else {
+      const remaining = b.maxMain - fixed, size = measureChild(i, 0, b.maxMain === INF ? INF : Math.max(0, remaining));
+      lastSpacing = Math.min(spacing, Math.max(0, remaining - size));
+      fixed += size + lastSpacing;
+    }
+  }
+  let weighted = 0;
+  if (weightedCount === 0) fixed -= lastSpacing;
+  else {
+    const target = b.maxMain === INF ? b.minMain : b.maxMain, totalSpacing = spacing * (weightedCount - 1), remaining = Math.max(0, target - fixed - totalSpacing), unit = f4(f4(remaining) / totalWeight);
+    let remainder = remaining;
+    for (const input of inputs) remainder -= round(f4(unit * f4(input.weight || 0)));
+    for (let i = 0; i < inputs.length; i++) if (nodes[i] === null) {
+      const correction = Math.sign(remainder);
+      remainder -= correction;
+      const main2 = Math.max(0, round(f4(unit * f4(inputs[i].weight || 0))) + correction);
+      weighted += measureChild(i, inputs[i].fill !== false && main2 !== INF ? main2 : 0, main2);
+    }
+    weighted = clamp(int(weighted + totalSpacing), 0, b.maxMain - fixed);
+  }
+  let before = 0, after = 0;
+  if (relative) {
+    for (let i = 0; i < inputs.length; i++) if (inputs[i].align === "line") {
+      const line = nodes[i].line ?? null;
+      if (line !== null) {
+        before = Math.max(before, line);
+        after = Math.max(after, crossSizes[i] - line);
+      }
+    }
+  }
+  const main = Math.max(Math.max(0, fixed + weighted), b.minMain), breadth = Math.max(cross, b.minCross, before + after);
+  const positions2 = arrange(main, mainSizes, o.arrangement || "start", rtl, vertical, spacing);
+  const children = nodes.map((node, i) => {
+    const c = crossPosition(inputs[i], breadth, crossSizes[i], vertical, rtl, before, node.line ?? null, o.crossAlignment ?? "center");
+    return { node, x: vertical ? c : positions2[i], y: vertical ? positions2[i] : c };
+  });
+  const requested = vertical ? { width: breadth, height: main } : { width: main, height: breadth };
+  return layoutPlaceable(o.id || "row", requested, axisConstraints(b, vertical), children, { fullTargets: nodes.map((n) => n.size[vertical ? "height" : "width"]) });
+}
+function rowColumnLayout(o) {
+  const node = measureRowColumn(o);
+  return { size: node.size, requested: node.requested, placements: layoutPlacements(node) };
+}
+function rowColumnIntrinsic(o, available, query = (input, axis, space, kind) => {
+  const value = kind === "min" ? input[axis === "main" ? "intrinsicMinMain" : "intrinsicMinCross"] ?? input[axis] : input[axis];
+  return axis === "cross" && input.wrap ? value * Math.max(1, Math.ceil(input.main / Math.max(1, space))) : value;
+}) {
+  const children = o.children || [], spacing = o.arrangement === "spaced" ? 7 : 0;
+  const main = (kind) => {
+    if (!children.length) return 0;
+    let unit = 0, fixed = 0, total = 0;
+    for (const child of children) {
+      const weight = f4(child.weight || 0), size = query(child, "main", available, kind);
+      if (weight === 0) fixed += size;
+      else if (weight > 0) {
+        total = f4(total + weight);
+        unit = Math.max(unit, round(f4(f4(size) / weight)));
+      }
+    }
+    return round(f4(f4(unit) * total)) + fixed + (children.length - 1) * spacing;
+  };
+  const cross = (kind) => {
+    if (!children.length) return 0;
+    let fixed = Math.min((children.length - 1) * spacing, available), maximum = 0, total = 0;
+    for (const child of children) {
+      const weight = f4(child.weight || 0);
+      if (weight === 0) {
+        const remaining = available === INF ? INF : available - fixed, size = Math.min(query(child, "main", INF, "max"), remaining);
+        fixed += size;
+        maximum = Math.max(maximum, query(child, "cross", size, kind));
+      } else if (weight > 0) total = f4(total + weight);
+    }
+    const unit = total === 0 ? 0 : available === INF ? INF : round(f4(f4(Math.max(available - fixed, 0)) / total));
+    for (const child of children) {
+      const weight = f4(child.weight || 0);
+      if (weight > 0) maximum = Math.max(maximum, query(child, "cross", unit === INF ? INF : round(f4(f4(unit) * weight)), kind));
+    }
+    return maximum;
+  };
+  return o.vertical ? { minWidth: cross("min"), minHeight: main("min"), maxWidth: cross("max"), maxHeight: main("max") } : { minWidth: main("min"), minHeight: cross("min"), maxWidth: main("max"), maxHeight: cross("max") };
+}
+
+// src/theme/surface-color.js
+var f5 = Math.fround;
+var schemeCache = /* @__PURE__ */ new WeakMap();
+var CONTENT_COLOR_ROLES = Object.freeze([
+  ["primary", "on-primary"],
+  ["secondary", "on-secondary"],
+  ["tertiary", "on-tertiary"],
+  ["background", "on-background"],
+  ["error", "on-error"],
+  ["primary-container", "on-primary-container"],
+  ["secondary-container", "on-secondary-container"],
+  ["tertiary-container", "on-tertiary-container"],
+  ["error-container", "on-error-container"],
+  ["inverse-surface", "inverse-on-surface"],
+  ["surface", "on-surface"],
+  ["surface-variant", "on-surface-variant"],
+  ...[
+    "surface-bright",
+    "surface-container",
+    "surface-container-high",
+    "surface-container-highest",
+    "surface-container-low",
+    "surface-container-lowest",
+    "surface-dim"
+  ].map((role) => [role, "on-surface"]),
+  ...["primary", "secondary", "tertiary"].flatMap((role) => [[role + "-fixed", "on-" + role + "-fixed"], [role + "-fixed-dim", "on-" + role + "-fixed"]])
+]);
+function packSrgb([red, green, blue, alpha = 1]) {
+  const byte = (value) => Math.trunc(f5(f5(Math.min(1, Math.max(0, f5(value))) * 255) + 0.5));
+  return (byte(alpha) << 24 | byte(red) << 16 | byte(green) << 8 | byte(blue)) >>> 0;
+}
+function unpackSrgb(color) {
+  return [color >>> 16 & 255, color >>> 8 & 255, color & 255, color >>> 24].map((value) => f5(value / 255));
+}
+function tonalSurfaceColor(surface, tint, elevation) {
+  elevation = f5(elevation);
+  if (elevation === 0) return surface;
+  const alpha = f5(f5(f5(4.5 * f5(Math.log(f5(elevation + 1)))) + 2) / 100);
+  const fg = unpackSrgb(packSrgb([...unpackSrgb(tint).slice(0, 3), alpha])), bg = unpackSrgb(surface);
+  const remainder = f5(1 - fg[3]), a = f5(fg[3] + f5(bg[3] * remainder));
+  const components = fg.slice(0, 3).map((channel2, i) => a === 0 ? 0 : f5(f5(f5(channel2 * fg[3]) + f5(f5(bg[i] * bg[3]) * remainder)) / a));
+  return packSrgb([...components, a]);
+}
+function matchingContentColor(background, scheme) {
+  for (const [container, content] of CONTENT_COLOR_ROLES) if (scheme[container] !== void 0 && background === scheme[container]) return scheme[content];
+  return void 0;
+}
+function srgbCss(color) {
+  const [r, g, b, a] = [color >>> 16 & 255, color >>> 8 & 255, color & 255, color >>> 24];
+  return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+}
+function resolveSurfaceColor(probe, color) {
+  probe.style.color = "";
+  probe.style.color = color;
+  const css = getComputedStyle(probe).color;
+  const rgb = /^rgba?\(([^)]+)\)$/.exec(css), srgb = /^color\(srgb\s+([^)]+)\)$/.exec(css);
+  let packed;
+  if (rgb) {
+    const channels = rgb[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    packed = packSrgb([...channels.slice(0, 3).map((v) => v / 255), channels[3] ?? 1]);
+  } else if (srgb) {
+    const channels = srgb[1].split(/[\s/]+/).filter(Boolean).map(Number);
+    packed = packSrgb(channels);
+  }
+  return { css, key: packed ?? css, packed };
+}
+function resolveSurfaceColors(host, probe, { container, content, elevation = 0 }) {
+  const style2 = getComputedStyle(host), resolved = /* @__PURE__ */ new Map();
+  const resolve = (color) => {
+    if (!resolved.has(color)) resolved.set(color, resolveSurfaceColor(probe, color));
+    return resolved.get(color);
+  };
+  const roles = [...new Set(CONTENT_COLOR_ROLES.flat())];
+  const values = roles.map((role) => style2.getPropertyValue("--md-sys-color-" + role).trim());
+  const signature = JSON.stringify([style2.color, values]);
+  let cached = schemeCache.get(host);
+  if (cached?.signature !== signature) {
+    const scheme2 = {};
+    for (let i = 0; i < roles.length; i++) {
+      if (values[i]) scheme2[roles[i]] = resolve(values[i]).key;
+    }
+    cached = { signature, scheme: scheme2 };
+    schemeCache.set(host, cached);
+  }
+  const scheme = cached.scheme;
+  const background = resolve(container);
+  const foreground = content ? resolve(content).css : matchingContentColor(background.key, scheme);
+  const parent = parseFloat(style2.getPropertyValue("--md-absolute-tonal-elevation")) || 0;
+  const total = f5(f5(parent) + f5(elevation));
+  const enabled = !["false", "0"].includes(style2.getPropertyValue("--md-tonal-elevation-enabled").trim());
+  const tint = style2.getPropertyValue("--md-sys-color-surface-tint").trim();
+  const tintColor = tint ? resolve(tint) : null;
+  const tonal = enabled && background.key === scheme.surface && background.packed !== void 0 && tintColor?.packed !== void 0;
+  return {
+    container: tonal ? srgbCss(tonalSurfaceColor(background.packed, tintColor.packed, total)) : background.css,
+    content: typeof foreground === "number" ? srgbCss(foreground) : foreground ?? style2.color,
+    total
+  };
+}
+
 // src/components/md-fab.js
 var defaultStyle4 = `
   :host { display: inline-block; outline: none; }
+  .touch-layout {
+    display: block; position: relative;
+    /* The toolbar updates this inherited size during the same layout pass.
+       Keep native coercion live in CSS instead of waiting for ResizeObserver. */
+    --_toolbar-fab-body-offset: calc(
+      round(nearest, max(0px, (round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px) - var(--md-toolbar-fab-size)) / 2), 1px)
+      + round(to-zero, min(0px, (var(--md-toolbar-fab-size) - round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px)) / 2), 1px));
+  }
+  .minimum-probe { position: absolute; width: var(--md-minimum-interactive-component-size, 48px); height: 0; visibility: hidden; pointer-events: none; }
+  .color-probe { position: absolute; visibility: hidden; pointer-events: none; }
 
   .fab {
-    position: relative;
+    position: absolute;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1677,8 +2737,8 @@ var defaultStyle4 = `
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     box-sizing: border-box;
-    color: var(--md-sys-color-on-primary, #fff);
-    background-color: var(--md-sys-color-primary, #6750A4);
+    color: var(--md-sys-color-on-primary);
+    background-color: var(--md-sys-color-primary);
     box-shadow: var(--md-sys-elevation-level-3);
     min-width: 56px;
     height: 56px;
@@ -1688,53 +2748,36 @@ var defaultStyle4 = `
     font-size: var(--md-sys-typescale-label-large-size, 14px);
     font-weight: var(--md-sys-typescale-label-large-weight, 500);
     letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-    transition:
-      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-      color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-    will-change: transform;
+    transition: none;
     outline: none;
   }
   .fab:focus { outline: none; }
-  .fab:focus-visible {
-    outline: 3px solid var(--md-sys-color-secondary, #625B71);
-    outline-offset: 2px;
-  }
 
-  .fab:not([disabled]):hover { box-shadow: var(--md-sys-elevation-level-4); }
-  .fab:not([disabled]):active { box-shadow: var(--md-sys-elevation-level-3); }
   :host([lowered]) .fab { box-shadow: var(--md-sys-elevation-level-1); }
-  :host([lowered]) .fab:hover:not([disabled]) { box-shadow: var(--md-sys-elevation-level-2); }
-  :host([lowered]) .fab.pressed:not([disabled]) { box-shadow: var(--md-sys-elevation-level-1); }
-  .fab::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; pointer-events: none; }
-  .fab:hover::before { opacity: 0.08; }
-  .fab:focus-visible::before, .fab.pressed::before { opacity: 0.1; }
+  .fab::before { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; background: rgb(from currentColor r g b / 1); opacity: var(--md-fab-state-alpha, 0); pointer-events: none; }
 
   /* Color roles (\xA74.3) */
-  .fab.primary      { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); }
-  .fab.secondary    { background-color: var(--md-sys-color-secondary, #625B71); color: var(--md-sys-color-on-secondary, #fff); }
-  .fab.tertiary     { background-color: var(--md-sys-color-tertiary, #7D5260); color: var(--md-sys-color-on-tertiary, #fff); }
-  .fab.primary-container   { background-color: var(--md-sys-color-primary-container, #EADDFF); color: var(--md-sys-color-on-primary-container, #21005D); }
-  .fab.secondary-container { background-color: var(--md-sys-color-secondary-container, #E8DEF8); color: var(--md-sys-color-on-secondary-container, #1D192B); }
-  .fab.tertiary-container  { background-color: var(--md-sys-color-tertiary-container, #FFD8E4); color: var(--md-sys-color-on-tertiary-container, #31111D); }
+  .fab.primary      { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+  .fab.secondary    { background-color: var(--md-sys-color-secondary); color: var(--md-sys-color-on-secondary); }
+  .fab.tertiary     { background-color: var(--md-sys-color-tertiary); color: var(--md-sys-color-on-tertiary); }
+  .fab.primary-container   { background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+  .fab.secondary-container { background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+  .fab.tertiary-container  { background-color: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
+  :host([color="surface"]) .fab { background-color: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); }
 
   .fab[disabled] {
     opacity: 1;
     cursor: not-allowed;
     box-shadow: none;
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent) !important;
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent) !important;
     color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent) !important;
   }
-  .fab[disabled]::before { opacity: 0; }
   /* FloatingToolbarDefaults FAB helper supplies baseline shape/icon and L2/L3. */
   .fab:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-3)); }
-  .fab:not([disabled]):hover { box-shadow: var(--md-toolbar-fab-hover-shadow, var(--md-sys-elevation-level-4)); }
-  .fab:not([disabled]):active, .fab.pressed:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-3)); }
   :host([lowered]) .fab:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-1)); }
-  :host([lowered]) .fab:not([disabled]):hover { box-shadow: var(--md-toolbar-fab-hover-shadow, var(--md-sys-elevation-level-2)); }
-  :host([lowered]) .fab:not([disabled]):active, :host([lowered]) .fab.pressed:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-1)); }
   .fab.primary-container { background-color: var(--md-toolbar-fab-container, var(--md-sys-color-primary-container)); color: var(--md-toolbar-fab-content, var(--md-sys-color-on-primary-container)); }
   :host([slot="fab"]) .fab { transition: none; }
-  .fab::after { content: ''; position: absolute; min-width: 48px; min-height: 48px; width: 100%; height: 100%; }
+  .fab::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 48px); height: max(100%, 48px); transform: translate(-50%, -50%); }
 
   .fab .material-symbols-outlined {
     font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
@@ -1746,35 +2789,30 @@ var defaultStyle4 = `
     direction: ltr;
     -webkit-font-smoothing: antialiased;
   }
-  .fab .lbl { white-space: nowrap; }
-  /* Ink lives in this shadow root; document styles cannot animate it. */
-  .md-ripple-effect {
-    position: absolute;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: var(--md-sys-state-pressed-opacity, 0.1);
-    transform: scale(0);
-    animation: fab-ripple 450ms var(--md-sys-motion-easing-emphasized-decelerate, cubic-bezier(.05,.7,.1,1)) forwards;
-    pointer-events: none;
-  }
-  @keyframes fab-ripple { to { transform: scale(2.5); opacity: 0; } }
+  .content-viewport { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; }
+  .content { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; justify-content: flex-start; box-sizing: border-box; }
+  .content > .material-symbols-outlined { flex: none; }
+  .label-clip { display: inline-flex; flex: none; overflow: hidden; box-sizing: border-box; direction: ltr; }
+  .label-content { display: inline-flex; flex: none; }
+  .fab .lbl { white-space: nowrap; flex: none; }
+  .fab .label-clip[hidden], .fab .material-symbols-outlined[hidden] { display: none; }
 `;
 var fabSheet = createComponentSheet(defaultStyle4);
 var FAB = {
   small: { h: 40, r: 12, icon: 24, padX: 0 },
   medium: { h: 80, r: 20, icon: 28, padX: 0 },
-  large: { h: 96, r: 28, icon: 32, padX: 0 },
+  large: { h: 96, r: 28, icon: 36, padX: 0 },
   baseline: { h: 56, r: 16, icon: 24, padX: 0 }
 };
 var EXT = {
   small: { h: 56, r: 16, icon: 24, padX: 16 },
   medium: { h: 80, r: 20, icon: 28, padX: 26 },
-  large: { h: 96, r: 28, icon: 32, padX: 28 },
+  large: { h: 96, r: 28, icon: 36, padX: 28 },
   baseline: { h: 56, r: 16, icon: 24, padX: 16 }
 };
 var MdFab = class extends HTMLElement {
   static get observedAttributes() {
-    return ["variant", "color", "size", "icon", "label", "disabled", "container-color", "content-color", "expanded", "lowered"];
+    return ["variant", "color", "size", "icon", "label", "disabled", "container-color", "content-color", "expanded", "lowered", "elevation", "aria-label"];
   }
   constructor() {
     super();
@@ -1782,6 +2820,9 @@ var MdFab = class extends HTMLElement {
     adoptSheet(this.shadowRoot, fabSheet);
     this._rendered = false;
     this._abortController = null;
+    this._expansion = null;
+    this._expansionFrame = null;
+    this._lastDisabled = null;
   }
   connectedCallback() {
     if (!this._rendered) {
@@ -1794,14 +2835,12 @@ var MdFab = class extends HTMLElement {
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._expansion = null;
   }
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
-    if (name === "variant" || name === "color" || name === "size" || name === "label" || name === "icon" || name === "container-color" || name === "content-color" || name === "expanded" || name === "lowered") {
-      this.render();
-      this._setup();
-    }
     this._sync();
+    if (name === "expanded") this.dispatchEvent(new CustomEvent("expanded-change", { detail: { expanded: this.expanded }, bubbles: true, composed: true }));
   }
   get variant() {
     return sanitizeAttribute(this.getAttribute("variant") || "surface");
@@ -1818,14 +2857,15 @@ var MdFab = class extends HTMLElement {
     else this.setAttribute("color", val);
   }
   get size() {
-    return this.getAttribute("size") || "medium";
+    const value = this.getAttribute("size");
+    return Object.hasOwn(FAB, value) ? value : "baseline";
   }
   set size(val) {
     if (val === null || val === void 0) this.removeAttribute("size");
     else this.setAttribute("size", val);
   }
   get icon() {
-    return this.getAttribute("icon") || "add";
+    return this.getAttribute("icon") ?? "add";
   }
   set icon(val) {
     if (val === null || val === void 0) this.removeAttribute("icon");
@@ -1863,6 +2903,13 @@ var MdFab = class extends HTMLElement {
   get lowered() {
     return this.hasAttribute("lowered");
   }
+  get elevation() {
+    return this.getAttribute("elevation") === "bottom-app-bar" ? "bottom-app-bar" : "default";
+  }
+  set elevation(val) {
+    if (val == null) this.removeAttribute("elevation");
+    else this.setAttribute("elevation", val);
+  }
   set lowered(val) {
     if (val) this.setAttribute("lowered", "");
     else this.removeAttribute("lowered");
@@ -1875,63 +2922,225 @@ var MdFab = class extends HTMLElement {
     else this.removeAttribute("disabled");
   }
   get isExtended() {
-    return this.expanded;
+    return this.variant === "extended" || Boolean(this.label) || this.hasAttribute("expanded");
+  }
+  focus(options) {
+    if (!this.disabled) this.shadowRoot.querySelector(".fab")?.focus(options);
   }
   _dims() {
     const s = this.size;
     const table = this.isExtended ? EXT : FAB;
-    return table[s] || (this.isExtended ? EXT.medium : FAB.medium);
+    return table[s];
   }
   _sync() {
     const fab = this.shadowRoot.querySelector(".fab");
     if (!fab) return;
     const d = this._dims();
     const isExt = this.isExtended;
-    fab.style.minWidth = `var(--md-toolbar-fab-size, ${d.h}px)`;
-    fab.style.width = isExt ? "auto" : `var(--md-toolbar-fab-size, ${d.h}px)`;
+    const pressed = fab.classList.contains("pressed");
+    fab.className = `fab ${this.color} ${this.variant}${isExt ? " extended" : ""}${pressed ? " pressed" : ""}`;
     fab.style.height = `var(--md-toolbar-fab-size, ${d.h}px)`;
-    fab.style.padding = isExt ? `0 ${d.padX}px` : "0";
+    fab.style.padding = "0";
     fab.style.borderRadius = `var(--md-toolbar-fab-shape, ${d.r}px)`;
-    fab.style.gap = `${d.h === 96 ? 20 : d.h === 80 ? 16 : 8}px`;
+    fab.style.gap = `${this.size === "baseline" && isExt ? 12 : d.h === 96 ? 16 : d.h === 80 ? 12 : 8}px`;
     const typeRole = d.h === 96 ? "headline-small" : d.h === 80 ? "title-large" : isExt && this.size !== "baseline" ? "title-medium" : "label-large";
     fab.style.font = `var(--md-sys-typescale-${typeRole})`;
     fab.style.letterSpacing = `var(--md-sys-typescale-${typeRole}-tracking)`;
-    if (this.containerColor) fab.style.backgroundColor = this.containerColor;
-    if (this.contentColor) fab.style.color = this.contentColor;
+    fab.style.backgroundColor = this.containerColor;
+    fab.style.color = this.contentColor;
     const iconEl = fab.querySelector(".material-symbols-outlined");
-    if (iconEl) iconEl.style.fontSize = `var(--md-toolbar-fab-icon-size, ${d.icon}px)`;
-    const fabAriaLabel = this.getAttribute("aria-label") || (isExt && this.label ? this.icon ? `${this.icon} ${this.label}` : this.label : this.label || this.icon || "Floating action button");
+    if (iconEl) {
+      iconEl.style.fontSize = `var(--md-toolbar-fab-icon-size, ${d.icon}px)`;
+      iconEl.textContent = this.icon;
+      iconEl.hidden = !this.icon;
+    }
+    const label = fab.querySelector(".lbl");
+    label.textContent = this.label;
+    const fabAriaLabel = this.getAttribute("aria-label") || this.label || this.icon || "Floating action button";
     fab.setAttribute("aria-label", fabAriaLabel);
     fab.disabled = this.disabled;
+    this._syncColors();
     fab.setAttribute("aria-disabled", this.disabled ? "true" : "false");
-    fab.setAttribute("tabindex", this.disabled ? "-1" : "0");
+    if (this._lastDisabled !== this.disabled) fab.setAttribute("tabindex", this.disabled ? "-1" : "0");
+    this._lastDisabled = this.disabled;
+    this._syncExpansion(d);
+    this._interactions?.refresh();
+  }
+  _syncExpansion(d = this._dims()) {
+    const fab = this.shadowRoot.querySelector(".fab");
+    const content = fab.querySelector(".content");
+    const clip = fab.querySelector(".label-clip");
+    const label = fab.querySelector(".lbl");
+    const icon2 = fab.querySelector(".material-symbols-outlined");
+    const baseline = this.size === "baseline";
+    const animated = this.isExtended && Boolean(this.icon && this.label);
+    clip.hidden = false;
+    clip.style.width = "auto";
+    const textWidth = Math.round(parseFloat(getComputedStyle(label).width) || 0);
+    const iconWidth = this.icon ? Math.round(parseFloat(getComputedStyle(icon2).width) || 0) : 0;
+    const gap = iconWidth && this.label ? baseline ? 12 : d.h === 96 ? 16 : d.h === 80 ? 12 : 8 : 0;
+    const labelWidth = textWidth + gap;
+    this._fabLayout = { d, baseline, animated, textWidth, labelWidth, iconWidth, content, clip, fab, gap };
+    const key = animated ? baseline ? "baseline" : "sized" : "static";
+    if (this._expansionKind !== key || !this._expansion) {
+      this._expansionKind = key;
+      this._expansion = new FabExpansion(animated ? this.expanded : true, { baseline, labelWidth, element: this });
+    } else if (animated) this._expansion.set(this.expanded, labelWidth, performance.now());
+    if (this._expansionMedia?.matches) this._expansion.finish();
+    this._tickExpansion(performance.now());
+  }
+  _tickExpansion(now) {
+    if (this._expansionFrame !== null) cancelAnimationFrame(this._expansionFrame);
+    this._expansionFrame = null;
+    if (!this._fabLayout || !this._expansion) return;
+    const { d, baseline, animated, labelWidth, iconWidth, content, clip, fab, gap } = this._fabLayout;
+    const state = this._expansion.sample(now);
+    const extended = this.isExtended;
+    const showLabel = extended && Boolean(this.label) && (!animated || state.composed);
+    clip.hidden = !showLabel;
+    clip.style.opacity = String(animated ? state.alpha : 1);
+    const labelContent = clip.querySelector(".label-content");
+    labelContent.style.paddingInlineStart = `${gap}px`;
+    labelContent.style.direction = getComputedStyle(fab).direction;
+    content.style.justifyContent = extended && this.icon ? "flex-start" : "center";
+    let width = d.h, measuredWidth = width, start = 0, end = 0;
+    if (extended) {
+      start = baseline ? this.icon ? this.expanded ? 16 : 0 : 20 : d.padX;
+      end = baseline ? this.icon ? this.expanded ? 20 : 0 : 20 : d.padX;
+      if (animated && baseline) {
+        const visibleWidth = Math.max(0, Math.round(state.width));
+        clip.style.width = `${visibleWidth}px`;
+        width = Math.max(this.expanded ? 80 : 56, start + iconWidth + visibleWidth + end);
+        measuredWidth = width;
+        content.style.justifyContent = this.expanded ? "flex-start" : "center";
+      } else {
+        clip.style.width = `${labelWidth}px`;
+        const minimum = baseline ? 80 : d.h;
+        measuredWidth = Math.max(minimum, start + iconWidth + (showLabel ? labelWidth : 0) + end);
+        width = animated ? Math.max(0, fabWidth(d.h, measuredWidth, state.width)) : measuredWidth;
+      }
+    } else {
+      content.style.justifyContent = "center";
+      clip.hidden = true;
+    }
+    fab.style.minWidth = "0";
+    fab.style.width = `var(--md-toolbar-fab-size, ${width}px)`;
+    content.style.width = `var(--md-toolbar-fab-size, ${measuredWidth}px)`;
+    content.style.paddingInlineStart = `${start}px`;
+    content.style.paddingInlineEnd = `${end}px`;
+    this._syncHitLayout();
+    if (animated && state.running && this.isConnected) this._expansionFrame = requestAnimationFrame((time) => this._tickExpansion(time));
+  }
+  _syncHitLayout() {
+    const fab = this.shadowRoot.querySelector(".fab");
+    const layout = this.shadowRoot.querySelector(".touch-layout");
+    const probe = this.shadowRoot.querySelector(".minimum-probe");
+    const style2 = getComputedStyle(fab);
+    const minimum = Math.max(0, Math.round(parseFloat(getComputedStyle(probe).width) || 0));
+    const width = parseFloat(style2.width) || 0, height = parseFloat(style2.height) || 0;
+    const sized = Boolean(style2.getPropertyValue("--md-toolbar-fab-size").trim());
+    const touch = minimumInteractiveLayout({
+      width,
+      height,
+      minimum,
+      ...sized ? { minWidth: width, maxWidth: width, minHeight: height, maxHeight: height } : {}
+    });
+    layout.style.width = `var(--md-toolbar-fab-size, ${touch.size.width}px)`;
+    layout.style.height = `var(--md-toolbar-fab-size, ${touch.size.height}px)`;
+    fab.style.left = `var(--_toolbar-fab-body-offset, ${touch.body.x}px)`;
+    fab.style.top = `var(--_toolbar-fab-body-offset, ${touch.body.y}px)`;
+    this._minimumInteractiveLines = touch.lines;
+  }
+  _syncColors() {
+    if (this.disabled) return;
+    const fab = this.shadowRoot.querySelector(".fab");
+    const style2 = getComputedStyle(fab);
+    const toolbar = Boolean(style2.getPropertyValue("--md-toolbar-fab-rest-shadow").trim());
+    const toolbarContent = this.color === "primary-container" ? style2.getPropertyValue("--md-toolbar-fab-content").trim() : "";
+    const colors = resolveSurfaceColors(this, this.shadowRoot.querySelector(".color-probe"), {
+      container: style2.backgroundColor,
+      content: this.contentColor || toolbarContent,
+      elevation: this.elevation === "bottom-app-bar" ? 0 : toolbar ? 3 : this.lowered ? 1 : 6
+    });
+    fab.style.backgroundColor = colors.container;
+    fab.style.color = colors.content;
+    fab.style.setProperty("--md-absolute-tonal-elevation", String(colors.total));
   }
   _setup() {
     this._abortController?.abort();
+    this._expansion = null;
     this._abortController = new AbortController();
     const { signal } = this._abortController;
     const fab = this.shadowRoot.querySelector(".fab");
     if (!fab) return;
-    bindPress(fab, {
+    this._interactions = bindFabInteractions(fab, {
       disabled: () => this.disabled,
-      onPress: (event) => createRipple(event, fab),
+      configuration: () => {
+        const style2 = getComputedStyle(fab);
+        if (this.elevation === "bottom-app-bar") return { rest: 0, hover: 0, restShadow: "var(--md-sys-elevation-level-0)", hoverShadow: "var(--md-sys-elevation-level-0)" };
+        const toolbar = Boolean(style2.getPropertyValue("--md-toolbar-fab-rest-shadow").trim());
+        const rest = toolbar ? 3 : this.lowered ? 1 : 6;
+        const hover = toolbar ? 6 : this.lowered ? 3 : 8;
+        return {
+          rest,
+          hover,
+          restShadow: `var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-${this.lowered ? 1 : 3}))`,
+          hoverShadow: `var(--md-toolbar-fab-hover-shadow, var(--md-sys-elevation-level-${this.lowered ? 2 : 4}))`
+        };
+      },
       signal
     });
+    bindPress(fab, {
+      disabled: () => this.disabled,
+      onPress: (event) => {
+        this._interactions.press(true);
+        createRipple(event, fab);
+      },
+      onRelease: () => this._interactions.press(false),
+      signal
+    });
+    this._expansionMedia = matchMedia("(prefers-reduced-motion: reduce)");
+    this._expansionMedia.addEventListener("change", () => {
+      if (this._expansionMedia.matches) {
+        this._expansion?.finish();
+        this._tickExpansion(performance.now());
+      }
+    }, { signal });
+    const stopTheme = observeThemeContext(this, () => this._sync());
+    document.fonts.addEventListener("loadingdone", () => this._sync(), { signal });
+    const resize = new ResizeObserver(() => {
+      if (this.isConnected) this._sync();
+    });
+    resize.observe(fab.querySelector(".lbl"));
+    const bodyResize = new ResizeObserver(() => {
+      if (this.isConnected) this._syncHitLayout();
+    });
+    bodyResize.observe(fab);
+    bodyResize.observe(this.shadowRoot.querySelector(".minimum-probe"));
+    signal.addEventListener("abort", () => {
+      stopTheme();
+      resize.disconnect();
+      bodyResize.disconnect();
+      if (this._expansionFrame !== null) cancelAnimationFrame(this._expansionFrame);
+      this._expansionFrame = null;
+    }, { once: true });
   }
   render() {
     const isExt = this.isExtended;
     const c = this.color;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    const fabAriaLabel = this.getAttribute("aria-label") || (isExt && this.label ? this.icon ? `${this.icon} ${this.label}` : this.label : this.label || this.icon || "Floating action button");
+    const fabAriaLabel = this.getAttribute("aria-label") || this.label || this.icon || "Floating action button";
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle4}</style>`}
-      <button part="button" class="fab ${escapeHtml(c)} ${escapeHtml(this.variant)}${isExt ? " extended" : ""}" ${this.disabled ? "disabled" : ""}
+      <span class="touch-layout"><span class="minimum-probe" aria-hidden="true"></span><span class="color-probe" aria-hidden="true"></span><button part="button" class="fab ${escapeHtml(c)} ${escapeHtml(this.variant)}${isExt ? " extended" : ""}" ${this.disabled ? "disabled" : ""}
         tabindex="${this.disabled ? -1 : 0}" role="button"
         aria-label="${escapeHtml(fabAriaLabel)}"
         aria-disabled="${this.disabled}">
-        <span class="material-symbols-outlined" aria-hidden="true">${escapeHtml(this.icon)}</span>
-        ${isExt && this.label ? `<span class="lbl">${escapeHtml(this.label)}</span>` : ""}
-      </button>
+        <span class="content-viewport" aria-hidden="true"><span class="content">
+          <span class="material-symbols-outlined">${escapeHtml(this.icon)}</span>
+          <span class="label-clip"${isExt && this.label ? "" : " hidden"}><span class="label-content"><span class="lbl">${escapeHtml(this.label)}</span></span></span>
+        </span></span>
+      </button></span>
     `;
   }
 };
@@ -2263,9 +3472,6 @@ var defaultStyle6 = `
   .chip:focus-visible:not(.disabled)::before {
     opacity: var(--md-sys-state-focus-state-layer-opacity, 0.10);
   }
-  .chip.pressed:not(.disabled)::before {
-    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.10);
-  }
 
   .chip.assist,
   .chip.suggestion,
@@ -2574,25 +3780,25 @@ if (!customElements.get("md-chip")) {
 }
 
 // src/motion/touch-slop.js
-var f = Math.fround;
+var f6 = Math.fround;
 function pointerSlop(pointerType, touchSlop = 8) {
-  return pointerType === "mouse" ? f(f(touchSlop) * f(0.125 / 18)) : f(touchSlop);
+  return pointerType === "mouse" ? f6(f6(touchSlop) * f6(0.125 / 18)) : f6(touchSlop);
 }
 var HorizontalTouchSlop = class {
   constructor(slop) {
-    this.slop = f(slop);
+    this.slop = f6(slop);
     this.total = 0;
   }
   add(delta) {
-    this.total = f(this.total + f(delta));
+    this.total = f6(this.total + f6(delta));
     const distance = Math.abs(this.total);
     if (distance === 0 || distance < this.slop) return null;
-    return f(this.total - f(Math.sign(this.total) * this.slop));
+    return f6(this.total - f6(Math.sign(this.total) * this.slop));
   }
 };
 
 // src/shapes/corner-shape.js
-var f2 = Math.fround;
+var f7 = Math.fround;
 var uniform = (value) => [value, value, value, value];
 var circleCornerShape = Object.freeze({
   type: "rounded",
@@ -2610,7 +3816,7 @@ function normalizeCornerShape(value = circleCornerShape) {
   if (corners.length !== 4) throw new TypeError("Expected four corners in top-start, top-end, bottom-end, bottom-start order");
   const normalized = corners.map((corner) => {
     const unit = typeof corner === "number" ? "px" : corner?.unit;
-    const size = f2(typeof corner === "number" ? corner : corner?.value);
+    const size = f7(typeof corner === "number" ? corner : corner?.value);
     if (!["px", "dp", "percent"].includes(unit) || !Number.isFinite(size) || size < 0 || unit === "percent" && size > 100) {
       throw new RangeError("Corners need finite nonnegative px/dp sizes or percentages in [0, 100]");
     }
@@ -2619,55 +3825,55 @@ function normalizeCornerShape(value = circleCornerShape) {
   return Object.freeze({ type: value.type, absolute: value.absolute === true, corners: Object.freeze(normalized) });
 }
 function cornerPx(corner, minimum, density) {
-  const value = f2(typeof corner === "number" ? corner : corner.value);
+  const value = f7(typeof corner === "number" ? corner : corner.value);
   switch (typeof corner === "number" ? "px" : corner.unit) {
     case "px":
       return value;
     case "dp":
-      return f2(value * density);
+      return f7(value * density);
     case "percent":
       if (value < 0 || value > 100) throw new RangeError("Corner percent must be in [0, 100]");
-      return f2(minimum * f2(value / 100));
+      return f7(minimum * f7(value / 100));
     default:
       throw new TypeError("Unknown corner unit");
   }
 }
 function cornerShapeOutline(shape2 = circleCornerShape, width, height, rtl = false, density = 1) {
-  width = f2(width);
-  height = f2(height);
-  density = f2(density);
+  width = f7(width);
+  height = f7(height);
+  density = f7(density);
   const bounds2 = { left: 0, top: 0, right: width, bottom: height };
   if (shape2.type === "rectangle") return { type: "rectangle", bounds: bounds2 };
   if (!["rounded", "cut"].includes(shape2.type) || shape2.corners?.length !== 4) throw new TypeError("Invalid corner shape");
   const minimum = Math.min(Math.abs(width), Math.abs(height));
   let [ts, te, be, bs] = shape2.corners.map((value) => cornerPx(value, minimum, density));
-  if (f2(ts + bs) > minimum) {
-    const scale2 = f2(minimum / f2(ts + bs));
-    ts = f2(ts * scale2);
-    bs = f2(bs * scale2);
+  if (f7(ts + bs) > minimum) {
+    const scale2 = f7(minimum / f7(ts + bs));
+    ts = f7(ts * scale2);
+    bs = f7(bs * scale2);
   }
-  if (f2(te + be) > minimum) {
-    const scale2 = f2(minimum / f2(te + be));
-    te = f2(te * scale2);
-    be = f2(be * scale2);
+  if (f7(te + be) > minimum) {
+    const scale2 = f7(minimum / f7(te + be));
+    te = f7(te * scale2);
+    be = f7(be * scale2);
   }
   if (![ts, te, be, bs].every((value) => value >= 0)) throw new RangeError("Corner size cannot be negative or NaN");
-  if (f2(f2(f2(ts + te) + be) + bs) === 0) return { type: "rectangle", bounds: bounds2 };
+  if (f7(f7(f7(ts + te) + be) + bs) === 0) return { type: "rectangle", bounds: bounds2 };
   const [tl, tr, br, bl] = rtl && !shape2.absolute ? [te, ts, bs, be] : [ts, te, be, bs];
   if (shape2.type === "rounded") return { type: "rounded", bounds: bounds2, radii: [tl, tr, br, bl].map((value) => [value, value]) };
   return { type: "generic", bounds: bounds2, points: [
     [0, tl],
     [tl, 0],
-    [f2(width - tr), 0],
+    [f7(width - tr), 0],
     [width, tr],
-    [width, f2(height - br)],
-    [f2(width - br), height],
+    [width, f7(height - br)],
+    [f7(width - br), height],
     [bl, height],
-    [0, f2(height - bl)]
+    [0, f7(height - bl)]
   ] };
 }
 function roundedOutlineRadii({ bounds: b, radii }) {
-  const width = f2(b.right - b.left), height = f2(b.bottom - b.top);
+  const width = f7(b.right - b.left), height = f7(b.bottom - b.top);
   let scale2 = 1;
   for (const [a, z, limit] of [
     [radii[3][1], radii[0][1], height],
@@ -2675,71 +3881,71 @@ function roundedOutlineRadii({ bounds: b, radii }) {
     [radii[1][1], radii[2][1], height],
     [radii[2][0], radii[3][0], width]
   ]) {
-    const sum = f2(a + z);
-    if (sum > limit && sum !== 0) scale2 = Math.min(scale2, f2(limit / sum));
+    const sum = f7(a + z);
+    if (sum > limit && sum !== 0) scale2 = Math.min(scale2, f7(limit / sum));
   }
-  return radii.map((corner) => corner.map((value) => f2(value * scale2)));
+  return radii.map((corner) => corner.map((value) => f7(value * scale2)));
 }
 
 // src/components/slider-layout.js
-var f3 = Math.fround;
-var lerp = (a, b, t) => f3(f3(f3(1 - t) * a) + f3(t * b));
-var scale = (a, b, value, min, max) => lerp(f3(min), f3(max), sliderValueFraction(value, a, b));
+var f8 = Math.fround;
+var lerp2 = (a, b, t) => f8(f8(f8(1 - t) * a) + f8(t * b));
+var scale = (a, b, value, min, max) => lerp2(f8(min), f8(max), sliderValueFraction(value, a, b));
 var SLIDER_METRICS = Object.freeze({ track: 16, handle: 4, handleLength: 44, gap: 6, insideCorner: 2, stop: 4 });
 function sliderValueFraction(value, min, max) {
-  const span = f3(f3(max) - f3(min));
-  return span === 0 ? 0 : f3(Math.max(0, Math.min(1, f3(f3(f3(value) - f3(min)) / span))));
+  const span = f8(f8(max) - f8(min));
+  return span === 0 ? 0 : f8(Math.max(0, Math.min(1, f8(f8(f8(value) - f8(min)) / span))));
 }
 function sliderTickFractions(steps) {
-  return steps > 0 ? Array.from({ length: steps + 2 }, (_, i) => f3(i / (steps + 1))) : [];
+  return steps > 0 ? Array.from({ length: steps + 2 }, (_, i) => f8(i / (steps + 1))) : [];
 }
 function snapSliderValue(value, min, max, steps = 0) {
-  const current = f3(Math.max(min, Math.min(max, value)));
+  const current = f8(Math.max(min, Math.min(max, value)));
   if (!steps || max <= min) return current;
-  const fraction = f3(f3(current - min) / f3(max - min));
+  const fraction = f8(f8(current - min) / f8(max - min));
   const lower = Math.max(0, Math.min(steps + 1, Math.floor(fraction * (steps + 1))));
-  const a = lerp(f3(min), f3(max), f3(lower / (steps + 1)));
-  const b = lerp(f3(min), f3(max), f3(Math.min(steps + 1, lower + 1) / (steps + 1)));
-  return Math.abs(f3(a - current)) <= Math.abs(f3(b - current)) ? a : b;
+  const a = lerp2(f8(min), f8(max), f8(lower / (steps + 1)));
+  const b = lerp2(f8(min), f8(max), f8(Math.min(steps + 1, lower + 1) / (steps + 1)));
+  return Math.abs(f8(a - current)) <= Math.abs(f8(b - current)) ? a : b;
 }
 function sliderThumbOffset(length, fraction, steps = 0, corner = 8) {
-  const p = f3(fraction);
-  return steps > 0 && p !== 0 && p !== 1 ? Math.round(f3(f3(f3(length - corner * 2) * p))) + corner : Math.round(f3(length * p));
+  const p = f8(fraction);
+  return steps > 0 && p !== 0 && p !== 1 ? Math.round(f8(f8(f8(length - corner * 2) * p))) + corner : Math.round(f8(length * p));
 }
 function sliderPointerValue(coordinate, total, min, max, steps = 0) {
-  const maxPx = f3(Math.max(f3(total - 2), 0)), minPx = f3(Math.min(2, maxPx));
-  const offset = snapSliderValue(f3(coordinate), minPx, maxPx, steps);
+  const maxPx = f8(Math.max(f8(total - 2), 0)), minPx = f8(Math.min(2, maxPx));
+  const offset = snapSliderValue(f8(coordinate), minPx, maxPx, steps);
   return scale(minPx, maxPx, offset, min, max);
 }
 var SliderPointerState = class {
   constructor(min, max, steps = 0) {
-    this.min = f3(min);
-    this.max = f3(max);
+    this.min = f8(min);
+    this.max = f8(max);
     this.steps = steps;
     this.total = 0;
     this.rawOffset = 0;
     this.pressOffset = 0;
   }
   press(coordinate) {
-    this.pressOffset = f3(f3(coordinate) - this.rawOffset);
+    this.pressOffset = f8(f8(coordinate) - this.rawOffset);
   }
   drag(delta) {
-    this.rawOffset = f3(f3(this.rawOffset + f3(delta)) + this.pressOffset);
+    this.rawOffset = f8(f8(this.rawOffset + f8(delta)) + this.pressOffset);
     this.pressOffset = 0;
     return sliderPointerValue(this.rawOffset, this.total, this.min, this.max, this.steps);
   }
 };
 var RangeSliderPointerState = class {
   constructor(min, max, steps = 0) {
-    this.min = f3(min);
-    this.max = f3(max);
+    this.min = f8(min);
+    this.max = f8(max);
     this.steps = steps;
     this.minPx = this.maxPx = this.rawOffsetStart = this.rawOffsetEnd = 0;
   }
   update(total, start, end, dragging = false) {
-    this.start = f3(start);
-    this.end = f3(end);
-    const maxPx = f3(Math.max(f3(total - 2), 0)), minPx = f3(Math.min(2, maxPx));
+    this.start = f8(start);
+    this.end = f8(end);
+    const maxPx = f8(Math.max(f8(total - 2), 0)), minPx = f8(Math.min(2, maxPx));
     if (!dragging && (this.minPx !== minPx || this.maxPx !== maxPx || this.start !== this.end)) {
       this.minPx = minPx;
       this.maxPx = maxPx;
@@ -2751,12 +3957,12 @@ var RangeSliderPointerState = class {
     const { minPx, maxPx } = this;
     let start, end;
     if (isStart) {
-      this.rawOffsetStart = f3(this.rawOffsetStart + f3(delta));
+      this.rawOffsetStart = f8(this.rawOffsetStart + f8(delta));
       this.rawOffsetEnd = scale(this.min, this.max, this.end, minPx, maxPx);
       end = this.rawOffsetEnd;
       start = Math.min(end, snapSliderValue(Math.max(minPx, Math.min(end, this.rawOffsetStart)), minPx, maxPx, this.steps));
     } else {
-      this.rawOffsetEnd = f3(this.rawOffsetEnd + f3(delta));
+      this.rawOffsetEnd = f8(this.rawOffsetEnd + f8(delta));
       this.rawOffsetStart = scale(this.min, this.max, this.start, minPx, maxPx);
       start = this.rawOffsetStart;
       end = Math.max(start, snapSliderValue(Math.max(start, Math.min(maxPx, this.rawOffsetEnd)), minPx, maxPx, this.steps));
@@ -2783,59 +3989,59 @@ function sliderTrackLayout({
   shrink = centered || vertical,
   stopIndicators = true
 }) {
-  length = f3(Math.max(0, length));
-  thickness = f3(thickness);
-  corner = f3(corner);
-  insideCorner = f3(insideCorner);
-  start = f3(start);
-  end = f3(end);
+  length = f8(Math.max(0, length));
+  thickness = f8(thickness);
+  corner = f8(corner);
+  insideCorner = f8(insideCorner);
+  start = f8(start);
+  end = f8(end);
   const ticks = sliderTickFractions(steps), rtlHorizontal = rtl && !vertical;
-  const valuePosition = (p) => ticks.length && p !== 0 && p !== 1 ? f3(f3(f3(length - f3(corner * 2)) * p) + corner) : f3(length * p);
-  const valueStart = valuePosition(start), valueEnd = valuePosition(end), center = f3(length / 2);
+  const valuePosition = (p) => ticks.length && p !== 0 && p !== 1 ? f8(f8(f8(length - f8(corner * 2)) * p) + corner) : f8(length * p);
+  const valueStart = valuePosition(start), valueEnd = valuePosition(end), center = f8(length / 2);
   const startHandle = range || centered && end <= 0.5 ? 4 : 0;
   const endHandle = !centered || end >= 0.5 ? 4 : 0;
-  const startGap = (range || centered) && gap > 0 ? f3(startHandle / 2 + gap) : 0;
-  const endGap = gap > 0 ? f3(endHandle / 2 + gap) : 0;
+  const startGap = (range || centered) && gap > 0 ? f8(startHandle / 2 + gap) : 0;
+  const endGap = gap > 0 ? f8(endHandle / 2 + gap) : 0;
   const paths = [], dots = [];
-  const axisPosition = (p) => (vertical ? reverse : rtlHorizontal) ? f3(length - p) : p;
+  const axisPosition = (p) => (vertical ? reverse : rtlHorizontal) ? f8(length - p) : p;
   const drawPath = (role, from, to, first2, last) => {
-    const extent = f3(to - from);
-    const lo = rtlHorizontal ? f3(length - to) : from;
-    const hi = f3(lo + extent);
+    const extent = f8(to - from);
+    const lo = rtlHorizontal ? f8(length - to) : from;
+    const hi = f8(lo + extent);
     if (vertical && reverse || rtlHorizontal) [first2, last] = [last, first2];
-    const bounds2 = vertical ? { left: 0, top: reverse ? f3(length - hi) : lo, right: thickness, bottom: reverse ? f3(length - lo) : hi } : { left: lo, top: 0, right: hi, bottom: thickness };
+    const bounds2 = vertical ? { left: 0, top: reverse ? f8(length - hi) : lo, right: thickness, bottom: reverse ? f8(length - lo) : hi } : { left: lo, top: 0, right: hi, bottom: thickness };
     const radii = (vertical ? [first2, first2, last, last] : [first2, last, last, first2]).map((r) => [r, r]);
     paths.push({ role, bounds: bounds2, radii });
   };
   const drawDot = (position, role, kind) => dots.push({ position: axisPosition(position), role, kind });
-  let leftThreshold = startGap, rightThreshold = f3(length - endGap);
+  let leftThreshold = startGap, rightThreshold = f8(length - endGap);
   if (!shrink || ticks.length) {
-    leftThreshold = f3(leftThreshold + corner);
-    rightThreshold = f3(rightThreshold - corner);
+    leftThreshold = f8(leftThreshold + corner);
+    rightThreshold = f8(rightThreshold - corner);
   }
   const adjustedEnd = centered ? Math.min(valueEnd, center) : valueStart;
   const adjustedStart = centered ? Math.max(valueEnd, center) : valueEnd;
   if ((centered || range) && adjustedEnd > leftThreshold) {
-    drawPath("inactive", 0, f3(adjustedEnd - startGap), corner, insideCorner);
+    drawPath("inactive", 0, f8(adjustedEnd - startGap), corner, insideCorner);
     if (stopIndicators) drawDot(corner, "active", "stop");
   }
   if (adjustedStart < rightThreshold) {
-    drawPath("inactive", f3(adjustedStart + endGap), length, insideCorner, corner);
-    if (stopIndicators) drawDot(f3(length - corner), "active", "stop");
+    drawPath("inactive", f8(adjustedStart + endGap), length, insideCorner, corner);
+    if (stopIndicators) drawDot(f8(length - corner), "active", "stop");
   }
-  const activeStart = centered ? f3(adjustedEnd + (adjustedEnd < center ? startGap : 0)) : range ? f3(valueStart + startGap) : 0;
-  const activeEnd = centered ? f3(adjustedStart - (adjustedStart > center ? endGap : 0)) : f3(valueEnd - endGap);
-  const activeWidth = rtlHorizontal && !centered && !range ? activeEnd : f3(activeEnd - activeStart);
+  const activeStart = centered ? f8(adjustedEnd + (adjustedEnd < center ? startGap : 0)) : range ? f8(valueStart + startGap) : 0;
+  const activeEnd = centered ? f8(adjustedStart - (adjustedStart > center ? endGap : 0)) : f8(valueEnd - endGap);
+  const activeWidth = rtlHorizontal && !centered && !range ? activeEnd : f8(activeEnd - activeStart);
   const first = centered || range ? insideCorner : corner;
   const threshold2 = !shrink || ticks.length ? rtlHorizontal || centered || range ? insideCorner : corner : 0;
   if (activeWidth > threshold2) drawPath("active", activeStart, activeEnd, first, insideCorner);
-  const tickStart = corner, tickEnd = f3(length - corner);
+  const tickStart = corner, tickEnd = f8(length - corner);
   const centerGap = centered ? valueEnd > center ? startGap : endGap : 0;
   const handleGap = centered ? valueEnd > center ? endGap : startGap : endGap;
-  const inGap = (position, middle, size) => position >= f3(middle - size) && position <= f3(middle + size);
+  const inGap = (position, middle, size) => position >= f8(middle - size) && position <= f8(middle + size);
   ticks.forEach((tick, index) => {
     if (stopIndicators && ((centered || range) && index === 0 || index === ticks.length - 1)) return;
-    const p = lerp(tickStart, tickEnd, tick);
+    const p = lerp2(tickStart, tickEnd, tick);
     if (centered && inGap(p, center, centerGap) || range && inGap(p, valueStart, startGap) || inGap(p, valueEnd, handleGap)) return;
     drawDot(p, p >= activeStart && p <= activeEnd ? "active-tick" : "inactive-tick", "tick");
   });
@@ -3374,207 +4580,6 @@ function setSelectionValidity(control, anchor, valueMissing) {
   }
   control._internals.setValidity({ valueMissing, customError }, message, anchor || void 0);
   anchor?.setAttribute("aria-invalid", String(Boolean(control.error) || control._internals.willValidate && !control._internals.validity.valid));
-}
-
-// src/motion/spring-duration.js
-function springDuration({
-  from,
-  to,
-  velocity = 0,
-  stiffness = 380,
-  dampingRatio = 0.8,
-  visibilityThreshold = 0.01
-}) {
-  const f13 = Math.fround;
-  const displacement = f13(f13(f13(from) - f13(to)) / f13(visibilityThreshold));
-  const initialVelocity = f13(f13(velocity) / f13(visibilityThreshold));
-  const damping = f13(dampingRatio), k = f13(stiffness);
-  if (damping === 0) return 9223372036854;
-  if (displacement === 0 && initialVelocity === 0) return 0;
-  const b = 2 * damping * Math.sqrt(k);
-  const partial = b * b - 4 * k;
-  const real = partial < 0 ? 0 : Math.sqrt(partial);
-  const imaginary = partial < 0 ? Math.sqrt(Math.abs(partial)) : 0;
-  const r1 = (-b + real) * 0.5, r2 = (-b - real) * 0.5;
-  const p = Math.abs(displacement), v = displacement < 0 ? -initialVelocity : initialVelocity;
-  let seconds;
-  if (damping < 1) {
-    const c2 = (v - r1 * p) / (imaginary * 0.5);
-    seconds = Math.log(1 / Math.sqrt(p * p + c2 * c2)) / r1;
-  } else if (damping === 1) {
-    const c1 = p, c2 = v - r1 * p;
-    const t1 = Math.log(Math.abs(1 / c1)) / r1;
-    const guess = Math.log(Math.abs(1 / c2));
-    let t = guess;
-    for (let i = 0; i < 6; i++) t = guess - Math.log(Math.abs(t / r1));
-    let current = finiteMax(t1, t / r1);
-    const inflection2 = -(r1 * c1 + c2) / (r1 * c2);
-    const x = c1 * Math.exp(r1 * inflection2) + c2 * inflection2 * Math.exp(r1 * inflection2);
-    let delta = -1;
-    if (!(Number.isNaN(inflection2) || inflection2 <= 0)) {
-      if (inflection2 > 0 && -x < 1) {
-        if (c2 < 0 && c1 > 0) current = 0;
-      } else {
-        current = -2 / r1 - c1 / c2;
-        delta = 1;
-      }
-    }
-    seconds = newton(
-      current,
-      (t2) => (c1 + c2 * t2) * Math.exp(r1 * t2) + delta,
-      (t2) => (c2 * (r1 * t2 + 1) + c1 * r1) * Math.exp(r1 * t2)
-    );
-  } else {
-    const c2 = (r1 * p - v) / (r1 - r2), c1 = p - c2;
-    let current = finiteMax(Math.log(Math.abs(1 / c1)) / r1, Math.log(Math.abs(1 / c2)) / r2);
-    const inflection2 = Math.log(c1 * r1 / (-c2 * r2)) / (r2 - r1);
-    const x = c1 * Math.exp(r1 * inflection2) + c2 * Math.exp(r2 * inflection2);
-    let delta = -1;
-    if (!(Number.isNaN(inflection2) || inflection2 <= 0)) {
-      if (inflection2 > 0 && -x < 1) {
-        if (c2 > 0 && c1 < 0) current = 0;
-      } else {
-        current = Math.log(-(c2 * r2 * r2) / (c1 * r1 * r1)) / (r1 - r2);
-        delta = 1;
-      }
-    }
-    const derivative = (t) => c1 * r1 * Math.exp(r1 * t) + c2 * r2 * Math.exp(r2 * t);
-    seconds = Math.abs(derivative(current)) < 1e-4 ? current : newton(
-      current,
-      (t) => c1 * Math.exp(r1 * t) + c2 * Math.exp(r2 * t) + delta,
-      derivative
-    );
-  }
-  return Number.isNaN(seconds) ? 0 : Math.max(0, Math.trunc(seconds * 1e3));
-}
-function finiteMax(a, b) {
-  return !Number.isFinite(a) ? b : !Number.isFinite(b) ? a : Math.max(a, b);
-}
-function newton(current, value, derivative) {
-  let difference = Infinity;
-  for (let i = 0; difference > 1e-3 && i < 100; i++) {
-    const previous = current;
-    current -= value(current) / derivative(current);
-    difference = Math.abs(previous - current);
-  }
-  return current;
-}
-
-// src/motion/selection-motion.js
-var SpringValue = class {
-  constructor(value) {
-    this.value = this.target = value;
-    this.animation = null;
-  }
-  sample(now) {
-    const a = this.animation;
-    if (!a) return { position: this.value, velocity: 0 };
-    const elapsed = Math.max(0, now - a.start);
-    if (elapsed >= a.duration) {
-      this.value = this.target;
-      this.animation = null;
-      return { position: this.value, velocity: 0 };
-    }
-    if (a.snap) return { position: a.from, velocity: a.velocity };
-    const state = SpringPhysics.solve({
-      ...a,
-      from: Math.fround(a.from - a.to),
-      to: 0,
-      time: Math.floor(elapsed) / 1e3
-    });
-    return { position: Math.fround(state.position + a.to), velocity: Math.fround(state.velocity) };
-  }
-  to(target, spec, { now = performance.now(), snap = false, delay = 0, transition = false, velocity = null, roundInitial = false } = {}) {
-    if (target === this.target && velocity === null) return;
-    const current = this.sample(now);
-    if (transition && snap && this.animation) {
-      spec = { stiffness: 1500, dampingRatio: 1 };
-      snap = false;
-    }
-    this.target = target;
-    const a = {
-      from: roundInitial ? Math.round(current.position) : current.position,
-      to: target,
-      velocity: Math.fround(velocity ?? current.velocity),
-      stiffness: Math.fround(spec.stiffness),
-      dampingRatio: Math.fround(spec.dampingRatio),
-      visibilityThreshold: Math.fround(spec.visibilityThreshold ?? 0.01),
-      start: now,
-      snap
-    };
-    a.duration = snap ? delay : springDuration(a);
-    this.animation = a;
-    this.sample(now);
-  }
-  finish() {
-    this.value = this.target;
-    this.animation = null;
-  }
-};
-var SelectionMotion = class {
-  constructor(element2, initial, draw) {
-    this.element = element2;
-    this.channels = Object.fromEntries(Object.entries(initial).map(([key, value]) => [key, new SpringValue(value)]));
-    this.draw = draw;
-    this.raf = null;
-    this.disposed = false;
-    this.media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
-    this.onPreference = () => {
-      if (this.media.matches) this.finish();
-    };
-    this.media?.addEventListener("change", this.onPreference);
-    this.render(performance.now());
-  }
-  set(updates) {
-    if (this.disposed) return;
-    const now = performance.now();
-    for (const [key, { value, role = "expressiveSpatialMedium", ...options }] of Object.entries(updates)) {
-      this.channels[key].to(value, SpringPhysics.getPreset(role, this.element), { ...options, now });
-    }
-    if (this.media?.matches) this.finish();
-    else this.tick(now);
-  }
-  render(now) {
-    if (this.disposed) return;
-    this.draw(Object.fromEntries(Object.entries(this.channels).map(([key, channel2]) => [key, channel2.sample(now).position])));
-  }
-  tick(now) {
-    if (this.disposed) return;
-    if (this.raf !== null) cancelAnimationFrame(this.raf);
-    this.raf = null;
-    this.render(now);
-    if (Object.values(this.channels).some((channel2) => channel2.animation)) {
-      this.raf = requestAnimationFrame((time) => this.tick(time));
-    }
-  }
-  finish() {
-    if (this.disposed) return;
-    for (const channel2 of Object.values(this.channels)) channel2.finish();
-    this.tick(performance.now());
-  }
-  dispose() {
-    this.disposed = true;
-    if (this.raf !== null) cancelAnimationFrame(this.raf);
-    this.raf = null;
-    this.media?.removeEventListener("change", this.onPreference);
-  }
-};
-function checkboxPath(fraction, gravitation) {
-  const points = [[4, 10], [8 + 2 * gravitation, 14 - 4 * gravitation], [16, 6 + 4 * gravitation]];
-  const lengths = [
-    Math.hypot(points[1][0] - 4, points[1][1] - 10),
-    Math.hypot(points[2][0] - points[1][0], points[2][1] - points[1][1])
-  ];
-  let remaining = Math.max(0, Math.min(1, fraction)) * (lengths[0] + lengths[1]);
-  if (remaining <= 0) return "";
-  let path = "M 4 10";
-  for (let i = 0; i < 2; i++) {
-    const portion = Math.min(1, remaining / lengths[i]);
-    path += ` L ${points[i][0] + (points[i + 1][0] - points[i][0]) * portion} ${points[i][1] + (points[i + 1][1] - points[i][1]) * portion}`;
-    remaining -= lengths[i];
-    if (remaining <= 0) break;
-  }
-  return path;
 }
 
 // src/components/md-switch.js
@@ -5311,42 +6316,42 @@ function cubicBezier(x1, y1, x2, y2, progress) {
 }
 
 // src/components/progress-indicator-layout.js
-var f4 = Math.fround;
-var clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+var f9 = Math.fround;
+var clamp2 = (x, a, b) => Math.max(a, Math.min(b, x));
 var phase = (ms, period) => (Math.max(0, ms) % period + period) % period;
 function linearIndeterminateFractions(elapsed) {
   const t = Math.floor(phase(elapsed, 1750));
-  const sample = (delay, duration) => f4(cubicBezier(0.3, 0, 0.8, 0.15, f4(clamp((t - delay) / duration, 0, 1))));
+  const sample = (delay, duration) => f9(cubicBezier(0.3, 0, 0.8, 0.15, f9(clamp2((t - delay) / duration, 0, 1))));
   return [sample(250, 1e3), sample(0, 1e3), sample(900, 850), sample(650, 850)];
 }
 function circularIndeterminateState(elapsed) {
   const elapsedCycle = phase(elapsed, 6e3), t = Math.floor(elapsedCycle);
   const step = Math.floor(t / 1500), ramp = Math.min(1, t % 1500 / 300);
-  const additional = f4((step + ramp) * 90);
-  const progress = t <= 3e3 ? f4(f4(0.1) + f4(f4(f4(0.87) - f4(0.1)) * f4(t / 3e3))) : f4(f4(0.87) + f4(f4(f4(0.1) - f4(0.87)) * f4(cubicBezier(0.2, 0, 0, 1, f4((t - 3e3) / 3e3)))));
-  return { progress, rotation: f4(f4(f4(elapsedCycle / 6e3) * 1080) + additional) };
+  const additional = f9((step + ramp) * 90);
+  const progress = t <= 3e3 ? f9(f9(0.1) + f9(f9(f9(0.87) - f9(0.1)) * f9(t / 3e3))) : f9(f9(0.87) + f9(f9(f9(0.1) - f9(0.87)) * f9(cubicBezier(0.2, 0, 0, 1, f9((t - 3e3) / 3e3)))));
+  return { progress, rotation: f9(f9(f9(elapsedCycle / 6e3) * 1080) + additional) };
 }
 function standardLinearLayout({ width, height, progress, fractions, gap = 4, stop = 4, cap = "round" }) {
-  progress = f4(progress);
-  const w = f4(width), h = f4(height), butt = cap === "butt" || h > w;
-  const gapFraction = f4(f4(butt ? gap : f4(gap + h)) / w);
+  progress = f9(progress);
+  const w = f9(width), h = f9(height), butt = cap === "butt" || h > w;
+  const gapFraction = f9(f9(butt ? gap : f9(gap + h)) / w);
   const tracks = [], active = [];
   const line = (out, start, end) => {
     if (start === end) return;
     out.push([
-      butt ? f4(start * w) : clamp(f4(start * w), h / 2, w - h / 2),
-      butt ? f4(end * w) : clamp(f4(end * w), h / 2, w - h / 2)
+      butt ? f9(start * w) : clamp2(f9(start * w), h / 2, w - h / 2),
+      butt ? f9(end * w) : clamp2(f9(end * w), h / 2, w - h / 2)
     ]);
   };
   if (fractions) {
     const [t1, h1, t2, h2] = fractions;
-    if (h1 < f4(1 - gapFraction)) line(tracks, h1 > 0 ? f4(h1 + gapFraction) : 0, 1);
+    if (h1 < f9(1 - gapFraction)) line(tracks, h1 > 0 ? f9(h1 + gapFraction) : 0, 1);
     if (h1 - t1 > 0) line(active, h1, t1);
-    if (t1 > gapFraction) line(tracks, h2 > 0 ? f4(h2 + gapFraction) : 0, t1 < 1 ? f4(t1 - gapFraction) : 1);
+    if (t1 > gapFraction) line(tracks, h2 > 0 ? f9(h2 + gapFraction) : 0, t1 < 1 ? f9(t1 - gapFraction) : 1);
     if (h2 - t2 > 0) line(active, h2, t2);
-    if (t2 > gapFraction) line(tracks, 0, t2 < 1 ? f4(t2 - gapFraction) : 1);
+    if (t2 > gapFraction) line(tracks, 0, t2 < 1 ? f9(t2 - gapFraction) : 1);
   } else {
-    const start = f4(progress + Math.min(progress, gapFraction));
+    const start = f9(progress + Math.min(progress, gapFraction));
     if (start <= 1) line(tracks, start, 1);
     line(active, 0, progress);
   }
@@ -5359,21 +6364,21 @@ function standardLinearLayout({ width, height, progress, fractions, gap = 4, sto
   };
 }
 function standardCircularLayout({ size, stroke = 4, progress, rotation = 270, gap = 4, cap = "round" }) {
-  progress = f4(progress);
-  const sweep = f4(progress * 360);
-  const gapSweep = f4(f4(f4((cap === "butt" ? gap : f4(gap + stroke)) / f4(Math.PI * size)) * 360));
+  progress = f9(progress);
+  const sweep = f9(progress * 360);
+  const gapSweep = f9(f9(f9((cap === "butt" ? gap : f9(gap + stroke)) / f9(Math.PI * size)) * 360));
   const adaptive = Math.min(sweep, gapSweep);
   return {
-    radius: f4(f4(size - stroke) / 2),
+    radius: f9(f9(size - stroke) / 2),
     start: rotation,
     sweep,
-    trackStart: f4(f4(rotation + sweep) + adaptive),
-    trackSweep: f4(f4(360 - sweep) - f4(2 * adaptive))
+    trackStart: f9(f9(rotation + sweep) + adaptive),
+    trackSweep: f9(f9(360 - sweep) - f9(2 * adaptive))
   };
 }
 function linearWavyLayout({ width, height, stroke = 4, trackStroke = stroke, fractions, gap = 4, stop = 4, cap = "round", trackCap = cap }) {
   const capWidth = cap === "butt" && trackCap === "butt" || height > width ? 0 : Math.max(stroke / 2, trackStroke / 2);
-  const clampX = (x2) => clamp(x2, capWidth, width - capWidth);
+  const clampX = (x2) => clamp2(x2, capWidth, width - capWidth);
   const active = [], tracks = [];
   let nextEnd = width - capWidth, adaptiveGap = gap, visible = false;
   for (let i = 0; i < fractions.length; i += 2) {
@@ -5441,7 +6446,7 @@ function linearWaveSegments(start, end, { height, stroke = 4, wavelength, amplit
 var progressMorphs = { "5": [1, 0.5, 0.49999994, 0.47155723, 0.49999997, [[0.8728427, 0.22911389, 0.8783204, 0.23665328, 0.88354254, 0.24431728, 0.8885088, 0.25209427], [0.8885088, 0.25209427, 0.8988186, 0.26823878, 0.9080266, 0.28487018, 0.91613275, 0.3018844], [0.91613275, 0.3018844, 0.93250465, 0.3362481, 0.94438183, 0.37217337, 0.95176446, 0.4088028], [0.95176446, 0.4088028, 0.9640112, 0.46956605, 0.9638893, 0.532267, 0.95139897, 0.59299165], [0.95139897, 0.59299165, 0.9438995, 0.6294522, 0.93194103, 0.6652003, 0.91552365, 0.69938874], [0.91552365, 0.69938874, 0.90747625, 0.71614695, 0.89835745, 0.73253053, 0.8881674, 0.74843955], [0.8881674, 0.74843955, 0.8833032, 0.7560334, 0.87819505, 0.7635192, 0.8728427, 0.770886]], [[0.8213799, 0.2458391, 0.8270108, 0.25358918, 0.83302915, 0.26105767, 0.83941394, 0.26821536], [0.839414, 0.26821533, 0.8526036, 0.28300157, 0.8657932, 0.29778782, 0.8789829, 0.31257406], [0.8789829, 0.31257406, 0.92145276, 0.36018494, 0.94268763, 0.38399038, 0.95398504, 0.4050985], [0.95398504, 0.4050985, 0.98571706, 0.4643873, 0.98571706, 0.53561264, 0.95398504, 0.59490144], [0.95398504, 0.59490144, 0.94268763, 0.6160096, 0.92145276, 0.639815, 0.8789829, 0.68742585], [0.8789829, 0.68742585, 0.8657932, 0.70221215, 0.8526036, 0.7169985, 0.8394139, 0.73178476], [0.83941394, 0.73178476, 0.83302903, 0.73894256, 0.82701075, 0.74641085, 0.8213801, 0.7541608]], [[0.960859, 0.49999994, 0.960859, 0.59506166, 0.9315202, 0.6901234, 0.8728427, 0.770886]], [[0.97778404, 0.5, 0.97778404, 0.53262854, 0.969851, 0.5652571, 0.95398504, 0.59490144], [0.95398504, 0.59490144, 0.94268763, 0.6160096, 0.92145276, 0.639815, 0.8789829, 0.68742585], [0.8789829, 0.68742585, 0.8657932, 0.70221215, 0.8526036, 0.7169985, 0.83941394, 0.73178476], [0.83941394, 0.73178476, 0.826644, 0.7461005, 0.81534064, 0.7616583, 0.8056716, 0.778227], [0.8056716, 0.778227, 0.7956848, 0.7953403, 0.78569806, 0.8124536, 0.77571124, 0.829567], [0.77571124, 0.829567, 0.7435546, 0.8846709, 0.7274761, 0.91222286, 0.71089226, 0.9294899]]], "6": [1, 0.51092076, 0.5, 0.5064112, 0.5, [[0.93447584, 0.25546035, 0.9455922, 0.27471453, 0.95529413, 0.2945372, 0.9635816, 0.3147837], [0.9635816, 0.3147837, 0.9717514, 0.3347426, 0.9785466, 0.35511345, 0.9839672, 0.37575752], [0.9839672, 0.37575752, 1.0054421, 0.45754272, 1.0053437, 0.54361707, 0.98367167, 0.6253629], [0.98367167, 0.6253629, 0.9782372, 0.6458615, 0.9714462, 0.666088, 0.9632986, 0.6859064], [0.9632986, 0.6859064, 0.9550735, 0.7059133, 0.9454659, 0.7255044, 0.9344759, 0.74453974]], [[0.88103724, 0.28370982, 0.8917829, 0.30232173, 0.9046457, 0.31971124, 0.9194159, 0.33551466], [0.9194158, 0.33551463, 0.94285923, 0.36059806, 0.9545809, 0.3731398, 0.96153265, 0.3826082], [0.96153265, 0.3826082, 1.0128224, 0.45246595, 1.0128224, 0.547534, 0.9615327, 0.6173917], [0.9615327, 0.6173917, 0.9545809, 0.62686014, 0.94285923, 0.6394019, 0.9194157, 0.6644854], [0.9194157, 0.6644854, 0.90464556, 0.6802888, 0.8917828, 0.69767827, 0.8810373, 0.71629006]], [[1, 0.50000006, 1.0000001, 0.58443946, 0.9781587, 0.6688789, 0.93447584, 0.7445397]], [[0.99999994, 0.49999994, 1, 0.5412314, 0.98717755, 0.58246285, 0.9615327, 0.6173917], [0.9615327, 0.6173917, 0.9545809, 0.62686014, 0.94285923, 0.6394019, 0.9194157, 0.6644854], [0.9194157, 0.6644854, 0.88987535, 0.6960924, 0.8679643, 0.7340435, 0.855362, 0.7754297], [0.855362, 0.7754297, 0.84536093, 0.8082738, 0.8403603, 0.8246958, 0.83563614, 0.8354508]]], "7": [1, 0.49999994, 0.49999994, 0.49517143, 0.5, [[0.9320587, 0.29193154, 0.94408506, 0.3169046, 0.9538272, 0.34265965, 0.9612852, 0.3688997], [0.9612852, 0.3688997, 0.98565876, 0.45465428, 0.9856367, 0.54558843, 0.9612189, 0.63133365], [0.9612189, 0.63133365, 0.95376945, 0.657493, 0.94404936, 0.68316936, 0.93205863, 0.7080683]], [[0.88255584, 0.31344587, 0.89429486, 0.33782232, 0.9100957, 0.36024275, 0.9294623, 0.37967744], [0.9294624, 0.37967744, 0.99574983, 0.4461979, 0.99574983, 0.5538021, 0.9294624, 0.6203225], [0.9294623, 0.62032247, 0.9100956, 0.6397573, 0.89429474, 0.6621777, 0.88255566, 0.6865542]], [[0.97954893, 0.49999994, 0.9795489, 0.57116264, 0.9637188, 0.6423253, 0.9320586, 0.70806843]], [[0.97917795, 0.49999997, 0.97917795, 0.5435311, 0.9626061, 0.5870623, 0.9294623, 0.62032247], [0.9294623, 0.62032247, 0.89072883, 0.65919214, 0.8662588, 0.7100045, 0.86001927, 0.76452243]]], "8": [1, 0.50618637, 0.50000006, 0.5070844, 0.50000006, [[0.95669526, 0.31339327, 0.9672748, 0.33893457, 0.97559285, 0.36515066, 0.9816493, 0.39175305], [0.9816493, 0.39175305, 0.9978831, 0.46305886, 0.99786836, 0.53714, 0.98160505, 0.60844076], [0.98160505, 0.60844076, 0.9755523, 0.6349767, 0.96724916, 0.66112745, 0.95669526, 0.68660676]], [[0.90425843, 0.33548543, 0.9145976, 0.3604465, 0.9302179, 0.3832201, 0.9504088, 0.40209094], [0.9504089, 0.402091, 1.0070844, 0.455061, 1.0070845, 0.54493904, 0.9504089, 0.5979091], [0.9504088, 0.59790915, 0.93021774, 0.61678004, 0.9145974, 0.63955384, 0.90425813, 0.66451514]], [[0.9938136, 0.50000006, 0.9938136, 0.5634328, 0.9814408, 0.6268656, 0.95669526, 0.6866069]], [[0.9929156, 0.5, 0.9929156, 0.535712, 0.97874665, 0.57142407, 0.9504088, 0.59790915], [0.9504088, 0.59790915, 0.91002685, 0.6356509, 0.88792735, 0.6890038, 0.8897943, 0.7442456]]], "9": [0, 0.5, 0.5, 0.49789155, 0.5, [[0.95810384, 0.3332639, 0.9671067, 0.35799915, 0.97404194, 0.38328126, 0.97890955, 0.40885907], [0.97890955, 0.40885907, 0.9903783, 0.46912426, 0.99036866, 0.5310309, 0.9788805, 0.5912934], [0.9788805, 0.5912934, 0.9740144, 0.61681914, 0.9670888, 0.6420499, 0.9581038, 0.66673607], [0.9581037, 0.6667362, 0.94910085, 0.69147134, 0.9381626, 0.7152964, 0.9254504, 0.7380189], [0.9254504, 0.7380189, 0.8954983, 0.7915567, 0.85569793, 0.8389739, 0.8081615, 0.87775314], [0.8081615, 0.87775314, 0.78802615, 0.8941792, 0.7665028, 0.90905553, 0.74375194, 0.9221908], [0.74375194, 0.9221908, 0.7209559, 0.9353521, 0.6972622, 0.94657207, 0.6729184, 0.95580727], [0.6729184, 0.95580727, 0.6155601, 0.97756684, 0.5545921, 0.9883073, 0.49325, 0.98745805], [0.49325, 0.98745805, 0.46726707, 0.98709846, 0.44121704, 0.98465943, 0.41534576, 0.9800976], [0.4153458, 0.9800976, 0.3894231, 0.9755267, 0.3640606, 0.96889186, 0.3394759, 0.96031845], [0.3394759, 0.96031845, 0.28155005, 0.9401181, 0.22794202, 0.9091563, 0.18149717, 0.8690759], [0.18149717, 0.8690759, 0.16182429, 0.8520989, 0.14343661, 0.8334857, 0.12655036, 0.8133615], [0.12655036, 0.8133614, 0.10963042, 0.793197, 0.09446639, 0.7718114, 0.08114421, 0.7494409], [0.08114421, 0.7494409, 0.049755186, 0.6967327, 0.028590985, 0.63855624, 0.018775363, 0.577999], [0.018775363, 0.577999, 0.014617686, 0.5523482, 0.012496147, 0.52627033, 0.012496147, 0.49999994], [0.012496147, 0.49999988, 0.012496147, 0.4736774, 0.014626111, 0.44754824, 0.018800126, 0.4218483], [0.018800126, 0.4218483, 0.028634863, 0.36129475, 0.04981733, 0.3031246, 0.08122377, 0.25042543], [0.08122377, 0.25042543, 0.09452679, 0.2281033, 0.109664164, 0.20676275, 0.12655048, 0.18663844], [0.12655045, 0.18663844, 0.14347024, 0.16647424, 0.16189742, 0.14782721, 0.1816145, 0.13082296], [0.1816145, 0.13082296, 0.22807136, 0.09075795, 0.28168905, 0.059812903, 0.33962205, 0.03963066], [0.33962205, 0.03963066, 0.36416113, 0.031081924, 0.38947448, 0.024464224, 0.41534582, 0.019902408], [0.4153461, 0.01990238, 0.44126844, 0.015331574, 0.46737036, 0.012891901, 0.4934044, 0.012539742], [0.4934044, 0.012539742, 0.554746, 0.011709981, 0.61571085, 0.022469496, 0.6730633, 0.044247728], [0.6730633, 0.044247728, 0.69735634, 0.053472452, 0.72100127, 0.06467411, 0.7437521, 0.07780935], [0.7437522, 0.07780932, 0.7665482, 0.09097062, 0.78811187, 0.1058799, 0.80828166, 0.12234473], [0.80828166, 0.12234473, 0.8558051, 0.1611386, 0.89559054, 0.2085681, 0.925526, 0.2621163], [0.925526, 0.2621163, 0.9382061, 0.28479812, 0.94911885, 0.30857772, 0.95810384, 0.3332639]], [[0.90375537, 0.35227776, 0.912724, 0.37691906, 0.92786205, 0.39931488, 0.94829786, 0.41707084], [0.9482979, 0.4170708, 0.99870473, 0.4608674, 0.9987048, 0.5391326, 0.9482979, 0.58292925], [0.94829786, 0.5829293, 0.92786205, 0.60068524, 0.912724, 0.623081, 0.90375537, 0.6477223], [0.90375537, 0.6477223, 0.8947866, 0.67236364, 0.89198726, 0.69925034, 0.89622873, 0.7259881], [0.89622873, 0.7259881, 0.90669066, 0.7919392, 0.85638267, 0.85189384, 0.7896169, 0.85304314], [0.7896169, 0.85304314, 0.7625489, 0.85350907, 0.73655677, 0.86093473, 0.7138473, 0.874046], [0.7138473, 0.874046, 0.6911377, 0.8871573, 0.6717107, 0.9059544, 0.65777314, 0.92916316], [0.65777314, 0.92916316, 0.6233949, 0.9864094, 0.54631865, 1, 0.4944344, 0.9579642], [0.49443442, 0.9579642, 0.47339952, 0.940922, 0.44871524, 0.92990303, 0.42289084, 0.9253495], [0.42289084, 0.9253495, 0.39706653, 0.9207959, 0.37010217, 0.9227079, 0.34450713, 0.9315279], [0.34450716, 0.9315279, 0.28137475, 0.95328325, 0.21359505, 0.91415066, 0.20086944, 0.84859866], [0.20086944, 0.8485986, 0.19571027, 0.8220228, 0.183884, 0.797715, 0.16702846, 0.7776273], [0.16702846, 0.7776273, 0.15017281, 0.75753945, 0.12828785, 0.74167174, 0.10301149, 0.73197603], [0.10301146, 0.731976, 0.04066524, 0.7080607, 0.013896971, 0.63451546, 0.04628454, 0.57611996], [0.04628454, 0.57611996, 0.059415027, 0.5524454, 0.06598029, 0.52622277, 0.065980315, 0.5000001], [0.065980315, 0.5000001, 0.065980345, 0.47377732, 0.05941511, 0.4475546, 0.04628461, 0.42387995], [0.04628454, 0.42387986, 0.013896971, 0.3654843, 0.040665302, 0.29193908, 0.103011556, 0.26802388], [0.103011556, 0.26802382, 0.12828794, 0.25832814, 0.1501729, 0.24246037, 0.16702858, 0.22237252], [0.16702858, 0.22237252, 0.1838841, 0.2022848, 0.19571039, 0.17797706, 0.20086958, 0.15140122], [0.20086958, 0.15140122, 0.21359518, 0.08584934, 0.28137484, 0.046716742, 0.34450722, 0.068472], [0.34450734, 0.06847197, 0.3701026, 0.07729203, 0.39706728, 0.07920398, 0.42289186, 0.07465028], [0.42289186, 0.07465028, 0.44871587, 0.07009668, 0.47339982, 0.059077736, 0.49443442, 0.042035885], [0.49443462, 0.042035755, 0.546319, 0, 0.62339514, 0.013590652, 0.6577733, 0.070836894], [0.6577733, 0.070836924, 0.6717108, 0.09404547, 0.6911376, 0.11284243, 0.713847, 0.12595378], [0.713847, 0.12595378, 0.7365566, 0.13906527, 0.7625489, 0.14649102, 0.7896171, 0.14695697], [0.789617, 0.146957, 0.8563828, 0.1481063, 0.90669066, 0.20806092, 0.89622873, 0.27401197], [0.89622873, 0.274012, 0.89198726, 0.30074972, 0.89478666, 0.32763648, 0.90375537, 0.35227776]], [[0.9875038, 0.5, 0.9875039, 0.5564427, 0.9777038, 0.61288536, 0.9581037, 0.6667362], [0.9581037, 0.6667362, 0.91890365, 0.7744375, 0.84301, 0.864884, 0.74375194, 0.9221908], [0.74375194, 0.9221908, 0.64449376, 0.9794975, 0.5282181, 1, 0.4153458, 0.9800976], [0.4153458, 0.9800976, 0.30247357, 0.9601951, 0.20022245, 0.9011605, 0.12655036, 0.8133614], [0.12655036, 0.8133614, 0.05287825, 0.72556233, 0.012496147, 0.6146134, 0.012496147, 0.49999988], [0.012496147, 0.49999988, 0.012496147, 0.38538644, 0.05287831, 0.27443743, 0.12655045, 0.18663844], [0.12655045, 0.18663844, 0.20022257, 0.09883948, 0.30247363, 0.039804816, 0.4153461, 0.01990238], [0.4153461, 0.01990238, 0.52821827, 0, 0.644494, 0.020502592, 0.7437522, 0.07780932], [0.7437522, 0.07780932, 0.84301025, 0.13511607, 0.91890377, 0.22556247, 0.95810384, 0.3332639], [0.95810384, 0.3332639, 0.97770387, 0.3871146, 0.9875039, 0.44355732, 0.9875038, 0.5]], [[0.98610306, 0.5, 0.98610306, 0.53051543, 0.9735013, 0.5610309, 0.94829786, 0.5829293], [0.94829786, 0.5829293, 0.90742624, 0.6184412, 0.8877458, 0.6725126, 0.89622873, 0.7259881], [0.89622873, 0.7259881, 0.90669066, 0.7919392, 0.85638267, 0.85189384, 0.7896169, 0.85304314], [0.7896169, 0.85304314, 0.7354807, 0.85397506, 0.68564826, 0.8827458, 0.65777314, 0.92916316], [0.65777314, 0.92916316, 0.6233949, 0.9864094, 0.54631865, 1, 0.49443442, 0.9579642], [0.49443442, 0.9579642, 0.45236468, 0.9238799, 0.3956972, 0.9138879, 0.34450716, 0.9315279], [0.34450716, 0.9315279, 0.28137475, 0.95328325, 0.21359505, 0.91415066, 0.20086944, 0.8485986], [0.20086944, 0.8485986, 0.19055107, 0.79544675, 0.15356405, 0.75136733, 0.10301146, 0.731976], [0.10301146, 0.731976, 0.04066524, 0.7080607, 0.013896971, 0.63451546, 0.04628454, 0.57611996], [0.04628454, 0.57611996, 0.07254555, 0.5287708, 0.07254558, 0.47122917, 0.04628454, 0.42387986], [0.04628454, 0.42387986, 0.013896971, 0.3654843, 0.040665302, 0.29193908, 0.103011556, 0.26802382], [0.103011556, 0.26802382, 0.15356414, 0.2486325, 0.19055119, 0.2045531, 0.20086958, 0.15140122], [0.20086958, 0.15140122, 0.21359518, 0.08584934, 0.28137484, 0.046716742, 0.34450734, 0.06847197], [0.34450734, 0.06847197, 0.39569733, 0.086111896, 0.4523647, 0.076119974, 0.49443462, 0.042035755], [0.49443462, 0.042035755, 0.546319, 0, 0.62339514, 0.013590652, 0.6577733, 0.070836924], [0.6577733, 0.070836924, 0.68564844, 0.11725424, 0.73548096, 0.14602506, 0.789617, 0.146957], [0.789617, 0.146957, 0.8563828, 0.1481063, 0.90669066, 0.20806092, 0.89622873, 0.274012], [0.89622873, 0.274012, 0.8877458, 0.32748744, 0.90742624, 0.38155892, 0.9482979, 0.4170708], [0.9482979, 0.4170708, 0.9735013, 0.4389691, 0.98610306, 0.46948457, 0.98610306, 0.5]]], "10": [1, 0.5040456, 0.5, 0.5057865, 0.5, [[0.9757263, 0.34674183, 0.9835216, 0.3707333, 0.98943937, 0.39517084, 0.99347955, 0.4198395], [0.99347955, 0.4198395, 1.0021801, 0.47296363, 1.0021734, 0.5271598, 0.9934596, 0.58028233], [0.9934596, 0.58028233, 0.98941976, 0.60490966, 0.9835087, 0.6293062, 0.97572625, 0.6532582]], [[0.9222192, 0.36469322, 0.9300524, 0.3888012, 0.9447365, 0.41068313, 0.9652808, 0.4272903], [0.9652809, 0.42729038, 1.011573, 0.46471113, 1.011573, 0.53528893, 0.9652809, 0.5727096], [0.9652808, 0.5727097, 0.94473636, 0.58931696, 0.9300522, 0.6111991, 0.92221904, 0.6353072]], [[1, 0.5, 1, 0.5517268, 0.9919087, 0.6034536, 0.97572625, 0.6532584]], [[1, 0.5, 1, 0.52699965, 0.9884269, 0.5539993, 0.9652808, 0.5727097], [0.9652808, 0.5727097, 0.92419195, 0.6059242, 0.90654427, 0.6602381, 0.9202629, 0.7112606]]], "11": [1, 0.5, 0.50000006, 0.4996316, 0.50000006, [[0.97167903, 0.3615027, 0.97829187, 0.38402393, 0.9832576, 0.40690032, 0.9865764, 0.42995504], [0.9865764, 0.42995504, 0.9932683, 0.47644216, 0.9932637, 0.523654, 0.9865627, 0.5701401], [0.9865627, 0.5701401, 0.98324406, 0.59316266, 0.97828275, 0.61600715, 0.97167903, 0.6384974]], [[0.9171153, 0.3774166, 0.9238498, 0.40035176, 0.93778247, 0.42117327, 0.9578637, 0.43630686], [0.9578637, 0.4363069, 1.0002033, 0.4682147, 1.0002033, 0.5317854, 0.9578637, 0.5636932], [0.9578637, 0.5636933, 0.9377822, 0.578827, 0.9238495, 0.5996487, 0.917115, 0.622584]], [[0.9915919, 0.5000001, 0.9915919, 0.546643, 0.98495424, 0.593286, 0.9716789, 0.63849753]], [[0.9896184, 0.50000006, 0.9896184, 0.5238697, 0.97903347, 0.5477393, 0.9578637, 0.5636933], [0.9578637, 0.5636933, 0.9177007, 0.59396076, 0.90213275, 0.64698046, 0.9195561, 0.6941568]]], "12": [1, 0.50280756, 0.5, 0.5049412, 0.5, [[0.9803466, 0.3720439, 0.9860807, 0.3934438, 0.99035096, 0.41513276, 0.9931574, 0.43696323], [0.9931574, 0.43696323, 0.9985404, 0.47883755, 0.99853736, 0.5212325, 0.9931484, 0.56310624], [0.9931484, 0.56310624, 0.9903419, 0.58491325, 0.98607457, 0.60657895, 0.9803466, 0.6279561]], [[0.92646074, 0.3870547, 0.9323426, 0.40900546, 0.9456884, 0.4289562, 0.9654113, 0.44284993], [0.9654113, 0.44284993, 1.0049412, 0.4706966, 1.0049412, 0.5293034, 0.9654113, 0.5571501], [0.9654113, 0.5571502, 0.9456883, 0.57104397, 0.93234235, 0.59099483, 0.9264606, 0.6129458]], [[0.9971924, 0.5, 0.9971924, 0.5430217, 0.99157715, 0.58604336, 0.9803466, 0.6279562]], [[0.9950588, 0.5, 0.9950588, 0.52161336, 0.98517627, 0.5432267, 0.9654113, 0.5571502], [0.9654113, 0.5571502, 0.9259653, 0.5849377, 0.9120276, 0.6369538, 0.93229496, 0.6807416]]], "13": [1, 0.49999994, 0.5, 0.50066364, 0.5, [[0.9796086, 0.38178724, 0.9845871, 0.40198594, 0.9882705, 0.42242056, 0.99065876, 0.44296828], [0.99065876, 0.44296828, 0.9950651, 0.4808777, 0.9950632, 0.51917225, 0.99065304, 0.55708134], [0.99065304, 0.55708134, 0.9882645, 0.57761234, 0.984583, 0.5980303, 0.97960854, 0.61821276]], [[0.9263733, 0.3950724, 0.9315561, 0.41609985, 0.9443773, 0.43524462, 0.9637326, 0.44802645], [0.96373266, 0.4480265, 1.0010146, 0.4726467, 1.0010147, 0.5273532, 0.9637327, 0.5519735], [0.9637326, 0.5519736, 0.9443771, 0.5647555, 0.93155587, 0.58390045, 0.92637306, 0.6049281]], [[0.99396217, 0.5, 0.99396217, 0.53969467, 0.9891776, 0.5793894, 0.97960854, 0.61821294]], [[0.99169415, 0.49999997, 0.9916942, 0.51983166, 0.9823737, 0.5396634, 0.9637326, 0.5519736], [0.9637326, 0.5519736, 0.92502177, 0.57753736, 0.9124476, 0.62855315, 0.9348442, 0.6691786]]], "14": [1, 0.5020806, 0.5, 0.50445575, 0.5, [[0.98751605, 0.3892025, 0.99191034, 0.4084552, 0.99514455, 0.42790395, 0.9972188, 0.44744527], [0.9972188, 0.44744527, 1.0009284, 0.48239583, 1.000927, 0.5176425, 0.9972146, 0.5525929], [0.9972146, 0.5525929, 0.9951403, 0.5721213, 0.9919075, 0.5915573, 0.98751605, 0.6107975]], [[0.9370998, 0.40125236, 0.941733, 0.42155114, 0.9541594, 0.4400711, 0.97326547, 0.45193332], [0.97326547, 0.4519333, 1.0089115, 0.47406465, 1.0089115, 0.52593535, 0.97326547, 0.5480667], [0.97326547, 0.5480667, 0.95415926, 0.559929, 0.9417329, 0.57844913, 0.9370997, 0.598748]], [[0.9999999, 0.5, 0.9999999, 0.53716695, 0.99583864, 0.5743339, 0.98751605, 0.6107975]], [[1, 0.5, 0.99999994, 0.5185005, 0.9910885, 0.537001, 0.97326547, 0.5480667], [0.97326547, 0.5480667, 0.93505305, 0.57179135, 0.9235596, 0.6221473, 0.94769406, 0.66010237]]], "15": [1, 0.5, 0.5, 0.50127506, 0.50000006, [[0.9846296, 0.3969889, 0.9884858, 0.41513127, 0.991312, 0.4334361, 0.9931079, 0.4518166], [0.9931079, 0.4518166, 0.9962402, 0.48387203, 0.9962392, 0.51615757, 0.9931051, 0.5482128], [0.9931051, 0.5482128, 0.9913089, 0.5665834, 0.9884838, 0.5848783, 0.9846296, 0.6030111]], [[0.93329924, 0.40817088, 0.9373992, 0.4274592, 0.9492608, 0.44509768, 0.967791, 0.4559446], [0.9677911, 0.45594463, 1.0014708, 0.47565943, 1.0014709, 0.52434057, 0.9677911, 0.5440554], [0.9677911, 0.5440554, 0.94926083, 0.5549023, 0.93739927, 0.57254076, 0.9332992, 0.591829]], [[0.99545646, 0.5, 0.99545646, 0.5345267, 0.9918475, 0.5690534, 0.9846295, 0.60301125]], [[0.9930509, 0.5, 0.99305093, 0.517099, 0.984631, 0.534198, 0.9677911, 0.5440554], [0.9677911, 0.5440554, 0.9307303, 0.56574935, 0.9203446, 0.6146102, 0.94537765, 0.6495025]]], "16": [1, 0.5015911, 0.5, 0.5040253, 0.50000006, [[0.9888628, 0.40307567, 0.99229586, 0.4203346, 0.9948029, 0.43773043, 0.996384, 0.4551893], [0.996384, 0.4551893, 0.99908465, 0.48500946, 0.9990839, 0.5150136, 0.996382, 0.54483366], [0.996382, 0.54483366, 0.9948007, 0.56228477, 0.9922943, 0.57967293, 0.9888628, 0.59692436]], [[0.93860626, 0.41355675, 0.94228595, 0.4320554, 0.953716, 0.4490124, 0.9718232, 0.45903242], [0.9718232, 0.45903242, 1.0040253, 0.47685215, 1.0040253, 0.52314794, 0.9718232, 0.54096764], [0.9718232, 0.54096764, 0.9537159, 0.5509877, 0.9422859, 0.5679448, 0.93860626, 0.58644354]], [[0.998409, 0.5, 0.998409, 0.5324649, 0.99522686, 0.56492984, 0.9888628, 0.59692454]], [[0.9959748, 0.5, 0.9959748, 0.51602894, 0.9879243, 0.53205776, 0.9718232, 0.54096764], [0.9718232, 0.54096764, 0.9356086, 0.56100786, 0.926103, 0.608796, 0.9518918, 0.6411694]]], "17": [1, 0.5, 0.5, 0.5016373, 0.50000006, [[0.98800504, 0.40877607, 0.9910694, 0.4251687, 0.9933005, 0.44167706, 0.9946985, 0.45823833], [0.9946985, 0.45823833, 0.99704516, 0.48603576, 0.9970447, 0.513982, 0.9946972, 0.54177934], [0.9946972, 0.54177934, 0.993299, 0.5583347, 0.9910683, 0.57483715, 0.9880051, 0.5912239]], [[0.93877256, 0.41828555, 0.9420952, 0.4360602, 0.95313007, 0.45239314, 0.9708284, 0.4616752], [0.9708284, 0.4616752, 1.0017297, 0.4778817, 1.0017297, 0.5221184, 0.9708284, 0.5383249], [0.9708284, 0.5383249, 0.9531298, 0.54760706, 0.942095, 0.56394035, 0.93877244, 0.5817152]], [[0.9964583, 0.5, 0.9964583, 0.53053856, 0.99364054, 0.5610771, 0.9880051, 0.59122396]], [[0.9940044, 0.50000006, 0.99400437, 0.51511085, 0.9862791, 0.53022164, 0.9708284, 0.5383249], [0.9708284, 0.5383249, 0.93543154, 0.55688906, 0.9266891, 0.6036572, 0.9529896, 0.6337546]]], "18": [1, 0.5012627, 0.49999994, 0.50374246, 0.50000006, [[0.99242306, 0.4133951, 0.99518824, 0.42907742, 0.9971967, 0.44485894, 0.9984481, 0.4606854], [0.9984481, 0.4606854, 1.0005177, 0.48685914, 1.0005174, 0.51315576, 0.99844694, 0.53932947], [0.99844694, 0.53932947, 0.99719536, 0.5551509, 0.9951874, 0.57092744, 0.99242306, 0.5866048]], [[0.94634676, 0.4219573, 0.94938385, 0.4391809, 0.96012586, 0.4550459, 0.97754526, 0.46372488], [0.97754526, 0.46372488, 1.0074849, 0.4786419, 1.0074849, 0.5213582, 0.97754526, 0.5362752], [0.97754526, 0.5362752, 0.96012586, 0.5449542, 0.94938385, 0.56081915, 0.94634676, 0.5780427]], [[1, 0.49999997, 1, 0.5289786, 0.9974744, 0.5579573, 0.99242306, 0.5866049]], [[1, 0.50000006, 1, 0.51440835, 0.9925151, 0.5288167, 0.97754526, 0.5362752], [0.97754526, 0.5362752, 0.9427062, 0.5536333, 0.9345771, 0.59973574, 0.9613783, 0.62796265]]], "19": [1, 0.5, 0.49999994, 0.50184834, 0.50000006, [[0.9903814, 0.41816977, 0.9928702, 0.43308413, 0.99467385, 0.44808358, 0.9957923, 0.46312127], [0.9957923, 0.46312127, 0.9976189, 0.4876771, 0.99761856, 0.5123348, 0.9957915, 0.5368906], [0.9957915, 0.5368906, 0.9946728, 0.5519243, 0.99286944, 0.5669197, 0.99038136, 0.5818301]], [[0.94326764, 0.4263404, 0.9460158, 0.44280896, 0.9563321, 0.45801458, 0.9732271, 0.46602914], [0.9732271, 0.46602914, 1.001873, 0.479618, 1.001873, 0.52038205, 0.9732271, 0.53397095], [0.9732271, 0.53397095, 0.95633185, 0.5419856, 0.9460156, 0.5571914, 0.9432676, 0.5736601]], [[0.997162, 0.4999999, 0.997162, 0.5273702, 0.9949018, 0.55474055, 0.9903814, 0.5818301]], [[0.9947115, 0.5, 0.9947115, 0.5135883, 0.98755, 0.5271765, 0.9732271, 0.53397095], [0.9732271, 0.53397095, 0.93943685, 0.55000013, 0.9319621, 0.59479374, 0.9587168, 0.6209262]]], "20": [1, 0.5010218, 0.5, 0.5034576, 0.5, [[0.99284756, 0.4221024, 0.99510884, 0.43637955, 0.9967446, 0.4507306, 0.9977548, 0.46511465], [0.9977548, 0.46511465, 0.99938637, 0.48834613, 0.9993861, 0.5116637, 0.99775416, 0.5348952], [0.99775416, 0.5348952, 0.99674386, 0.5492759, 0.9951083, 0.56362367, 0.99284756, 0.5778976]], [[0.94678104, 0.42978507, 0.94929683, 0.44566837, 0.95928776, 0.46036762, 0.97579664, 0.46783933], [0.97579676, 0.46783936, 1.0034575, 0.4803583, 1.0034575, 0.5196417, 0.97579676, 0.5321607], [0.97579664, 0.5321607, 0.9592875, 0.53963256, 0.9492966, 0.55433214, 0.9467809, 0.5702157]], [[0.99897826, 0.5, 0.99897826, 0.52604634, 0.9969347, 0.5520927, 0.99284756, 0.5778976]], [[0.99654233, 0.5, 0.99654233, 0.5129506, 0.9896271, 0.5259012, 0.97579664, 0.5321607], [0.97579664, 0.5321607, 0.9427786, 0.5471043, 0.9358327, 0.59095883, 0.96261704, 0.61537415]]], "21": [1, 0.5, 0.50000006, 0.50196534, 0.49999997, [[0.992117, 0.42582548, 0.99417603, 0.43948627, 0.995663, 0.45321137, 0.9965781, 0.46696505], [0.9965781, 0.46696505, 0.99804175, 0.48896673, 0.9980415, 0.51104164, 0.99657744, 0.53304327], [0.99657744, 0.53304327, 0.99566245, 0.54679424, 0.9941756, 0.5605166, 0.992117, 0.57417464]], [[0.9470616, 0.43291283, 0.9493736, 0.44825113, 0.9590591, 0.46247798, 0.9751937, 0.46945828], [0.9751937, 0.46945828, 1.0019459, 0.48103207, 1.0019459, 0.51896787, 0.97519374, 0.53054166], [0.9751936, 0.5305417, 0.9590589, 0.5375221, 0.94937325, 0.5517493, 0.9470614, 0.5670879]], [[0.9976756, 0.50000006, 0.9976756, 0.52479434, 0.9958227, 0.5495887, 0.9921169, 0.5741749]], [[0.99525785, 0.49999997, 0.9952578, 0.5123774, 0.9885698, 0.52475476, 0.9751936, 0.5305417], [0.9751936, 0.5305417, 0.94292444, 0.5445023, 0.93645114, 0.58744967, 0.9631718, 0.6103016]]], "22": [1, 0.50084686, 0.5, 0.50325507, 0.50000006, [[0.9949195, 0.42896318, 0.9968084, 0.44210166, 0.9981706, 0.45529667, 0.99900603, 0.46851677], [0.99900603, 0.46851677, 1.0003314, 0.48948714, 1.0003312, 0.5105205, 0.9990057, 0.53149086], [0.9990057, 0.53149086, 0.9981702, 0.54470843, 0.9968081, 0.5579009, 0.9949195, 0.5710368]], [[0.9522641, 0.43544248, 0.95440704, 0.45034698, 0.96385276, 0.46420145, 0.97970444, 0.47076872], [0.97970444, 0.47076872, 1.0057448, 0.4815571, 1.0057449, 0.518443, 0.9797045, 0.52923137], [0.97970444, 0.5292314, 0.9638529, 0.5357986, 0.9544072, 0.54965293, 0.9522641, 0.56455714]], [[0.99999994, 0.5, 1, 0.52373964, 0.9983065, 0.5474793, 0.9949195, 0.5710369]], [[0.99923474, 0.50000006, 0.9992348, 0.5119186, 0.9927247, 0.5238372, 0.97970444, 0.5292314], [0.97970444, 0.5292314, 0.94800097, 0.54236597, 0.9419215, 0.58464956, 0.9686404, 0.606184]]], "23": [1, 0.5, 0.5, 0.50202286, 0.5, [[0.9934222, 0.43218073, 0.9951527, 0.44477102, 0.996399, 0.45741093, 0.99716127, 0.47007278], [0.99716127, 0.47007278, 0.99836123, 0.4900083, 0.9983611, 0.509998, 0.99716085, 0.5299335], [0.99716085, 0.5299335, 0.9963986, 0.54259324, 0.9951525, 0.5552311, 0.9934222, 0.5678193]], [[0.95032847, 0.43838227, 0.9523015, 0.45273596, 0.9614289, 0.46610636, 0.97685033, 0.47223476], [0.97685033, 0.47223473, 1.0019749, 0.48221916, 1.0019749, 0.51778084, 0.97685033, 0.5277653], [0.97685015, 0.52776533, 0.96142864, 0.5338938, 0.95230126, 0.5472643, 0.9503284, 0.5616182]], [[0.9980611, 0.5, 0.9980611, 0.52265936, 0.9965148, 0.5453186, 0.99342215, 0.56781936]], [[0.9956938, 0.5, 0.99569374, 0.5113865, 0.98941267, 0.522773, 0.97685015, 0.52776533], [0.97685015, 0.52776533, 0.9460071, 0.54002225, 0.9403408, 0.5812474, 0.9667334, 0.6013712]]], "24": [1, 0.5007109, 0.5, 0.5030492, 0.50000006, [[0.9950237, 0.43492255, 0.99661946, 0.44704378, 0.99776757, 0.45920902, 0.9984677, 0.4713936], [0.9984677, 0.4713936, 0.999563, 0.49045056, 0.99956286, 0.50955474, 0.9984675, 0.52861166], [0.9984675, 0.52861166, 0.9977672, 0.5407945, 0.99661934, 0.55295795, 0.9950237, 0.5650774]], [[0.952867, 0.4407807, 0.9546983, 0.45469034, 0.9635708, 0.46767294, 0.9786555, 0.47343197], [0.9786555, 0.47343197, 1.0030493, 0.48274502, 1.0030493, 0.51725507, 0.9786555, 0.5265681], [0.9786555, 0.5265681, 0.96357083, 0.5323271, 0.9546983, 0.54530966, 0.952867, 0.55921924]], [[0.99928904, 0.5, 0.99928904, 0.5217391, 0.9978673, 0.5434782, 0.9950237, 0.5650775]], [[0.9969508, 0.5, 0.9969508, 0.5109558, 0.99085236, 0.5219116, 0.9786555, 0.5265681], [0.9786555, 0.5265681, 0.94848585, 0.53808624, 0.9431655, 0.578499, 0.9693259, 0.5974332]]], "25": [1, 0.50000006, 0.5, 0.5020421, 0.49999997, [[0.9944289, 0.4375393, 0.99590284, 0.44920722, 0.9969622, 0.4609145, 0.99760675, 0.47263905], [0.99760675, 0.47263905, 0.99860907, 0.49086738, 0.99860895, 0.5091374, 0.9976065, 0.52736574], [0.9976065, 0.52736574, 0.99696183, 0.53908867, 0.99590266, 0.55079436, 0.9944289, 0.56246066]], [[0.9531839, 0.44300783, 0.9548881, 0.45649743, 0.9635175, 0.46911216, 0.9782737, 0.47453225], [0.9782737, 0.47453225, 1.0019763, 0.48323843, 1.0019763, 0.51676154, 0.9782737, 0.5254677], [0.9782737, 0.5254677, 0.96351755, 0.53088784, 0.9548881, 0.5435024, 0.9531838, 0.55699193]], [[0.99835837, 0.49999997, 0.9983584, 0.5208617, 0.99704856, 0.5417234, 0.9944288, 0.56246084]], [[0.99605066, 0.49999997, 0.9960506, 0.5105573, 0.99012494, 0.5211146, 0.9782737, 0.5254677], [0.9782737, 0.5254677, 0.94876105, 0.53630805, 0.943756, 0.5759271, 0.96964556, 0.59376633]]], "26": [1, 0.5006069, 0.5, 0.502892, 0.5, [[0.99635893, 0.43980482, 0.99772793, 0.4510793, 0.99871093, 0.462389, 0.9993077, 0.47371405], [0.9993077, 0.47371405, 1.0002308, 0.49122694, 1.0002307, 0.5087765, 0.9993075, 0.52628934], [0.9993075, 0.52628934, 0.9987106, 0.5376133, 0.99772775, 0.5489218, 0.99635893, 0.56019515]], [[0.9569248, 0.4448708, 0.9585207, 0.45801294, 0.9669503, 0.4703252, 0.98144203, 0.47545338], [0.98144203, 0.47545338, 1.0045779, 0.48364046, 1.0045779, 0.51635957, 0.98144203, 0.5245466], [0.98144203, 0.5245466, 0.96695006, 0.5296749, 0.9585205, 0.5419874, 0.9569247, 0.55512977]], [[1, 0.5, 1, 0.52010196, 0.99878633, 0.5402039, 0.99635893, 0.56019527]], [[0.9987939, 0.5, 0.9987939, 0.51022655, 0.9930099, 0.5204531, 0.98144203, 0.5245466], [0.98144203, 0.5245466, 0.95245826, 0.5348031, 0.9477236, 0.5737965, 0.9734106, 0.5906912]]], "27": [1, 0.5, 0.50000006, 0.50203663, 0.5, [[0.9952209, 0.4421171, 0.99649113, 0.45298463, 0.9974023, 0.46388346, 0.9979547, 0.474796], [0.9979547, 0.474796, 0.9988047, 0.49158913, 0.99880457, 0.5084146, 0.9979545, 0.52520776], [0.9979545, 0.52520776, 0.9974021, 0.53611904, 0.99649096, 0.54701674, 0.9952209, 0.557883]], [[0.95570886, 0.44697395, 0.9571965, 0.45969915, 0.9653789, 0.47164172, 0.9795156, 0.47646737], [0.9795157, 0.4764674, 1.0019596, 0.4841287, 1.0019596, 0.5158713, 0.9795157, 0.5235326], [0.9795156, 0.5235326, 0.96537864, 0.52835834, 0.95719624, 0.5403012, 0.95570874, 0.5530266]], [[0.99859214, 0.5, 0.99859214, 0.51932704, 0.99746835, 0.5386541, 0.9952209, 0.5578831]], [[0.99634856, 0.5, 0.9963486, 0.509851, 0.9907376, 0.51970196, 0.9795156, 0.5235326], [0.9795156, 0.5235326, 0.9512416, 0.5331841, 0.9467859, 0.5713042, 0.9720722, 0.58721596]]], "28": [1, 0.5005229, 0.5, 0.50273377, 0.5, [[0.99633986, 0.44413474, 0.9975242, 0.45464572, 0.9983733, 0.4651854, 0.998887, 0.47573745], [0.998887, 0.47573745, 0.999674, 0.49190384, 0.9996739, 0.50809944, 0.9988867, 0.52426577], [0.9988867, 0.52426577, 0.99837303, 0.5348168, 0.997524, 0.5453553, 0.99633986, 0.5558653]], [[0.9576464, 0.44874406, 0.9590411, 0.46112144, 0.967018, 0.47275713, 0.98086387, 0.47732177], [0.98086387, 0.47732177, 1.0027337, 0.48453173, 1.0027337, 0.5154683, 0.98086387, 0.52267826], [0.98086387, 0.52267826, 0.96701765, 0.527243, 0.9590407, 0.53887916, 0.95764625, 0.5512569]], [[0.9994771, 0.5, 0.9994771, 0.51865155, 0.9984313, 0.5373031, 0.99633986, 0.5558653]], [[0.99726623, 0.5, 0.99726623, 0.5095366, 0.99179876, 0.51907325, 0.98086387, 0.52267826], [0.98086387, 0.52267826, 0.95317185, 0.5318076, 0.94895625, 0.56922174, 0.97392255, 0.5842843]]], "29": [1, 0.50000006, 0.5, 0.50201505, 0.5, [[0.9958557, 0.44607252, 0.9969613, 0.45623884, 0.9977534, 0.46643102, 0.9982319, 0.47663444], [0.9982319, 0.47663444, 0.998962, 0.49220383, 0.9989619, 0.5077993, 0.9982317, 0.5233687], [0.9982317, 0.5233687, 0.9977532, 0.53357106, 0.99696124, 0.5437622, 0.9958557, 0.5539275]], [[0.95796263, 0.450413, 0.9592726, 0.46245766, 0.9670514, 0.47379875, 0.98061234, 0.4781213], [0.98061234, 0.4781213, 1.0019315, 0.48491684, 1.0019315, 0.5150832, 0.98061234, 0.5218787], [0.9806122, 0.5218788, 0.96705145, 0.5262013, 0.9592726, 0.53754234, 0.9579626, 0.54958695]], [[0.9987794, 0.5, 0.9987794, 0.5180026, 0.9978048, 0.53600526, 0.99585557, 0.5539276]], [[0.9966017, 0.5, 0.9966017, 0.5092405, 0.991272, 0.51848096, 0.9806122, 0.5218788], [0.9806122, 0.5218788, 0.9534904, 0.5305239, 0.9494968, 0.5672436, 0.9741262, 0.5815171]]], "30": [1, 0.5004559, 0.5, 0.50260675, 0.50000006, [[0.9972632, 0.44778353, 0.9982997, 0.45764565, 0.99904186, 0.46753046, 0.99948955, 0.47742507], [0.99948955, 0.47742507, 1.0001701, 0.49246854, 1.0001701, 0.5075346, 0.9994895, 0.5225782], [0.9994895, 0.5225782, 0.9990418, 0.53247166, 0.9982997, 0.54235536, 0.9972633, 0.5522165]], [[0.96078634, 0.4518441, 0.96202266, 0.46360564, 0.9696337, 0.47469708, 0.9829559, 0.47880718], [0.9829559, 0.47880718, 1.0038095, 0.48524085, 1.0038095, 0.5147593, 0.9829559, 0.52119297], [0.9829559, 0.52119297, 0.96963346, 0.5253031, 0.9620224, 0.53639495, 0.9607862, 0.5481568]], [[0.99999994, 0.5, 1, 0.5174289, 0.99908775, 0.53485775, 0.9972633, 0.5522165]], [[0.9985961, 0.50000006, 0.9985961, 0.5089881, 0.9933827, 0.51797616, 0.9829559, 0.52119297], [0.9829559, 0.52119297, 0.9563111, 0.5294133, 0.9525119, 0.56556, 0.97686535, 0.5791405]]], "31": [1, 0.5, 0.5, 0.50198317, 0.5, [[0.99637187, 0.44952402, 0.9973429, 0.45907265, 0.99803764, 0.4686423, 0.99845624, 0.47822103], [0.99845624, 0.47822103, 0.9990903, 0.49273428, 0.9990903, 0.50726837, 0.99845606, 0.5217816], [0.99845606, 0.5217816, 0.99803746, 0.53135943, 0.9973427, 0.54092824, 0.9963718, 0.550476]], [[0.95998967, 0.4534254, 0.9611525, 0.46485996, 0.9685652, 0.4756589, 0.98159015, 0.47955212], [0.98159015, 0.47955212, 1.0018965, 0.4856218, 1.0018965, 0.5143782, 0.98159015, 0.52044785], [0.98159015, 0.5204479, 0.9685653, 0.5243411, 0.96115255, 0.53513986, 0.95998967, 0.5465743]], [[0.99893165, 0.5, 0.99893165, 0.51684695, 0.99807835, 0.53369397, 0.9963718, 0.55047613]], [[0.99682, 0.5, 0.99682, 0.5087065, 0.9917433, 0.517413, 0.98159015, 0.5204479], [0.98159015, 0.5204479, 0.9555401, 0.5282343, 0.9519393, 0.56364393, 0.9758886, 0.5765149]]], "32": [1, 0.5004006, 0.5, 0.50248003, 0.5, [[0.9971958, 0.45106986, 0.9981088, 0.46033967, 0.9987617, 0.46962905, 0.99915445, 0.4789269], [0.99915445, 0.4789269, 0.9997479, 0.49296993, 0.99974775, 0.5070322, 0.9991544, 0.52107525], [0.9991544, 0.52107525, 0.9987616, 0.5303724, 0.9981087, 0.53966105, 0.9971958, 0.54893017]], [[0.9615247, 0.4547879, 0.96262336, 0.4659425, 0.96986675, 0.47649193, 0.9826401, 0.48019442], [0.9826401, 0.48019442, 1.0024799, 0.4859453, 1.0024799, 0.5140548, 0.9826401, 0.5198056], [0.98264, 0.5198056, 0.9698666, 0.5235082, 0.96262324, 0.53405774, 0.9615247, 0.5452124]], [[0.99959946, 0.5, 0.99959946, 0.51633024, 0.99879825, 0.53266037, 0.9971957, 0.5489302]], [[0.99751997, 0.5, 0.9975199, 0.5084651, 0.99256, 0.5169302, 0.98264, 0.5198056], [0.98264, 0.5198056, 0.9570935, 0.52721065, 0.95366675, 0.56200284, 0.9772778, 0.57424945]]], "33": [1, 0.5, 0.5, 0.50194484, 0.50000006, [[0.9967973, 0.4525617, 0.9976567, 0.46156162, 0.99827087, 0.47057906, 0.99864006, 0.47960404], [0.99864006, 0.47960404, 0.999196, 0.49319625, 0.99919605, 0.5068056, 0.99864006, 0.52039784], [0.99864006, 0.52039784, 0.99827087, 0.52942216, 0.9976567, 0.53843904, 0.9967973, 0.5474383]], [[0.96182454, 0.4560873, 0.962864, 0.46697152, 0.9699429, 0.47727895, 0.98246866, 0.480803], [0.9824688, 0.480803, 1.0018572, 0.4862579, 1.0018572, 0.51374215, 0.9824688, 0.519197], [0.9824688, 0.519197, 0.969943, 0.52272105, 0.962864, 0.5330286, 0.96182454, 0.5439129]], [[0.9990572, 0.5, 0.9990571, 0.51583076, 0.99830383, 0.5316615, 0.9967973, 0.54743826]], [[0.99701, 0.5, 0.99701005, 0.5082348, 0.99216294, 0.5164696, 0.9824688, 0.519197], [0.9824688, 0.519197, 0.9574169, 0.5262453, 0.9541528, 0.5604277, 0.9774182, 0.57208973]]], "34": [1, 0.50035524, 0.5, 0.5023747, 0.50000006, [[0.9978686, 0.45389864, 0.9986801, 0.4626563, 0.9992598, 0.47142994, 0.9996079, 0.48021036], [0.9996079, 0.48021036, 1.0001307, 0.49339896, 1.0001307, 0.50660306, 0.99960774, 0.51979166], [0.99960774, 0.51979166, 0.9992597, 0.5285714, 0.99868, 0.53734434, 0.99786854, 0.54610133]], [[0.9640337, 0.4572215, 0.9650208, 0.46787128, 0.9719573, 0.47796962, 0.9842705, 0.48133492], [0.9842705, 0.48133495, 1.0032682, 0.4865272, 1.0032682, 0.5134729, 0.9842705, 0.51866513], [0.9842705, 0.5186652, 0.9719572, 0.5220305, 0.9650208, 0.5321289, 0.96403366, 0.5427786]], [[1, 0.5, 1, 0.5153834, 0.9992895, 0.53076684, 0.9978686, 0.5461014]], [[0.9985188, 0.50000006, 0.9985188, 0.5080345, 0.9937694, 0.51606905, 0.9842705, 0.5186652], [0.9842705, 0.5186652, 0.95964366, 0.5253959, 0.95652425, 0.5590597, 0.979495, 0.5702009]]], "35": [1, 0.49999994, 0.5, 0.50190276, 0.5, [[0.99715203, 0.45525563, 0.997918, 0.46376586, 0.998465, 0.47229046, 0.998793, 0.48082122], [0.998793, 0.48082122, 0.99928457, 0.49360305, 0.9992845, 0.5063987, 0.9987929, 0.51918054], [0.9987929, 0.51918054, 0.9984649, 0.52771074, 0.99791795, 0.53623474, 0.9971521, 0.5447444]], [[0.9634947, 0.45845625, 0.9644296, 0.46884185, 0.9712032, 0.4787019, 0.9832639, 0.48190653], [0.9832639, 0.48190653, 1.0018156, 0.48683584, 1.0018156, 0.51316416, 0.9832639, 0.5180935], [0.9832639, 0.5180935, 0.9712031, 0.52129817, 0.9644295, 0.5311583, 0.9634947, 0.54154396]], [[0.9991617, 0.5, 0.99916166, 0.5149295, 0.99849176, 0.52985895, 0.9971521, 0.54474473]], [[0.99717766, 0.5, 0.99717766, 0.5078144, 0.99253976, 0.5156288, 0.9832639, 0.5180935], [0.9832639, 0.5180935, 0.9591423, 0.5245029, 0.9561694, 0.5575342, 0.97875893, 0.56814754]]], "36": [1, 0.5003167, 0.5, 0.5022704, 0.50000006, [[0.9977832, 0.45647737, 0.99850816, 0.4647637, 0.99902564, 0.47306406, 0.99933577, 0.48137048], [0.99933577, 0.48137048, 0.9997992, 0.4937861, 0.99979913, 0.5062152, 0.9993357, 0.5186309], [0.9993357, 0.5186309, 0.9990256, 0.5269368, 0.9985081, 0.5352367, 0.9977832, 0.54352266]], [[0.96474487, 0.459539, 0.96563333, 0.4696941, 0.97226495, 0.47934672, 0.9841069, 0.48240805], [0.9841069, 0.48240802, 1.0022703, 0.48710358, 1.0022703, 0.5128966, 0.9841069, 0.51759213], [0.9841069, 0.51759213, 0.97226495, 0.5206535, 0.9656334, 0.530306, 0.96474475, 0.540461]], [[0.9996834, 0.5, 0.9996834, 0.51452184, 0.99904996, 0.5290437, 0.9977831, 0.54352283]], [[0.99772954, 0.50000006, 0.99772954, 0.50762224, 0.9931886, 0.51524436, 0.9841069, 0.51759213], [0.9841069, 0.51759213, 0.9604228, 0.52371484, 0.9575805, 0.5562029, 0.9798416, 0.56634533]]], "37": [1, 0.50000006, 0.5, 0.50185853, 0.49999997, [[0.99745125, 0.45766053, 0.9981381, 0.46572998, 0.9986282, 0.47381237, 0.99892163, 0.48190036], [0.99892163, 0.48190036, 0.99935913, 0.49396324, 0.9993592, 0.5060384, 0.99892163, 0.51810133], [0.99892163, 0.51810133, 0.99862814, 0.52618873, 0.998138, 0.53427064, 0.99745125, 0.5423395]], [[0.96502227, 0.46057928, 0.9658677, 0.4705106, 0.97236073, 0.47996113, 0.98398715, 0.48288748], [0.9839872, 0.48288748, 1.0017726, 0.48736402, 1.0017726, 0.51263595, 0.9839872, 0.51711243], [0.9839872, 0.51711243, 0.9723606, 0.52003884, 0.96586746, 0.52948976, 0.96502227, 0.53942126]], [[0.9992497, 0.5, 0.9992497, 0.51412636, 0.9986502, 0.5282527, 0.9974512, 0.54233956]], [[0.9973263, 0.49999997, 0.99732625, 0.5074371, 0.9928799, 0.5148742, 0.9839872, 0.51711243], [0.9839872, 0.51711243, 0.9607341, 0.5229652, 0.9580147, 0.55491537, 0.9799443, 0.56461376]]], "38": [1, 0.50028443, 0.5, 0.5021816, 0.50000006, [[0.998293, 0.45873398, 0.99894536, 0.46660712, 0.9994107, 0.47449133, 0.999689, 0.48238024], [0.999689, 0.48238024, 1.0001035, 0.49412352, 1.0001035, 0.5058773, 0.9996891, 0.5176206], [0.9996891, 0.5176206, 0.9994106, 0.52550924, 0.99894536, 0.53339314, 0.998293, 0.54126596]], [[0.9667989, 0.46150154, 0.96760577, 0.4712354, 0.97397685, 0.48050803, 0.9854143, 0.4833128], [0.9854143, 0.4833128, 1.002867, 0.48759264, 1.002867, 0.5124075, 0.9854143, 0.51668733], [0.9854143, 0.51668733, 0.9739766, 0.51949215, 0.96760553, 0.528765, 0.96679884, 0.53849906]], [[0.9999999, 0.5, 0.9999999, 0.5137665, 0.9994309, 0.52753305, 0.9982929, 0.541266]], [[0.9985038, 0.50000006, 0.9985038, 0.50727373, 0.9941406, 0.5145474, 0.9854143, 0.51668733], [0.9854143, 0.51668733, 0.9625387, 0.522297, 0.95993, 0.5537794, 0.98157036, 0.56307787]]], "39": [1, 0.50000006, 0.5000002, 0.5018134, 0.50000006, [[0.99770546, 0.45982122, 0.99832475, 0.46749264, 0.9987664, 0.4751757, 0.99903035, 0.48286384], [0.99903035, 0.48286384, 0.9994224, 0.4942847, 0.99942243, 0.50571656, 0.99903035, 0.5171374], [0.99903035, 0.5171374, 0.9987663, 0.5248252, 0.99832475, 0.532508, 0.99770546, 0.54017913]], [[0.9664251, 0.46249312, 0.9671935, 0.47200885, 0.9734281, 0.4810832, 0.9846486, 0.48376572], [0.9846488, 0.48376578, 1.0017296, 0.48784938, 1.0017295, 0.51215076, 0.98464876, 0.51623434], [0.98464876, 0.51623434, 0.97342813, 0.5189169, 0.9671934, 0.52799153, 0.9664252, 0.5375074]], [[0.9993244, 0.5000002, 0.9993244, 0.513405, 0.9987848, 0.5268099, 0.99770546, 0.54017925]], [[0.99745935, 0.50000006, 0.9974593, 0.5070963, 0.9931891, 0.5141926, 0.98464876, 0.51623434], [0.98464876, 0.51623434, 0.9622074, 0.52159953, 0.9597102, 0.55253273, 0.98100036, 0.56142825]]], "40": [1, 0.50025666, 0.5, 0.502094, 0.49999997, [[0.9982037, 0.46081066, 0.9987931, 0.46830016, 0.9992133, 0.4757998, 0.9994642, 0.48330373], [0.9994642, 0.48330373, 0.99983644, 0.49443176, 0.99983644, 0.50556934, 0.9994643, 0.51669735], [0.9994643, 0.51669735, 0.9992133, 0.5242009, 0.99879307, 0.5317002, 0.9982037, 0.5391893]], [[0.967465, 0.4633746, 0.9681987, 0.47269723, 0.9743126, 0.48159638, 0.98534197, 0.48416865], [0.98534197, 0.48416865, 1.002094, 0.48807555, 1.002094, 0.5119244, 0.98534197, 0.5158313], [0.9853419, 0.5158313, 0.97431254, 0.5184036, 0.96819866, 0.52730286, 0.967465, 0.53662556]], [[0.99974346, 0.5, 0.99974346, 0.5130734, 0.99923015, 0.5261467, 0.9982037, 0.5391893]], [[0.997906, 0.49999997, 0.997906, 0.5069389, 0.993718, 0.51387787, 0.9853419, 0.5158313], [0.9853419, 0.5158313, 0.9632832, 0.5209759, 0.9608864, 0.55142814, 0.981869, 0.5599601]]], "41": [1, 0.5000001, 0.5, 0.50175065, 0.5, [[0.99792385, 0.4617721, 0.9984851, 0.469083, 0.99888515, 0.47640407, 0.9991238, 0.48372942], [0.9991238, 0.48372942, 0.99947727, 0.49457362, 0.99947727, 0.5054273, 0.9991238, 0.5162715], [0.9991238, 0.5162715, 0.9988851, 0.5235965, 0.9984851, 0.5309173, 0.99792385, 0.53822786]], [[0.9677012, 0.46422726, 0.9684026, 0.47336137, 0.97439826, 0.48208898, 0.9852388, 0.48455676], [0.9852388, 0.48455676, 1.0016693, 0.48829708, 1.0016693, 0.511703, 0.9852388, 0.51544327], [0.98523873, 0.5154433, 0.97439826, 0.5179111, 0.96840256, 0.5266387, 0.9677012, 0.5357728]], [[0.99938893, 0.49999997, 0.99938893, 0.5127529, 0.99890053, 0.5255058, 0.9979238, 0.538228]], [[0.9975617, 0.50000006, 0.99756163, 0.5067866, 0.99345404, 0.51357317, 0.98523873, 0.5154433], [0.98523873, 0.5154433, 0.9635574, 0.52037895, 0.961256, 0.55035436, 0.98193, 0.55854183]]], "42": [1, 0.5002328, 0.5, 0.50193775, 0.5, [[0.99860245, 0.4626525, 0.9991381, 0.4698015, 0.9995198, 0.47695875, 0.9997476, 0.48411968], [0.9997476, 0.48411968, 1.0000842, 0.49470437, 1.0000842, 0.5052969, 0.9997476, 0.51588166], [0.9997476, 0.51588166, 0.9995198, 0.5230421, 0.9991382, 0.530199, 0.99860245, 0.5373475]], [[0.96909887, 0.4649921, 0.96977115, 0.47395778, 0.9756612, 0.48253214, 0.9863338, 0.4849049], [0.9863338, 0.4849049, 1.0024774, 0.488494, 1.0024774, 0.5115061, 0.9863338, 0.5150952], [0.98633367, 0.51509523, 0.97566104, 0.51746804, 0.9697709, 0.5260426, 0.9690988, 0.5350083]], [[0.99999994, 0.5, 1, 0.51245755, 0.99953413, 0.52491516, 0.99860233, 0.5373476]], [[0.9984415, 0.50000006, 0.9984415, 0.5066503, 0.9944056, 0.51330066, 0.98633367, 0.51509523], [0.98633367, 0.51509523, 0.96498793, 0.51984096, 0.9627731, 0.5493947, 0.98317325, 0.5572689]]], "43": [1, 0.5000001, 0.50000006, 0.5015871, 0.50000006, [[0.99811226, 0.46354306, 0.99862325, 0.47052532, 0.9989873, 0.47751665, 0.9992042, 0.4845118], [0.9992042, 0.4845118, 0.9995245, 0.4948349, 0.9995245, 0.5051663, 0.9992044, 0.51548946], [0.9992044, 0.51548946, 0.9989873, 0.5224842, 0.99862325, 0.52947515, 0.99811226, 0.53645706]], [[0.96877885, 0.46580648, 0.9694218, 0.47458875, 0.9751959, 0.4829954, 0.9856801, 0.48527306], [0.9856801, 0.4852731, 1.0015082, 0.4887117, 1.0015082, 0.5112884, 0.9856801, 0.51472706], [0.9856801, 0.51472706, 0.9751958, 0.5170047, 0.9694217, 0.5254115, 0.96877885, 0.5341938]], [[0.9994445, 0.5000001, 0.9994445, 0.5121615, 0.99900043, 0.5243229, 0.99811226, 0.53645736]], [[0.9975512, 0.50000006, 0.9975512, 0.5065039, 0.99359417, 0.51300776, 0.9856801, 0.51472706], [0.9856801, 0.51472706, 0.9647113, 0.51928246, 0.96258354, 0.54835457, 0.9826656, 0.5559145]]], "44": [1, 0.50021213, 0.5, 0.50175524, 0.50000006, [[0.99851507, 0.46436083, 0.99900365, 0.4711914, 0.9993515, 0.4780299, 0.99955875, 0.48487177], [0.99955875, 0.48487177, 0.9998642, 0.49495488, 0.99986416, 0.50504535, 0.9995587, 0.5151285], [0.9995587, 0.5151285, 0.9993515, 0.5219703, 0.9990036, 0.5288087, 0.99851507, 0.53563917]], [[0.96960676, 0.46653914, 0.97022325, 0.47515696, 0.9758935, 0.48341328, 0.9862094, 0.48560432], [0.9862094, 0.48560432, 1.0017551, 0.48890612, 1.0017551, 0.51109403, 0.9862094, 0.51439583], [0.9862093, 0.51439583, 0.975893, 0.5165869, 0.9702228, 0.52484363, 0.9696066, 0.53346175]], [[0.9997878, 0.5, 0.9997878, 0.51188767, 0.99936354, 0.52377534, 0.99851507, 0.5356394]], [[0.99786866, 0.50000006, 0.99786866, 0.5063725, 0.99398226, 0.5127449, 0.9862093, 0.51439583], [0.9862093, 0.51439583, 0.96557707, 0.51877797, 0.9635284, 0.54742193, 0.98332703, 0.5546958]]], "45": [1, 0.5, 0.5, 0.5014453, 0.50000006, [[0.9982757, 0.46515712, 0.998743, 0.47183985, 0.9990756, 0.47852954, 0.99927366, 0.48522228], [0.99927366, 0.48522228, 0.99956524, 0.49507228, 0.9995653, 0.50492877, 0.9992738, 0.5147788], [0.9992738, 0.5147788, 0.9990757, 0.52147114, 0.99874306, 0.5281606, 0.9982758, 0.5348429]], [[0.96979123, 0.46725047, 0.9703827, 0.47570744, 0.97595096, 0.48381627, 0.9861005, 0.4859249], [0.9861005, 0.4859249, 1.0013692, 0.48909697, 1.0013692, 0.51090306, 0.9861005, 0.51407516], [0.9861005, 0.51407516, 0.9759505, 0.51618385, 0.97038233, 0.5242932, 0.9697911, 0.5327504]], [[0.9994925, 0.5, 0.9994925, 0.5116214, 0.999087, 0.5232428, 0.9982758, 0.534843]], [[0.9975521, 0.5, 0.99755204, 0.50624454, 0.99373484, 0.5124891, 0.9861005, 0.51407516], [0.9861005, 0.51407516, 0.9658009, 0.5182924, 0.9638277, 0.5465115, 0.98334277, 0.5535129]]], "46": [1, 0.50019413, 0.5, 0.5015999, 0.5, [[0.9988352, 0.46589214, 0.99928284, 0.47243622, 0.9996014, 0.4789886, 0.999791, 0.4855444], [0.999791, 0.4855444, 1.0000697, 0.49517912, 1.0000697, 0.50482136, 0.99979097, 0.51445603], [0.99979097, 0.51445603, 0.99960136, 0.5210117, 0.99928284, 0.5275639, 0.9988352, 0.53410786]], [[0.9709703, 0.4678945, 0.971539, 0.47620624, 0.97701514, 0.48418224, 0.9870152, 0.48621532], [0.9870152, 0.48621532, 1.0020341, 0.48926875, 1.0020341, 0.5107313, 0.9870152, 0.5137847], [0.9870151, 0.51378477, 0.977015, 0.5158178, 0.9715389, 0.5237939, 0.9709703, 0.5321057]], [[1, 0.5, 1, 0.5113776, 0.99961174, 0.52275515, 0.99883515, 0.5341081]], [[0.99827933, 0.50000006, 0.99827933, 0.506129, 0.9945246, 0.512258, 0.9870151, 0.51378477], [0.9870151, 0.51378477, 0.9670148, 0.51785094, 0.9651106, 0.54568934, 0.98437107, 0.55244106]]], "47": [1, 0.49999988, 0.5, 0.50132155, 0.50000006, [[0.9984191, 0.46663496, 0.9988481, 0.47304282, 0.9991533, 0.4794555, 0.9993349, 0.48587027], [0.9993349, 0.48587027, 0.99960154, 0.49528894, 0.99960154, 0.50471205, 0.9993349, 0.5141307], [0.9993349, 0.5141307, 0.9991533, 0.5205451, 0.998848, 0.5269575, 0.9984191, 0.5333651]], [[0.97074354, 0.46857637, 0.9712896, 0.47673145, 0.97666585, 0.48456317, 0.9865007, 0.48652074], [0.9865008, 0.48652077, 1.0012485, 0.48945624, 1.0012485, 0.5105439, 0.9865008, 0.51347935], [0.9865007, 0.51347935, 0.97666585, 0.5154369, 0.9712896, 0.5232685, 0.9707435, 0.5314236]], [[0.9995349, 0.49999997, 0.9995349, 0.5111265, 0.999163, 0.52225304, 0.9984191, 0.5333655]], [[0.9975616, 0.50000006, 0.9975616, 0.5060059, 0.99387467, 0.51201165, 0.9865007, 0.51347935], [0.9865007, 0.51347935, 0.96683055, 0.51739454, 0.96499556, 0.544807, 0.98396826, 0.55130905]]], "48": [1, 0.5001783, 0.49999994, 0.5014616, 0.50000006, [[0.9987518, 0.46732187, 0.9991633, 0.4736004, 0.9994562, 0.47988436, 0.9996302, 0.4861706], [0.9996302, 0.4861706, 0.99988556, 0.49538898, 0.9998855, 0.5046123, 0.9996302, 0.5138308], [0.9996302, 0.5138308, 0.9994561, 0.52011657, 0.9991633, 0.5264, 0.9987518, 0.53267807]], [[0.9714619, 0.46919483, 0.97198725, 0.47720832, 0.9772731, 0.4849097, 0.98695904, 0.48679805], [0.98695904, 0.48679802, 1.0014615, 0.48962536, 1.0014615, 0.5103748, 0.98695904, 0.51320213], [0.9869591, 0.51320213, 0.9772731, 0.51509047, 0.9719872, 0.522792, 0.971462, 0.53080547]], [[0.99982166, 0.49999994, 0.9998217, 0.51089805, 0.9994651, 0.5217962, 0.9987518, 0.5326781]], [[0.9978359, 0.50000006, 0.9978359, 0.50589424, 0.99421024, 0.5117885, 0.9869591, 0.51320213], [0.9869591, 0.51320213, 0.96758705, 0.51697886, 0.9658155, 0.5440081, 0.9845289, 0.5502811]]], "49": [1, 0.49999988, 0.50000006, 0.50121295, 0.50000006, [[0.9985454, 0.46799237, 0.99894047, 0.47414562, 0.99922156, 0.4803035, 0.99938864, 0.4864634], [0.99938864, 0.4864634, 0.99963325, 0.49548683, 0.9996332, 0.50451446, 0.99938846, 0.5135378], [0.99938846, 0.5135378, 0.99922144, 0.51969737, 0.9989404, 0.5258549, 0.9985454, 0.53200775]], [[0.97164047, 0.46979752, 0.9721459, 0.47767204, 0.97734296, 0.48524538, 0.9868816, 0.48706755], [0.9868816, 0.48706758, 1.0011426, 0.48979193, 1.0011426, 0.5102082, 0.9868816, 0.51293254], [0.9868815, 0.5129326, 0.97734296, 0.5147548, 0.97214603, 0.5223279, 0.97164035, 0.5302023]], [[0.99957204, 0.50000006, 0.99957204, 0.51067394, 0.9992298, 0.5213479, 0.9985454, 0.5320079]], [[0.9975774, 0.5000001, 0.9975774, 0.5057852, 0.9940121, 0.51157033, 0.9868815, 0.5129326], [0.9868815, 0.5129326, 0.9678044, 0.51657695, 0.9660935, 0.5432256, 0.98454803, 0.54927963]]], "50": [1, 0.50016433, 0.5, 0.5013425, 0.50000006, [[0.9990138, 0.468615, 0.99939346, 0.47464985, 0.99966353, 0.48069084, 0.99982387, 0.48673442], [0.99982387, 0.48673442, 1.0000585, 0.49557644, 1.0000587, 0.504424, 0.9998239, 0.513266], [0.9998239, 0.513266, 0.9996635, 0.5193094, 0.99939346, 0.5253503, 0.9990138, 0.531385]], [[0.9726483, 0.4703484, 0.9731359, 0.4780961, 0.978252, 0.48555255, 0.98765653, 0.48731366], [0.98765653, 0.48731366, 1.0016981, 0.48994315, 1.0016981, 0.510057, 0.98765653, 0.51268643], [0.98765653, 0.51268643, 0.9782518, 0.51444757, 0.9731357, 0.5219043, 0.9726483, 0.52965224]], [[1, 0.5, 1, 0.5104678, 0.9996712, 0.5209356, 0.9990137, 0.531385]], [[0.9981878, 0.50000006, 0.9981878, 0.50568587, 0.9946773, 0.51137173, 0.98765653, 0.51268643], [0.98765653, 0.51268643, 0.96884716, 0.5162087, 0.96719223, 0.542513, 0.98541194, 0.548365]]], "51": [1, 0.49999988, 0.49999994, 0.50111705, 0.49999997, [[0.9986571, 0.46924374, 0.9990221, 0.47516185, 0.99928164, 0.4810842, 0.9994357, 0.48700827], [0.9994357, 0.48700827, 0.9996611, 0.49566844, 0.999661, 0.5043324, 0.9994358, 0.5129926], [0.9994358, 0.5129926, 0.99928164, 0.51891637, 0.99902207, 0.5248384, 0.9986571, 0.5307562]], [[0.9724862, 0.47092712, 0.9729558, 0.47853965, 0.97798496, 0.4858709, 0.9872438, 0.48757118], [0.9872438, 0.48757118, 1.0010494, 0.4901064, 1.0010494, 0.5098936, 0.9872438, 0.5124288], [0.98724365, 0.5124288, 0.9779849, 0.51412904, 0.97295576, 0.5214603, 0.9724861, 0.52907276]], [[0.9996048, 0.49999997, 0.9996048, 0.51025623, 0.9992889, 0.52051246, 0.99865705, 0.53075624]], [[0.99759793, 0.5, 0.99759793, 0.5055806, 0.9941466, 0.5111612, 0.98724365, 0.5124288], [0.98724365, 0.5124288, 0.968726, 0.5158294, 0.96712697, 0.5417542, 0.98508656, 0.5474046]]], "52": [1, 0.500152, 0.5, 0.5012355, 0.5, [[0.9989363, 0.46982896, 0.9992876, 0.47563678, 0.9995374, 0.48144883, 0.99968565, 0.48726264], [0.99968565, 0.48726264, 0.9999021, 0.49575323, 0.9999021, 0.5042476, 0.99968565, 0.51273817], [0.99968565, 0.51273817, 0.9995374, 0.5185517, 0.9992876, 0.5243635, 0.9989363, 0.53017104]], [[0.97311586, 0.4714563, 0.9735688, 0.4789455, 0.9785187, 0.48616272, 0.9876449, 0.48780677], [0.9876449, 0.4878068, 1.0012355, 0.4902551, 1.0012355, 0.5097449, 0.9876449, 0.51219326], [0.98764485, 0.51219326, 0.97851884, 0.51383734, 0.973569, 0.52105427, 0.97311586, 0.52854323]], [[0.999848, 0.5, 0.999848, 0.5100612, 0.99954414, 0.5201224, 0.99893624, 0.5301712]], [[0.9978379, 0.5, 0.99783784, 0.5054845, 0.9944402, 0.51096904, 0.98764485, 0.51219326], [0.98764485, 0.51219326, 0.9693926, 0.5154814, 0.9678454, 0.5410616, 0.98556817, 0.54652584]]], "53": [1, 0.49999976, 0.5, 0.5010321, 0.5, [[0.9987561, 0.47040153, 0.9990945, 0.47610378, 0.9993351, 0.48180744, 0.99947786, 0.4875117], [0.99947786, 0.4875117, 0.99968624, 0.49583727, 0.9996863, 0.50416404, 0.99947786, 0.5124896], [0.99947786, 0.5124896, 0.9993351, 0.5181934, 0.99909455, 0.5238967, 0.9987561, 0.5295985]], [[0.9732852, 0.47197497, 0.9737227, 0.47934243, 0.9785944, 0.48644656, 0.9875888, 0.4880367], [0.9875888, 0.4880367, 1.0009673, 0.49040186, 1.0009673, 0.5095982, 0.9875888, 0.51196337], [0.98758864, 0.5119634, 0.9785942, 0.51355356, 0.9737225, 0.5206578, 0.9732851, 0.5280253]], [[0.9996342, 0.5, 0.9996342, 0.50986755, 0.9993415, 0.51973516, 0.9987561, 0.52959865]], [[0.99762267, 0.5, 0.99762267, 0.5053904, 0.9942781, 0.5107808, 0.98758864, 0.5119634], [0.98758864, 0.5119634, 0.96959937, 0.51514375, 0.9681016, 0.5403815, 0.98558867, 0.5456672]]], "54": [1, 0.5001409, 0.50000006, 0.5011421, 0.50000006, [[0.9991543, 0.4709359, 0.99948037, 0.47653466, 0.9997122, 0.48213777, 0.9998497, 0.4877427], [0.9998497, 0.4877427, 1.0000501, 0.4959131, 1.0000501, 0.5040873, 0.9998496, 0.51225775], [0.9998496, 0.51225775, 0.9997122, 0.51786256, 0.9994804, 0.5234655, 0.9991543, 0.52906424]], [[0.97415674, 0.47245064, 0.97457963, 0.47970676, 0.97937965, 0.4867078, 0.9882538, 0.48824793], [0.9882541, 0.48824796, 1.0014383, 0.49053612, 1.0014383, 0.50946397, 0.9882541, 0.5117521], [0.9882539, 0.5117522, 0.9793797, 0.5132923, 0.9745797, 0.5202935, 0.9741569, 0.5275496]], [[0.9999999, 0.50000006, 0.99999994, 0.50969243, 0.99971807, 0.51938474, 0.9991543, 0.5290645]], [[0.99814224, 0.50000006, 0.99814224, 0.50530404, 0.99484617, 0.5106081, 0.9882539, 0.5117522], [0.9882539, 0.5117522, 0.97050524, 0.5148325, 0.96905357, 0.53975767, 0.9863246, 0.5448777]]], "55": [1, 0.49999988, 0.5, 0.5009565, 0.5, [[0.9988451, 0.47147503, 0.9991596, 0.47697344, 0.9993829, 0.48247457, 0.99951535, 0.48797685], [0.99951535, 0.48797685, 0.9997084, 0.49599177, 0.9997084, 0.5040092, 0.9995154, 0.51202416], [0.9995154, 0.51202416, 0.999383, 0.5175261, 0.99915946, 0.5230269, 0.9988451, 0.52852494]], [[0.97404045, 0.47294793, 0.97444856, 0.48008627, 0.97917235, 0.4869778, 0.9879171, 0.48846817], [0.9879171, 0.48846817, 1.0008942, 0.49067986, 1.0008942, 0.50932014, 0.9879172, 0.51153183], [0.9879171, 0.5115319, 0.9791726, 0.51302224, 0.9744488, 0.5199135, 0.9740405, 0.5270516]], [[0.9996602, 0.49999994, 0.9996602, 0.509511, 0.99938846, 0.519022, 0.99884504, 0.52852505]], [[0.9976499, 0.5, 0.99764997, 0.505213, 0.9944057, 0.510426, 0.9879171, 0.5115319], [0.9879171, 0.5115319, 0.97042775, 0.5145126, 0.9690219, 0.53909767, 0.9860575, 0.54405266]]], "56": [1, 0.50013095, 0.5, 0.50105757, 0.5, [[0.9990832, 0.47197953, 0.9993865, 0.4773798, 0.99960196, 0.48278576, 0.99972975, 0.48819417], [0.99972975, 0.48819417, 0.9999155, 0.4960631, 0.9999155, 0.5039371, 0.99972963, 0.511806], [0.99972963, 0.511806, 0.9996019, 0.5172143, 0.9993864, 0.52262026, 0.9990832, 0.52802044]], [[0.97459674, 0.47340703, 0.9749917, 0.4804366, 0.9796453, 0.48722684, 0.98827094, 0.48867097], [0.98827094, 0.48867095, 1.0010575, 0.4908117, 1.0010575, 0.5091883, 0.98827094, 0.5113291], [0.9882709, 0.5113291, 0.9796453, 0.51277316, 0.9749917, 0.5195634, 0.9745966, 0.52659285]], [[0.9998689, 0.5, 0.999869, 0.5093458, 0.9996071, 0.51869166, 0.99908316, 0.52802056]], [[0.9978608, 0.5, 0.99786085, 0.50512934, 0.9946642, 0.5102587, 0.9882709, 0.5113291], [0.9882709, 0.5113291, 0.9710194, 0.5142173, 0.9696561, 0.538491, 0.9864758, 0.54329276]]], "57": [1, 0.5, 0.5, 0.5008888, 0.5, [[0.9989249, 0.47247386, 0.9992178, 0.47778273, 0.9994258, 0.48309487, 0.99954915, 0.4884083], [0.99954915, 0.4884083, 0.99972844, 0.49613547, 0.99972844, 0.50386554, 0.99954915, 0.51159275], [0.99954915, 0.51159275, 0.9994258, 0.5169058, 0.99921775, 0.5222176, 0.9989249, 0.52752614]], [[0.9747559, 0.4738566, 0.97513795, 0.4807791, 0.9797225, 0.48746967, 0.9882302, 0.4888693], [0.9882302, 0.4888693, 1.0008291, 0.49094203, 1.0008291, 0.509058, 0.9882302, 0.5111307], [0.9882302, 0.5111307, 0.97972274, 0.5125303, 0.97513825, 0.51922053, 0.9747559, 0.5261429]], [[0.9996837, 0.5, 0.99968374, 0.5091786, 0.9994308, 0.51835716, 0.9989249, 0.5275265]], [[0.99767935, 0.5, 0.99767935, 0.5050472, 0.99452966, 0.51009434, 0.9882302, 0.5111307], [0.9882302, 0.5111307, 0.97121435, 0.5139301, 0.9698922, 0.5378942, 0.98649687, 0.5425484]]], "58": [1, 0.50012225, 0.50000006, 0.500983, 0.50000006, [[0.9992662, 0.47293752, 0.9995495, 0.47816208, 0.9997507, 0.48338595, 0.9998699, 0.48860946], [0.9998699, 0.48860946, 1.0000433, 0.49620396, 1.0000433, 0.5037978, 0.9998699, 0.51139235], [0.9998699, 0.51139235, 0.9997506, 0.51661533, 0.99954945, 0.5218386, 0.9992662, 0.5270626]], [[0.9755171, 0.4742723, 0.9758874, 0.48109612, 0.98040795, 0.48769468, 0.98880696, 0.48905283], [0.988807, 0.48905283, 1.0012326, 0.4910621, 1.0012326, 0.50893795, 0.988807, 0.5109473], [0.98880696, 0.5109473, 0.9804082, 0.5123054, 0.9758876, 0.5189037, 0.97551715, 0.5257273]], [[0.9999999, 0.50000006, 0.9999999, 0.5090202, 0.9997554, 0.51804036, 0.9992662, 0.5270628]], [[0.9981262, 0.5, 0.9981262, 0.5049713, 0.9950198, 0.50994265, 0.98880696, 0.5109473], [0.98880696, 0.5109473, 0.97200835, 0.5136637, 0.97072446, 0.53734326, 0.987131, 0.54186004]]], "59": [1, 0.5000003, 0.5, 0.500828, 0.5, [[0.9989972, 0.47340482, 0.99927056, 0.47853398, 0.99946475, 0.4836701, 0.99957967, 0.48880908], [0.99957967, 0.48880908, 0.9997465, 0.49626756, 0.9997465, 0.5037322, 0.99957967, 0.5111907], [0.99957967, 0.5111907, 0.9994647, 0.51632977, 0.99927056, 0.5214659, 0.9989972, 0.5265952]], [[0.9754339, 0.474705, 0.97579217, 0.48142487, 0.98024523, 0.48792642, 0.9885285, 0.48924336], [0.9885285, 0.48924336, 1.0007706, 0.4911897, 1.0007706, 0.5088104, 0.9885285, 0.51075673], [0.9885284, 0.5107568, 0.98024535, 0.51207376, 0.9757922, 0.5185751, 0.9754338, 0.5252948]], [[0.99970484, 0.49999997, 0.99970484, 0.5088719, 0.9994689, 0.5177438, 0.9989972, 0.52659565]], [[0.99771, 0.5, 0.99771005, 0.5048918, 0.9946495, 0.50978357, 0.9885284, 0.5107568], [0.9885284, 0.5107568, 0.97196174, 0.5133907, 0.970716, 0.5367636, 0.98690885, 0.5411436]]], "60": [1, 0.500114, 0.5, 0.5009151, 0.49999997, [[0.99920166, 0.47384405, 0.99946606, 0.4788897, 0.9996539, 0.48394248, 0.99976504, 0.4889982], [0.99976504, 0.4889982, 0.99992627, 0.49633056, 0.99992627, 0.50366926, 0.9997651, 0.5110016], [0.9997651, 0.5110016, 0.99965394, 0.5160574, 0.99946606, 0.5211102, 0.99920166, 0.5261559]], [[0.9759285, 0.47510597, 0.97627574, 0.48172963, 0.9806664, 0.48814124, 0.9888425, 0.48941967], [0.9888426, 0.48941967, 1.0009153, 0.49130738, 1.0009153, 0.50869256, 0.9888426, 0.5105803], [0.9888425, 0.5105803, 0.98066616, 0.51185876, 0.97627556, 0.5182707, 0.9759285, 0.5248945]], [[0.99988604, 0.5, 0.99988604, 0.50872564, 0.99965787, 0.5174513, 0.99920166, 0.526156]], [[0.9978971, 0.49999997, 0.99789715, 0.5048182, 0.99487895, 0.5096364, 0.9888425, 0.5105803], [0.9888425, 0.5105803, 0.97249, 0.5131372, 0.9712799, 0.53622764, 0.9872755, 0.5404799]]], "61": [1, 0.5000002, 0.5, 0.5007733, 0.5, [[0.99906164, 0.47427505, 0.99931765, 0.4792406, 0.9994994, 0.48421136, 0.9996069, 0.48918432], [0.9996069, 0.48918432, 0.99976295, 0.49639326, 0.999763, 0.5036068, 0.9996071, 0.51081574], [0.9996071, 0.51081574, 0.99949944, 0.5157887, 0.99931765, 0.5207594, 0.9990617, 0.52572495]], [[0.9760777, 0.47549984, 0.9764143, 0.4820285, 0.9807433, 0.48835132, 0.98881316, 0.48959267], [0.9888133, 0.48959267, 1.0007184, 0.491424, 1.0007184, 0.508576, 0.9888133, 0.5104073], [0.98881316, 0.5104073, 0.9807432, 0.51164865, 0.9764143, 0.5179715, 0.9760776, 0.52450025]], [[0.9997239, 0.49999997, 0.9997239, 0.50858015, 0.99950325, 0.5171603, 0.99906164, 0.52572507]], [[0.99774206, 0.5, 0.99774206, 0.50474584, 0.9947658, 0.5094917, 0.98881316, 0.5104073], [0.98881316, 0.5104073, 0.97267306, 0.51289004, 0.9714973, 0.5356994, 0.9872965, 0.5398286]]], "62": [1, 0.5001071, 0.5, 0.50085485, 0.5, [[0.99935794, 0.47468093, 0.99960613, 0.4795748, 0.9997824, 0.48446786, 0.9998867, 0.48936057], [0.9998867, 0.48936057, 1.0000379, 0.4964543, 1.0000378, 0.5035473, 0.9998865, 0.510641], [0.9998865, 0.510641, 0.99978226, 0.5155332, 0.99960613, 0.52042574, 0.99935794, 0.5253191]], [[0.9767482, 0.47586548, 0.9770748, 0.48230627, 0.9813465, 0.48854694, 0.9893182, 0.48975357], [0.9893182, 0.48975354, 1.0010679, 0.49153203, 1.0010679, 0.50846803, 0.9893182, 0.5102465], [0.98931813, 0.5102465, 0.9813467, 0.51145315, 0.97707504, 0.5176935, 0.97674817, 0.524134]], [[1, 0.5, 1, 0.5084389, 0.999786, 0.5168778, 0.99935794, 0.5253191]], [[0.9981305, 0.5, 0.99813044, 0.50467867, 0.995193, 0.5093573, 0.98931813, 0.5102465], [0.98931813, 0.5102465, 0.9733749, 0.5126598, 0.9722313, 0.53520924, 0.98784876, 0.5392231]]], "63": [1, 0.50000024, 0.5, 0.50072366, 0.5000001, [[0.99912035, 0.4750898, 0.99936044, 0.47990036, 0.999531, 0.48471653, 0.9996318, 0.48953506], [0.9996318, 0.48953506, 0.9997778, 0.4965102, 0.9997777, 0.5034903, 0.99963176, 0.51046544], [0.99963176, 0.51046544, 0.9995309, 0.51528376, 0.99936044, 0.5200998, 0.99912035, 0.5249102]], [[0.9766891, 0.47624552, 0.9770058, 0.4825939, 0.98121727, 0.48874795, 0.9890846, 0.48992005], [0.9890846, 0.48992005, 1.0006707, 0.49164614, 1.0006707, 0.50835407, 0.9890846, 0.51008016], [0.9890846, 0.51008016, 0.9812174, 0.5112523, 0.97700596, 0.51740617, 0.97668904, 0.5237544]], [[0.9997411, 0.5, 0.9997411, 0.50830895, 0.9995342, 0.5166179, 0.99912035, 0.52491033]], [[0.9977742, 0.5000001, 0.9977741, 0.50460863, 0.99487764, 0.50921714, 0.9890846, 0.51008016], [0.9890846, 0.51008016, 0.9733501, 0.51242435, 0.97223866, 0.534696, 0.98766154, 0.5385952]]], "64": [1, 0.50010026, 0.5, 0.50079954, 0.49999994, [[0.9992977, 0.4754762, 0.99953055, 0.4802159, 0.9996958, 0.4849579, 0.9997936, 0.48970085], [0.9997936, 0.48970085, 0.9999351, 0.49656647, 0.99993515, 0.5034341, 0.9997936, 0.5102997], [0.9997936, 0.5102997, 0.99969584, 0.5150425, 0.9995305, 0.51978433, 0.9992977, 0.5245238]], [[0.977132, 0.47660032, 0.97744, 0.4828624, 0.9815955, 0.48893523, 0.9893654, 0.49007484], [0.98936546, 0.49007484, 1.0007995, 0.49175188, 1.0007995, 0.508248, 0.98936546, 0.509925], [0.98936534, 0.50992507, 0.9815954, 0.51106465, 0.9774398, 0.5171376, 0.9771318, 0.5233997]], [[0.9998997, 0.5, 0.9998997, 0.5081769, 0.999699, 0.51635385, 0.9992976, 0.5245238]], [[0.997941, 0.49999994, 0.997941, 0.5045432, 0.9950825, 0.5090865, 0.98936534, 0.50992507], [0.98936534, 0.50992507, 0.9738246, 0.5122044, 0.9727431, 0.5342187, 0.9879856, 0.5380104]]], "65": [1, 0.49999976, 0.5, 0.5006788, 0.5, [[0.99917245, 0.47585484, 0.99939835, 0.48052603, 0.9995588, 0.4851956, 0.9996537, 0.48986453], [0.9996537, 0.48986453, 0.99979097, 0.4966222, 0.999791, 0.5033785, 0.9996537, 0.5101361], [0.9996537, 0.5101361, 0.9995588, 0.51480484, 0.9993984, 0.51947415, 0.99917245, 0.5241451]], [[0.97727114, 0.47694758, 0.97757006, 0.4831251, 0.98167026, 0.4891187, 0.9893443, 0.4902271], [0.9893443, 0.4902271, 1.000628, 0.49185687, 1.000628, 0.5081431, 0.9893443, 0.5097729], [0.98934424, 0.5097729, 0.9816698, 0.51088136, 0.9775695, 0.5168755, 0.97727096, 0.52305335]], [[0.9997566, 0.5, 0.99975663, 0.5080468, 0.9995619, 0.5160936, 0.99917245, 0.5241451]], [[0.9978071, 0.5, 0.9978071, 0.50447905, 0.9949862, 0.508958, 0.98934424, 0.5097729], [0.98934424, 0.5097729, 0.9739958, 0.5119898, 0.9729435, 0.5337479, 0.98800623, 0.53743577]]], "66": [1, 0.50009435, 0.5, 0.50074995, 0.5000001, [[0.99943376, 0.47621346, 0.99965286, 0.48081315, 0.9998084, 0.48541498, 0.9999004, 0.49001774], [0.9999004, 0.49001774, 1.0000333, 0.49667212, 1.0000333, 0.50332844, 0.99990034, 0.50998276], [0.99990034, 0.50998276, 0.99980843, 0.5145854, 0.99965286, 0.51918703, 0.99943376, 0.52378654]], [[0.9778662, 0.4772728, 0.9781569, 0.48337114, 0.9822055, 0.48929036, 0.98978996, 0.49036932], [0.98978996, 0.49036932, 1.0009335, 0.4919546, 1.0009335, 0.5080456, 0.98978996, 0.5096309], [0.98978996, 0.5096309, 0.9822049, 0.51071, 0.9781563, 0.51663, 0.9778662, 0.52272886]], [[1, 0.5, 1, 0.507931, 0.9998113, 0.515862, 0.9994337, 0.52378654]], [[0.9981476, 0.5000001, 0.9981476, 0.5044192, 0.99536175, 0.5088383, 0.98978996, 0.5096309], [0.98978996, 0.5096309, 0.9746207, 0.5117889, 0.97359556, 0.5333089, 0.9884911, 0.5368991]]], "67": [1, 0.49999994, 0.50000006, 0.5006379, 0.5, [[0.9992216, 0.47657475, 0.9994343, 0.4811064, 0.9995853, 0.48563927, 0.99967444, 0.49017262], [0.99967444, 0.49017262, 0.9998033, 0.4967241, 0.9998033, 0.50327665, 0.9996743, 0.5098281], [0.9996743, 0.5098281, 0.99958515, 0.51436126, 0.9994343, 0.51889396, 0.9992216, 0.5234254]], [[0.9778251, 0.4776088, 0.97810745, 0.48362458, 0.9821021, 0.4894661, 0.98959225, 0.49051586], [0.98959243, 0.49051592, 1.0005891, 0.49205717, 1.0005891, 0.5079428, 0.98959243, 0.50948405], [0.98959243, 0.50948405, 0.9821023, 0.5105338, 0.97810763, 0.5163754, 0.9778252, 0.52239126]], [[0.9997711, 0.50000006, 0.99977106, 0.5078097, 0.9995879, 0.51561934, 0.99922156, 0.5234254]], [[0.9978399, 0.49999997, 0.9978399, 0.50435674, 0.9950908, 0.5087134, 0.98959243, 0.50948405], [0.98959243, 0.50948405, 0.97461194, 0.5115836, 0.9736139, 0.53285086, 0.9883321, 0.53634405]]], "68": [1, 0.50008875, 0.5000001, 0.5007045, 0.50000006, [[0.99937844, 0.47691652, 0.9995848, 0.48137882, 0.99973124, 0.485847, 0.99981767, 0.4903176], [0.99981767, 0.4903176, 0.99994254, 0.49677068, 0.99994254, 0.5032288, 0.99981767, 0.5096818], [0.99981767, 0.5096818, 0.9997312, 0.5141527, 0.9995848, 0.5186212, 0.99937844, 0.52308375]], [[0.9782238, 0.4779235, 0.97849864, 0.48386207, 0.98244274, 0.48963082, 0.98984474, 0.4906531], [0.989845, 0.4906531, 1.0007046, 0.49215293, 1.0007046, 0.50784713, 0.989845, 0.5093469], [0.9898448, 0.50934696, 0.9824427, 0.51036924, 0.97849846, 0.51613826, 0.97822386, 0.52207696]], [[0.9999113, 0.5000001, 0.9999113, 0.5077005, 0.9997337, 0.5154008, 0.99937844, 0.523084]], [[0.9979897, 0.5, 0.9979897, 0.5042985, 0.9952748, 0.508597, 0.9898448, 0.50934696], [0.9898448, 0.50934696, 0.97504044, 0.5113915, 0.974068, 0.5324233, 0.9886207, 0.5358252]]], "69": [1, 0.5, 0.49999994, 0.5006006, 0.5, [[0.9992662, 0.4772526, 0.9994668, 0.48165435, 0.9996092, 0.486058, 0.99969316, 0.4904623], [0.99969316, 0.4904623, 0.9998145, 0.49682033, 0.9998145, 0.50317997, 0.99969316, 0.509538], [0.99969316, 0.509538, 0.9996091, 0.5139422, 0.9994668, 0.5183456, 0.9992662, 0.5227473]], [[0.97835356, 0.4782329, 0.9786207, 0.48409534, 0.982515, 0.48979247, 0.98982966, 0.49078813], [0.98982966, 0.49078813, 1.0005536, 0.49224788, 1.0005536, 0.5077522, 0.98982966, 0.5092119], [0.9898296, 0.5092119, 0.9825151, 0.51020753, 0.9786208, 0.5159044, 0.9783535, 0.5217667]], [[0.9997842, 0.4999999, 0.9997842, 0.50758415, 0.9996115, 0.5151684, 0.9992662, 0.52274734]], [[0.9978726, 0.50000006, 0.9978726, 0.504241, 0.99519163, 0.50848204, 0.9898296, 0.5092119], [0.9898296, 0.5092119, 0.9752001, 0.5112033, 0.9742525, 0.5320008, 0.9886405, 0.5353142]]], "70": [1, 0.5000839, 0.5, 0.5006633, 0.49999997, [[0.9994963, 0.4775714, 0.99969125, 0.48191375, 0.99982965, 0.48625636, 0.99991137, 0.49059907], [0.99991137, 0.49059907, 1.0000293, 0.49686643, 1.0000293, 0.503134, 0.9999114, 0.5094014], [0.9999114, 0.5094014, 0.99982965, 0.513744, 0.9996913, 0.51808643, 0.9994963, 0.52242863]], [[0.97888553, 0.47852314, 0.97914565, 0.48431414, 0.98299325, 0.48994404, 0.9902262, 0.4909146], [0.9902262, 0.4909146, 1.0008231, 0.49233657, 1.0008231, 0.50766337, 0.9902262, 0.50908536], [0.9902261, 0.50908536, 0.98299325, 0.51005596, 0.9791457, 0.51568574, 0.97888553, 0.52147675]], [[1, 0.5, 0.99999994, 0.50747645, 0.99983203, 0.51495296, 0.9994963, 0.5224287]], [[0.99817395, 0.49999997, 0.99817395, 0.50418717, 0.99552464, 0.50837433, 0.9902261, 0.50908536], [0.9902261, 0.50908536, 0.97576016, 0.51102656, 0.974836, 0.5316051, 0.98906976, 0.5348352]]], "71": [1, 0.49999994, 0.5, 0.5005665, 0.5000001, [[0.99930674, 0.4778926, 0.99949634, 0.4821736, 0.99963075, 0.48645487, 0.9997102, 0.4907363], [0.9997102, 0.4907363, 0.99982476, 0.4969123, 0.9998247, 0.5030886, 0.99971014, 0.5092646], [0.99971014, 0.5092646, 0.99963075, 0.51354575, 0.9994963, 0.5178268, 0.99930674, 0.5221074]], [[0.9788578, 0.47882384, 0.97911125, 0.48454022, 0.98291004, 0.49009943, 0.9900569, 0.49104503], [0.99005693, 0.49104506, 1.0005213, 0.49242958, 1.0005213, 0.50757056, 0.99005693, 0.5089551], [0.99005693, 0.5089551, 0.9829099, 0.5099008, 0.97911114, 0.5154602, 0.97885776, 0.5211767]], [[0.9997961, 0.50000006, 0.9997961, 0.50736946, 0.99963295, 0.5147389, 0.99930674, 0.5221076]], [[0.99790525, 0.50000006, 0.99790525, 0.50413144, 0.9952891, 0.5082629, 0.99005693, 0.5089551], [0.99005693, 0.5089551, 0.97576255, 0.51084644, 0.9748616, 0.53119403, 0.98893297, 0.5343413]]], "72": [1, 0.5000793, 0.5, 0.50062513, 0.5, [[0.9994448, 0.47819728, 0.9996291, 0.48241997, 0.9997599, 0.48664308, 0.999837, 0.49086633], [0.999837, 0.49086633, 0.9999484, 0.49695557, 0.99994844, 0.5030452, 0.99983704, 0.5091344], [0.99983704, 0.5091344, 0.9997599, 0.5133574, 0.99962914, 0.5175803, 0.9994448, 0.5218027]], [[0.97921836, 0.47910473, 0.9794652, 0.4847516, 0.9832183, 0.49024528, 0.9902849, 0.49116734], [0.9902849, 0.49116734, 1.000625, 0.49251658, 1.000625, 0.50748354, 0.9902849, 0.50883275], [0.99028486, 0.50883275, 0.9832182, 0.50975484, 0.97946507, 0.51524854, 0.97921836, 0.5208954]], [[0.9999207, 0.49999997, 0.99992067, 0.50726795, 0.99976206, 0.5145359, 0.9994448, 0.52180284]], [[0.99803996, 0.50000006, 0.99803996, 0.5040791, 0.99545497, 0.50815815, 0.99028486, 0.50883275], [0.99028486, 0.50883275, 0.9761512, 0.510677, 0.97527224, 0.5308085, 0.9891916, 0.53387755]]], "73": [1, 0.49999988, 0.5, 0.50053513, 0.50000006, [[0.9993441, 0.47849715, 0.99952346, 0.48266256, 0.99965066, 0.48682827, 0.9997258, 0.49099422], [0.9997258, 0.49099422, 0.99983406, 0.49699792, 0.99983406, 0.5030019, 0.9997258, 0.50900567], [0.9997258, 0.50900567, 0.9996507, 0.5131716, 0.9995235, 0.51733744, 0.9993441, 0.52150285]], [[0.9793396, 0.4793822, 0.9795799, 0.4849601, 0.9832878, 0.49038863, 0.99027467, 0.4912879], [0.99027467, 0.49128792, 1.0004916, 0.4926029, 1.0004916, 0.50739723, 0.99027467, 0.50871223], [0.9902746, 0.5087123, 0.98328745, 0.5096116, 0.97957957, 0.5150406, 0.97933954, 0.5206188]], [[0.999807, 0.5, 0.99980706, 0.507168, 0.99965274, 0.514336, 0.99934405, 0.5215029]], [[0.9979373, 0.50000006, 0.9979374, 0.5040274, 0.99538314, 0.50805473, 0.9902746, 0.5087123], [0.9902746, 0.5087123, 0.97630066, 0.51051086, 0.975443, 0.5304273, 0.98921067, 0.5334205]]], "74": [1, 0.50007516, 0.5, 0.5005907, 0.5000001, [[0.99954903, 0.47878253, 0.9997238, 0.48289603, 0.9998478, 0.48700717, 0.99992096, 0.4911173], [0.99992096, 0.4911173, 1.0000265, 0.49704036, 1.0000263, 0.5029614, 0.99992085, 0.50888443], [0.99992085, 0.50888443, 0.99984765, 0.512994, 0.99972373, 0.5171045, 0.99954903, 0.52121747]], [[0.97981745, 0.47964275, 0.9800517, 0.48515606, 0.9837171, 0.49052364, 0.9906292, 0.4914013], [0.9906292, 0.49140134, 1.0007305, 0.492684, 1.0007305, 0.5073163, 0.9906292, 0.5085989], [0.99062914, 0.5085989, 0.98371726, 0.50947666, 0.9800519, 0.5148438, 0.9798175, 0.52035695]], [[1, 0.5, 1, 0.5070702, 0.9998497, 0.51414025, 0.99954903, 0.52121747]], [[0.9982052, 0.5000001, 0.9982052, 0.50397885, 0.99567986, 0.5079576, 0.99062914, 0.5085989], [0.99062914, 0.5085989, 0.97680503, 0.51035434, 0.9759676, 0.53006893, 0.9895932, 0.53299046]]], "75": [1, 0.50000036, 0.5, 0.5005064, 0.5000001, [[0.9993797, 0.4790698, 0.99954945, 0.48311922, 0.9996698, 0.4871763, 0.9997408, 0.49123663], [0.9997408, 0.49123663, 0.9998429, 0.4970761, 0.9998429, 0.5029222, 0.9997407, 0.5087616], [0.9997407, 0.5087616, 0.9996698, 0.5128225, 0.99954945, 0.51688015, 0.9993797, 0.5209302]], [[0.97980016, 0.4799122, 0.9800286, 0.48535806, 0.98364985, 0.49066156, 0.9904834, 0.49151778], [0.99048364, 0.4915178, 1.0004647, 0.49276844, 1.0004647, 0.5072317, 0.99048364, 0.50848234], [0.9904835, 0.5084824, 0.98364997, 0.5093386, 0.9800288, 0.51464206, 0.9798003, 0.5200879]], [[0.9998174, 0.5, 0.9998174, 0.5069843, 0.99967146, 0.5139686, 0.99937963, 0.5209302]], [[0.99796945, 0.50000006, 0.9979694, 0.50392854, 0.99547416, 0.507857, 0.9904835, 0.5084824], [0.9904835, 0.5084824, 0.976816, 0.51019484, 0.97599864, 0.5296977, 0.9894749, 0.53254783]]], "76": [1, 0.5000712, 0.5, 0.50055856, 0.50000006, [[0.999501, 0.47934353, 0.99966675, 0.48335084, 0.9997843, 0.4873544, 0.9998538, 0.49135643], [0.9998538, 0.49135643, 0.9999537, 0.4971205, 0.9999536, 0.50288135, 0.9998537, 0.5086454], [0.9998537, 0.5086454, 0.99978423, 0.51264685, 0.9996667, 0.5166498, 0.999501, 0.52065647]], [[0.9801282, 0.48016566, 0.98035115, 0.48554814, 0.9839308, 0.49079162, 0.99069065, 0.49162754], [0.99069065, 0.49162754, 1.0005586, 0.4928478, 1.0005586, 0.50715226, 0.99069065, 0.5083725], [0.9906906, 0.50837255, 0.98393047, 0.50920844, 0.98035073, 0.51445234, 0.9801281, 0.5198352]], [[0.9999287, 0.5, 0.99992865, 0.50688183, 0.9997861, 0.51376367, 0.999501, 0.5206569]], [[0.99809164, 0.5, 0.99809164, 0.5038812, 0.99562466, 0.5077624, 0.9906906, 0.50837255], [0.9906906, 0.50837255, 0.9771702, 0.5100444, 0.9763718, 0.52934825, 0.98970795, 0.53213096]]], "77": [1, 0.49999964, 0.5, 0.50047976, 0.49999997, [[0.99940985, 0.47961313, 0.9995713, 0.48356843, 0.9996858, 0.48752046, 0.9997535, 0.49147114], [0.9997535, 0.49147114, 0.9998508, 0.4971587, 0.9998508, 0.5028434, 0.9997535, 0.5085309], [0.9997535, 0.5085309, 0.9996859, 0.512481, 0.99957144, 0.5164323, 0.99941, 0.5203869]], [[0.980241, 0.4804155, 0.9804584, 0.48573542, 0.9839969, 0.4909196, 0.9906837, 0.49173576], [0.9906837, 0.49173576, 1.0004395, 0.49292654, 1.0004395, 0.5070734, 0.9906837, 0.5082642], [0.9906837, 0.5082641, 0.9839972, 0.5090803, 0.98045874, 0.51426405, 0.98024106, 0.51958376]], [[0.9998265, 0.5, 0.99982643, 0.5067924, 0.9996877, 0.51358485, 0.99941, 0.520387]], [[0.9980005, 0.49999994, 0.9980005, 0.50383437, 0.9955616, 0.5076688, 0.9906837, 0.5082641], [0.9906837, 0.5082641, 0.9773097, 0.50989664, 0.9765297, 0.5290023, 0.98972625, 0.53171945]]], "78": [1, 0.5000675, 0.5, 0.5005293, 0.49999997, [[0.9995955, 0.4798699, 0.9997525, 0.48376498, 0.9998638, 0.48766908, 0.99992937, 0.491577], [0.99992937, 0.491577, 1.0000236, 0.49718916, 1.0000236, 0.50280917, 0.9999295, 0.50842136], [0.9999295, 0.50842136, 0.99986386, 0.51232976, 0.9997525, 0.51623446, 0.9995955, 0.5201301]], [[0.98067313, 0.48065132, 0.9808854, 0.4859122, 0.98438495, 0.49104044, 0.9910028, 0.49183792], [0.99100304, 0.49183792, 1.000653, 0.4930008, 1.000653, 0.50699914, 0.99100304, 0.508162], [0.991003, 0.50816196, 0.98438495, 0.5089595, 0.9808853, 0.51408786, 0.9806732, 0.51934886]], [[1.0000001, 0.5, 1.0000001, 0.50671893, 0.99986523, 0.51343787, 0.9995955, 0.5201301]], [[0.99824053, 0.5, 0.99824053, 0.50379026, 0.99582803, 0.5075806, 0.991003, 0.50816196], [0.991003, 0.50816196, 0.9777667, 0.509757, 0.97700435, 0.5286763, 0.9900693, 0.5313311]]], "79": [1, 0.49999958, 0.5, 0.5004552, 0.50000006, [[0.99943906, 0.4801284, 0.99959266, 0.4839872, 0.9997015, 0.48784035, 0.9997659, 0.4916911], [0.9997659, 0.4916911, 0.99985826, 0.49723274, 0.9998582, 0.5027695, 0.99976575, 0.50831115], [0.99976575, 0.50831115, 0.9997015, 0.51216114, 0.99959254, 0.51601356, 0.99943906, 0.5198716]], [[0.98066324, 0.48089427, 0.9808703, 0.486094, 0.9843297, 0.4911641, 0.9908758, 0.491943], [0.9908758, 0.491943, 1.0004162, 0.49307817, 1.0004162, 0.50692207, 0.9908758, 0.50805724], [0.9908758, 0.50805724, 0.98432946, 0.50883615, 0.98087, 0.51390654, 0.98066306, 0.5191064]], [[0.99983513, 0.5, 0.9998351, 0.50661826, 0.99970305, 0.5132365, 0.99943906, 0.5198716]], [[0.998031, 0.5000001, 0.998031, 0.50374484, 0.995646, 0.5074897, 0.9908758, 0.50805724], [0.9908758, 0.50805724, 0.9777831, 0.50961506, 0.9770381, 0.5283392, 0.98996574, 0.53093237]]], "80": [1, 0.5000641, 0.5, 0.500502, 0.5, [[0.9995516, 0.4803754, 0.9997008, 0.48417285, 0.99980664, 0.48798037, 0.99986887, 0.49179202], [0.99986887, 0.49179202, 0.9999583, 0.49726057, 0.9999583, 0.50273776, 0.9998688, 0.5082063], [0.9998688, 0.5082063, 0.99980664, 0.51201856, 0.9997008, 0.5158266, 0.9995516, 0.5196246]], [[0.980963, 0.48112306, 0.9811651, 0.48626518, 0.9845866, 0.49128067, 0.9910651, 0.49204195], [0.9910651, 0.49204195, 1.000502, 0.49315086, 1.000502, 0.50684917, 0.9910651, 0.50795805], [0.99106497, 0.50795805, 0.9845865, 0.5087193, 0.98116505, 0.5137348, 0.98096275, 0.51887697]], [[0.999936, 0.5, 0.9999359, 0.5065514, 0.99980783, 0.5131028, 0.99955153, 0.5196256]], [[0.9981427, 0.5, 0.9981427, 0.5037018, 0.99578357, 0.5074036, 0.99106497, 0.50795805], [0.99106497, 0.50795805, 0.9781076, 0.50948066, 0.97737914, 0.5280211, 0.99017715, 0.5305556]]], "81": [1, 0.49999964, 0.5, 0.5004325, 0.5000001, [[0.9994666, 0.4806183, 0.9996126, 0.4843827, 0.99971616, 0.48814204, 0.99977726, 0.4918993], [0.99977726, 0.4918993, 0.9998652, 0.49730188, 0.99986506, 0.50270015, 0.99977726, 0.5081027], [0.99977726, 0.5081027, 0.99971616, 0.5118593, 0.99961257, 0.515618, 0.9994666, 0.5193817]], [[0.98106825, 0.4813499, 0.9812657, 0.4864347, 0.98464954, 0.49139583, 0.9910607, 0.4921399], [0.9910608, 0.4921399, 1.000395, 0.49322328, 1.000395, 0.506777, 0.9910608, 0.50786036], [0.99106055, 0.50786036, 0.98464924, 0.50860447, 0.9812655, 0.5135658, 0.9810681, 0.5186507]], [[0.9998432, 0.5, 0.9998432, 0.50645566, 0.9997176, 0.5129113, 0.9994666, 0.5193817]], [[0.9980615, 0.5000001, 0.9980615, 0.5036594, 0.9957279, 0.5073187, 0.99106055, 0.50786036], [0.99106055, 0.50786036, 0.9782378, 0.50934863, 0.9775255, 0.52770597, 0.9901945, 0.5301835]]], "82": [1, 0.5000609, 0.5, 0.5004768, 0.5000001, [[0.9996342, 0.48085114, 0.9997762, 0.48455662, 0.99987686, 0.48827308, 0.99993616, 0.4919941], [0.99993616, 0.4919941, 1.0000212, 0.49732774, 1.0000212, 0.5026707, 0.99993616, 0.5080043], [0.99993616, 0.5080043, 0.9998769, 0.51172584, 0.99977624, 0.51544285, 0.9996342, 0.5191489]], [[0.98146075, 0.48156434, 0.9816539, 0.4865951, 0.98500204, 0.49150473, 0.9913496, 0.4922325], [0.9913496, 0.4922325, 1.0005869, 0.49329162, 1.0005869, 0.5067087, 0.9913496, 0.50776774], [0.99134934, 0.5077678, 0.9850017, 0.50849557, 0.9816535, 0.51340526, 0.98146045, 0.518436]], [[0.99999994, 0.5, 0.99999994, 0.50639373, 0.99987805, 0.51278746, 0.9996342, 0.51914936]], [[0.99827754, 0.5000002, 0.99827754, 0.5036192, 0.9959682, 0.5072382, 0.99134934, 0.5077678], [0.99134934, 0.5077678, 0.97865355, 0.5092234, 0.9779566, 0.52740794, 0.9905038, 0.5298312]]], "83": [1, 0.4999994, 0.5, 0.50041145, 0.49999997, [[0.9994916, 0.4810852, 0.9996308, 0.48476297, 0.9997295, 0.48843238, 0.9997878, 0.49209827], [0.9997878, 0.49209827, 0.99987155, 0.49736935, 0.9998716, 0.5026332, 0.9997878, 0.50790423], [0.9997878, 0.50790423, 0.9997295, 0.5115693, 0.9996308, 0.51523787, 0.9994916, 0.51891476]], [[0.98145664, 0.48178422, 0.98164535, 0.48675913, 0.98495674, 0.49161553, 0.99123824, 0.49232712], [0.9912385, 0.49232715, 1.0003754, 0.4933622, 1.0003754, 0.5066377, 0.9912385, 0.5076727], [0.9912385, 0.5076727, 0.98495674, 0.50838435, 0.98164535, 0.513241, 0.98145676, 0.5182161]], [[0.99985063, 0.5, 0.99985063, 0.5062967, 0.99973094, 0.5125934, 0.9994915, 0.51891476]], [[0.9980912, 0.49999994, 0.9980912, 0.5035776, 0.99580693, 0.5071552, 0.9912385, 0.5076727], [0.9912385, 0.5076727, 0.97867465, 0.50909597, 0.9779929, 0.52710044, 0.99041307, 0.5294698]]], "84": [1, 0.5000582, 0.5000001, 0.50045335, 0.5000001, [[0.99959266, 0.48130876, 0.9997282, 0.4849313, 0.9998243, 0.48855948, 0.99988085, 0.49219006], [0.99988085, 0.49219006, 0.999962, 0.49739507, 0.999962, 0.50260496, 0.9998809, 0.50780994], [0.9998809, 0.50780994, 0.9998243, 0.51144063, 0.9997282, 0.5150689, 0.99959266, 0.5186914]], [[0.9817311, 0.48199221, 0.9819154, 0.48691452, 0.98519194, 0.4917211, 0.9914113, 0.49241728], [0.9914113, 0.49241728, 1.0004532, 0.4934294, 1.0004532, 0.50657094, 0.9914113, 0.5075831], [0.99141115, 0.5075831, 0.9851918, 0.50827926, 0.9819153, 0.5130857, 0.98173094, 0.5180079]], [[0.9999417, 0.5000001, 0.9999417, 0.5062362, 0.99982536, 0.5124722, 0.99959266, 0.51869166]], [[0.9981928, 0.5000002, 0.9981928, 0.5035386, 0.9959323, 0.507077, 0.99141115, 0.5075831], [0.99141115, 0.5075831, 0.9789722, 0.5089755, 0.9783049, 0.52680963, 0.9906052, 0.5291277]]], "85": [1, 0.5000002, 0.49999994, 0.50039196, 0.5000001, [[0.99951684, 0.4815299, 0.9996493, 0.4851116, 0.9997431, 0.488697, 0.99979836, 0.49228394], [0.99979836, 0.49228394, 0.99987763, 0.49742684, 0.99987763, 0.5025729, 0.99979836, 0.50771576], [0.99979836, 0.50771576, 0.9997431, 0.51130277, 0.9996493, 0.5148882, 0.99951684, 0.51847]], [[0.98182976, 0.48219877, 0.98201, 0.48706853, 0.98525196, 0.49182492, 0.9914092, 0.4925061], [0.9914092, 0.4925061, 1.0003568, 0.49349594, 1.0003568, 0.5065044, 0.9914092, 0.5074943], [0.99140906, 0.5074943, 0.9852519, 0.50817543, 0.98201, 0.51293176, 0.98182964, 0.5178015]], [[0.9998579, 0.49999997, 0.9998579, 0.5061603, 0.9997442, 0.51232064, 0.99951684, 0.51847064]], [[0.99811995, 0.5000002, 0.99811995, 0.50349975, 0.995883, 0.5069994, 0.99140906, 0.5074943], [0.99140906, 0.5074943, 0.97909427, 0.50885665, 0.9784411, 0.5265212, 0.99062186, 0.52878934]]], "86": [1, 0.5000554, 0.5, 0.5004319, 0.50000006, [[0.99966747, 0.48174098, 0.9997966, 0.48527533, 0.9998881, 0.48882103, 0.999942, 0.4923715], [0.999942, 0.4923715, 1.0000192, 0.4974531, 1.0000192, 0.50254446, 0.99994206, 0.50762606], [0.99994206, 0.50762606, 0.99988824, 0.5111774, 0.9997967, 0.5147239, 0.99966747, 0.51825905]], [[0.9821878, 0.48239377, 0.98236394, 0.48721403, 0.9855732, 0.49192342, 0.99167174, 0.49259025], [0.99167174, 0.49259025, 1.00053, 0.49355885, 1.0005301, 0.5064413, 0.9916718, 0.50740993], [0.9916718, 0.50740993, 0.98557323, 0.5080768, 0.982364, 0.5127861, 0.9821878, 0.5176064]], [[0.99999994, 0.5, 0.99999994, 0.50609756, 0.99988914, 0.5121951, 0.99966747, 0.51825917]], [[0.99831545, 0.50000006, 0.9983155, 0.50346285, 0.99610096, 0.5069256, 0.9916718, 0.50740993], [0.9916718, 0.50740993, 0.97947454, 0.50874364, 0.9788348, 0.5262477, 0.99090225, 0.5284682]]], "87": [1, 0.5, 0.50000006, 0.50037366, 0.5, [[0.9995383, 0.48195383, 0.9996649, 0.4854567, 0.9997546, 0.4889605, 0.99980754, 0.49246457], [0.99980754, 0.49246457, 0.99988323, 0.49748814, 0.9998832, 0.50251245, 0.9998075, 0.50753605], [0.9998075, 0.50753605, 0.9997546, 0.51104, 0.9996649, 0.51454353, 0.9995383, 0.5180463]], [[0.98218834, 0.48259464, 0.9823609, 0.48736352, 0.98553634, 0.49202377, 0.9915738, 0.49267638], [0.9915738, 0.49267638, 1.00034, 0.493624, 1.00034, 0.506376, 0.9915738, 0.5073236], [0.9915738, 0.5073236, 0.9855361, 0.5079763, 0.98236066, 0.5126369, 0.98218834, 0.51740605]], [[0.9998642, 0.50000006, 0.9998642, 0.5060163, 0.99975556, 0.5120325, 0.9995383, 0.51804656]], [[0.99814844, 0.5, 0.99814844, 0.5034249, 0.9959569, 0.5068498, 0.9915738, 0.5073236], [0.9915738, 0.5073236, 0.9794984, 0.5086289, 0.97887206, 0.5259661, 0.99082196, 0.52813935]]], "88": [1, 0.50005305, 0.5, 0.50041175, 0.5000002, [[0.999628, 0.48215795, 0.9997518, 0.48562396, 0.9998395, 0.48908818, 0.9998911, 0.4925516], [0.9998911, 0.4925516, 0.9999652, 0.49751812, 0.9999653, 0.50248307, 0.99989116, 0.50744957], [0.99989116, 0.50744957, 0.9998395, 0.51091266, 0.9997518, 0.5143764, 0.999628, 0.51784205]], [[0.98244095, 0.48278508, 0.9826098, 0.4875054, 0.9857532, 0.4921194, 0.9917329, 0.49275848], [0.9917329, 0.49275848, 1.0004116, 0.49368596, 1.0004116, 0.5063144, 0.99173295, 0.5072419], [0.9917328, 0.5072419, 0.98575306, 0.5078809, 0.9826097, 0.5124948, 0.9824408, 0.51721513]], [[0.99994683, 0.49999997, 0.99994683, 0.50594556, 0.9998405, 0.5118912, 0.999628, 0.51784205]], [[0.99824196, 0.5000002, 0.998242, 0.5033892, 0.9960723, 0.5067781, 0.9917328, 0.5072419], [0.9917328, 0.5072419, 0.97977275, 0.50852007, 0.9791592, 0.52569914, 0.99099773, 0.5278274]]], "89": [1, 0.5000001, 0.50000006, 0.5003568, 0.49999997, [[0.99955916, 0.48235902, 0.99968004, 0.48578185, 0.99976563, 0.48920807, 0.99981606, 0.49263582], [0.99981606, 0.49263582, 0.99988824, 0.49754438, 0.99988824, 0.5024559, 0.99981606, 0.50736445], [0.99981606, 0.50736445, 0.99976563, 0.51079214, 0.99968004, 0.51421833, 0.99955916, 0.51764107]], [[0.9825332, 0.48297286, 0.98269826, 0.48764518, 0.9858098, 0.49221343, 0.99173236, 0.49283928], [0.99173236, 0.49283928, 1.0003241, 0.49374723, 1.0003241, 0.5062527, 0.99173236, 0.5071607], [0.9917323, 0.5071607, 0.9858097, 0.50778663, 0.9826981, 0.512355, 0.98253316, 0.5170274]], [[0.9998703, 0.50000006, 0.99987024, 0.5058838, 0.9997665, 0.5117675, 0.99955916, 0.51764137]], [[0.9981762, 0.49999997, 0.99817616, 0.50335336, 0.99602824, 0.5067067, 0.9917323, 0.5071607], [0.9917323, 0.5071607, 0.9798871, 0.5084125, 0.9792861, 0.525434, 0.9910135, 0.5275182]]], "90": [1, 0.500051, 0.5, 0.500393, 0.5000001, [[0.99969417, 0.48255238, 0.99981284, 0.48595178, 0.99989694, 0.48933908, 0.99994665, 0.4927213], [0.99994665, 0.4927213, 1.0000179, 0.4975784, 1.0000179, 0.5024251, 0.9999466, 0.5072822], [0.9999466, 0.5072822, 0.999897, 0.5106633, 0.99981284, 0.51404935, 0.99969417, 0.5174476]], [[0.9828612, 0.4831526, 0.98302305, 0.48777893, 0.98610437, 0.49230313, 0.9919721, 0.49291638], [0.99197215, 0.4929164, 1.0004815, 0.49380568, 1.0004815, 0.5061945, 0.99197215, 0.5070838], [0.991972, 0.50708383, 0.98610437, 0.507697, 0.98302305, 0.5122211, 0.98286116, 0.5168473]], [[1.0000001, 0.5, 1.0000001, 0.50580394, 0.9998981, 0.5116079, 0.99969417, 0.5174476]], [[0.9983541, 0.5000001, 0.99835414, 0.5033196, 0.9962268, 0.5066391, 0.991972, 0.50708383], [0.991972, 0.50708383, 0.98023593, 0.5083103, 0.97964674, 0.5251823, 0.9912687, 0.5272245]]], "91": [1, 0.50000036, 0.5, 0.50034094, 0.5, [[0.9995789, 0.48274612, 0.99969435, 0.48608977, 0.99977624, 0.48944208, 0.9998243, 0.492798], [0.9998243, 0.492798, 0.99989307, 0.4975963, 0.9998931, 0.502402, 0.9998243, 0.5072003], [0.9998243, 0.5072003, 0.99977624, 0.51055676, 0.99969435, 0.51390964, 0.9995789, 0.5172539]], [[0.98286504, 0.48333564, 0.98302346, 0.48791495, 0.9860736, 0.49239427, 0.99188507, 0.49299496], [0.9918854, 0.49299502, 1.0003097, 0.49386576, 1.0003097, 0.50613415, 0.9918854, 0.507005], [0.9918852, 0.507005, 0.98607343, 0.5076057, 0.9830233, 0.5120854, 0.9828651, 0.5166649]], [[0.99987596, 0.5, 0.99987596, 0.5057598, 0.99977696, 0.51151955, 0.9995789, 0.51725435]], [[0.99820364, 0.49999997, 0.99820364, 0.50328475, 0.99609756, 0.50656956, 0.9918852, 0.507005], [0.9918852, 0.507005, 0.9802618, 0.5082064, 0.9796845, 0.52492344, 0.9911973, 0.5269239]]], "92": [1, 0.50004846, 0.5, 0.50037545, 0.5, [[0.99966055, 0.48293278, 0.9997736, 0.4862427, 0.9998538, 0.48955894, 0.9999009, 0.49287766], [0.9999009, 0.49287766, 0.9999683, 0.49762386, 0.9999683, 0.50237536, 0.9999009, 0.5071215], [0.9999009, 0.5071215, 0.99985373, 0.5104406, 0.9997736, 0.513757, 0.99966055, 0.51706725]], [[0.9830984, 0.48351032, 0.98325354, 0.48804483, 0.9862741, 0.4924813, 0.99203205, 0.49307], [0.99203205, 0.49307, 1.0003755, 0.49392307, 1.0003755, 0.50607693, 0.99203205, 0.50693], [0.9920318, 0.50693005, 0.9862737, 0.50751877, 0.9832531, 0.5119556, 0.98309827, 0.51649034]], [[0.9999514, 0.50000006, 0.9999514, 0.50569516, 0.99985445, 0.5113903, 0.99966055, 0.5170676]], [[0.99828964, 0.5, 0.99828964, 0.50325173, 0.9962038, 0.50650346, 0.9920318, 0.50693005], [0.9920318, 0.50693005, 0.9805156, 0.50810754, 0.97994953, 0.5246773, 0.9913587, 0.526638]]], "93": [1, 0.50000054, 0.5, 0.5003261, 0.49999997, [[0.9995971, 0.48311695, 0.9997076, 0.48638672, 0.9997859, 0.48966816, 0.99983186, 0.49295452], [0.99983186, 0.49295452, 0.9998976, 0.4976475, 0.9998976, 0.50235045, 0.9998319, 0.5070434], [0.9998319, 0.5070434, 0.9997859, 0.51033044, 0.9997077, 0.5136126, 0.9995972, 0.516883]], [[0.9831849, 0.4836825, 0.9833366, 0.4881728, 0.98632777, 0.49256712, 0.99203265, 0.49314415], [0.9920327, 0.49314412, 1.0002959, 0.49397996, 1.0002959, 0.50602, 0.9920327, 0.50685585], [0.9920325, 0.5068558, 0.9863277, 0.5074328, 0.9833365, 0.5118271, 0.98318475, 0.5163173]], [[0.9998812, 0.5, 0.99988127, 0.5056392, 0.99978656, 0.51127833, 0.9995972, 0.5168832]], [[0.99823004, 0.5, 0.9982301, 0.50321895, 0.9961643, 0.5064379, 0.9920325, 0.5068558], [0.9920325, 0.5068558, 0.9806228, 0.50800985, 0.9800678, 0.524433, 0.99137354, 0.52635473]]], "94": [1, 0.50004673, 0.5, 0.5003591, 0.5000001, [[0.99971974, 0.483294, 0.9998286, 0.48654938, 0.99990577, 0.4897943, 0.9999512, 0.49303487], [0.9999512, 0.49303487, 1.0000165, 0.49768215, 1.0000165, 0.50232047, 0.99995106, 0.5069678], [0.99995106, 0.5069678, 0.9999057, 0.5102074, 0.9998285, 0.5134515, 0.99971974, 0.516706]], [[0.98348624, 0.48384744, 0.98363495, 0.48829538, 0.98659813, 0.4926492, 0.99225223, 0.49321502], [0.99225223, 0.493215, 1.0004389, 0.49403426, 1.0004389, 0.505966, 0.9922523, 0.5067853], [0.99225223, 0.5067852, 0.98659813, 0.50735104, 0.983635, 0.5117048, 0.9834863, 0.5161526]], [[1, 0.5, 1, 0.5055584, 0.9999066, 0.5111168, 0.9997197, 0.516706]], [[0.9983922, 0.5000001, 0.9983923, 0.5031879, 0.99634564, 0.5063757, 0.99225223, 0.5067852], [0.99225223, 0.5067852, 0.980944, 0.5079169, 0.9803996, 0.52420044, 0.99160707, 0.52608496]]], "95": [1, 0.5000003, 0.5, 0.5003123, 0.49999994, [[0.9996136, 0.48347253, 0.9997196, 0.4866778, 0.9997948, 0.48989034, 0.99983895, 0.49310592], [0.99983895, 0.49310592, 0.999902, 0.49769968, 0.999902, 0.5022996, 0.99983895, 0.5068934], [0.99983895, 0.5068934, 0.9997947, 0.5101092, 0.9997195, 0.513322, 0.99961346, 0.5165275]], [[0.98349285, 0.4840163, 0.9836388, 0.48842055, 0.9865732, 0.4927324, 0.9921748, 0.4932871], [0.9921748, 0.493287, 1.0002829, 0.49408996, 1.0002829, 0.50591, 0.9921748, 0.506713], [0.99217474, 0.5067129, 0.9865736, 0.5072676, 0.9836391, 0.5115789, 0.98349273, 0.5159828]], [[0.9998862, 0.5, 0.9998862, 0.5055163, 0.9997953, 0.5110326, 0.99961346, 0.5165276]], [[0.9982559, 0.49999997, 0.9982559, 0.5031557, 0.9962288, 0.5063115, 0.99217474, 0.5067129], [0.99217474, 0.5067129, 0.9809711, 0.5078224, 0.98043716, 0.5239616, 0.9915431, 0.5258091]]], "96": [1, 0.50004464, 0.5, 0.5003438, 0.49999997, [[0.9996874, 0.4836436, 0.99979156, 0.48682463, 0.99986535, 0.49000305, 0.9999088, 0.4931804], [0.9999088, 0.4931804, 0.9999709, 0.4977279, 0.999971, 0.5022732, 0.99990875, 0.5068207], [0.99990875, 0.5068207, 0.9998653, 0.50999767, 0.9997915, 0.5131757, 0.9996874, 0.5163564]], [[0.98370874, 0.48417693, 0.98385185, 0.4885397, 0.9867588, 0.49281177, 0.9923105, 0.49335584], [0.99231064, 0.49335587, 1.0003438, 0.4941431, 1.0003438, 0.5058569, 0.99231064, 0.5066441], [0.9923105, 0.5066441, 0.9867586, 0.5071882, 0.9838516, 0.5114606, 0.9837087, 0.5158235]], [[0.9999553, 0.5, 0.99995536, 0.5054496, 0.999866, 0.5108992, 0.9996874, 0.51635677]], [[0.9983355, 0.5, 0.9983355, 0.50312525, 0.9963272, 0.5062505, 0.9923105, 0.5066441], [0.9923105, 0.5066441, 0.9812065, 0.50773233, 0.9806826, 0.5237341, 0.99169177, 0.52554625]]], "97": [1, 0.49999958, 0.5, 0.5002992, 0.50000006, [[0.99962765, 0.48381296, 0.9997299, 0.48696578, 0.99980223, 0.49011093, 0.99984497, 0.49325302], [0.99984497, 0.49325302, 0.999906, 0.49775368, 0.99990594, 0.50224787, 0.99984485, 0.5067485], [0.99984485, 0.5067485, 0.99980223, 0.5098901, 0.9997298, 0.51303476, 0.99962765, 0.516187]], [[0.98378986, 0.48433658, 0.98393035, 0.48865807, 0.98681, 0.49289054, 0.992312, 0.4934242], [0.992312, 0.4934242, 1.0002707, 0.49419612, 1.0002707, 0.5058041, 0.992312, 0.50657606], [0.9923119, 0.50657606, 0.9868096, 0.50710976, 0.9839299, 0.51134264, 0.98378974, 0.51566434]], [[0.9998906, 0.49999997, 0.9998906, 0.50538826, 0.99980295, 0.5107765, 0.9996276, 0.51618737]], [[0.998281, 0.5000001, 0.998281, 0.5030951, 0.9962914, 0.50619006, 0.9923119, 0.50657606], [0.9923119, 0.50657606, 0.9813071, 0.5076435, 0.98079306, 0.52350825, 0.99170595, 0.52528584]]], "98": [1, 0.5000429, 0.5, 0.5003294, 0.49999997, [[0.9997424, 0.48397544, 0.9998425, 0.487096, 0.99991333, 0.49021035, 0.9999551, 0.49332207], [0.9999551, 0.49332207, 1.000015, 0.49777663, 1.000015, 0.5022258, 0.9999551, 0.5066803], [0.9999551, 0.5066803, 0.99991333, 0.50979125, 0.9998424, 0.5129048, 0.9997424, 0.5160246]], [[0.98406786, 0.4844877, 0.9842053, 0.4887702, 0.987059, 0.4929655, 0.992514, 0.49348924], [0.992514, 0.49348918, 1.0004016, 0.49424645, 1.0004016, 0.5057535, 0.9925141, 0.5065108], [0.99251395, 0.50651085, 0.98705864, 0.5070346, 0.98420495, 0.51123023, 0.9840678, 0.51551294]], [[1, 0.5, 1, 0.50533545, 0.9999141, 0.51067084, 0.9997424, 0.51602477]], [[0.9984298, 0.49999997, 0.9984298, 0.50306606, 0.9964578, 0.5061321, 0.99251395, 0.50651085], [0.99251395, 0.50651085, 0.9816037, 0.5075583, 0.9810991, 0.5232925, 0.9919202, 0.5250369]]], "99": [1, 0.5, 0.49999994, 0.50028706, 0.50000006, [[0.9996434, 0.48413947, 0.9997413, 0.48722205, 0.9998107, 0.49030533, 0.9998514, 0.49338895], [0.9998514, 0.49338895, 0.99990964, 0.49779606, 0.99990964, 0.50220376, 0.99985147, 0.5066109], [0.99985147, 0.5066109, 0.99981064, 0.5096945, 0.9997413, 0.51277786, 0.9996435, 0.51586044]], [[0.98407674, 0.48464334, 0.9842117, 0.48888537, 0.9870387, 0.49304178, 0.9924449, 0.4935556], [0.99244493, 0.4935556, 1.0002596, 0.4942983, 1.0002596, 0.5057017, 0.99244493, 0.50644445], [0.9924449, 0.50644445, 0.9870385, 0.5069583, 0.98421144, 0.511115, 0.98407674, 0.5153572]], [[0.9998951, 0.49999994, 0.99989516, 0.5052875, 0.9998113, 0.51057506, 0.9996435, 0.5158607]], [[0.998306, 0.5, 0.998306, 0.50303656, 0.9963523, 0.5060731, 0.9924449, 0.50644445], [0.9924449, 0.50644445, 0.98163193, 0.50747216, 0.9811368, 0.5230717, 0.9918628, 0.52478313]]], "100": [1, 0.5000408, 0.5000001, 0.50031585, 0.49999994, [[0.9997136, 0.4842973, 0.99980915, 0.48733795, 0.99987686, 0.49039245, 0.99991655, 0.4934527], [0.99991655, 0.4934527, 0.9999732, 0.49781275, 0.99997324, 0.5021845, 0.9999166, 0.5065446], [0.9999166, 0.5065446, 0.99987686, 0.5096058, 0.99980915, 0.5126613, 0.9997136, 0.51570296]], [[0.98427725, 0.48479155, 0.9844097, 0.48899513, 0.9872112, 0.49311465, 0.99257094, 0.49361897], [0.99257094, 0.49361897, 1.0003159, 0.49434775, 1.0003159, 0.5056521, 0.99257094, 0.5063809], [0.99257076, 0.506381, 0.98721105, 0.5068853, 0.98440945, 0.5110048, 0.98427707, 0.51520836]], [[0.99995905, 0.5000001, 0.99995905, 0.50524795, 0.9998772, 0.5104958, 0.9997136, 0.51570314]], [[0.99837965, 0.49999994, 0.99837965, 0.50300825, 0.9964434, 0.5060165, 0.99257076, 0.506381], [0.99257076, 0.506381, 0.98185074, 0.50738966, 0.98136455, 0.52286065, 0.99200016, 0.5245405]]], "101": [1, 0.49999958, 0.49999994, 0.50027555, 0.5, [[0.9996564, 0.48445335, 0.99975073, 0.48748404, 0.9998176, 0.490506, 0.99985695, 0.49352422], [0.99985695, 0.49352422, 0.9999132, 0.49784476, 0.99991316, 0.5021577, 0.9998568, 0.5064782], [0.9998568, 0.5064782, 0.9998175, 0.5094956, 0.99975073, 0.5125166, 0.9996564, 0.5155465]], [[0.9843533, 0.48493823, 0.98448306, 0.48910376, 0.98725927, 0.49318695, 0.992573, 0.49368197], [0.992573, 0.49368197, 1.0002487, 0.4943971, 1.0002487, 0.505603, 0.992573, 0.5063181], [0.9925727, 0.50631815, 0.98725903, 0.50681317, 0.9844828, 0.5108963, 0.9843531, 0.5150619]], [[0.9998991, 0.4999999, 0.9998991, 0.5051735, 0.9998182, 0.510347, 0.9996564, 0.5155469]], [[0.99832976, 0.5, 0.99832976, 0.5029803, 0.99641085, 0.5059606, 0.9925727, 0.50631815], [0.9925727, 0.50631815, 0.9819452, 0.50730824, 0.98146784, 0.52265114, 0.99201363, 0.5243001]]], "102": [1, 0.5000393, 0.5, 0.5003032, 0.5000001, [[0.9997642, 0.48460364, 0.999856, 0.48758352, 0.999921, 0.49057928, 0.99995923, 0.49358165], [0.99995923, 0.49358165, 1.0000136, 0.49785495, 1.0000136, 0.50214165, 0.99995923, 0.506415], [0.99995923, 0.506415, 0.9999211, 0.5094185, 0.9998561, 0.51241535, 0.9997642, 0.51539636]], [[0.9846107, 0.48507896, 0.98473793, 0.48920795, 0.98748994, 0.4932561, 0.9927595, 0.4937422], [0.9927595, 0.49374226, 1.0003691, 0.4944442, 1.0003691, 0.505556, 0.9927595, 0.506258], [0.99275935, 0.5062581, 0.98748946, 0.5067442, 0.9847374, 0.51079285, 0.9846105, 0.51492214]], [[1, 0.49999997, 0.99999994, 0.5051476, 0.9999214, 0.5102953, 0.99976414, 0.5153966]], [[0.99846673, 0.5000001, 0.9984667, 0.5029535, 0.99656427, 0.505907, 0.99275935, 0.5062581], [0.99275935, 0.5062581, 0.9822202, 0.5072303, 0.9817512, 0.5224508, 0.99221075, 0.52407014]]], "103": [1, 0.5000001, 0.5, 0.50026476, 0.50000006, [[0.9996708, 0.48475468, 0.99976116, 0.48771715, 0.9998253, 0.49068218, 0.99986285, 0.49364838], [0.99986285, 0.49364838, 0.99991655, 0.49788183, 0.9999166, 0.5021175, 0.99986285, 0.506351], [0.99986285, 0.506351, 0.99982524, 0.5093174, 0.9997612, 0.5122826, 0.9996708, 0.5152453]], [[0.98462087, 0.48522207, 0.9847457, 0.48931378, 0.9874729, 0.4933262, 0.9926971, 0.49380347], [0.9926971, 0.49380347, 1.0002389, 0.4944925, 1.0002389, 0.5055077, 0.9926971, 0.50619674], [0.99269706, 0.5061967, 0.9874728, 0.50667405, 0.9847455, 0.51068646, 0.9846207, 0.5147782]], [[0.9999032, 0.5, 0.99990314, 0.50508434, 0.9998257, 0.5101687, 0.9996708, 0.5152454]], [[0.9983535, 0.5000001, 0.9983535, 0.5029262, 0.996468, 0.5058522, 0.99269706, 0.5061967], [0.99269706, 0.5061967, 0.98224866, 0.5071513, 0.9817881, 0.52224576, 0.99215907, 0.5238356]]], "104": [1, 0.50003815, 0.5, 0.5002912, 0.49999997, [[0.99973327, 0.48490083, 0.9998222, 0.48784322, 0.99988514, 0.4907792, 0.9999223, 0.49371257], [0.9999223, 0.49371257, 0.9999752, 0.49790677, 0.9999752, 0.5020955, 0.99992216, 0.5062897], [0.99992216, 0.5062897, 0.9998851, 0.50922227, 0.99982214, 0.51215756, 0.99973327, 0.51509917]], [[0.9848076, 0.4853592, 0.98493004, 0.48941517, 0.9876336, 0.4933932, 0.9928144, 0.49386203], [0.9928144, 0.49386203, 1.0002912, 0.49453855, 1.0002912, 0.5054614, 0.9928144, 0.5061379], [0.99281436, 0.5061379, 0.9876338, 0.5066067, 0.9849303, 0.51058424, 0.9848075, 0.5146399]], [[0.9999619, 0.5, 0.9999619, 0.5050268, 0.9998857, 0.51005363, 0.9997332, 0.51509917]], [[0.998422, 0.49999994, 0.998422, 0.5028998, 0.9965528, 0.50579965, 0.99281436, 0.5061379], [0.99281436, 0.5061379, 0.98245275, 0.5070755, 0.9820003, 0.52204955, 0.99228644, 0.52361107]]], "105": [1, 0.49999946, 0.5, 0.50025445, 0.49999997, [[0.99968183, 0.48504555, 0.9997692, 0.4879645, 0.99983114, 0.49087194, 0.99986756, 0.49377444], [0.99986756, 0.49377444, 0.9999198, 0.4979291, 0.9999198, 0.50207376, 0.99986756, 0.50622845], [0.99986756, 0.50622845, 0.9998311, 0.50913006, 0.9997692, 0.51203644, 0.99968183, 0.51495445]], [[0.9848792, 0.4854967, 0.98499984, 0.48951668, 0.9876797, 0.49345985, 0.9928169, 0.4939203], [0.9928169, 0.4939203, 1.0002292, 0.49458462, 1.0002292, 0.50541544, 0.9928169, 0.50607973], [0.99281675, 0.50607973, 0.98767954, 0.5065402, 0.98499966, 0.51048326, 0.9848789, 0.51450324]], [[0.9999067, 0.5, 0.99990666, 0.5049734, 0.99983174, 0.5099468, 0.99968183, 0.5149548]], [[0.99837613, 0.50000006, 0.99837613, 0.5028738, 0.9965231, 0.50574756, 0.99281675, 0.50607973], [0.99281675, 0.50607973, 0.98254156, 0.5070006, 0.982097, 0.5218546, 0.992299, 0.5233884]]], "106": [1, 0.5000368, 0.5, 0.50027984, 0.50000006, [[0.99977934, 0.48518473, 0.9998651, 0.48807722, 0.9999259, 0.49095783, 0.9999618, 0.4938335], [0.9999618, 0.4938335, 1.0000129, 0.49794894, 1.0000129, 0.5020542, 0.9999616, 0.50616974], [0.9999616, 0.50616974, 0.99992585, 0.5090443, 0.99986506, 0.51192385, 0.99977934, 0.5148153]], [[0.9851178, 0.4856272, 0.9852362, 0.4896132, 0.9878936, 0.49352378, 0.9929894, 0.49397618], [0.9929895, 0.49397615, 1.0003399, 0.49462876, 1.0003399, 0.5053715, 0.9929895, 0.50602406], [0.9929893, 0.50602406, 0.98789334, 0.5064765, 0.985236, 0.5103872, 0.9851176, 0.51437324]], [[1, 0.5, 1, 0.50492674, 0.99992645, 0.5098535, 0.99977934, 0.5148153]], [[0.99850225, 0.5000001, 0.99850225, 0.502849, 0.99666464, 0.5056978, 0.9929893, 0.50602406], [0.9929893, 0.50602406, 0.98279697, 0.506929, 0.98235995, 0.5216679, 0.9924812, 0.5231751]]], "107": [1, 0.49999964, 0.5, 0.500245, 0.49999997, [[0.999694, 0.48532498, 0.99977803, 0.48818648, 0.9998376, 0.49104047, 0.9998725, 0.49389124], [0.9998725, 0.49389124, 0.99992263, 0.49796662, 0.99992263, 0.5020356, 0.9998725, 0.50611097], [0.9998725, 0.50611097, 0.9998375, 0.5089611, 0.99977803, 0.5118143, 0.999694, 0.5146751]], [[0.9851292, 0.48576075, 0.9852458, 0.48971164, 0.98788, 0.49358827, 0.9929332, 0.4940327], [0.9929333, 0.49403274, 1.0002204, 0.49467373, 1.0002204, 0.5053262, 0.9929333, 0.5059672], [0.9929333, 0.5059672, 0.9878799, 0.5064117, 0.9852456, 0.5102886, 0.98512924, 0.5142398]], [[0.9999101, 0.5, 0.9999101, 0.50488424, 0.99983805, 0.50976855, 0.99969405, 0.5146755]], [[0.99839866, 0.49999994, 0.99839866, 0.50282335, 0.99657685, 0.5056467, 0.9929333, 0.5059672], [0.9929333, 0.5059672, 0.9828257, 0.5068562, 0.9823963, 0.52147704, 0.9924344, 0.52295774]]], "108": [1, 0.5000352, 0.5, 0.50026935, 0.50000006, [[0.99975336, 0.48545983, 0.9998356, 0.48828748, 0.9998938, 0.49111658, 0.99992806, 0.49394634], [0.99992806, 0.49394634, 0.999977, 0.4979819, 0.99997693, 0.5020187, 0.9999281, 0.50605434], [0.9999281, 0.50605434, 0.99989384, 0.50888383, 0.9998356, 0.5117128, 0.99975336, 0.5145402]], [[0.9853032, 0.48588675, 0.98541707, 0.48980486, 0.9880292, 0.49365038, 0.99304235, 0.49408725], [0.9930427, 0.49408728, 1.0002693, 0.49471703, 1.0002693, 0.5052831, 0.9930427, 0.50591284], [0.99304247, 0.5059129, 0.9880296, 0.5063497, 0.9854176, 0.5101948, 0.9853034, 0.5141126]], [[0.99996483, 0.5, 0.99996483, 0.5048482, 0.9998943, 0.50969636, 0.9997533, 0.5145402]], [[0.9984627, 0.50000006, 0.9984626, 0.50279903, 0.996656, 0.50559795, 0.99304247, 0.5059129], [0.99304247, 0.5059129, 0.9830164, 0.5067866, 0.98259425, 0.52129424, 0.99255264, 0.5227495]]], "109": [1, 0.50000066, 0.49999994, 0.5002359, 0.5, [[0.9997073, 0.4855933, 0.9997877, 0.48838228, 0.99984455, 0.49118713, 0.99987805, 0.49399865], [0.99987805, 0.49399865, 0.9999255, 0.4979939, 0.9999255, 0.5020025, 0.999878, 0.5059978], [0.999878, 0.5059978, 0.9998447, 0.5088104, 0.99978775, 0.5116164, 0.9997073, 0.5144066]], [[0.98537153, 0.48601386, 0.9854836, 0.48989862, 0.9880736, 0.4937119, 0.9930461, 0.49414125], [0.9930461, 0.49414125, 1.0002124, 0.49476, 1.0002124, 0.50524, 0.9930461, 0.5058588], [0.99304605, 0.50585884, 0.98807335, 0.50628823, 0.9854832, 0.51010185, 0.98537135, 0.51398677]], [[0.9999136, 0.49999994, 0.9999136, 0.5048176, 0.9998448, 0.5096353, 0.9997073, 0.5144066]], [[0.9984209, 0.5, 0.99842083, 0.5027747, 0.99662924, 0.50554943, 0.99304605, 0.50585884], [0.99304605, 0.50585884, 0.9831009, 0.50671756, 0.9826858, 0.5211124, 0.9925651, 0.5225427]]], "110": [1, 0.5000343, 0.5, 0.50025946, 0.50000006, [[0.9997944, 0.48572317, 0.99987435, 0.48851866, 0.9999309, 0.49129453, 0.9999643, 0.49406222], [0.9999643, 0.49406222, 1.000012, 0.49802798, 1.0000119, 0.50197685, 0.9999642, 0.50594264], [0.9999642, 0.50594264, 0.9999308, 0.5087087, 0.99987423, 0.51148295, 0.9997944, 0.51427686]], [[0.9855937, 0.4861357, 0.98570395, 0.4899885, 0.9882728, 0.49377102, 0.9932064, 0.49419317], [0.99320644, 0.49419314, 1.0003148, 0.49480134, 1.0003148, 0.50519884, 0.99320644, 0.50580704], [0.9932063, 0.505807, 0.9882726, 0.50622916, 0.98570365, 0.5100118, 0.9855935, 0.5138647]], [[1, 0.5, 1, 0.50473964, 0.99993145, 0.5094794, 0.9997944, 0.51427704]], [[0.9985378, 0.50000006, 0.9985378, 0.50275147, 0.9967606, 0.50550294, 0.9932063, 0.505807], [0.9932063, 0.505807, 0.9833387, 0.5066513, 0.98293054, 0.52093804, 0.99273396, 0.5223443]]], "111": [1, 0.5000001, 0.5, 0.5002273, 0.4999999, [[0.99971664, 0.48585305, 0.9997945, 0.48860377, 0.9998496, 0.49135712, 0.999882, 0.4941115], [0.999882, 0.4941115, 0.99992824, 0.49803656, 0.99992824, 0.5019638, 0.99988204, 0.5058888], [0.99988204, 0.5058888, 0.9998497, 0.50864315, 0.9997945, 0.5113963, 0.99971664, 0.5141469]], [[0.9856054, 0.48625875, 0.98571366, 0.49007925, 0.988261, 0.49383068, 0.99315494, 0.49424568], [0.99315494, 0.49424568, 1.0002043, 0.4948434, 1.0002043, 0.50515646, 0.99315494, 0.5057542], [0.99315494, 0.5057542, 0.98826116, 0.50616914, 0.9857138, 0.50992024, 0.9856055, 0.5137405]], [[0.9999167, 0.5, 0.9999167, 0.5047182, 0.99985, 0.50943637, 0.9997166, 0.51414704]], [[0.998442, 0.4999999, 0.998442, 0.5027276, 0.99667966, 0.5054553, 0.99315494, 0.5057542], [0.99315494, 0.5057542, 0.9833669, 0.5065841, 0.9829656, 0.5207599, 0.99269116, 0.5221423]]], "112": [1, 0.50003314, 0.5, 0.5002498, 0.5, [[0.999768, 0.48597905, 0.99984527, 0.48873198, 0.99990004, 0.49145767, 0.9999322, 0.49417198], [0.9999322, 0.49417198, 0.99997854, 0.49806762, 0.9999784, 0.5019398, 0.99993217, 0.5058355], [0.99993217, 0.5058355, 0.99989986, 0.5085473, 0.99984515, 0.5112705, 0.99976796, 0.514021]], [[0.9857685, 0.4863779, 0.98587483, 0.49016708, 0.9884014, 0.49388832, 0.9932572, 0.4942964], [0.9932572, 0.4942964, 1.0002497, 0.49488404, 1.0002497, 0.505116, 0.9932572, 0.5057036], [0.993257, 0.5057036, 0.98840165, 0.5061116, 0.985875, 0.5098324, 0.98576826, 0.5136212]], [[0.9999669, 0.49999997, 0.9999669, 0.50464684, 0.9999006, 0.5092937, 0.99976796, 0.514021]], [[0.9985016, 0.5, 0.9985016, 0.5027049, 0.99675345, 0.50540984, 0.993257, 0.5057036], [0.993257, 0.5057036, 0.9835453, 0.5065198, 0.98315054, 0.52058905, 0.9928015, 0.5219485]]], "113": [1, 0.5000001, 0.50000006, 0.5002193, 0.5000001, [[0.9997267, 0.48610312, 0.99980175, 0.4888036, 0.999855, 0.49150896, 0.9998862, 0.4942163], [0.9998862, 0.4942163, 0.99993074, 0.49807054, 0.9999307, 0.5019289, 0.9998862, 0.5057832], [0.9998862, 0.5057832, 0.9998549, 0.50849074, 0.9998018, 0.51119626, 0.9997267, 0.513897]], [[0.9858322, 0.4864957, 0.98593676, 0.49025398, 0.9884428, 0.49394548, 0.9932606, 0.49434683], [0.9932606, 0.4943468, 1.0001967, 0.49492455, 1.0001967, 0.50507575, 0.9932607, 0.50565356], [0.9932606, 0.50565356, 0.9884429, 0.5060549, 0.9859369, 0.5097461, 0.9858322, 0.51350415]], [[0.99991953, 0.50000006, 0.99991953, 0.5046371, 0.9998553, 0.5092741, 0.9997268, 0.51389706]], [[0.99846274, 0.5000002, 0.9984627, 0.5026824, 0.99672866, 0.50536466, 0.9932606, 0.50565356], [0.9932606, 0.50565356, 0.9836249, 0.50645614, 0.9832366, 0.52041924, 0.99281305, 0.5217562]]], "114": [1, 0.5000319, 0.5, 0.5002409, 0.49999997, [[0.99980867, 0.4862237, 0.99988306, 0.4889215, 0.9999357, 0.49160093, 0.9999666, 0.4942727], [0.9999666, 0.4942727, 1.0000112, 0.49809772, 1.0000112, 0.501907, 0.9999667, 0.50573194], [0.9999667, 0.50573194, 0.99993575, 0.5084022, 0.99988306, 0.51108015, 0.99980867, 0.51377636]], [[0.98603964, 0.48660865, 0.9861423, 0.4903372, 0.9886285, 0.49400014, 0.99341, 0.49439493], [0.99341, 0.49439493, 1.0002917, 0.49496317, 1.0002917, 0.50503683, 0.99341, 0.50560504], [0.99340993, 0.50560504, 0.9886283, 0.5059998, 0.98614216, 0.509663, 0.98603964, 0.51339155]], [[1.0000001, 0.5, 1.0000001, 0.5045741, 0.9999363, 0.50914824, 0.99980867, 0.5137768]], [[0.9985713, 0.49999997, 0.9985713, 0.50266045, 0.99685085, 0.5053209, 0.99340993, 0.50560504], [0.99340993, 0.50560504, 0.9838473, 0.5063946, 0.9834652, 0.5202558, 0.9929699, 0.521571]]], "115": [1, 0.50000083, 0.5, 0.5002114, 0.5, [[0.9997378, 0.48634526, 0.99980986, 0.48898354, 0.9998609, 0.491644, 0.9998906, 0.49431354], [0.9998906, 0.49431354, 0.9999331, 0.49809688, 0.9999331, 0.5018987, 0.9998908, 0.50568205], [0.9998908, 0.50568205, 0.9998609, 0.5083531, 0.99980986, 0.51101506, 0.9997378, 0.51365477]], [[0.9860521, 0.48672527, 0.9861535, 0.49042296, 0.98861945, 0.4940558, 0.9933631, 0.49444407], [0.9933631, 0.49444404, 1.0001895, 0.4950028, 1.0001895, 0.50499725, 0.9933631, 0.50555605], [0.9933631, 0.505556, 0.9886194, 0.50594425, 0.9861535, 0.50957716, 0.9860521, 0.51327485]], [[0.9999225, 0.5, 0.9999225, 0.5045731, 0.999861, 0.5091462, 0.9997378, 0.5136556]], [[0.9984829, 0.50000006, 0.99848294, 0.50263834, 0.99677634, 0.5052767, 0.9933631, 0.505556], [0.9933631, 0.505556, 0.9838751, 0.50633264, 0.9834992, 0.5200893, 0.99293095, 0.5213829]]], "116": [1, 0.50003046, 0.5, 0.5002324, 0.5000001, [[0.99978656, 0.48646227, 0.9998578, 0.48909262, 0.9999082, 0.49172848, 0.99993783, 0.4943667], [0.99993783, 0.4943667, 0.99998, 0.49812037, 0.99998, 0.50187874, 0.9999379, 0.50563246], [0.9999379, 0.50563246, 0.9999083, 0.5082709, 0.9998579, 0.5109071, 0.9997866, 0.5135377]], [[0.9862051, 0.48683673, 0.986305, 0.49050504, 0.98875153, 0.49410936, 0.99345905, 0.4944914], [0.99345905, 0.4944914, 1.0002322, 0.49504095, 1.0002322, 0.5049593, 0.9934591, 0.5055089], [0.99345887, 0.5055089, 0.98875105, 0.50589097, 0.9863045, 0.5094956, 0.9862049, 0.5131641]], [[0.9999695, 0.49999997, 0.99996954, 0.504518, 0.99990857, 0.50903594, 0.9997866, 0.5135379]], [[0.9985389, 0.5000001, 0.998539, 0.5026171, 0.99684566, 0.5052341, 0.99345887, 0.5055089], [0.99345887, 0.5055089, 0.98404264, 0.506273, 0.98367274, 0.51992935, 0.9930341, 0.52120215]]], "117": [1, 0.49999964, 0.5, 0.50020427, 0.49999997, [[0.999744, 0.48657796, 0.9998143, 0.4891984, 0.99986416, 0.4918104, 0.9998933, 0.49441895], [0.9998933, 0.49441895, 0.99993515, 0.49814266, 0.9999352, 0.50185925, 0.99989337, 0.5055829], [0.99989337, 0.5055829, 0.99986416, 0.5081909, 0.99981433, 0.51080227, 0.999744, 0.5134221]], [[0.98626584, 0.48694625, 0.98636395, 0.49058563, 0.9887911, 0.4941622, 0.99346316, 0.4945381], [0.9934632, 0.4945381, 1.0001833, 0.49507877, 1.0001833, 0.50492126, 0.9934632, 0.5054619], [0.9934629, 0.5054619, 0.98879033, 0.5058378, 0.98636305, 0.50941515, 0.98626554, 0.51305497]], [[0.9999248, 0.5, 0.9999248, 0.5044658, 0.9998646, 0.50893164, 0.999744, 0.5134229]], [[0.99850327, 0.5, 0.9985033, 0.5025958, 0.9968233, 0.50519156, 0.9934629, 0.5054619], [0.9934629, 0.5054619, 0.98411816, 0.50621367, 0.98375404, 0.51977, 0.9930453, 0.52102244]]], "118": [1, 0.50002974, 0.5, 0.5002241, 0.50000006, [[0.9998212, 0.48669127, 0.9998907, 0.48930016, 0.9999399, 0.49188897, 0.99996895, 0.49446934], [0.99996895, 0.49446934, 1.0000105, 0.49816388, 1.0000104, 0.50184125, 0.9999688, 0.5055357], [0.9999688, 0.5055357, 0.99993986, 0.50811446, 0.9998906, 0.51070154, 0.9998212, 0.5133087]], [[0.98645926, 0.48705342, 0.98655605, 0.4906644, 0.9889646, 0.4942134, 0.99360186, 0.49458334], [0.99360186, 0.49458337, 1.000271, 0.49511537, 1.000271, 0.5048848, 0.99360186, 0.5054168], [0.99360144, 0.50541687, 0.98896384, 0.50578684, 0.9865552, 0.50933635, 0.9864587, 0.5129477]], [[1, 0.5, 1, 0.5044165, 0.9999404, 0.50883305, 0.9998212, 0.5133091]], [[0.9986037, 0.50000006, 0.9986037, 0.50257546, 0.99693644, 0.5051508, 0.99360144, 0.50541687], [0.99360144, 0.50541687, 0.9843255, 0.50615686, 0.98396707, 0.51961684, 0.9931912, 0.5208496]]], "119": [1, 0.49999893, 0.5, 0.5001975, 0.49999994, [[0.9997507, 0.48680338, 0.99981916, 0.48939764, 0.9998677, 0.49196392, 0.9998963, 0.49451858], [0.9998963, 0.49451858, 0.9999373, 0.49818304, 0.99993724, 0.5018234, 0.99989617, 0.505488], [0.99989617, 0.505488, 0.99986756, 0.5080404, 0.99981904, 0.5106045, 0.9997507, 0.5131966]], [[0.98647255, 0.48715982, 0.9865674, 0.49074268, 0.98895705, 0.49426478, 0.99355966, 0.4946289], [0.9935598, 0.49462897, 1.0001769, 0.4951524, 1.0001769, 0.50484747, 0.9935598, 0.5053709], [0.9935598, 0.5053709, 0.9889568, 0.50573504, 0.98656714, 0.50925773, 0.98647267, 0.5128409]], [[0.99992704, 0.5, 0.99992704, 0.5043714, 0.9998683, 0.50874275, 0.9997507, 0.5131966]], [[0.99852264, 0.4999999, 0.99852264, 0.50255454, 0.9968684, 0.5051092, 0.9935598, 0.5053709], [0.9935598, 0.5053709, 0.9843541, 0.50609916, 0.9840012, 0.51946074, 0.99315584, 0.5206738]]], "120": [1, 0.500029, 0.5, 0.50021666, 0.5000002, [[0.999797, 0.48691255, 0.99986446, 0.48949125, 0.9999124, 0.49203598, 0.99994063, 0.49456656], [0.99994063, 0.49456656, 0.99998116, 0.49820146, 0.99998116, 0.5018071, 0.9999405, 0.5054421], [0.9999405, 0.5054421, 0.9999123, 0.5079698, 0.99986446, 0.5105117, 0.999797, 0.51308745]], [[0.98661566, 0.48726314, 0.98670876, 0.49081886, 0.9890801, 0.49431497, 0.99364924, 0.4946734], [0.99364924, 0.4946734, 1.0002164, 0.4951886, 1.0002164, 0.5048119, 0.99364924, 0.50532705], [0.99364924, 0.50532705, 0.98907983, 0.50568557, 0.98670846, 0.50918204, 0.9866158, 0.51273793]], [[0.9999709, 0.49999997, 0.9999709, 0.5043291, 0.999913, 0.5086582, 0.999797, 0.5130876]], [[0.9985746, 0.50000024, 0.99857455, 0.50253487, 0.9969328, 0.5050695, 0.99364924, 0.50532705], [0.99364924, 0.50532705, 0.9845112, 0.506044, 0.9841638, 0.5193107, 0.9932521, 0.52050495]]], "121": [1, 0.5000013, 0.5, 0.5001905, 0.5, [[0.9997644, 0.4870216, 0.9998292, 0.4895178, 0.999875, 0.49204916, 0.9999018, 0.49459514], [0.9999018, 0.49459514, 0.9999396, 0.4981863, 0.9999397, 0.50180644, 0.9999019, 0.5053977], [0.9999019, 0.5053977, 0.99987507, 0.507946, 0.9998293, 0.51047987, 0.99976444, 0.51297843]], [[0.9866732, 0.48736662, 0.9867648, 0.4908948, 0.98911804, 0.49436423, 0.9936533, 0.49471706], [0.9936533, 0.49471706, 1.0001705, 0.4952241, 1.0001705, 0.504776, 0.9936533, 0.505283], [0.9936532, 0.50528306, 0.9891179, 0.5056359, 0.98676467, 0.50910527, 0.98667294, 0.5126334]], [[0.99993026, 0.5, 0.99993026, 0.50436026, 0.999875, 0.5087205, 0.9997644, 0.51297927]], [[0.9985412, 0.50000006, 0.9985412, 0.5025148, 0.9969119, 0.5050295, 0.9936532, 0.50528306], [0.9936532, 0.50528306, 0.9845824, 0.5059888, 0.98424035, 0.5191611, 0.9932624, 0.52033675]]], "122": [1, 0.5000271, 0.5, 0.5002094, 0.5000001, [[0.9998369, 0.48712707, 0.99990064, 0.48960093, 0.9999457, 0.4921121, 0.9999721, 0.4946387], [0.9999721, 0.4946387, 1.0000092, 0.4982, 1.0000092, 0.50179195, 0.9999721, 0.5053532], [0.9999721, 0.5053532, 0.99994576, 0.5078826, 0.9999007, 0.5103965, 0.9998369, 0.51287293]], [[0.98685455, 0.4874664, 0.986945, 0.49096814, 0.98928064, 0.49441192, 0.99378335, 0.49475938], [0.99378353, 0.49475938, 1.0002527, 0.49525857, 1.0002527, 0.50474167, 0.99378353, 0.50524086], [0.99378353, 0.50524086, 0.98928094, 0.5055883, 0.98694515, 0.5090319, 0.9868546, 0.5125335]], [[0.9999999, 0.49999997, 0.9999999, 0.5043272, 0.9999456, 0.5086543, 0.9998369, 0.5128735]], [[0.9986354, 0.5000001, 0.9986354, 0.5024957, 0.9970181, 0.5049913, 0.99378353, 0.50524086], [0.99378353, 0.50524086, 0.98477757, 0.50593585, 0.9844406, 0.51901716, 0.993399, 0.5201749]]], "123": [1, 0.49999863, 0.5, 0.50018436, 0.4999999, [[0.99976593, 0.48723277, 0.99983025, 0.4897496, 0.9998758, 0.4922324, 0.99990267, 0.49470097], [0.99990267, 0.49470097, 0.9999412, 0.4982465, 0.9999411, 0.5017626, 0.99990255, 0.5053082], [0.99990255, 0.5053082, 0.9998757, 0.50777376, 0.9998302, 0.5102535, 0.99976593, 0.51276726]], [[0.98686826, 0.48756674, 0.9869571, 0.4910418, 0.9892749, 0.49445993, 0.99374473, 0.49480206], [0.99374473, 0.49480206, 1.0001651, 0.49529347, 1.0001651, 0.5047064, 0.99374473, 0.50519776], [0.9937446, 0.5051978, 0.9892751, 0.5055399, 0.9869572, 0.5089576, 0.9868681, 0.51243246]], [[0.9999316, 0.5, 0.9999316, 0.5042222, 0.9998764, 0.5084445, 0.9997659, 0.51276726]], [[0.9985601, 0.4999999, 0.9985601, 0.502476, 0.9969549, 0.5049521, 0.9937446, 0.5051978], [0.9937446, 0.5051978, 0.9848049, 0.5058821, 0.9844731, 0.5188704, 0.9933663, 0.5200103]]], "124": [1, 0.5000271, 0.5, 0.5002024, 0.5000001, [[0.99981034, 0.48733544, 0.99987346, 0.48982698, 0.9999182, 0.49229038, 0.99994457, 0.4947421], [0.99994457, 0.4947421, 0.99998236, 0.49825767, 0.9999823, 0.50174916, 0.99994445, 0.5052648], [0.99994445, 0.5052648, 0.9999181, 0.5077142, 0.9998734, 0.51017535, 0.99981034, 0.51266456]], [[0.98700327, 0.48766512, 0.987091, 0.49111408, 0.9893917, 0.49450672, 0.99382925, 0.49484366], [0.99382925, 0.49484363, 1.0002024, 0.4953275, 1.0002024, 0.5046728, 0.99382925, 0.5051567], [0.99382895, 0.5051567, 0.9893913, 0.50549364, 0.9870907, 0.50888634, 0.98700285, 0.5123353]], [[0.9999728, 0.5, 0.9999728, 0.50419396, 0.9999187, 0.5083879, 0.99981034, 0.512665]], [[0.9986091, 0.5000002, 0.9986091, 0.50245744, 0.99701583, 0.50491476, 0.99382895, 0.5051567], [0.99382895, 0.5051567, 0.9849531, 0.5058306, 0.9846262, 0.5187294, 0.99345666, 0.519852]]], "125": [1, 0.49999923, 0.5, 0.50017846, 0.50000006, [[0.9997747, 0.487437, 0.99983656, 0.4899009, 0.9998804, 0.49234575, 0.9999061, 0.4947827], [0.9999061, 0.4947827, 0.9999431, 0.49826807, 0.99994314, 0.5017372, 0.9999061, 0.50522256], [0.9999061, 0.50522256, 0.99988043, 0.50765777, 0.99983656, 0.5101009, 0.9997747, 0.512563]], [[0.98705757, 0.48776123, 0.98714375, 0.49118465, 0.9894273, 0.49455273, 0.9938333, 0.49488458], [0.9938333, 0.49488458, 1.0001595, 0.4953611, 1.0001595, 0.504639, 0.9938333, 0.5051155], [0.99383307, 0.50511557, 0.9894273, 0.5054474, 0.98714375, 0.5088151, 0.98705727, 0.51223826]], [[0.99993396, 0.5, 0.9999339, 0.50416905, 0.99988085, 0.5083381, 0.99977475, 0.5125632]], [[0.99857795, 0.50000006, 0.99857795, 0.50243866, 0.9969964, 0.50487727, 0.99383307, 0.50511557], [0.99383307, 0.50511557, 0.98502076, 0.5057793, 0.9846987, 0.5185886, 0.99346656, 0.5196943]]], "126": [1, 0.500026, 0.5, 0.5001958, 0.5000001, [[0.99984413, 0.487536, 0.9999048, 0.4899696, 0.99994785, 0.49239662, 0.9999732, 0.4948209], [0.9999732, 0.4948209, 1.0000092, 0.4982761, 1.0000091, 0.5017258, 0.99997306, 0.5051811], [0.99997306, 0.5051811, 0.9999478, 0.50760466, 0.9999048, 0.51003104, 0.99984413, 0.512464]], [[0.9872277, 0.48785543, 0.987313, 0.49125376, 0.98958004, 0.49459738, 0.99395514, 0.49492428], [0.99395514, 0.4949243, 1.000236, 0.49539366, 1.000236, 0.50460666, 0.99395514, 0.505076], [0.99395496, 0.50507605, 0.9895798, 0.5054029, 0.9873127, 0.50874686, 0.98722756, 0.5121453]], [[1, 0.5, 1, 0.5041482, 0.999948, 0.50829643, 0.99984413, 0.5124642]], [[0.9986658, 0.5000002, 0.9986658, 0.5024207, 0.9970956, 0.5048413, 0.99395496, 0.50507605], [0.99395496, 0.50507605, 0.985204, 0.5057299, 0.98488665, 0.5184531, 0.9935946, 0.51954246]]], "127": [1, 0.5000003, 0.5, 0.50017273, 0.5000002, [[0.999784, 0.4876348, 0.9998434, 0.49003488, 0.99988544, 0.49244475, 0.9999101, 0.49485865], [0.9999101, 0.49485865, 0.99994516, 0.49828303, 0.99994516, 0.50171554, 0.9999101, 0.5051399], [0.9999101, 0.5051399, 0.99988544, 0.5075543, 0.9998435, 0.5099646, 0.999784, 0.5123652]], [[0.98724097, 0.48795012, 0.98732483, 0.49132326, 0.98957515, 0.4946425, 0.993919, 0.49496454], [0.99391913, 0.49496454, 1.000154, 0.49542677, 1.000154, 0.50457364, 0.99391913, 0.5050358], [0.99391913, 0.5050358, 0.9895752, 0.50535786, 0.98732495, 0.5086773, 0.9872411, 0.5120505]], [[0.99993634, 0.5, 0.99993634, 0.5041312, 0.99988556, 0.5082624, 0.999784, 0.51236534]], [[0.99859536, 0.5000002, 0.9985953, 0.5024025, 0.9970366, 0.50480473, 0.99391913, 0.5050358], [0.99391913, 0.5050358, 0.9852306, 0.50567997, 0.984918, 0.51831526, 0.99356425, 0.51938826]]], "128": [1, 0.50002474, 0.49999994, 0.50018966, 0.5000001, [[0.9998267, 0.48773143, 0.9998847, 0.49009553, 0.9999258, 0.49248868, 0.9999497, 0.4948939], [0.9999497, 0.4948939, 0.99998367, 0.49828786, 0.99998367, 0.5017057, 0.9999499, 0.50509965], [0.9999499, 0.50509965, 0.99992585, 0.50750697, 0.99988484, 0.50990224, 0.9998267, 0.5122684]], [[0.9873687, 0.4880421, 0.98745155, 0.49139065, 0.9896856, 0.494686, 0.99399906, 0.49500328], [0.9939992, 0.49500328, 1.0001895, 0.49545866, 1.0001895, 0.50454164, 0.9939992, 0.504997], [0.99399894, 0.504997, 0.9896854, 0.50531435, 0.98745143, 0.50860965, 0.98736864, 0.51195836]], [[0.99997526, 0.49999994, 0.99997526, 0.5041176, 0.99992573, 0.50823534, 0.99982667, 0.51227]], [[0.9986419, 0.5000001, 0.99864197, 0.5023847, 0.9970944, 0.5047693, 0.99399894, 0.504997], [0.99399894, 0.504997, 0.98537076, 0.5056317, 0.98506266, 0.5181821, 0.9936493, 0.51923937]]], "129": [1, 0.49999875, 0.5, 0.5001676, 0.5, [[0.999787, 0.48782605, 0.9998455, 0.4902287, 0.999887, 0.49259654, 0.9999115, 0.49494982], [0.9999115, 0.49494982, 0.9999466, 0.4983293, 0.9999466, 0.50167876, 0.99991137, 0.5050583], [0.99991137, 0.5050583, 0.99988693, 0.5074089, 0.99984545, 0.5097741, 0.999787, 0.51217395]], [[0.98742074, 0.4881318, 0.98750186, 0.4914565, 0.98971987, 0.49472907, 0.9940038, 0.49504176], [0.994004, 0.49504167, 1.0001501, 0.49549028, 1.0001501, 0.50450975, 0.994004, 0.50495833], [0.9940036, 0.5049583, 0.98971957, 0.50527096, 0.9875016, 0.5085437, 0.98742056, 0.5118685]], [[0.9999378, 0.50000006, 0.9999378, 0.5040238, 0.9998875, 0.5080475, 0.9997869, 0.51217425]], [[0.9986136, 0.5, 0.99861354, 0.502367, 0.99707705, 0.50473404, 0.9940036, 0.5049583], [0.9940036, 0.5049583, 0.9854354, 0.5055837, 0.9851318, 0.5180495, 0.99365944, 0.5190913]]], "130": [1, 0.50002444, 0.5, 0.50018364, 0.5, [[0.99985325, 0.48791847, 0.9999105, 0.49028176, 0.99995095, 0.49263448, 0.99997485, 0.49498278], [0.99997485, 0.49498278, 1.0000087, 0.49833143, 1.0000086, 0.50167114, 0.99997467, 0.5050198], [0.99997467, 0.5050198, 0.9999509, 0.50736725, 0.9999104, 0.50971913, 0.99985325, 0.51208156]], [[0.9875805, 0.48821884, 0.98766017, 0.4915204, 0.98986256, 0.49477082, 0.9941178, 0.495079], [0.99411786, 0.495079, 1.0002211, 0.49552107, 1.0002211, 0.50447893, 0.99411786, 0.504921], [0.9941177, 0.504921, 0.98986244, 0.50522923, 0.98766, 0.5084797, 0.9875804, 0.51178133]], [[1, 0.5, 1, 0.5040169, 0.9999511, 0.5080337, 0.99985325, 0.51208156]], [[0.99869525, 0.5, 0.99869525, 0.50235, 0.9971695, 0.50469995, 0.9941177, 0.504921], [0.9941177, 0.504921, 0.98560756, 0.5055374, 0.9853082, 0.5179215, 0.993779, 0.5189484]]], "131": [1, 0.5000006, 0.49999994, 0.50016207, 0.5000002, [[0.9997977, 0.48801175, 0.9998534, 0.49033177, 0.9998928, 0.49266967, 0.9999159, 0.49501503], [0.9999159, 0.49501503, 0.9999485, 0.4983322, 0.9999485, 0.5016642, 0.99991584, 0.5049814], [0.99991584, 0.5049814, 0.9998928, 0.5073279, 0.9998534, 0.509667, 0.9997977, 0.5119881]], [[0.98759353, 0.48830926, 0.9876725, 0.49158666, 0.989859, 0.49481326, 0.99408424, 0.49511695], [0.9940845, 0.49511698, 1.0001442, 0.4955525, 1.0001442, 0.50444794, 0.9940845, 0.50488347], [0.9940845, 0.50488347, 0.98985887, 0.5051872, 0.98767227, 0.5084145, 0.9875938, 0.5116922]], [[0.9999403, 0.49999994, 0.9999403, 0.5040134, 0.9998928, 0.50802696, 0.9997977, 0.5119885]], [[0.99862933, 0.5000002, 0.99862933, 0.502333, 0.99711436, 0.50466573, 0.9940845, 0.50488347], [0.9940845, 0.50488347, 0.9856335, 0.5054909, 0.9853384, 0.5177917, 0.9937508, 0.5188036]]], "132": [1, 0.50002414, 0.5, 0.50017804, 0.5, [[0.99983114, 0.48810276, 0.9998872, 0.4904608, 0.9999271, 0.49277416, 0.9999505, 0.49506876], [0.9999505, 0.49506876, 0.9999844, 0.49837297, 0.9999844, 0.5016384, 0.9999505, 0.5049428], [0.9999505, 0.5049428, 0.999927, 0.50723356, 0.99988717, 0.5095431, 0.99983114, 0.5118972]], [[0.98771447, 0.48839495, 0.98779213, 0.4916494, 0.98996335, 0.4948539, 0.9941602, 0.49515328], [0.99416035, 0.49515328, 1.0001781, 0.49558258, 1.0001781, 0.5044175, 0.99416035, 0.5048468], [0.9941601, 0.5048468, 0.9899634, 0.50514615, 0.9877922, 0.5083506, 0.98771447, 0.51160496]], [[0.99997586, 0.5, 0.99997586, 0.5039216, 0.99992764, 0.5078434, 0.9998311, 0.51189727]], [[0.9986736, 0.5, 0.9986737, 0.5023161, 0.99716926, 0.5046321, 0.9941601, 0.5048468], [0.9941601, 0.5048468, 0.9857662, 0.50544554, 0.98547524, 0.5176659, 0.9938313, 0.51866335]]], "133": [1, 0.49999958, 0.5, 0.5001574, 0.5000002, [[0.9998014, 0.4881921, 0.999856, 0.49050263, 0.99989456, 0.4928022, 0.9999173, 0.4950972], [0.9999173, 0.4950972, 0.9999497, 0.49836957, 0.99994963, 0.5016327, 0.99991727, 0.5049051], [0.99991727, 0.5049051, 0.99989456, 0.50719935, 0.9998559, 0.5094981, 0.9998014, 0.5118079]], [[0.9877638, 0.48848087, 0.9878404, 0.4917124, 0.9899964, 0.49489462, 0.99416465, 0.49518973], [0.99416465, 0.49518973, 1.0001405, 0.49561277, 1.0001405, 0.5043876, 0.99416465, 0.50481063], [0.99416435, 0.5048107, 0.98999584, 0.5051058, 0.98783994, 0.5082882, 0.9877634, 0.5115199]], [[0.9999416, 0.49999997, 0.9999416, 0.5039252, 0.99989486, 0.5078505, 0.99980134, 0.5118081]], [[0.9986465, 0.5000002, 0.99864656, 0.50229967, 0.99715257, 0.5045991, 0.99416435, 0.5048107], [0.99416435, 0.5048107, 0.98582727, 0.5054009, 0.98554045, 0.51754093, 0.99384063, 0.5185242]]], "134": [1, 0.5000226, 0.5, 0.5001726, 0.50000006, [[0.9998644, 0.48827955, 0.9999174, 0.49054, 0.9999548, 0.4928271, 0.9999768, 0.4951252], [0.9999768, 0.4951252, 1.0000076, 0.498366, 1.0000076, 0.5016287, 0.99997675, 0.50486946], [0.99997675, 0.50486946, 0.9999549, 0.50716937, 0.9999174, 0.50945824, 0.9998644, 0.5117205]], [[0.9879143, 0.48856357, 0.98798984, 0.49177295, 0.9901311, 0.49493372, 0.99427193, 0.49522468], [0.99427193, 0.49522468, 1.0002074, 0.49564177, 1.0002074, 0.5043584, 0.99427193, 0.5047755], [0.99427193, 0.50477546, 0.9901311, 0.50506645, 0.9879899, 0.5082272, 0.9879144, 0.5114366]], [[1, 0.5, 0.99999994, 0.50393265, 0.9999548, 0.5078653, 0.99986434, 0.5117213]], [[0.99872357, 0.5000001, 0.99872357, 0.5022835, 0.9972397, 0.50456697, 0.99427193, 0.50477546], [0.99427193, 0.50477546, 0.98598975, 0.50535744, 0.985707, 0.51741993, 0.99395317, 0.51838946]]], "135": [1, 0.49999887, 0.5, 0.5001527, 0.5000001, [[0.99980557, 0.48836687, 0.999859, 0.4906631, 0.9998969, 0.49292666, 0.9999192, 0.49517655], [0.9999192, 0.49517655, 0.99995124, 0.49840435, 0.9999511, 0.501604, 0.99991924, 0.5048319], [0.99991924, 0.5048319, 0.99989676, 0.507079, 0.999859, 0.50933975, 0.99980557, 0.5116331]], [[0.98792845, 0.48864663, 0.9880025, 0.4918338, 0.99012876, 0.49497336, 0.99424195, 0.4952603], [0.994242, 0.4952603, 1.0001363, 0.49567145, 1.0001363, 0.5043288, 0.994242, 0.50473994], [0.99424183, 0.50473994, 0.9901289, 0.5050268, 0.9880026, 0.50816596, 0.9879282, 0.5113529]], [[0.99994314, 0.5, 0.99994314, 0.50384563, 0.9998973, 0.50769114, 0.99980557, 0.5116331]], [[0.99866265, 0.5000001, 0.99866265, 0.50226724, 0.99718916, 0.50453436, 0.99424183, 0.50473994], [0.99424183, 0.50473994, 0.9860157, 0.5053137, 0.9857367, 0.51729715, 0.9939274, 0.518253]]], "136": [1, 0.5000221, 0.5, 0.50016755, 0.5, [[0.9998452, 0.48845157, 0.999897, 0.4906921, 0.99993354, 0.49294412, 0.999955, 0.49520096], [0.999955, 0.49520096, 0.99998534, 0.49839634, 0.9999854, 0.50160134, 0.999955, 0.5047967], [0.999955, 0.5047967, 0.9999336, 0.50705427, 0.999897, 0.50930715, 0.9998452, 0.5115484]], [[0.988042, 0.48872766, 0.98811495, 0.4918931, 0.99022675, 0.49501157, 0.99431294, 0.4952945], [0.99431324, 0.4952945, 1.0001678, 0.49569988, 1.0001678, 0.50430006, 0.99431324, 0.5047054], [0.99431324, 0.5047054, 0.99022686, 0.5049883, 0.9881151, 0.508107, 0.98804224, 0.51127255]], [[0.9999779, 0.5, 0.9999779, 0.50386065, 0.9999336, 0.5077213, 0.99984527, 0.5115484]], [[0.9987042, 0.49999997, 0.9987042, 0.5022514, 0.99724054, 0.5045028, 0.99431324, 0.5047054], [0.99431324, 0.5047054, 0.98614115, 0.50527126, 0.98586607, 0.5171783, 0.9940033, 0.5181209]]], "137": [1, 0.4999984, 0.5, 0.50014824, 0.5000001, [[0.99981, 0.4885367, 0.9998622, 0.49081266, 0.9998992, 0.49304172, 0.9999212, 0.49525124], [0.9999212, 0.49525124, 0.9999526, 0.49843442, 0.99995255, 0.5015769, 0.99992096, 0.5047601], [0.99992096, 0.5047601, 0.99989915, 0.5069659, 0.99986213, 0.5091913, 0.99981004, 0.5114633]], [[0.98808885, 0.48880932, 0.9881611, 0.49195284, 0.99025846, 0.4950499, 0.9943174, 0.49532884], [0.9943174, 0.49532893, 1.0001323, 0.4957286, 1.0001323, 0.5042717, 0.9943174, 0.50467134], [0.99431723, 0.5046714, 0.9902581, 0.5049504, 0.9881607, 0.50804776, 0.9880888, 0.5111915]], [[0.9999448, 0.5, 0.99994475, 0.50377494, 0.99989986, 0.5075499, 0.9998101, 0.5114637]], [[0.9986786, 0.5000001, 0.99867857, 0.50223583, 0.99722487, 0.50447154, 0.99431723, 0.5046714], [0.99431723, 0.5046714, 0.9861992, 0.5052294, 0.9859279, 0.5170601, 0.9940118, 0.5179898]]], "138": [1, 0.5000216, 0.5, 0.5001625, 0.5, [[0.99987066, 0.48861822, 0.9999211, 0.49083436, 0.99995685, 0.49305317, 0.9999777, 0.49527305], [0.9999777, 0.49527305, 1.0000074, 0.49842343, 1.0000074, 0.50157607, 0.99997777, 0.5047264], [0.99997777, 0.5047264, 0.99995685, 0.5069465, 0.9999211, 0.50916547, 0.99987066, 0.5113818]], [[0.9882313, 0.48888677, 0.98830223, 0.49200958, 0.99038565, 0.4950867, 0.9944188, 0.4953619], [0.9944188, 0.4953619, 1.0001954, 0.49575606, 1.0001954, 0.50424397, 0.9944188, 0.50463814], [0.99441856, 0.50463814, 0.9903853, 0.50491333, 0.9883019, 0.50799066, 0.98823106, 0.5111136]], [[1, 0.5, 1, 0.5037965, 0.9999569, 0.50759304, 0.99987054, 0.5113818]], [[0.9987512, 0.5, 0.9987512, 0.5022205, 0.99730706, 0.504441, 0.99441856, 0.50463814], [0.99441856, 0.50463814, 0.9863526, 0.5051885, 0.98608494, 0.5169456, 0.9941176, 0.51786256]]], "139": [1, 0.49999815, 0.5, 0.5001439, 0.4999999, [[0.99981487, 0.48870236, 0.9998658, 0.49095297, 0.99990195, 0.4931491, 0.99992335, 0.49532244], [0.99992335, 0.49532244, 0.9999541, 0.49846137, 0.999954, 0.5015527, 0.9999231, 0.5046918], [0.9999231, 0.5046918, 0.9999017, 0.5068605, 0.99986565, 0.509052, 0.99981487, 0.51129764]], [[0.988245, 0.48896748, 0.9883156, 0.49206844, 0.9903848, 0.4951239, 0.99439067, 0.4953953], [0.9943908, 0.49539527, 1.0001285, 0.49578393, 1.0001285, 0.50421584, 0.9943908, 0.5046045], [0.99439025, 0.5046045, 0.99038446, 0.5048759, 0.9883153, 0.50793123, 0.9882446, 0.51103216]], [[0.99994624, 0.5, 0.99994624, 0.5037121, 0.9999024, 0.50742424, 0.99981487, 0.5112978]], [[0.9986941, 0.4999999, 0.99869406, 0.502205, 0.9972596, 0.50441015, 0.99439025, 0.5046045], [0.99439025, 0.5046045, 0.9863775, 0.50514734, 0.98611337, 0.5168293, 0.9940938, 0.5177337]]], "140": [1, 0.500021, 0.49999994, 0.5001578, 0.49999997, [[0.99985313, 0.4887819, 0.99990225, 0.49096727, 0.9999369, 0.49315417, 0.99995726, 0.49534163], [0.99995726, 0.49534163, 0.9999862, 0.4984467, 0.99998623, 0.50155306, 0.99995726, 0.5046581], [0.99995726, 0.5046581, 0.99993694, 0.5068456, 0.9999022, 0.50903255, 0.99985313, 0.51121795]], [[0.98835236, 0.48904362, 0.9884218, 0.4921242, 0.9904773, 0.49516007, 0.9944578, 0.49542785], [0.9944578, 0.49542788, 1.0001576, 0.49581122, 1.0001576, 0.5041887, 0.9944578, 0.5045721], [0.99445754, 0.50457215, 0.99047685, 0.5048399, 0.9884214, 0.50787604, 0.9883522, 0.51095676]], [[0.999979, 0.5, 0.999979, 0.5037408, 0.99993706, 0.5074816, 0.9998532, 0.5112182]], [[0.9987326, 0.49999997, 0.9987326, 0.5021902, 0.99730766, 0.5043804, 0.99445754, 0.50457215], [0.99445754, 0.50457215, 0.9864961, 0.50510764, 0.98623556, 0.5167169, 0.99416524, 0.5176091]]], "141": [1, 0.500062, 0.5, 0.5001396, 0.4999999, [[0.999969, 0.48886034, 0.99996895, 0.49103194, 0.99996895, 0.49320358, 0.9999689, 0.4953752], [0.9999689, 0.4953752, 0.9999689, 0.49845856, 0.9999689, 0.501542, 0.9999688, 0.5046254], [0.9999688, 0.5046254, 0.9999689, 0.50679684, 0.9999689, 0.50896823, 0.9999689, 0.5111397]], [[0.9883963, 0.4891205, 0.98846495, 0.49218035, 0.99050677, 0.49519596, 0.99446136, 0.4954601], [0.9944615, 0.4954601, 1.0001239, 0.49583825, 1.0001239, 0.5041616, 0.9944615, 0.5045398], [0.9944615, 0.5045398, 0.990507, 0.5048039, 0.98846525, 0.50781924, 0.9883964, 0.5108789]], [[0.99996895, 0.50000006, 0.9999689, 0.50371325, 0.9999689, 0.5074265, 0.9999689, 0.51114005]], [[0.99870825, 0.4999999, 0.99870825, 0.50217533, 0.99729264, 0.50435066, 0.9944615, 0.5045398], [0.9944615, 0.5045398, 0.9865513, 0.5050681, 0.98629415, 0.51660484, 0.9941733, 0.517485]]], "142": [1, 0.5, 0.5, 0.5001533, 0.5, [[0.9998777, 0.48893943, 0.9998777, 0.4910956, 0.9998777, 0.49325174, 0.9998777, 0.4954079], [0.9998777, 0.4954079, 0.9998777, 0.4984694, 0.9998777, 0.5015309, 0.99987775, 0.5045924], [0.99987775, 0.5045924, 0.9998777, 0.50674844, 0.9998777, 0.5089045, 0.9998777, 0.5110606]], [[0.98853195, 0.48919445, 0.9885997, 0.49223447, 0.99062836, 0.49523073, 0.9945582, 0.49549136], [0.99455833, 0.4954914, 1.0001844, 0.4958645, 1.0001844, 0.50413543, 0.99455833, 0.50450855], [0.9945582, 0.50450855, 0.99062777, 0.5047692, 0.98859924, 0.5077663, 0.98853195, 0.51080674]], [[0.9998777, 0.5, 0.9998777, 0.5036869, 0.9998777, 0.5073737, 0.9998777, 0.5110612]], [[0.99877787, 0.49999997, 0.99877787, 0.50216097, 0.9973714, 0.504322, 0.9945582, 0.50450855], [0.9945582, 0.50450855, 0.9866975, 0.50502986, 0.9864438, 0.51649654, 0.9942738, 0.51736504]]], "143": [1, 0.5000603, 0.5, 0.50013554, 0.5000001, [[0.99996984, 0.48901582, 0.99996984, 0.49115723, 0.99996984, 0.4932987, 0.9999699, 0.49544013], [0.9999699, 0.49544013, 0.99996984, 0.49848008, 0.99996984, 0.5015201, 0.99996984, 0.50456], [0.99996984, 0.50456, 0.99996984, 0.5067014, 0.99996984, 0.5088428, 0.99996984, 0.5109842]], [[0.98854476, 0.48926884, 0.9886112, 0.49228892, 0.99062634, 0.49526614, 0.99453133, 0.49552327], [0.99453133, 0.49552333, 1.0001203, 0.4958914, 1.0001203, 0.50410897, 0.99453133, 0.50447696], [0.99453104, 0.504477, 0.990626, 0.50473416, 0.9886108, 0.50771147, 0.9885444, 0.51073164]], [[0.99996984, 0.5, 0.99996984, 0.5036614, 0.99996984, 0.5073228, 0.99996984, 0.5109842]], [[0.9987231, 0.5000002, 0.9987231, 0.5021466, 0.9973258, 0.50429296, 0.99453104, 0.504477], [0.99453104, 0.504477, 0.9867208, 0.50499135, 0.98647034, 0.5163865, 0.9942511, 0.5172435]]], "144": [1, 0.5, 0.5, 0.50014865, 0.4999999, [[1, 0.48908973, 1, 0.4912169, 1, 0.4933441, 0.99999994, 0.4954713], [0.99999994, 0.4954713, 0.9999999, 0.4984906, 0.9999999, 0.5015099, 0.99999994, 0.5045291], [0.99999994, 0.5045291, 1, 0.5066562, 1, 0.5087832, 1, 0.5109103]], [[0.98864704, 0.4893407, 0.9887123, 0.49234143, 0.9907145, 0.4953, 0.9945953, 0.4955538], [0.9945953, 0.4955538, 1.0001484, 0.49591696, 1.0001485, 0.5040829, 0.9945953, 0.5044461], [0.994595, 0.50444615, 0.9907141, 0.50469995, 0.98871195, 0.5076585, 0.98864657, 0.5106593]], [[0.99999994, 0.5, 0.99999994, 0.5036368, 1, 0.50727355, 0.99999994, 0.51091045]], [[0.9987602, 0.49999994, 0.99876016, 0.50213224, 0.9973719, 0.5042645, 0.994595, 0.50444615], [0.994595, 0.50444615, 0.9868335, 0.5049537, 0.9865864, 0.51627964, 0.994319, 0.51712537]]], "145": [1, 0.50005865, 0.5, 0.500132, 0.5000002, [[0.99997056, 0.489167, 0.99997056, 0.49127924, 0.9999706, 0.49339145, 0.99997056, 0.49550372], [0.99997056, 0.49550372, 0.9999706, 0.49850148, 0.99997056, 0.50149924, 0.99997056, 0.50449705], [0.99997056, 0.50449705, 0.99997056, 0.506609, 0.99997056, 0.508721, 0.99997056, 0.510833]], [[0.9886892, 0.48941314, 0.9887537, 0.4923944, 0.9907429, 0.49533397, 0.9945994, 0.49558443], [0.99459964, 0.49558446, 1.0001172, 0.4959428, 1.0001172, 0.50405747, 0.99459964, 0.5044158], [0.9945995, 0.5044158, 0.9907433, 0.50466627, 0.9887541, 0.5076055, 0.9886893, 0.51058656]], [[0.99997056, 0.5, 0.99997056, 0.503611, 0.99997056, 0.50722206, 0.99997056, 0.5108331]], [[0.99873775, 0.5000002, 0.99873775, 0.5021184, 0.99735844, 0.50423664, 0.9945995, 0.5044158], [0.9945995, 0.5044158, 0.9868867, 0.5049167, 0.9866427, 0.5161738, 0.99432683, 0.51700836]]], "146": [1, 0.5, 0.5, 0.50014454, 0.5, [[0.99988425, 0.4892416, 0.99988425, 0.4913394, 0.9998842, 0.49343708, 0.9998842, 0.49553484], [0.9998842, 0.49553484, 0.9998842, 0.4985117, 0.9998842, 0.50148857, 0.9998842, 0.50446546], [0.9998842, 0.50446546, 0.99988425, 0.5065631, 0.99988425, 0.5086608, 0.99988425, 0.5107584]], [[0.9888172, 0.48948288, 0.98888075, 0.49244532, 0.9908574, 0.49536675, 0.9946904, 0.495614], [0.9946904, 0.495614, 1.0001733, 0.49596766, 1.0001733, 0.5040324, 0.9946904, 0.50438607], [0.9946903, 0.50438607, 0.9908575, 0.5046333, 0.9888809, 0.5075544, 0.988817, 0.5105167]], [[0.99988425, 0.5, 0.99988425, 0.5035861, 0.99988425, 0.5071722, 0.99988425, 0.51075906]], [[0.9988026, 0.5, 0.9988026, 0.50210464, 0.9974319, 0.5042092, 0.9946903, 0.50438607], [0.9946903, 0.50438607, 0.9870246, 0.50488055, 0.98678374, 0.51607066, 0.99442154, 0.51689446]]], "147": [1, 0.50005704, 0.5, 0.5001285, 0.50000006, [[0.99997145, 0.48931563, 0.99997145, 0.49139893, 0.99997145, 0.49348217, 0.99997145, 0.49556544], [0.99997145, 0.49556544, 0.99997145, 0.49852204, 0.99997145, 0.5014786, 0.99997145, 0.5044352], [0.99997145, 0.5044352, 0.99997145, 0.50651824, 0.99997145, 0.5086013, 0.99997145, 0.5106844]], [[0.9888306, 0.48955634, 0.9888944, 0.4924988, 0.9908583, 0.4954, 0.9946662, 0.49564397], [0.9946662, 0.49564397, 1.0001141, 0.49599302, 1.0001141, 0.5040071, 0.9946662, 0.50435615], [0.9946659, 0.50435615, 0.9908576, 0.5046001, 0.9888937, 0.50750184, 0.98883027, 0.51044464]], [[0.99997145, 0.5, 0.99997145, 0.50356144, 0.99997145, 0.5071229, 0.9999714, 0.51068556]], [[0.9987521, 0.50000006, 0.9987521, 0.5020908, 0.99739015, 0.5041816, 0.9946659, 0.50435615], [0.9946659, 0.50435615, 0.98704815, 0.5048441, 0.98681045, 0.5159663, 0.9944008, 0.51677936]]], "148": [1, 0.5, 0.50000006, 0.5001405, 0.49999994, [[0.99999994, 0.48938504, 0.9999999, 0.4914549, 0.9999999, 0.4935248, 0.9999999, 0.49559462], [0.9999999, 0.49559462, 0.9999999, 0.49853164, 0.9999999, 0.5014686, 0.99999994, 0.5044056], [0.99999994, 0.5044056, 0.9999999, 0.50647545, 0.9999999, 0.5085453, 0.99999994, 0.51061505]], [[0.9889273, 0.4896231, 0.98898935, 0.49254766, 0.9909409, 0.49543208, 0.9947264, 0.49567297], [0.9947264, 0.49567294, 1.0001403, 0.49601746, 1.0001403, 0.5039825, 0.9947264, 0.50432694], [0.9947262, 0.50432694, 0.9909407, 0.50456786, 0.98898923, 0.50745213, 0.9889269, 0.5103766]], [[0.99999994, 0.5, 0.99999994, 0.50353837, 0.99999994, 0.50707674, 0.99999994, 0.5106151]], [[0.9987868, 0.49999994, 0.99878687, 0.50207734, 0.99743336, 0.5041547, 0.9947262, 0.50432694], [0.9947262, 0.50432694, 0.9871549, 0.5048087, 0.9869202, 0.51586497, 0.99446416, 0.5166676]]], "149": [1, 0.50005555, 0.49999997, 0.5001251, 0.50000006, [[0.9999722, 0.48945826, 0.9999722, 0.49151403, 0.9999722, 0.49356985, 0.9999722, 0.49562562], [0.9999722, 0.49562562, 0.9999722, 0.4985421, 0.9999722, 0.5014586, 0.9999722, 0.5043751], [0.9999722, 0.5043751, 0.99997216, 0.5064306, 0.9999721, 0.50848615, 0.9999721, 0.5105417]], [[0.9889679, 0.48969218, 0.98902947, 0.49259812, 0.99096864, 0.49546427, 0.9947309, 0.49570206], [0.9947309, 0.49570203, 1.0001109, 0.49604204, 1.0001109, 0.50395817, 0.9947309, 0.5042982], [0.9947309, 0.5042982, 0.9909687, 0.504536, 0.9890295, 0.50740206, 0.98896796, 0.5103079]], [[0.9999722, 0.49999997, 0.99997216, 0.5035139, 0.9999721, 0.50702775, 0.9999721, 0.5105422]], [[0.9987659, 0.5000001, 0.9987659, 0.5020641, 0.9974209, 0.5041282, 0.9947309, 0.5042982], [0.9947309, 0.5042982, 0.9872059, 0.5047738, 0.9869741, 0.5157642, 0.9944725, 0.5165567]]], "150": [1, 0.5, 0.5, 0.50013703, 0.49999985, [[0.9998903, 0.48952913, 0.9998903, 0.4915711, 0.9998903, 0.49361306, 0.9998903, 0.495655], [0.9998903, 0.495655, 0.9998903, 0.49855173, 0.9998903, 0.5014485, 0.9998904, 0.50434524], [0.9998904, 0.50434524, 0.9998903, 0.5063871, 0.9998903, 0.508429, 0.9998903, 0.51047087]], [[0.98908883, 0.48975843, 0.9891496, 0.4926464, 0.9910768, 0.49549502, 0.9948165, 0.49572983], [0.9948168, 0.49572983, 1.0001639, 0.49606553, 1.0001639, 0.5039342, 0.9948168, 0.5042699], [0.9948168, 0.5042699, 0.991077, 0.5045047, 0.98914975, 0.5073535, 0.9890891, 0.51024145]], [[0.9998903, 0.5, 0.9998903, 0.50349027, 0.9998903, 0.50698054, 0.9998904, 0.51047087]], [[0.9988271, 0.49999985, 0.9988271, 0.50205094, 0.99749035, 0.50410205, 0.9948168, 0.5042699], [0.9948168, 0.5042699, 0.9873368, 0.5047395, 0.9871079, 0.5156661, 0.99456173, 0.5164486]]], "151": [1, 0.5000541, 0.49999997, 0.5001216, 0.5000002, [[0.9999729, 0.489598, 0.9999729, 0.4916266, 0.9999728, 0.49365517, 0.9999729, 0.49568376], [0.9999729, 0.49568376, 0.9999729, 0.49856144, 0.99997294, 0.50143915, 0.99997294, 0.5043169], [0.99997294, 0.5043169, 0.99997294, 0.5063453, 0.99997294, 0.5083736, 0.99997294, 0.51040196]], [[0.9891023, 0.48982644, 0.98916245, 0.49269608, 0.9910774, 0.49552685, 0.9947942, 0.49575862], [0.9947942, 0.49575865, 1.0001079, 0.49609002, 1.0001079, 0.5039104, 0.9947942, 0.5042418], [0.99479365, 0.5042418, 0.9910769, 0.5044736, 0.9891618, 0.5073044, 0.98910165, 0.51017404]], [[0.9999729, 0.49999997, 0.99997294, 0.5034673, 0.99997294, 0.50693464, 0.99997294, 0.51040244]], [[0.9987795, 0.50000024, 0.9987795, 0.5020382, 0.99745107, 0.5040761, 0.99479365, 0.5042418], [0.99479365, 0.5042418, 0.9873593, 0.5047055, 0.9871332, 0.5155673, 0.99454254, 0.51633984]]], "152": [1, 0.5, 0.5, 0.5001331, 0.50000024, [[1, 0.48966467, 1, 0.4916802, 1, 0.4936958, 0.99999994, 0.49571133], [0.99999994, 0.49571133, 0.9999999, 0.49857026, 0.9999999, 0.5014292, 0.9999999, 0.50428814], [0.9999999, 0.50428814, 0.99999994, 0.50630385, 1, 0.5083196, 1, 0.5103353]], [[0.9891939, 0.48989135, 0.98925316, 0.49274346, 0.99115646, 0.49555725, 0.9948513, 0.49578616], [0.9948513, 0.49578613, 1.0001327, 0.49611336, 1.0001327, 0.5038871, 0.9948513, 0.50421435], [0.9948511, 0.5042143, 0.99115616, 0.5044433, 0.98925287, 0.50725734, 0.98919374, 0.51010954]], [[0.99999994, 0.5, 0.99999994, 0.50344515, 1, 0.50689024, 1, 0.51033604]], [[0.9988123, 0.50000024, 0.9988124, 0.5020255, 0.99749196, 0.50405073, 0.9948511, 0.5042143], [0.9948511, 0.5042143, 0.98746103, 0.5046722, 0.9872378, 0.51547104, 0.9946027, 0.516234]]], "153": [1, 0.5000527, 0.5, 0.5001184, 0.49999976, [[0.99997365, 0.4897343, 0.99997365, 0.4917364, 0.99997365, 0.4937385, 0.99997365, 0.49574062], [0.99997365, 0.49574062, 0.99997365, 0.49858034, 0.99997365, 0.5014201, 0.99997365, 0.50425977], [0.99997365, 0.50425977, 0.99997365, 0.50626177, 0.99997365, 0.50826377, 0.99997365, 0.51026577]], [[0.989233, 0.4899564, 0.98929167, 0.49279073, 0.9911833, 0.4955871, 0.99485576, 0.49581316], [0.99485576, 0.4958132, 1.0001049, 0.4961363, 1.0001049, 0.5038633, 0.99485576, 0.5041864], [0.9948557, 0.50418645, 0.9911834, 0.5044125, 0.9892918, 0.5072087, 0.989233, 0.5100429]], [[0.99997365, 0.5, 0.99997365, 0.50342196, 0.99997365, 0.50684386, 0.9999736, 0.5102665]], [[0.99879265, 0.4999998, 0.99879265, 0.5020123, 0.99748033, 0.50402486, 0.9948557, 0.50418645], [0.9948557, 0.50418645, 0.98750985, 0.5046386, 0.9872893, 0.51537466, 0.9946109, 0.5161281]]], "154": [1, 0.5, 0.5, 0.5001297, 0.50000006, [[0.999896, 0.48980072, 0.999896, 0.49179, 0.999896, 0.4937793, 0.99989593, 0.4957686], [0.99989593, 0.4957686, 0.999896, 0.49858958, 0.99989593, 0.50141054, 0.99989605, 0.5042316], [0.99989605, 0.5042316, 0.99989605, 0.50622076, 0.99989605, 0.50821006, 0.999896, 0.51019925]], [[0.98934805, 0.49001887, 0.98940575, 0.49283645, 0.9912859, 0.49561673, 0.99493736, 0.49584004], [0.99493736, 0.49584007, 1.0001552, 0.49615914, 1.0001552, 0.503841, 0.99493736, 0.50416005], [0.9949371, 0.5041601, 0.99128556, 0.50438344, 0.98940533, 0.5071638, 0.9893478, 0.50998145]], [[0.99989593, 0.49999997, 0.999896, 0.5033997, 0.999896, 0.50679946, 0.999896, 0.5101994]], [[0.99885076, 0.50000006, 0.99885076, 0.50200033, 0.9975463, 0.50400054, 0.9949371, 0.5041601], [0.9949371, 0.5041601, 0.987634, 0.5046067, 0.9874162, 0.51528186, 0.9946952, 0.516026]]], "155": [1, 0.5000513, 0.5, 0.5001152, 0.5000001, [[0.9999743, 0.48986697, 0.99997425, 0.4918434, 0.9999742, 0.49381977, 0.99997425, 0.49579617], [0.99997425, 0.49579617, 0.99997425, 0.498599, 0.99997425, 0.5014018, 0.99997425, 0.5042046], [0.99997425, 0.5042046, 0.99997425, 0.5061807, 0.99997425, 0.5081569, 0.9999743, 0.510133]], [[0.98936075, 0.49008432, 0.98941827, 0.49288404, 0.991287, 0.49564654, 0.9949161, 0.49586704], [0.9949161, 0.49586704, 1.0001022, 0.49618217, 1.0001022, 0.50381804, 0.9949161, 0.50413316], [0.99491584, 0.5041331, 0.99128675, 0.50435364, 0.9894181, 0.5071162, 0.98936063, 0.509916]], [[0.99997425, 0.5, 0.99997425, 0.5033777, 0.99997425, 0.50675535, 0.9999743, 0.5101342]], [[0.99880564, 0.5000001, 0.99880564, 0.5019879, 0.9975091, 0.50397563, 0.99491584, 0.5041331], [0.99491584, 0.5041331, 0.9876563, 0.5045743, 0.98744106, 0.5151875, 0.9946774, 0.5159225]]], "156": [1, 0.5, 0.49999997, 0.5001263, 0.4999998, [[1, 0.48992938, 1, 0.4918937, 0.99999994, 0.4938581, 1, 0.49582243], [1, 0.49582243, 0.99999994, 0.49860758, 1, 0.5013927, 1, 0.5041778], [1, 0.5041778, 1, 0.506142, 1, 0.50810623, 1, 0.5100705]], [[0.98944867, 0.4901444, 0.9895048, 0.49292785, 0.99136233, 0.495675, 0.9949709, 0.49589285], [0.9949714, 0.49589288, 1.0001266, 0.4962041, 1.0001266, 0.50379544, 0.9949714, 0.50410664], [0.9949713, 0.50410664, 0.991363, 0.5043245, 0.9895055, 0.50707114, 0.9894491, 0.5098543]], [[1, 0.49999997, 1, 0.5033568, 1, 0.5067136, 0.99999994, 0.5100705]], [[0.9988378, 0.49999976, 0.9988378, 0.5019754, 0.997549, 0.5039511, 0.9949713, 0.50410664], [0.9949713, 0.50410664, 0.98775387, 0.5045424, 0.9875413, 0.51509565, 0.99473536, 0.51582164]]], "157": [1, 0.50005, 0.49999997, 0.50011235, 0.5000002, [[0.9999749, 0.48999518, 0.99997485, 0.49194676, 0.99997485, 0.49389833, 0.99997485, 0.49584988], [0.99997485, 0.49584988, 0.99997485, 0.4986167, 0.99997485, 0.5013836, 0.99997485, 0.5041504], [0.99997485, 0.5041504, 0.9999749, 0.5061019, 0.9999749, 0.5080533, 0.9999749, 0.51000476]], [[0.9894856, 0.49020675, 0.98954105, 0.49297348, 0.99138737, 0.4957043, 0.9949749, 0.49591947], [0.9949749, 0.49591944, 1.0000993, 0.49622685, 1.0000993, 0.5037736, 0.9949749, 0.504081], [0.99497473, 0.504081, 0.99138725, 0.50429624, 0.98954093, 0.50702685, 0.9894854, 0.50979346]], [[0.9999749, 0.49999997, 0.9999749, 0.5033349, 0.9999749, 0.5066699, 0.99997497, 0.5100054]], [[0.9988183, 0.50000024, 0.9988182, 0.5019638, 0.99753714, 0.50392735, 0.99497473, 0.504081], [0.99497473, 0.504081, 0.98779935, 0.5045115, 0.9875894, 0.5150047, 0.99474186, 0.5157219]]], "158": [1, 0.5, 0.49999997, 0.5001231, 0.5000001, [[0.9999012, 0.49005938, 0.9999012, 0.4919985, 0.9999012, 0.4939376, 0.9999012, 0.4958767], [0.9999012, 0.4958767, 0.9999012, 0.49862552, 0.9999012, 0.50137436, 0.9999011, 0.50412315], [0.9999011, 0.50412315, 0.9999012, 0.5060624, 0.9999012, 0.50800145, 0.9999012, 0.50994056]], [[0.9895954, 0.4902676, 0.98965055, 0.49301767, 0.991486, 0.49573204, 0.9950527, 0.49594465], [0.99505305, 0.49594465, 1.0001477, 0.49624836, 1.0001477, 0.50375193, 0.99505305, 0.5040556], [0.9950525, 0.5040556, 0.9914857, 0.5042683, 0.9896503, 0.5069827, 0.9895952, 0.50973284]], [[0.9999012, 0.49999994, 0.9999012, 0.5033135, 0.9999012, 0.506627, 0.99990106, 0.509942]], [[0.99887407, 0.5000001, 0.998874, 0.50195193, 0.9976004, 0.50390375, 0.9950525, 0.5040556], [0.9950525, 0.5040556, 0.98791814, 0.50448096, 0.9877106, 0.5149159, 0.9948226, 0.5156245]]], "159": [1, 0.50004876, 0.5, 0.5001096, 0.5000001, [[0.99997556, 0.4901206, 0.99997556, 0.4920479, 0.9999755, 0.49397525, 0.9999755, 0.49590263], [0.9999755, 0.49590263, 0.9999755, 0.49863428, 0.99997556, 0.50136596, 0.99997556, 0.50409764], [0.99997556, 0.50409764, 0.99997556, 0.5060249, 0.99997556, 0.50795215, 0.99997556, 0.5098794]], [[0.98960817, 0.49032658, 0.98966193, 0.49306077, 0.99148643, 0.49576014, 0.99503314, 0.49597025], [0.9950333, 0.4959702, 1.0000978, 0.49627015, 1.0000978, 0.50373006, 0.9950333, 0.50403005], [0.995033, 0.50403005, 0.9914863, 0.50424016, 0.9896618, 0.50693953, 0.98960805, 0.5096738]], [[0.99997556, 0.50000006, 0.99997556, 0.50329316, 0.99997556, 0.5065863, 0.99997556, 0.50987965]], [[0.9988316, 0.5000001, 0.9988316, 0.5019401, 0.9975655, 0.50388, 0.995033, 0.50403005], [0.995033, 0.50403005, 0.9879402, 0.5044502, 0.9877351, 0.51482606, 0.9948059, 0.5155261]]], "160": [1, 0.5, 0.5, 0.5001198, 0.49999994, [[1, 0.49018124, 1, 0.49209675, 0.99999994, 0.49401227, 1, 0.49592778], [1, 0.49592778, 0.99999994, 0.49864247, 1, 0.5013572, 1, 0.50407183], [1, 0.50407183, 1, 0.5059875, 1, 0.5079031, 1, 0.50981873]], [[0.9896912, 0.49038655, 0.9897449, 0.49310437, 0.9915587, 0.49578744, 0.9950847, 0.49599501], [0.99508476, 0.49599496, 1.0001196, 0.49629137, 1.0001196, 0.5037086, 0.99508476, 0.50400496], [0.9950845, 0.50400496, 0.99155825, 0.5042125, 0.9897444, 0.5068959, 0.98969096, 0.5096138]], [[0.99999994, 0.5, 0.99999994, 0.50327295, 1, 0.50654584, 0.99999994, 0.50981873]], [[0.99886084, 0.49999997, 0.99886084, 0.5019284, 0.99760216, 0.5038568, 0.9950845, 0.50400496], [0.9950845, 0.50400496, 0.9880319, 0.5044201, 0.98782927, 0.5147385, 0.9948606, 0.5154302]]], "161": [1, 0.5000475, 0.5, 0.5001068, 0.50000006, [[0.9999761, 0.49024418, 0.99997604, 0.49214733, 0.9999761, 0.49405044, 0.9999761, 0.49595362], [0.9999761, 0.49595362, 0.9999761, 0.49865118, 0.99997616, 0.50134873, 0.9999761, 0.5040463], [0.9999761, 0.5040463, 0.99997616, 0.5059495, 0.99997616, 0.5078526, 0.99997616, 0.5097558]], [[0.9897265, 0.4904461, 0.9897797, 0.49314767, 0.9915829, 0.4958147, 0.9950885, 0.49601978], [0.9950887, 0.49601978, 1.0000943, 0.49631262, 1.0000943, 0.50368744, 0.9950887, 0.5039803], [0.9950887, 0.5039802, 0.99158293, 0.5041853, 0.9897798, 0.5068525, 0.98972666, 0.5095542]], [[0.99997616, 0.5, 0.99997616, 0.50325197, 0.99997616, 0.5065039, 0.99997616, 0.50975615]], [[0.99884284, 0.50000006, 0.99884284, 0.50191694, 0.9975915, 0.5038339, 0.9950887, 0.5039802], [0.9950887, 0.5039802, 0.9880763, 0.5043905, 0.98787606, 0.5146516, 0.99486715, 0.5153351]]], "162": [1, 0.5, 0.5, 0.5001168, 0.5000002, [[0.99990606, 0.49030492, 0.99990606, 0.49219635, 0.99990594, 0.4940878, 0.999906, 0.49597925], [0.999906, 0.49597925, 0.99990594, 0.4986597, 0.999906, 0.50134015, 0.99990594, 0.5040206], [0.99990594, 0.5040206, 0.99990606, 0.5059121, 0.99990606, 0.5078036, 0.99990606, 0.5096951]], [[0.9898309, 0.49050352, 0.9898835, 0.4931895, 0.9916763, 0.49584144, 0.9951623, 0.4960441], [0.9951623, 0.49604413, 1.0001394, 0.4963335, 1.0001394, 0.50366694, 0.9951623, 0.5039563], [0.99516195, 0.5039563, 0.99167585, 0.50415903, 0.98988307, 0.5068111, 0.9898305, 0.50949717]], [[0.999906, 0.5, 0.99990606, 0.5032317, 0.99990606, 0.5064634, 0.99990606, 0.5096953]], [[0.9988951, 0.50000024, 0.9988951, 0.5019059, 0.99765086, 0.5038116, 0.99516195, 0.5039563], [0.99516195, 0.5039563, 0.9881888, 0.5043618, 0.9879908, 0.5145671, 0.9949434, 0.51524264]]], "163": [1, 0.5000464, 0.5, 0.5001037, 0.49999982, [[0.99997675, 0.49036378, 0.99997675, 0.4922438, 0.99997675, 0.49412382, 0.99997663, 0.4960038], [0.99997663, 0.4960038, 0.9999767, 0.49866807, 0.99997675, 0.5013323, 0.99997675, 0.50399655], [0.99997675, 0.50399655, 0.99997675, 0.5058764, 0.99997675, 0.50775635, 0.99997675, 0.5096362]], [[0.9898427, 0.4905605, 0.98989457, 0.49323094, 0.9916768, 0.49586785, 0.9951433, 0.49606818], [0.9951433, 0.49606812, 1.0000914, 0.49635407, 1.0000914, 0.5036457, 0.9951433, 0.50393164], [0.9951431, 0.50393164, 0.9916769, 0.5041319, 0.98989457, 0.50676847, 0.9898425, 0.50943875]], [[0.99997675, 0.50000006, 0.99997675, 0.5032121, 0.99997675, 0.5064242, 0.99997675, 0.5096367]], [[0.9988544, 0.49999988, 0.9988544, 0.5018943, 0.99761736, 0.5037887, 0.9951431, 0.50393164], [0.9951431, 0.50393164, 0.9882095, 0.5043323, 0.98801386, 0.51448107, 0.9949271, 0.51514864]]], "164": [1, 0.5, 0.5, 0.50011414, 0.5000001, [[1, 0.49042147, 1, 0.49229026, 0.99999994, 0.49415907, 0.99999994, 0.49602792], [0.99999994, 0.49602792, 0.9999999, 0.498676, 0.9999999, 0.5013242, 0.9999999, 0.5039723], [0.9999999, 0.5039723, 1, 0.5058411, 1, 0.5077098, 1, 0.5095785]], [[0.9899233, 0.49061722, 0.9899746, 0.4932723, 0.99174666, 0.49589413, 0.9951938, 0.4960921], [0.9951938, 0.49609208, 1.0001138, 0.49637467, 1.0001138, 0.50362563, 0.9951938, 0.5039082], [0.99519336, 0.5039082, 0.9917463, 0.50410616, 0.9899742, 0.506728, 0.9899229, 0.50938296]], [[0.99999994, 0.5, 0.99999994, 0.50319284, 1, 0.5063857, 1, 0.50957876]], [[0.9988838, 0.5000002, 0.9988838, 0.5018835, 0.99765384, 0.5037669, 0.99519336, 0.5039082], [0.99519336, 0.5039082, 0.98829836, 0.50430423, 0.988105, 0.514398, 0.9949799, 0.5150578]]], "165": [1, 0.5000453, 0.5, 0.50010175, 0.49999994, [[0.99997735, 0.49048066, 0.99997735, 0.49233797, 0.99997735, 0.49419534, 0.99997735, 0.49605268], [0.99997735, 0.49605268, 0.99997735, 0.49868432, 0.99997735, 0.50131595, 0.99997735, 0.50394756], [0.99997735, 0.50394756, 0.99997735, 0.50580484, 0.99997735, 0.50766206, 0.99997735, 0.50951934]], [[0.98995733, 0.49067336, 0.9900081, 0.4933131, 0.99177, 0.49591988, 0.9951977, 0.49611554], [0.99519783, 0.4961155, 1.00009, 0.49639478, 1.00009, 0.5036052, 0.99519783, 0.50388443], [0.9951976, 0.50388443, 0.9917694, 0.5040802, 0.9900074, 0.5066876, 0.9899571, 0.5093277]], [[0.99997735, 0.5, 0.99997735, 0.5031731, 0.99997735, 0.5063462, 0.99997735, 0.5095198]], [[0.9988669, 0.5, 0.9988669, 0.5018724, 0.99764395, 0.50374484, 0.9951976, 0.50388443], [0.9951976, 0.50388443, 0.988341, 0.50427586, 0.9881498, 0.5143147, 0.9949868, 0.5149669]]], "166": [1, 0.5, 0.5, 0.50011104, 0.5, [[0.9999105, 0.4905389, 0.9999105, 0.4923849, 0.9999105, 0.49423093, 0.9999105, 0.49607694], [0.9999105, 0.49607694, 0.9999105, 0.4986924, 0.9999105, 0.5013078, 0.99991053, 0.5039233], [0.99991053, 0.5039233, 0.9999105, 0.5057692, 0.9999105, 0.50761515, 0.9999105, 0.5094611]], [[0.990056, 0.49072865, 0.9901066, 0.4933533, 0.9918586, 0.49594507, 0.9952673, 0.49613848], [0.9952675, 0.4961385, 1.0001323, 0.49641454, 1.0001323, 0.50358546, 0.9952675, 0.50386155], [0.9952675, 0.50386155, 0.9918581, 0.504055, 0.9901061, 0.5066478, 0.9900562, 0.50927305]], [[0.9999105, 0.49999997, 0.9999105, 0.5031537, 0.9999105, 0.50630736, 0.9999105, 0.5094626]], [[0.9989161, 0.5, 0.99891615, 0.50186175, 0.9976999, 0.5037235, 0.9952675, 0.50386155], [0.9952675, 0.50386155, 0.9884483, 0.5042485, 0.9882594, 0.51423395, 0.99505985, 0.5148787]]], "167": [1, 0.5000442, 0.49999997, 0.50009936, 0.49999985, [[0.9999779, 0.49059507, 0.99997795, 0.4924302, 0.99997795, 0.4942653, 0.99997795, 0.4961004], [0.99997795, 0.4961004, 0.99997795, 0.49870014, 0.999978, 0.5013, 0.9999779, 0.5038998], [0.9999779, 0.5038998, 0.99997795, 0.5057348, 0.99997795, 0.5075699, 0.9999779, 0.5094049]], [[0.9900688, 0.49078327, 0.9901185, 0.49339297, 0.9918605, 0.4959703, 0.99525046, 0.49616152], [0.995251, 0.49616152, 1.0000882, 0.49643433, 1.0000882, 0.5035654, 0.995251, 0.5038382], [0.9952503, 0.5038382, 0.9918599, 0.5040294, 0.9901179, 0.5066074, 0.99006844, 0.50921744]], [[0.99997795, 0.49999997, 0.9999779, 0.50313497, 0.9999779, 0.50626993, 0.9999778, 0.5094063]], [[0.9988789, 0.49999988, 0.9988789, 0.50185084, 0.9976696, 0.5037018, 0.9952503, 0.5038382], [0.9952503, 0.5038382, 0.988469, 0.50422066, 0.98828214, 0.51415205, 0.9950444, 0.51478934]]], "168": [1, 0.5, 0.5, 0.5001081, 0.50000006, [[1, 0.4906493, 1, 0.49247405, 0.99999994, 0.49429876, 0.9999999, 0.49612346], [0.9999999, 0.49612346, 0.9999999, 0.498708, 1, 0.5012926, 1, 0.50387716], [1, 0.50387716, 1, 0.50570166, 1, 0.50752616, 1, 0.50935066]], [[0.99014467, 0.49083546, 0.99019325, 0.49343115, 0.9919255, 0.49599534, 0.9952977, 0.49618444], [0.9952977, 0.4961844, 1.0001081, 0.4964541, 1.0001081, 0.5035461, 0.99529773, 0.5038158], [0.9952972, 0.5038158, 0.9919254, 0.50400484, 0.9901932, 0.50656843, 0.9901442, 0.5091638]], [[1, 0.5, 1, 0.5031169, 1, 0.5062338, 1, 0.50935066]], [[0.9989055, 0.50000006, 0.9989055, 0.50184053, 0.99770296, 0.50368094, 0.9952972, 0.5038158], [0.9952972, 0.5038158, 0.9885528, 0.50419396, 0.9883681, 0.51407266, 0.9950939, 0.5147027]]], "169": [1, 0.5000432, 0.5, 0.5000969, 0.4999999, [[0.9999783, 0.4907051, 0.9999783, 0.49251896, 0.9999783, 0.49433288, 0.9999783, 0.49614674], [0.9999783, 0.49614674, 0.9999783, 0.49871558, 0.9999783, 0.5012844, 0.9999783, 0.5038533], [0.9999783, 0.5038533, 0.9999783, 0.5056672, 0.9999783, 0.50748104, 0.9999783, 0.5092949]], [[0.9901774, 0.4908887, 0.9902254, 0.49346983, 0.991948, 0.49601978, 0.9953018, 0.49620673], [0.9953018, 0.4962067, 1.0000854, 0.4964733, 1.0000854, 0.50352657, 0.9953018, 0.5037932], [0.9953016, 0.5037932, 0.99194753, 0.50398016, 0.990225, 0.5065304, 0.9901772, 0.50911176]], [[0.9999783, 0.5, 0.9999783, 0.5030983, 0.9999783, 0.5061966, 0.9999783, 0.5092949]], [[0.99888945, 0.49999994, 0.99888945, 0.5018299, 0.99769354, 0.50365984, 0.9953016, 0.5037932], [0.9953016, 0.5037932, 0.988594, 0.504167, 0.9884113, 0.51399314, 0.9951008, 0.5146161]]], "170": [1, 0.5, 0.5, 0.50010574, 0.5000001, [[0.9999147, 0.49076083, 0.9999147, 0.4925639, 0.9999147, 0.49436697, 0.9999147, 0.49617004], [0.9999147, 0.49617004, 0.9999147, 0.49872357, 0.9999147, 0.5012771, 0.9999147, 0.50383055], [0.9999147, 0.50383055, 0.9999147, 0.5056334, 0.9999147, 0.5074363, 0.9999147, 0.50923914]], [[0.9902722, 0.49094135, 0.99031985, 0.4935081, 0.992033, 0.49604398, 0.99536866, 0.49622878], [0.99536866, 0.49622884, 1.0001261, 0.49649245, 1.0001261, 0.5035078, 0.99536866, 0.5037714], [0.9953682, 0.5037715, 0.99203265, 0.5039563, 0.9903195, 0.50649196, 0.9902718, 0.50905865]], [[0.9999147, 0.5, 0.9999147, 0.5030797, 0.9999147, 0.5061594, 0.9999147, 0.50923944]], [[0.9989367, 0.5000001, 0.9989368, 0.50181985, 0.9977474, 0.5036396, 0.9953682, 0.5037715], [0.9953682, 0.5037715, 0.98869646, 0.50414115, 0.98851573, 0.513916, 0.99517, 0.514532]]], "171": [1, 0.5000422, 0.5, 0.5000946, 0.50000036, [[0.9999789, 0.4908144, 0.9999789, 0.49260706, 0.99997884, 0.49439967, 0.99997896, 0.4961924], [0.99997896, 0.4961924, 0.9999789, 0.49873102, 0.9999789, 0.50126964, 0.9999789, 0.50380826], [0.9999789, 0.50380826, 0.9999789, 0.5056007, 0.9999789, 0.5073931, 0.9999789, 0.5091856]], [[0.99028414, 0.49099407, 0.99033123, 0.4935465, 0.9920348, 0.49606833, 0.9953523, 0.49625108], [0.9953527, 0.49625114, 1.0000838, 0.49651176, 1.0000838, 0.5034889, 0.9953527, 0.50374955], [0.995352, 0.50374955, 0.99203455, 0.5039323, 0.99033093, 0.50645405, 0.9902838, 0.5090064]], [[0.9999789, 0.50000006, 0.9999789, 0.5030619, 0.9999789, 0.5061238, 0.99997896, 0.5091856]], [[0.998901, 0.5000003, 0.998901, 0.5018098, 0.9977182, 0.5036192, 0.995352, 0.50374955], [0.995352, 0.50374955, 0.9887165, 0.50411505, 0.9885378, 0.5138381, 0.9951555, 0.51444715]]], "172": [1, 0.5, 0.50000006, 0.50010324, 0.50000006, [[1, 0.49086615, 1, 0.49264878, 1, 0.4944314, 1, 0.49621403], [1, 0.49621403, 1, 0.4987381, 1, 0.50126225, 1, 0.5037863], [1, 0.5037863, 1, 0.50556886, 1, 0.5073514, 1, 0.50913393]], [[0.9903571, 0.4910442, 0.9904033, 0.4935829, 0.9920975, 0.4960916, 0.9953977, 0.49627236], [0.99539787, 0.49627244, 1.0001032, 0.49653012, 1.0001032, 0.50347, 0.99539787, 0.5037277], [0.9953975, 0.5037278, 0.99209726, 0.5039085, 0.99040306, 0.5064173, 0.99035686, 0.5089561]], [[1, 0.50000006, 1, 0.50304466, 1, 0.5060893, 0.99999994, 0.509134]], [[0.99892694, 0.5000001, 0.9989269, 0.50179946, 0.9977505, 0.5035988, 0.9953975, 0.5037278], [0.9953975, 0.5037278, 0.98879737, 0.50408924, 0.98862076, 0.51376176, 0.9952033, 0.51436406]]], "173": [1, 0.50004125, 0.5, 0.50009197, 0.5, [[0.9999794, 0.49091995, 0.9999794, 0.49269217, 0.9999794, 0.49446434, 0.9999794, 0.49623653], [0.9999794, 0.49623653, 0.9999794, 0.49874574, 0.9999794, 0.5012549, 0.9999794, 0.5037641], [0.9999794, 0.5037641, 0.9999794, 0.5055361, 0.9999794, 0.507308, 0.9999794, 0.50908]], [[0.99038804, 0.4910949, 0.99043363, 0.49361977, 0.99211854, 0.4961151, 0.9954013, 0.49629384], [0.9954013, 0.49629384, 1.0000812, 0.49654862, 1.0000812, 0.5034514, 0.9954013, 0.5037062], [0.99540067, 0.50370616, 0.99211824, 0.5038849, 0.99043334, 0.5063797, 0.99038744, 0.5089044]], [[0.9999794, 0.5, 0.9999794, 0.50302666, 0.9999794, 0.5060533, 0.9999794, 0.50908]], [[0.99891126, 0.5, 0.99891126, 0.50178945, 0.9977412, 0.5035788, 0.99540067, 0.50370616], [0.99540067, 0.50370616, 0.98883575, 0.50406367, 0.988661, 0.51368576, 0.9952092, 0.5142814]]], "174": [1, 0.5, 0.5, 0.500101, 0.5000004, [[0.9999186, 0.49097303, 0.9999186, 0.4927348, 0.9999186, 0.4944965, 0.99991846, 0.49625823], [0.99991846, 0.49625823, 0.9999185, 0.49875274, 0.9999186, 0.5012472, 0.9999186, 0.50374174], [0.9999186, 0.50374174, 0.9999186, 0.50550354, 0.9999186, 0.50726527, 0.9999186, 0.509027]], [[0.9904786, 0.4911459, 0.9905241, 0.49365687, 0.99219996, 0.49613833, 0.99546516, 0.49631506], [0.99546516, 0.49631512, 1.00012, 0.4965671, 1.00012, 0.5034337, 0.99546516, 0.50368565], [0.9954649, 0.5036857, 0.99219966, 0.5038625, 0.9905238, 0.506344, 0.9904784, 0.508855]], [[0.9999186, 0.5, 0.9999186, 0.503009, 0.9999186, 0.50601804, 0.9999186, 0.5090276]], [[0.9989563, 0.50000036, 0.9989563, 0.50178003, 0.9977926, 0.5035597, 0.9954649, 0.5036857], [0.9954649, 0.5036857, 0.98893434, 0.5040393, 0.9887615, 0.5136122, 0.9952752, 0.5142014]]], "175": [1, 0.50004023, 0.5, 0.5000902, 0.5, [[0.9999798, 0.4910242, 0.9999798, 0.49277604, 0.99997985, 0.4945279, 0.9999798, 0.49627975], [0.9999798, 0.49627975, 0.99997985, 0.49875998, 0.99997985, 0.5012402, 0.9999798, 0.5037204], [0.9999798, 0.5037204, 0.99997985, 0.5054722, 0.99997973, 0.50722396, 0.9999798, 0.5089758]], [[0.9904906, 0.4911956, 0.99053556, 0.4936929, 0.9922023, 0.49616104, 0.99545014, 0.49633583], [0.99545014, 0.49633586, 1.0000798, 0.4965851, 1.0000798, 0.5034149, 0.99545014, 0.5036642], [0.99545, 0.5036642, 0.99220204, 0.503839, 0.9905353, 0.50630724, 0.99049056, 0.50880456]], [[0.99997985, 0.49999997, 0.9999798, 0.5029919, 0.9999798, 0.5059838, 0.99997973, 0.50897646]], [[0.99892235, 0.5, 0.99892235, 0.5017698, 0.99776495, 0.50353956, 0.99545, 0.5036642], [0.99545, 0.5036642, 0.9889541, 0.50401384, 0.9887832, 0.5135371, 0.9952626, 0.51411974]]], "176": [1, 0.50000006, 0.5, 0.5000985, 0.5, [[1, 0.49107385, 1, 0.49281618, 1, 0.49455845, 1, 0.49630082], [1, 0.49630082, 1, 0.49876714, 1, 0.50123346, 1, 0.5036998], [1, 0.5036998, 1, 0.50544184, 1, 0.50718397, 1, 0.5089261]], [[0.9905602, 0.49124384, 0.99060434, 0.49372804, 0.9922621, 0.49618354, 0.9954934, 0.49635646], [0.9954934, 0.49635643, 1.0000985, 0.49660295, 1.0000985, 0.5033971, 0.9954934, 0.5036436], [0.99549335, 0.5036436, 0.99226236, 0.5038165, 0.9906046, 0.50627166, 0.99056023, 0.5087556]], [[1, 0.49999997, 1, 0.50297534, 1, 0.5059507, 1, 0.5089261]], [[0.9989472, 0.5, 0.9989472, 0.5017602, 0.99779594, 0.50352037, 0.99549335, 0.5036436], [0.99549335, 0.5036436, 0.9890314, 0.50398946, 0.98886216, 0.5134642, 0.995308, 0.5140405]]], "177": [1, 0.50003934, 0.49999997, 0.50008816, 0.4999999, [[0.9999803, 0.4911258, 0.9999803, 0.4928579, 0.9999802, 0.49459004, 0.9999802, 0.4963221], [0.9999802, 0.4963221, 0.9999802, 0.49877414, 0.9999802, 0.5012262, 0.9999802, 0.50367814], [0.9999802, 0.50367814, 0.9999802, 0.50541013, 0.9999802, 0.5071421, 0.9999803, 0.5088741]], [[0.99059004, 0.49129397, 0.99063426, 0.4937643, 0.99228317, 0.4962059, 0.9954969, 0.4963769], [0.99549687, 0.49637693, 1.0000774, 0.49662063, 1.0000774, 0.5033792, 0.9954969, 0.50362295], [0.9954965, 0.503623, 0.99228275, 0.5037941, 0.9906339, 0.5062357, 0.99058974, 0.50870603]], [[0.9999803, 0.49999997, 0.9999802, 0.502958, 0.9999802, 0.50591606, 0.9999803, 0.50887585]], [[0.99893224, 0.49999994, 0.9989323, 0.5017505, 0.9977871, 0.50350106, 0.9954965, 0.503623], [0.9954965, 0.503623, 0.9890683, 0.50396514, 0.9889011, 0.51339144, 0.9953137, 0.51396155]]], "178": [1, 0.5, 0.49999997, 0.5000964, 0.5000001, [[0.99992216, 0.49117553, 0.99992216, 0.492898, 0.9999222, 0.49462044, 0.9999223, 0.49634293], [0.9999223, 0.49634293, 0.9999222, 0.49878097, 0.9999223, 0.50121903, 0.9999223, 0.5036571], [0.9999223, 0.5036571, 0.99992216, 0.50537956, 0.99992216, 0.50710195, 0.99992216, 0.5088244]], [[0.9906772, 0.49134085, 0.9907206, 0.4937984, 0.99236083, 0.49622777, 0.9955584, 0.49639702], [0.9955586, 0.49639705, 1.0001152, 0.49663818, 1.0001152, 0.503362, 0.9955586, 0.50360316], [0.9955583, 0.5036032, 0.99236083, 0.5037724, 0.9907206, 0.50620157, 0.99067706, 0.5086591]], [[0.99992216, 0.49999994, 0.99992216, 0.5029414, 0.99992216, 0.5058829, 0.9999221, 0.5088244]], [[0.998976, 0.50000006, 0.998976, 0.50174135, 0.9978369, 0.5034826, 0.9955583, 0.5036032], [0.9955583, 0.5036032, 0.98916304, 0.5039416, 0.98899746, 0.5133209, 0.99537694, 0.51388484]]], "179": [1, 0.5000385, 0.5, 0.50008607, 0.49999997, [[0.9999807, 0.49122375, 0.9999807, 0.4929369, 0.99998075, 0.49465007, 0.99998087, 0.49636328], [0.99998087, 0.49636328, 0.9999808, 0.49878767, 0.9999808, 0.50121206, 0.9999807, 0.50363654], [0.9999807, 0.50363654, 0.9999808, 0.50534976, 0.9999807, 0.50706303, 0.9999807, 0.5087763]], [[0.99068797, 0.49138767, 0.99073046, 0.49383247, 0.9923619, 0.49624974, 0.9955433, 0.4964172], [0.9955433, 0.49641716, 1.0000757, 0.49665564, 1.0000757, 0.50334436, 0.9955433, 0.5035829], [0.99554306, 0.5035829, 0.9923616, 0.5037503, 0.99073017, 0.50616753, 0.9906877, 0.5086124]], [[0.9999807, 0.5, 0.99998075, 0.50292546, 0.9999807, 0.5058509, 0.9999807, 0.50877637]], [[0.9989426, 0.5, 0.99894255, 0.5017318, 0.9978095, 0.5034636, 0.99554306, 0.5035829], [0.99554306, 0.5035829, 0.98918116, 0.50391763, 0.9890173, 0.51324916, 0.99536407, 0.51380706]]], "180": [1, 0.5, 0.50000006, 0.5000943, 0.5, [[0.99999994, 0.49127263, 0.9999999, 0.49297637, 0.9999999, 0.49468005, 0.99999994, 0.4963838], [0.99999994, 0.4963838, 0.9999999, 0.49879485, 0.9999999, 0.5012059, 0.9999999, 0.503617], [0.9999999, 0.503617, 0.9999999, 0.5053205, 0.9999999, 0.50702393, 0.99999994, 0.50872743]], [[0.9907552, 0.49143556, 0.9907977, 0.49386716, 0.99242055, 0.49627113, 0.99558526, 0.49643677], [0.9955856, 0.49643674, 1.0000944, 0.49667272, 1.0000944, 0.50332725, 0.9955856, 0.50356317], [0.9955854, 0.50356317, 0.992421, 0.50372875, 0.9907981, 0.5061323, 0.9907552, 0.50856364]], [[0.99999994, 0.50000006, 0.99999994, 0.5029092, 0.99999994, 0.5058183, 0.99999994, 0.50872856]], [[0.9989672, 0.49999997, 0.99896723, 0.5017226, 0.99784005, 0.5034452, 0.9955854, 0.50356317], [0.9955854, 0.50356317, 0.98925585, 0.50389445, 0.9890938, 0.5131794, 0.99540794, 0.51373136]]], "181": [1, 0.50003767, 0.5, 0.50008434, 0.5, [[0.99998116, 0.49132094, 0.99998116, 0.49301523, 0.9999811, 0.4947095, 0.999981, 0.4964038], [0.999981, 0.4964038, 0.99998105, 0.4988013, 0.9999811, 0.50119877, 0.99998116, 0.5035963], [0.99998116, 0.5035963, 0.9999811, 0.5052905, 0.99998116, 0.5069848, 0.99998116, 0.50867903]], [[0.9907835, 0.49148142, 0.99082536, 0.4939005, 0.9924397, 0.4962924, 0.9955885, 0.49645633], [0.9955893, 0.49645638, 1.0000746, 0.4966899, 1.0000746, 0.50331014, 0.9955893, 0.50354356], [0.9955888, 0.5035436, 0.9924396, 0.5037075, 0.9908252, 0.50610006, 0.99078393, 0.5085194]], [[0.99998116, 0.5, 0.99998116, 0.502893, 0.99998116, 0.50578606, 0.99998116, 0.5086794]], [[0.9989533, 0.5, 0.9989533, 0.50171345, 0.99783194, 0.50342685, 0.9955888, 0.5035436], [0.9955888, 0.5035436, 0.9892918, 0.5038714, 0.98913133, 0.5131098, 0.9954132, 0.51365596]]], "182": [1, 0.5, 0.5, 0.5000919, 0.5, [[0.9999255, 0.4913701, 0.9999255, 0.49305475, 0.9999255, 0.49473935, 0.9999255, 0.49642393], [0.9999255, 0.49642393, 0.9999255, 0.4988081, 0.9999255, 0.5011923, 0.9999255, 0.5035764], [0.9999255, 0.5035764, 0.9999255, 0.50526094, 0.9999255, 0.50694543, 0.9999255, 0.5086299]], [[0.99086666, 0.49152866, 0.9909087, 0.4939347, 0.9925147, 0.49631342, 0.9956471, 0.49647555], [0.99564743, 0.49647546, 1.0001098, 0.49670643, 1.0001098, 0.5032935, 0.99564743, 0.5035245], [0.99564743, 0.5035244, 0.99251515, 0.50368655, 0.9909091, 0.5060652, 0.9908671, 0.50847125]], [[0.9999255, 0.5, 0.9999255, 0.50287664, 0.9999255, 0.5057533, 0.9999255, 0.5086299]], [[0.99899423, 0.49999997, 0.99899423, 0.5017045, 0.9978786, 0.503409, 0.99564743, 0.5035244], [0.99564743, 0.5035244, 0.9893819, 0.5038487, 0.9892232, 0.51304203, 0.9954738, 0.5135823]]], "183": [1, 0.5000369, 0.49999997, 0.5000823, 0.49999982, [[0.9999816, 0.49141678, 0.9999815, 0.49309236, 0.9999815, 0.4947679, 0.9999815, 0.49644348], [0.9999815, 0.49644348, 0.9999815, 0.49881455, 0.9999815, 0.50118566, 0.9999816, 0.5035568], [0.9999816, 0.5035568, 0.9999815, 0.5052323, 0.9999815, 0.50690776, 0.9999816, 0.5085832]], [[0.9908783, 0.49157467, 0.9909198, 0.493968, 0.9925175, 0.4963343, 0.9956337, 0.49649474], [0.9956337, 0.49649474, 1.0000727, 0.49672323, 1.0000727, 0.5032764, 0.9956337, 0.50350493], [0.9956332, 0.503505, 0.99251676, 0.50366545, 0.9909192, 0.506032, 0.99087775, 0.50842553]], [[0.9999816, 0.49999994, 0.9999816, 0.502861, 0.9999816, 0.5057221, 0.9999816, 0.50858325]], [[0.99896294, 0.49999985, 0.998963, 0.5016953, 0.9978532, 0.50339067, 0.9956332, 0.503505], [0.9956332, 0.503505, 0.98939973, 0.5038259, 0.98924273, 0.5129732, 0.9954615, 0.51350784]]], "184": [1, 0.49999997, 0.5, 0.5000903, 0.49999994, [[1, 0.4914627, 1, 0.4931293, 1, 0.49479598, 1, 0.49646258], [1, 0.49646258, 1, 0.498821, 1, 0.5011794, 1, 0.5035378], [1, 0.5035378, 1, 0.5052043, 1, 0.50687075, 1, 0.5085373]], [[0.9909422, 0.49161905, 0.99098307, 0.49400032, 0.99257255, 0.49635488, 0.99567336, 0.4965136], [0.99567413, 0.4965136, 1.0000907, 0.4967397, 1.0000907, 0.50326014, 0.99567413, 0.5034863], [0.9956732, 0.5034862, 0.9925728, 0.50364494, 0.9909833, 0.5059989, 0.990942, 0.5083798]], [[1, 0.5, 1, 0.50284576, 1, 0.5056915, 0.99999994, 0.5085376]], [[0.9989866, 0.49999994, 0.9989866, 0.5016866, 0.9978824, 0.5033732, 0.9956732, 0.5034862], [0.9956732, 0.5034862, 0.9894709, 0.50380373, 0.98931545, 0.5129064, 0.99550354, 0.5134354]]], "185": [1, 0.500036, 0.50000006, 0.5000803, 0.5000001, [[0.999982, 0.4915103, 0.999982, 0.49316764, 0.999982, 0.49482498, 0.99998194, 0.4964823], [0.99998194, 0.4964823, 0.999982, 0.49882758, 0.999982, 0.50117284, 0.999982, 0.5035181], [0.999982, 0.5035181, 0.999982, 0.50517535, 0.999982, 0.5068326, 0.999982, 0.50848985]], [[0.99096984, 0.49166486, 0.9910106, 0.49403355, 0.99259186, 0.49637568, 0.9956767, 0.49653274], [0.99567664, 0.49653277, 1.0000706, 0.49675643, 1.0000706, 0.50324386, 0.9956767, 0.5034676], [0.99567616, 0.5034677, 0.99259096, 0.5036248, 0.9910097, 0.5059673, 0.9909691, 0.5083362]], [[0.999982, 0.5000001, 0.999982, 0.50283, 0.999982, 0.50565994, 0.99998194, 0.5084903]], [[0.99897206, 0.5000002, 0.9989721, 0.50167793, 0.99787366, 0.50335574, 0.99567616, 0.5034677], [0.99567616, 0.5034677, 0.9895051, 0.5037819, 0.9893513, 0.51283973, 0.9955089, 0.5133634]]], "186": [1, 0.49999994, 0.49999997, 0.5000881, 0.5000001, [[0.9999287, 0.49155557, 0.9999287, 0.49320412, 0.9999287, 0.4948527, 0.9999287, 0.49650127], [0.9999287, 0.49650127, 0.9999287, 0.49883384, 0.9999287, 0.5011664, 0.9999287, 0.50349903], [0.9999287, 0.50349903, 0.9999287, 0.50514746, 0.9999287, 0.50679594, 0.9999287, 0.50844437]], [[0.99104935, 0.49170786, 0.9910896, 0.49406478, 0.9926628, 0.49639553, 0.9957327, 0.496551], [0.9957327, 0.49655095, 1.0001047, 0.4967724, 1.0001047, 0.5032279, 0.9957327, 0.5034493], [0.9957325, 0.50344926, 0.99266225, 0.50360477, 0.991089, 0.5059358, 0.99104893, 0.50829285]], [[0.9999287, 0.49999994, 0.9999287, 0.50281477, 0.9999287, 0.50562954, 0.99992865, 0.5084451]], [[0.9990117, 0.5000001, 0.9990117, 0.5016694, 0.9979187, 0.5033386, 0.9957325, 0.50344926], [0.9957325, 0.50344926, 0.98959166, 0.5037603, 0.98943937, 0.5127746, 0.99556667, 0.51329285]]], "187": [1, 0.5000352, 0.49999997, 0.500079, 0.50000006, [[0.9999823, 0.4916003, 0.9999823, 0.49324018, 0.99998224, 0.49488, 0.9999823, 0.49651986], [0.9999823, 0.49651986, 0.99998224, 0.49884003, 0.99998224, 0.5011602, 0.9999823, 0.5034804], [0.9999823, 0.5034804, 0.99998224, 0.50512016, 0.9999823, 0.5067599, 0.9999823, 0.5083996]], [[0.9910598, 0.49175122, 0.9910995, 0.49409622, 0.9926647, 0.49641538, 0.9957195, 0.49656928], [0.99572015, 0.49656934, 1.0000699, 0.4967884, 1.0000699, 0.50321156, 0.99572015, 0.5034307], [0.9957195, 0.5034308, 0.9926651, 0.5035846, 0.99109995, 0.50590324, 0.99105984, 0.50824785]], [[0.9999823, 0.49999994, 0.9999823, 0.50279987, 0.9999823, 0.50559974, 0.9999823, 0.5083996]], [[0.9989824, 0.5, 0.9989824, 0.5016606, 0.997895, 0.5033212, 0.9957195, 0.5034308], [0.9957195, 0.5034308, 0.9896095, 0.5037386, 0.9894588, 0.5127087, 0.99555504, 0.5132217]]], "188": [1, 0.49999997, 0.49999997, 0.5000862, 0.49999982, [[1, 0.49164456, 1, 0.49327582, 0.99999994, 0.49490708, 0.99999994, 0.49653837], [0.99999994, 0.49653837, 0.9999999, 0.49884623, 0.99999994, 0.50115407, 0.9999999, 0.5034619], [0.9999999, 0.5034619, 1, 0.50509304, 0.99999994, 0.50672424, 0.99999994, 0.5083554]], [[0.991122, 0.49179488, 0.9911615, 0.49412775, 0.9927188, 0.49643493, 0.99575835, 0.49658722], [0.99575883, 0.49658722, 1.0000867, 0.4968041, 1.0000867, 0.5031956, 0.99575883, 0.5034125], [0.9957582, 0.5034125, 0.9927187, 0.5035648, 0.99116147, 0.5058719, 0.9911218, 0.50820476]], [[1, 0.49999997, 1, 0.5027851, 1, 0.5055703, 0.99999994, 0.5083556]], [[0.9990047, 0.49999985, 0.99900466, 0.50165194, 0.9979228, 0.503304, 0.9957582, 0.5034125], [0.9957582, 0.5034125, 0.98967814, 0.5037171, 0.98952895, 0.5126443, 0.9955954, 0.51315194]]], "189": [1, 0.5000346, 0.50000006, 0.5000769, 0.49999994, [[0.9999828, 0.49168903, 0.9999828, 0.49331167, 0.9999827, 0.4949343, 0.9999828, 0.49655697], [0.9999828, 0.49655697, 0.9999827, 0.49885228, 0.9999827, 0.5011476, 0.9999827, 0.50344306], [0.9999827, 0.50344306, 0.9999828, 0.5050657, 0.9999828, 0.50668836, 0.9999828, 0.50831103]], [[0.99114865, 0.49183697, 0.9911874, 0.4941584, 0.9927368, 0.49645457, 0.99576163, 0.49660534], [0.99576163, 0.49660537, 1.0000678, 0.49681997, 1.0000678, 0.50317997, 0.99576163, 0.50339454], [0.9957612, 0.5033946, 0.9927362, 0.5035454, 0.9911868, 0.50584173, 0.99114805, 0.50816315]], [[0.9999827, 0.5, 0.9999827, 0.50277036, 0.9999827, 0.5055407, 0.9999828, 0.50831103]], [[0.9989914, 0.49999997, 0.9989913, 0.5016436, 0.99791473, 0.50328726, 0.9957612, 0.5033946], [0.9957612, 0.5033946, 0.9897111, 0.50369614, 0.98956335, 0.51258034, 0.99560034, 0.51308286]]], "190": [1, 0.5, 0.5, 0.5000843, 0.50000036, [[0.99993175, 0.4917343, 0.9999317, 0.493348, 0.9999317, 0.4949617, 0.99993163, 0.4965754], [0.99993163, 0.4965754, 0.9999317, 0.49885854, 0.9999317, 0.50114167, 0.9999317, 0.5034249], [0.9999317, 0.5034249, 0.9999317, 0.50503844, 0.9999317, 0.50665206, 0.99993175, 0.5082657]], [[0.99122435, 0.4918806, 0.99126315, 0.49419004, 0.9928049, 0.49647415, 0.9958146, 0.49662337], [0.9958146, 0.4966234, 1.0000997, 0.4968359, 1.0000997, 0.50316495, 0.9958146, 0.50337744], [0.99581397, 0.50337744, 0.9928044, 0.5035266, 0.9912627, 0.50581056, 0.9912236, 0.50811994]], [[0.99993175, 0.5, 0.99993175, 0.5027552, 0.99993175, 0.50551045, 0.9999317, 0.5082674]], [[0.9990284, 0.5000004, 0.9990284, 0.5016358, 0.9979571, 0.5032712, 0.99581397, 0.50337744], [0.99581397, 0.50337744, 0.9897931, 0.50367594, 0.98964685, 0.51251817, 0.9956555, 0.5130156]]], "191": [1, 0.5000338, 0.49999997, 0.5000754, 0.49999985, [[0.999983, 0.49177647, 0.99998295, 0.493382, 0.999983, 0.49498755, 0.99998295, 0.4965931], [0.99998295, 0.4965931, 0.9999831, 0.49886438, 0.9999831, 0.5011357, 0.9999831, 0.5034069], [0.9999831, 0.5034069, 0.9999831, 0.50501245, 0.9999831, 0.50661796, 0.9999831, 0.5082235]], [[0.9912349, 0.4919215, 0.99127316, 0.4942196, 0.99280727, 0.4964927, 0.99580246, 0.49664044], [0.99580264, 0.4966405, 1.0000663, 0.4968508, 1.0000663, 0.5031489, 0.99580264, 0.5033592], [0.99580246, 0.50335926, 0.99280685, 0.503507, 0.99127275, 0.50578076, 0.9912349, 0.5080791]], [[0.9999831, 0.5, 0.9999831, 0.50274116, 0.9999831, 0.5054823, 0.99998313, 0.50822484]], [[0.99900043, 0.49999988, 0.9990004, 0.50162697, 0.99793446, 0.50325406, 0.99580246, 0.50335926], [0.99580246, 0.50335926, 0.98981106, 0.5036548, 0.9896663, 0.5124545, 0.99564475, 0.51294696]]], "192": [1, 0.50000006, 0.5, 0.50008243, 0.50000024, [[1, 0.49181786, 1, 0.49341556, 1, 0.49501327, 1, 0.496611], [1, 0.496611, 1, 0.49887052, 1, 0.50113, 1, 0.5033896], [1, 0.5033896, 1, 0.50498706, 1, 0.5065846, 1, 0.5081821]], [[0.9912943, 0.49196222, 0.9913318, 0.49424928, 0.9928583, 0.49651194, 0.9958394, 0.4966582], [0.9958397, 0.49665824, 1.0000824, 0.4968664, 1.0000824, 0.5031341, 0.9958397, 0.5033423], [0.9958394, 0.5033423, 0.9928582, 0.50348854, 0.9913317, 0.5057513, 0.99129426, 0.5080384]], [[1, 0.5, 1, 0.5027274, 1, 0.5054548, 1, 0.5081823]], [[0.99902165, 0.50000024, 0.99902165, 0.5016192, 0.99796104, 0.5032382, 0.9958394, 0.5033423], [0.9958394, 0.5033423, 0.98987687, 0.50363487, 0.9897336, 0.5123932, 0.9956836, 0.51288074]]], "193": [1, 0.5000331, 0.50000006, 0.5000738, 0.49999985, [[0.9999833, 0.49186128, 0.9999833, 0.49345046, 0.9999833, 0.49503967, 0.9999834, 0.49662888], [0.9999834, 0.49662888, 0.9999833, 0.4988764, 0.9999834, 0.50112396, 0.9999833, 0.5033715], [0.9999833, 0.5033715, 0.9999833, 0.5049606, 0.9999833, 0.50654966, 0.9999833, 0.5081388]], [[0.99132, 0.49200335, 0.99135727, 0.49427894, 0.9928762, 0.49653026, 0.9958428, 0.49667507], [0.9958428, 0.49667513, 1.0000647, 0.49688116, 1.0000647, 0.5031186, 0.9958428, 0.5033246], [0.9958428, 0.5033247, 0.99287575, 0.50346947, 0.99135685, 0.50572145, 0.99131995, 0.50799733]], [[0.9999833, 0.50000006, 0.9999833, 0.50271297, 0.9999833, 0.5054259, 0.9999834, 0.508139]], [[0.99900925, 0.49999988, 0.99900925, 0.50161076, 0.9979538, 0.50322163, 0.9958428, 0.5033247], [0.9958428, 0.5033247, 0.98990905, 0.5036143, 0.98976713, 0.5123313, 0.99568874, 0.5128139]]], "194": [1, 0.5, 0.5, 0.5000805, 0.5000001, [[0.99993443, 0.4919037, 0.99993443, 0.4934847, 0.99993443, 0.49506572, 0.9999344, 0.49664676], [0.9999344, 0.49664676, 0.99993443, 0.4988825, 0.99993443, 0.5011183, 0.99993443, 0.503354], [0.99993443, 0.503354, 0.99993443, 0.5049348, 0.99993443, 0.5065155, 0.99993443, 0.5080963]], [[0.9913933, 0.49204314, 0.9914299, 0.49430794, 0.9929415, 0.49654886, 0.9958944, 0.49669227], [0.9958944, 0.49669224, 1.000096, 0.49689627, 1.000096, 0.503104, 0.9958944, 0.503308], [0.99589366, 0.503308, 0.99294114, 0.50345135, 0.99142957, 0.50569177, 0.9913925, 0.50795627]], [[0.99993443, 0.5, 0.99993443, 0.5026988, 0.99993443, 0.50539756, 0.99993443, 0.5080963]], [[0.9990456, 0.5000001, 0.9990456, 0.50160307, 0.99799514, 0.503206, 0.99589366, 0.503308], [0.99589366, 0.503308, 0.9899879, 0.5035948, 0.98984736, 0.51227146, 0.99574125, 0.5127493]]], "195": [1, 0.50003237, 0.49999994, 0.5000722, 0.49999997, [[0.99998367, 0.49194485, 0.9999836, 0.4935178, 0.9999836, 0.49509072, 0.9999836, 0.49666363], [0.9999836, 0.49666363, 0.9999836, 0.49888793, 0.99998355, 0.5011123, 0.99998367, 0.5033366], [0.99998367, 0.5033366, 0.9999836, 0.5049094, 0.9999836, 0.50648224, 0.99998367, 0.50805503]], [[0.991403, 0.49208426, 0.9914396, 0.49433762, 0.9929437, 0.4965671, 0.99588203, 0.49670905], [0.9958824, 0.49670908, 1.0000633, 0.49691108, 1.0000633, 0.50308883, 0.9958824, 0.50329083], [0.99588215, 0.50329095, 0.9929439, 0.50343287, 0.9914398, 0.50566226, 0.99140316, 0.5079155]], [[0.99998367, 0.4999999, 0.99998367, 0.50268495, 0.99998367, 0.50537, 0.9999837, 0.5080553]], [[0.9990181, 0.49999997, 0.9990181, 0.5015949, 0.99797285, 0.5031898, 0.99588215, 0.50329095], [0.99588215, 0.50329095, 0.9900049, 0.50357485, 0.98986584, 0.51221055, 0.99573076, 0.51268375]]], "196": [1, 0.5, 0.50000006, 0.5000787, 0.5000004, [[1, 0.49198607, 1, 0.49355093, 1.0000001, 0.4951158, 1.0000001, 0.4966807], [1.0000001, 0.4966807, 1.0000001, 0.49889374, 1, 0.50110674, 1, 0.5033198], [1, 0.5033198, 1, 0.5048845, 1, 0.5064493, 1, 0.508014]], [[0.9914602, 0.49212494, 0.9914967, 0.49436718, 0.9929934, 0.49658558, 0.99591756, 0.49672616], [0.99591756, 0.49672619, 1.0000784, 0.49692616, 1.0000784, 0.50307465, 0.99591756, 0.5032747], [0.9959171, 0.50327474, 0.9929931, 0.5034152, 0.9914963, 0.50563335, 0.9914596, 0.5078755]], [[1, 0.50000006, 1, 0.50267136, 1, 0.5053427, 1, 0.5080152]], [[0.9990382, 0.50000036, 0.9990382, 0.5015875, 0.997998, 0.50317466, 0.9959171, 0.50327474], [0.9959171, 0.50327474, 0.9900676, 0.50355583, 0.98992985, 0.51215166, 0.9957679, 0.5126202]]], "197": [1, 0.5000318, 0.5, 0.5000709, 0.49999973, [[0.999984, 0.49202627, 0.999984, 0.49358338, 0.99998397, 0.4951405, 0.999984, 0.49669763], [0.999984, 0.49669763, 0.99998397, 0.49889928, 0.999984, 0.5011009, 0.999984, 0.5033026], [0.999984, 0.5033026, 0.999984, 0.5048596, 0.999984, 0.5064167, 0.999984, 0.50797373]], [[0.9914853, 0.49216223, 0.9915208, 0.49439406, 0.9930104, 0.49660277, 0.9959214, 0.49674198], [0.9959216, 0.49674198, 1.0000625, 0.49694, 1.0000625, 0.5030595, 0.9959216, 0.50325745], [0.9959212, 0.50325745, 0.9930101, 0.50339663, 0.9915205, 0.50560546, 0.99148506, 0.5078374]], [[0.999984, 0.49999997, 0.999984, 0.5026579, 0.999984, 0.5053158, 0.999984, 0.50797373]], [[0.99902725, 0.49999973, 0.99902725, 0.5015791, 0.99799204, 0.50315845, 0.9959212, 0.50325745], [0.9959212, 0.50325745, 0.9900993, 0.50353587, 0.9899629, 0.5120919, 0.9957731, 0.51255584]]], "198": [1, 0.5, 0.5, 0.5000774, 0.5000002, [[0.9999371, 0.492067, 0.9999371, 0.4936162, 0.9999371, 0.4951654, 0.9999372, 0.49671462], [0.9999372, 0.49671462, 0.9999372, 0.49890488, 0.9999371, 0.5010952, 0.9999371, 0.5032855], [0.9999371, 0.5032855, 0.9999371, 0.50483465, 0.9999371, 0.50638384, 0.9999371, 0.507933]], [[0.99155486, 0.49220198, 0.99159026, 0.49442294, 0.99307275, 0.49662077, 0.99596983, 0.49675864], [0.99596983, 0.4967587, 1.0000911, 0.49695483, 1.0000911, 0.5030456, 0.99596983, 0.5032417], [0.99596983, 0.5032418, 0.99307245, 0.50337964, 0.99159, 0.5055779, 0.99155486, 0.5077991]], [[0.9999371, 0.5, 0.9999371, 0.50264436, 0.9999371, 0.5052887, 0.9999371, 0.50793374]], [[0.99906075, 0.50000024, 0.99906075, 0.50157195, 0.9980304, 0.50314367, 0.99596983, 0.5032418], [0.99596983, 0.5032418, 0.9901752, 0.5035175, 0.99004006, 0.5120345, 0.99582356, 0.51249397]]], "199": [1, 0.5000311, 0.49999997, 0.5000695, 0.50000024, [[0.9999844, 0.4921071, 0.9999844, 0.49364835, 0.9999844, 0.4951896, 0.9999844, 0.49673086], [0.9999844, 0.49673086, 0.9999844, 0.49891013, 0.9999844, 0.50108945, 0.9999843, 0.5032687], [0.9999843, 0.5032687, 0.9999844, 0.5048101, 0.9999844, 0.5063515, 0.9999844, 0.50789285]], [[0.9915651, 0.49224204, 0.9916008, 0.49445194, 0.9930761, 0.49663854, 0.9959591, 0.49677503], [0.99595976, 0.49677503, 1.0000613, 0.4969692, 1.0000613, 0.50303125, 0.99595976, 0.50322545], [0.99595976, 0.50322545, 0.99307644, 0.50336194, 0.99160117, 0.505549, 0.9915658, 0.5077591]], [[0.9999844, 0.49999994, 0.9999844, 0.5026309, 0.9999844, 0.5052619, 0.9999844, 0.5078933]], [[0.9990359, 0.50000024, 0.9990359, 0.50156426, 0.9980105, 0.50312835, 0.99595976, 0.50322545], [0.99595976, 0.50322545, 0.99019235, 0.5034985, 0.9900585, 0.51197624, 0.99581444, 0.5124312]]], "200": [1, 0.49999997, 0.5, 0.50007576, 0.50000036, [[1, 0.49214563, 1, 0.49367952, 1, 0.49521342, 1, 0.49674737], [1, 0.49674737, 1, 0.49891597, 1, 0.50108457, 1, 0.50325316], [1, 0.50325316, 1, 0.5047869, 1, 0.5063206, 1, 0.50785434]], [[0.9916197, 0.49227944, 0.99165463, 0.4944791, 0.99312294, 0.49665594, 0.99599284, 0.49679115], [0.99599284, 0.49679115, 1.000075, 0.49698344, 1.000075, 0.50301737, 0.99599284, 0.5032096], [0.9959924, 0.5032096, 0.99312216, 0.5033448, 0.99165386, 0.50552213, 0.9916193, 0.507722]], [[1, 0.5, 1, 0.5026181, 1, 0.5052362, 1, 0.5078549]], [[0.99905443, 0.50000036, 0.9990545, 0.50155693, 0.9980339, 0.5031135, 0.9959924, 0.5032096], [0.9959924, 0.5032096, 0.9902518, 0.50348, 0.9901193, 0.51191926, 0.99584913, 0.5123699]]], "201": [1, 0.5000305, 0.5, 0.5000681, 0.50000036, [[0.99998474, 0.4921857, 0.99998474, 0.4937117, 0.99998474, 0.49523774, 0.99998474, 0.49676377], [0.99998474, 0.49676377, 0.99998474, 0.4989212, 0.99998474, 0.5010786, 0.99998474, 0.50323606], [0.99998474, 0.50323606, 0.99998474, 0.5047621, 0.99998474, 0.5062882, 0.99998474, 0.5078143]], [[0.99164414, 0.49231753, 0.99167883, 0.4945067, 0.9931401, 0.4966732, 0.9959967, 0.4968071], [0.9959967, 0.4968071, 1.0000596, 0.49699748, 1.0000596, 0.50300324, 0.9959967, 0.50319374], [0.99599636, 0.50319374, 0.99313986, 0.5033276, 0.9916785, 0.505494, 0.9916438, 0.5076831]], [[0.99998474, 0.5, 0.99998474, 0.5026047, 0.99998474, 0.5052095, 0.99998474, 0.50781435]], [[0.9990438, 0.50000036, 0.9990439, 0.5015494, 0.99802816, 0.5030985, 0.99599636, 0.50319374], [0.99599636, 0.50319374, 0.9902823, 0.50346154, 0.99015105, 0.51186234, 0.99585384, 0.5123086]]], "202": [1, 0.5, 0.5, 0.5000743, 0.50000024, [[0.99993956, 0.49222475, 0.99993956, 0.49374324, 0.99993956, 0.49526173, 0.99993956, 0.49678025], [0.99993956, 0.49678025, 0.99993956, 0.4989267, 0.99993956, 0.5010732, 0.99993956, 0.50321966], [0.99993956, 0.50321966, 0.9999397, 0.5047382, 0.9999397, 0.50625676, 0.9999396, 0.50777525]], [[0.9917121, 0.4923549, 0.99174654, 0.49453366, 0.99320096, 0.49668998, 0.99604434, 0.4968226], [0.99604434, 0.49682257, 1.0000883, 0.49701118, 1.0000883, 0.5029894, 0.99604434, 0.503178], [0.9960437, 0.503178, 0.99319977, 0.50331056, 0.99174523, 0.50546765, 0.99171126, 0.5076468]], [[0.99993956, 0.5, 0.9999396, 0.5025917, 0.9999396, 0.50518346, 0.9999396, 0.5077761]], [[0.9990773, 0.5000003, 0.9990774, 0.501542, 0.9980663, 0.5030837, 0.9960437, 0.503178], [0.9960437, 0.503178, 0.99035573, 0.50344324, 0.9902256, 0.51180655, 0.995903, 0.5122486]]], "203": [1, 0.5000299, 0.50000006, 0.50006694, 0.5, [[0.9999851, 0.49226204, 0.9999851, 0.4937733, 0.9999851, 0.49528462, 0.99998504, 0.49679586], [0.99998504, 0.49679586, 0.9999851, 0.498932, 0.9999851, 0.50106823, 0.9999851, 0.5032044], [0.9999851, 0.5032044, 0.9999851, 0.5047156, 0.9999851, 0.50622684, 0.9999851, 0.50773805]], [[0.99172175, 0.49239096, 0.99175555, 0.49455976, 0.99320304, 0.49670655, 0.99603367, 0.49683794], [0.99603397, 0.49683794, 1.0000589, 0.49702471, 1.0000589, 0.5029753, 0.99603397, 0.5031621], [0.99603355, 0.50316215, 0.99320257, 0.5032936, 0.99175495, 0.50544095, 0.99172163, 0.5076101]], [[0.9999851, 0.5, 0.9999851, 0.50257933, 0.9999851, 0.50515866, 0.9999851, 0.50773835]], [[0.9990527, 0.5, 0.99905264, 0.50153434, 0.9980464, 0.5030687, 0.99603355, 0.50316215], [0.99603355, 0.50316215, 0.99037206, 0.50342494, 0.99024326, 0.5117501, 0.99589384, 0.512188]]], "204": [1, 0.49999997, 0.49999997, 0.5000731, 0.5, [[0.99999994, 0.49229944, 0.99999994, 0.49380338, 1, 0.4953073, 1, 0.49681127], [1, 0.49681127, 1, 0.498937, 1.0000001, 0.50106275, 1, 0.50318855], [1, 0.50318855, 1, 0.50469255, 1, 0.5061965, 1, 0.5077005]], [[0.9917745, 0.4924282, 0.9918082, 0.4945867, 0.993249, 0.49672323, 0.9960665, 0.49685335], [0.9960667, 0.4968533, 1.0000731, 0.49703828, 1.0000731, 0.50296175, 0.9960667, 0.50314677], [0.9960664, 0.5031467, 0.9932484, 0.5032768, 0.9918075, 0.5054141, 0.9917744, 0.507573]], [[1, 0.49999994, 1, 0.5025668, 1, 0.5051336, 1, 0.5077008]], [[0.9990715, 0.5, 0.9990715, 0.50152713, 0.9980699, 0.50305426, 0.9960664, 0.5031467], [0.9960664, 0.5031467, 0.9904306, 0.503407, 0.9903029, 0.5116952, 0.99592805, 0.5121289]]], "205": [1, 0.5000294, 0.50000006, 0.5000654, 0.50000024, [[0.9999853, 0.49233723, 0.9999852, 0.4938339, 0.9999853, 0.4953306, 0.9999853, 0.49682727], [0.9999853, 0.49682727, 0.9999852, 0.4989425, 0.9999852, 0.50105774, 0.99998534, 0.5031729], [0.99998534, 0.5031729, 0.9999852, 0.50466955, 0.9999852, 0.50616616, 0.9999853, 0.5076628]], [[0.99179757, 0.4924634, 0.9918303, 0.4946123, 0.99326444, 0.4967399, 0.9960697, 0.49686882], [0.9960697, 0.4968688, 1.0000575, 0.49705204, 1.0000575, 0.5029484, 0.9960697, 0.5031317], [0.99606943, 0.5031317, 0.9932642, 0.5032606, 0.9918301, 0.5053881, 0.9917973, 0.50753695]], [[0.9999853, 0.5, 0.9999853, 0.5025543, 0.9999853, 0.50510854, 0.99998534, 0.50766283]], [[0.9990605, 0.50000024, 0.9990605, 0.50152016, 0.99806356, 0.5030401, 0.99606943, 0.5031317], [0.99606943, 0.5031317, 0.9904593, 0.50338954, 0.9903329, 0.5116406, 0.99593246, 0.51207024]]], "206": [1, 0.5, 0.5, 0.50007147, 0.5000002, [[0.99994195, 0.4923756, 0.9999419, 0.49386463, 0.9999418, 0.4953536, 0.9999418, 0.49684265], [0.9999418, 0.49684265, 0.9999418, 0.49894744, 0.9999418, 0.50105226, 0.9999419, 0.5031571], [0.9999419, 0.5031571, 0.99994195, 0.5046462, 0.99994195, 0.5061353, 0.99994195, 0.5076244]], [[0.9918628, 0.4925008, 0.99189585, 0.49463925, 0.99332345, 0.49675602, 0.9961153, 0.49688366], [0.9961158, 0.49688366, 1.0000855, 0.49706525, 1.0000855, 0.5029351, 0.9961158, 0.5031166], [0.99611527, 0.5031166, 0.9933231, 0.50324434, 0.99189556, 0.50536156, 0.99186265, 0.5075002]], [[0.99994195, 0.5, 0.99994195, 0.5025415, 0.99994195, 0.50508296, 0.99994195, 0.50762445]], [[0.99909306, 0.5000001, 0.99909306, 0.501513, 0.99810064, 0.5030259, 0.99611527, 0.5031166], [0.99611527, 0.5031166, 0.99053043, 0.5033721, 0.9904051, 0.51158696, 0.9959796, 0.51201254]]], "207": [1, 0.5000288, 0.49999997, 0.50006425, 0.5, [[0.9999856, 0.49241164, 0.9999856, 0.49389374, 0.9999856, 0.4953758, 0.9999856, 0.49685788], [0.9999856, 0.49685788, 0.9999856, 0.4989525, 0.9999856, 0.50104713, 0.9999856, 0.50314176], [0.9999856, 0.50314176, 0.9999856, 0.50462395, 0.9999856, 0.50610614, 0.9999856, 0.5075883]], [[0.99187154, 0.49253574, 0.9919039, 0.49466455, 0.9933249, 0.49677214, 0.9961044, 0.49689865], [0.99610496, 0.49689862, 1.0000563, 0.49707845, 1.0000563, 0.5029216, 0.99610496, 0.5031014], [0.99610424, 0.5031014, 0.9933244, 0.50322795, 0.99190354, 0.5053358, 0.9918713, 0.50746477]], [[0.9999856, 0.49999997, 0.9999856, 0.5025294, 0.9999856, 0.5050589, 0.9999856, 0.50758874]], [[0.9990685, 0.5, 0.99906844, 0.50150573, 0.9980806, 0.50301147, 0.99610424, 0.5031014], [0.99610424, 0.5031014, 0.99054474, 0.50335443, 0.9904207, 0.51153266, 0.99597013, 0.51195437]]], "208": [1, 0.5, 0.5, 0.5000698, 0.5, [[1, 0.49244732, 1, 0.49392262, 1, 0.49539796, 0.99999994, 0.49687326], [0.99999994, 0.49687326, 1, 0.49895793, 1, 0.50104266, 1, 0.50312734], [1, 0.50312734, 1, 0.50460243, 1, 0.5060776, 1, 0.5075527]], [[0.9919227, 0.49257016, 0.99195445, 0.49468946, 0.99336886, 0.49678808, 0.99613637, 0.4969134], [0.99613637, 0.4969134, 1.0000696, 0.49709156, 1.0000697, 0.5029084, 0.99613637, 0.5030866], [0.99613595, 0.5030866, 0.99336827, 0.503212, 0.9919538, 0.50531083, 0.99192214, 0.50743026]], [[1, 0.5, 1, 0.5025176, 1, 0.50503516, 1, 0.5075529]], [[0.9990863, 0.5, 0.9990864, 0.50149876, 0.998103, 0.5029975, 0.99613595, 0.5030866], [0.99613595, 0.5030866, 0.9906013, 0.5033373, 0.9904783, 0.51147974, 0.9960041, 0.5118975]]], "209": [1, 0.50002825, 0.5, 0.50006276, 0.5000001, [[0.9999858, 0.4924838, 0.9999858, 0.49395216, 0.9999858, 0.49542052, 0.9999858, 0.49688882], [0.9999858, 0.49688882, 0.9999858, 0.49896324, 0.9999858, 0.50103766, 0.9999858, 0.5031121], [0.9999858, 0.5031121, 0.9999858, 0.5045801, 0.9999858, 0.50604814, 0.9999858, 0.5075162]], [[0.99194443, 0.4926056, 0.991976, 0.49471512, 0.99338394, 0.4968041, 0.996139, 0.49692827], [0.9961391, 0.49692827, 1.0000545, 0.4971048, 1.0000545, 0.50289553, 0.9961391, 0.503072], [0.9961391, 0.503072, 0.9933839, 0.50319624, 0.99197596, 0.5052855, 0.99194455, 0.5073952]], [[0.9999858, 0.5, 0.9999858, 0.50250536, 0.9999858, 0.5050108, 0.9999858, 0.50751644]], [[0.99907565, 0.5000001, 0.99907565, 0.50149196, 0.9980968, 0.5029838, 0.9961391, 0.503072], [0.9961391, 0.503072, 0.9906293, 0.5033204, 0.9905074, 0.511427, 0.9960078, 0.51184094]]], "210": [1, 0.5, 0.5, 0.50006837, 0.5000002, [[0.99994403, 0.49251992, 0.99994403, 0.49398112, 0.99994403, 0.49544233, 0.99994403, 0.49690354], [0.99994403, 0.49690354, 0.99994403, 0.498968, 0.99994403, 0.5010325, 0.999944, 0.50309694], [0.999944, 0.50309694, 0.99994403, 0.50455797, 0.99994403, 0.506019, 0.99994403, 0.5074801]], [[0.99200726, 0.49264014, 0.9920385, 0.49474013, 0.99344003, 0.49681967, 0.9961829, 0.49694273], [0.9961829, 0.49694285, 1.0000807, 0.49711767, 1.0000807, 0.50288284, 0.9961829, 0.50305766], [0.9961823, 0.5030578, 0.99343944, 0.50318086, 0.99203795, 0.50526047, 0.99200666, 0.5073604]], [[0.99994403, 0.5, 0.99994403, 0.5024934, 0.99994403, 0.50498676, 0.9999441, 0.5074802]], [[0.9991063, 0.50000024, 0.9991063, 0.5014852, 0.9981318, 0.5029702, 0.9961823, 0.5030578], [0.9961823, 0.5030578, 0.99069685, 0.5033039, 0.9905761, 0.5113754, 0.9960523, 0.5117856]]], "211": [1, 0.50002766, 0.5, 0.50006205, 0.5000003, [[0.99998605, 0.49255607, 0.99998605, 0.49401006, 0.99998605, 0.49546403, 0.99998605, 0.49691802], [0.99998605, 0.49691802, 0.99998605, 0.4989727, 0.99998605, 0.50102746, 0.99998605, 0.50308216], [0.99998605, 0.50308216, 0.99998605, 0.50453603, 0.99998605, 0.50598997, 0.99998605, 0.5074439]], [[0.99201703, 0.492676, 0.99204856, 0.49476603, 0.9934437, 0.49683547, 0.9961738, 0.49695736], [0.99617434, 0.49695733, 1.0000546, 0.4971306, 1.0000546, 0.50287, 0.99617434, 0.5030433], [0.9961737, 0.50304323, 0.9934436, 0.5031652, 0.9920484, 0.5052345, 0.9920168, 0.5073245]], [[0.9999861, 0.5, 0.99998605, 0.5024813, 0.99998605, 0.50496256, 0.9999862, 0.50744545]], [[0.99908453, 0.5000003, 0.99908453, 0.5014785, 0.99811447, 0.5029566, 0.9961737, 0.50304323], [0.9961737, 0.50304323, 0.9907125, 0.50328714, 0.99059296, 0.5113234, 0.99604446, 0.5117298]]], "212": [1, 0.5, 0.50000006, 0.5000671, 0.50000036, [[0.99999994, 0.4925901, 0.9999999, 0.49403757, 0.9999999, 0.49548507, 0.9999999, 0.49693254], [0.9999999, 0.49693254, 0.9999999, 0.49897763, 0.9999999, 0.50102276, 0.9999999, 0.50306785], [0.9999999, 0.50306785, 0.9999999, 0.50451523, 0.9999999, 0.5059626, 0.99999994, 0.50740993]], [[0.9920659, 0.49270886, 0.99209654, 0.49478987, 0.99348545, 0.49685088, 0.9962041, 0.4969717], [0.9962041, 0.4969717, 1.0000669, 0.49714336, 1.0000669, 0.50285745, 0.9962041, 0.5030291], [0.9962035, 0.50302917, 0.993485, 0.50315, 0.99209607, 0.50521064, 0.9920652, 0.5072916]], [[0.99999994, 0.50000006, 0.99999994, 0.50247, 0.99999994, 0.50494, 0.99999994, 0.507411]], [[0.9991012, 0.50000036, 0.9991012, 0.5014719, 0.99813545, 0.5029433, 0.9962035, 0.50302917], [0.9962035, 0.50302917, 0.99076635, 0.50327075, 0.99064785, 0.5112725, 0.99607587, 0.5116751]]], "213": [1, 0.5000272, 0.50000006, 0.5000606, 0.49999994, [[0.9999863, 0.49262497, 0.99998623, 0.49406573, 0.99998623, 0.49550647, 0.9999861, 0.49694717], [0.9999861, 0.49694717, 0.9999862, 0.49898258, 0.99998623, 0.5010179, 0.9999862, 0.50305325], [0.9999862, 0.50305325, 0.9999863, 0.5044939, 0.9999863, 0.5059345, 0.9999863, 0.50737506]], [[0.9920875, 0.49274176, 0.99211776, 0.4948136, 0.9935005, 0.49686557, 0.99620724, 0.49698532], [0.99620837, 0.4969853, 1.000054, 0.4971554, 1.000054, 0.50284445, 0.99620837, 0.50301456], [0.9962076, 0.5030145, 0.9935007, 0.50313425, 0.99211794, 0.5051863, 0.9920877, 0.5072582]], [[0.9999863, 0.50000006, 0.9999863, 0.5024584, 0.9999863, 0.5049167, 0.9999863, 0.50737506]], [[0.9990926, 0.49999994, 0.99909264, 0.5014647, 0.99813116, 0.5029295, 0.9962076, 0.5030145], [0.9962076, 0.5030145, 0.99079436, 0.50325394, 0.9906768, 0.5112212, 0.99608076, 0.51162016]]], "214": [1, 0.5, 0.5, 0.5000656, 0.5000003, [[0.9999461, 0.49265954, 0.9999461, 0.49409354, 0.9999461, 0.4955275, 0.9999461, 0.49696147], [0.9999461, 0.49696147, 0.9999461, 0.49898714, 0.9999461, 0.50101286, 0.9999461, 0.5030385], [0.9999461, 0.5030385, 0.9999461, 0.5044725, 0.9999461, 0.50590646, 0.9999461, 0.50734043]], [[0.9921471, 0.49277478, 0.99217695, 0.49483755, 0.9935535, 0.4968809, 0.9962488, 0.49699956], [0.9962488, 0.49699956, 1.0000775, 0.49716812, 1.0000775, 0.5028324, 0.9962488, 0.503001], [0.9962488, 0.503001, 0.9935535, 0.50311965, 0.992177, 0.5051629, 0.9921471, 0.5072257]], [[0.9999461, 0.5, 0.9999461, 0.50244683, 0.9999461, 0.50489366, 0.99994606, 0.5073409]], [[0.9991203, 0.50000024, 0.9991203, 0.50145847, 0.9981631, 0.5029167, 0.9962488, 0.503001], [0.9962488, 0.503001, 0.9908591, 0.5032383, 0.9907426, 0.51117164, 0.9961231, 0.51156706]]], "215": [1, 0.5000267, 0.5, 0.50005955, 0.50000006, [[0.9999867, 0.49269393, 0.9999867, 0.4941212, 0.9999867, 0.4955485, 0.9999867, 0.49697578], [0.9999867, 0.49697578, 0.99998665, 0.498992, 0.99998665, 0.5010082, 0.9999867, 0.50302446], [0.9999867, 0.50302446, 0.99998665, 0.50445163, 0.99998665, 0.50587887, 0.9999867, 0.5073061]], [[0.9921573, 0.4928088, 0.9921872, 0.49486205, 0.9935576, 0.4968958, 0.9962407, 0.49701336], [0.99624103, 0.49701336, 1.0000526, 0.49718037, 1.0000526, 0.5028198, 0.99624103, 0.5029868], [0.99624103, 0.5029868, 0.9935578, 0.5031043, 0.9921874, 0.5051382, 0.9921576, 0.5071915]], [[0.99998665, 0.5, 0.99998665, 0.5024354, 0.99998665, 0.5048708, 0.9999867, 0.5073069]], [[0.99909973, 0.50000006, 0.99909973, 0.5014517, 0.9981468, 0.5029033, 0.99624103, 0.5029868], [0.99624103, 0.5029868, 0.99087495, 0.5032219, 0.99075943, 0.51112115, 0.99611646, 0.511513]]], "216": [1, 0.5, 0.5, 0.5000648, 0.5000002, [[1, 0.49272677, 1, 0.49414778, 0.99999994, 0.49556878, 1, 0.49698982], [1, 0.49698982, 0.99999994, 0.4989968, 1, 0.50100386, 1, 0.50301087], [1, 0.50301087, 1, 0.50443166, 1, 0.50585246, 1, 0.50727326]], [[0.9922042, 0.49284127, 0.9922337, 0.49488562, 0.993598, 0.4969107, 0.9962697, 0.49702722], [0.9962697, 0.49702716, 1.0000646, 0.4971927, 1.0000646, 0.5028077, 0.9962697, 0.50297326], [0.9962694, 0.5029732, 0.9935977, 0.5030898, 0.99223334, 0.5051148, 0.99220383, 0.5071591]], [[1, 0.5, 1, 0.5024244, 1, 0.50484884, 1, 0.50727403]], [[0.9991159, 0.5000002, 0.9991159, 0.50144535, 0.99816716, 0.50289047, 0.9962694, 0.5029732], [0.9962694, 0.5029732, 0.9909264, 0.50320625, 0.990812, 0.5110721, 0.9961461, 0.5114604]]], "217": [1, 0.5000262, 0.5, 0.5000582, 0.49999946, [[0.9999869, 0.49276155, 0.9999869, 0.4941757, 0.9999869, 0.49558988, 0.9999869, 0.49700406], [0.9999869, 0.49700406, 0.9999869, 0.49900147, 0.9999869, 0.50099885, 0.9999869, 0.50299627], [0.9999869, 0.50299627, 0.9999869, 0.5044104, 0.9999869, 0.50582445, 0.9999869, 0.5072385]], [[0.9922255, 0.4928742, 0.99225515, 0.4949091, 0.9936135, 0.49692464, 0.99627316, 0.49704012], [0.99627316, 0.49704015, 1.0000513, 0.49720418, 1.0000513, 0.5027948, 0.99627316, 0.50295883], [0.9962726, 0.50295883, 0.9936127, 0.50307435, 0.99225444, 0.50509024, 0.99222505, 0.5071254]], [[0.9999869, 0.5, 0.9999869, 0.50241286, 0.9999869, 0.5048257, 0.9999869, 0.50723916]], [[0.99910676, 0.4999995, 0.99910676, 0.50143814, 0.9981622, 0.5028768, 0.9962726, 0.50295883], [0.9962726, 0.50295883, 0.9909529, 0.50318986, 0.99083954, 0.51102215, 0.9961509, 0.51140714]]], "218": [1, 0.5, 0.5, 0.50006366, 0.5, [[0.9999481, 0.49279472, 0.9999481, 0.49420238, 0.999948, 0.49560997, 0.99994814, 0.49701765], [0.99994814, 0.49701765, 0.999948, 0.49900597, 0.99994814, 0.5009943, 0.99994814, 0.50298274], [0.99994814, 0.50298274, 0.999948, 0.50439024, 0.9999481, 0.5057978, 0.9999481, 0.5072053]], [[0.9922842, 0.49290615, 0.9923134, 0.4949324, 0.9936657, 0.4969396, 0.99631435, 0.4970541], [0.99631435, 0.497054, 1.0000762, 0.4972166, 1.0000762, 0.5027834, 0.99631435, 0.502946], [0.9963141, 0.50294596, 0.9936659, 0.5030604, 0.9923135, 0.50506717, 0.992284, 0.50709313]], [[0.9999481, 0.5, 0.9999481, 0.50240177, 0.9999481, 0.50480354, 0.9999481, 0.5072057]], [[0.9991357, 0.5, 0.9991357, 0.50143236, 0.9981953, 0.5028647, 0.9963141, 0.50294596], [0.9963141, 0.50294596, 0.99101704, 0.5031749, 0.99090457, 0.51097465, 0.9961931, 0.5113561]]], "219": [1, 0.50002575, 0.5, 0.50005734, 0.49999997, [[0.9999871, 0.49282768, 0.9999871, 0.49422887, 0.9999871, 0.49563006, 0.999987, 0.4970312], [0.999987, 0.4970312, 0.9999871, 0.4990105, 0.9999871, 0.5009898, 0.9999871, 0.5029691], [0.9999871, 0.5029691, 0.9999871, 0.5043702, 0.9999871, 0.5057713, 0.9999871, 0.50717235]], [[0.9922925, 0.49293903, 0.9923218, 0.49495614, 0.9936682, 0.49695414, 0.99630505, 0.49706757], [0.99630505, 0.49706742, 1.0000505, 0.4972286, 1.0000505, 0.5027714, 0.99630505, 0.50293255], [0.9963049, 0.5029324, 0.9936682, 0.50304586, 0.9923217, 0.5050437, 0.99229234, 0.50706065]], [[0.99998707, 0.5, 0.9999871, 0.5023908, 0.9999871, 0.5047816, 0.9999871, 0.5071733]], [[0.99911416, 0.5, 0.99911416, 0.501426, 0.99817777, 0.50285196, 0.9963049, 0.5029324], [0.9963049, 0.5029324, 0.9910305, 0.50315934, 0.9909191, 0.5109262, 0.9961852, 0.5113042]]], "220": [1, 0.5, 0.5, 0.50006187, 0.5000006, [[1, 0.49285913, 1, 0.4942543, 1, 0.49564952, 1.0000001, 0.4970447], [1.0000001, 0.4970447, 1, 0.49901503, 1, 0.5009853, 1, 0.5029556], [1, 0.5029556, 1, 0.5043507, 1, 0.50574577, 1, 0.5071409]], [[0.9923373, 0.49296972, 0.9923656, 0.49497852, 0.99370617, 0.49696887, 0.99633247, 0.49708137], [0.99633247, 0.49708137, 1.0000618, 0.49724105, 1.0000618, 0.5027602, 0.99633247, 0.5029199], [0.99633205, 0.50292, 0.99370563, 0.50303245, 0.992365, 0.5050229, 0.99233675, 0.50703186]], [[1, 0.5, 1, 0.5023803, 1, 0.5047606, 1, 0.507141]], [[0.9991295, 0.5000006, 0.9991294, 0.5014203, 0.9981971, 0.50284004, 0.99633205, 0.50292], [0.99633205, 0.50292, 0.9910801, 0.50314486, 0.9909697, 0.51087916, 0.99621385, 0.511254]]], "221": [1, 0.5000252, 0.50000006, 0.500056, 0.5, [[0.9999873, 0.492892, 0.99998724, 0.49428082, 0.99998724, 0.4956696, 0.99998724, 0.49705842], [0.99998724, 0.49705842, 0.99998724, 0.49901965, 0.99998724, 0.50098085, 0.99998724, 0.5029421], [0.99998724, 0.5029421, 0.99998724, 0.50433075, 0.99998724, 0.5057194, 0.9999873, 0.5071081]], [[0.99235845, 0.49300033, 0.9923864, 0.49500048, 0.9937211, 0.4969824, 0.9963364, 0.4970939], [0.996337, 0.49709386, 1.0000502, 0.49725217, 1.0000502, 0.50274783, 0.996337, 0.50290614], [0.99633604, 0.50290614, 0.99372125, 0.5030176, 0.9923864, 0.5049989, 0.9923579, 0.5069987]], [[0.9999873, 0.50000006, 0.9999873, 0.5023694, 0.9999873, 0.50473875, 0.99998724, 0.50710815]], [[0.9991219, 0.5, 0.9991219, 0.50141346, 0.9981936, 0.502827, 0.99633604, 0.50290614], [0.99633604, 0.50290614, 0.9911064, 0.50312907, 0.99099684, 0.51083124, 0.99621826, 0.5112027]]], "222": [1, 0.5, 0.5, 0.50006115, 0.49999994, [[0.99994993, 0.49292457, 0.99994993, 0.49430698, 0.9999499, 0.4956894, 0.9999498, 0.4970718], [0.9999498, 0.4970718, 0.9999499, 0.49902403, 0.99994993, 0.5009763, 0.99994993, 0.50292856], [0.99994993, 0.50292856, 0.99994993, 0.50431085, 0.99994993, 0.50569314, 0.99994993, 0.5070754]], [[0.99241334, 0.49303272, 0.9924418, 0.4950238, 0.99377084, 0.49699622, 0.9963744, 0.49710673], [0.99637455, 0.4971068, 1.0000719, 0.49726367, 1.0000719, 0.5027363, 0.99637455, 0.5028932], [0.99637455, 0.5028932, 0.99377084, 0.5030037, 0.99244183, 0.5049764, 0.9924135, 0.50696754]], [[0.99994993, 0.5, 0.99994993, 0.5023585, 0.99994993, 0.504717, 0.99994993, 0.5070765]], [[0.99914753, 0.49999997, 0.99914753, 0.5014074, 0.9982232, 0.50281477, 0.99637455, 0.5028932], [0.99637455, 0.5028932, 0.9911669, 0.5031142, 0.99105835, 0.5107846, 0.996258, 0.511153]]], "223": [1, 0.5000248, 0.49999997, 0.5000549, 0.5, [[0.9999876, 0.4929561, 0.9999876, 0.4943323, 0.99998754, 0.49570855, 0.9999876, 0.49708477], [0.9999876, 0.49708477, 0.9999876, 0.4990282, 0.9999876, 0.5009717, 0.9999876, 0.5029151], [0.9999876, 0.5029151, 0.9999876, 0.50429136, 0.9999876, 0.50566757, 0.9999876, 0.50704384]], [[0.99242246, 0.49306333, 0.9924506, 0.49504596, 0.9937739, 0.4970102, 0.99636656, 0.49711975], [0.9963669, 0.49711972, 1.0000484, 0.4972753, 1.0000484, 0.5027247, 0.9963669, 0.5028803], [0.9963669, 0.5028802, 0.9937742, 0.50298977, 0.99245083, 0.5049541, 0.99242276, 0.50693667]], [[0.99998754, 0.49999997, 0.99998754, 0.50234795, 0.9999876, 0.5046959, 0.9999875, 0.50704384]], [[0.99912804, 0.5, 0.99912804, 0.50140125, 0.9982077, 0.5028025, 0.9963669, 0.5028802], [0.9963669, 0.5028802, 0.9911812, 0.5030993, 0.9910736, 0.51073796, 0.99625105, 0.511103]]], "224": [1, 0.49999997, 0.50000006, 0.5000601, 0.50000036, [[0.99999994, 0.49298686, 0.9999999, 0.49435705, 0.99999994, 0.49572724, 0.99999994, 0.49709743], [0.99999994, 0.49709743, 0.9999999, 0.49903232, 1, 0.5009672, 0.99999994, 0.50290203], [0.99999994, 0.50290203, 0.99999994, 0.50427246, 0.99999994, 0.50564283, 0.99999994, 0.5070132]], [[0.99246657, 0.49309438, 0.99249446, 0.49506846, 0.9938121, 0.4970243, 0.996394, 0.49713287], [0.9963945, 0.4971328, 1.0000604, 0.49728703, 1.0000604, 0.5027137, 0.9963945, 0.5028679], [0.99639416, 0.5028678, 0.9938121, 0.5029764, 0.99249434, 0.50493264, 0.99246675, 0.5069069]], [[1, 0.50000006, 1, 0.50233775, 1, 0.5046755, 0.99999994, 0.50701326]], [[0.99914396, 0.50000036, 0.99914396, 0.5013956, 0.9982275, 0.5027908, 0.99639416, 0.5028678], [0.99639416, 0.5028678, 0.9912301, 0.503085, 0.9911234, 0.5106924, 0.9962794, 0.5110543]]], "225": [1, 0.50002444, 0.50000006, 0.500054, 0.50000006, [[0.9999878, 0.4930186, 0.99998784, 0.49438274, 0.99998784, 0.49574688, 0.9999879, 0.49711102], [0.9999879, 0.49711102, 0.9999879, 0.49903697, 0.99998784, 0.500963, 0.99998784, 0.5028889], [0.99998784, 0.5028889, 0.99998784, 0.5042531, 0.99998784, 0.50561726, 0.9999878, 0.50698143]], [[0.9924865, 0.49312392, 0.9925138, 0.49508974, 0.99382585, 0.49703774, 0.99639714, 0.4971454], [0.99639714, 0.49714535, 1.0000473, 0.4972982, 1.0000473, 0.50270206, 0.99639714, 0.5028549], [0.9963964, 0.5028549, 0.9938251, 0.5029626, 0.992513, 0.5049106, 0.9924857, 0.5068765]], [[0.9999877, 0.5, 0.9999878, 0.50232714, 0.9999878, 0.5046543, 0.9999878, 0.50698155]], [[0.9991348, 0.5000001, 0.9991348, 0.5013893, 0.99822223, 0.5027785, 0.9963964, 0.5028549], [0.9963964, 0.5028549, 0.99125403, 0.5030702, 0.99114823, 0.5106462, 0.9962831, 0.5110051]]], "226": [1, 0.5, 0.49999997, 0.5000587, 0.50000006, [[0.9999517, 0.49305013, 0.9999517, 0.49440798, 0.9999517, 0.4957658, 0.9999517, 0.49712366], [0.9999517, 0.49712366, 0.9999517, 0.49904114, 0.9999517, 0.50095856, 0.99995166, 0.50287604], [0.99995166, 0.50287604, 0.9999517, 0.50423396, 0.9999517, 0.50559187, 0.9999517, 0.50694984]], [[0.99253976, 0.49315473, 0.99256736, 0.4951119, 0.99387383, 0.49705106, 0.99643403, 0.49715778], [0.99643403, 0.4971578, 1.0000691, 0.49730933, 1.0000691, 0.50269085, 0.99643403, 0.50284237], [0.9964334, 0.5028424, 0.993873, 0.5029491, 0.99256647, 0.50488853, 0.992539, 0.5068459]], [[0.9999517, 0.5, 0.9999517, 0.5023166, 0.9999517, 0.5046332, 0.9999517, 0.5069499]], [[0.9991604, 0.5000001, 0.99916035, 0.50138336, 0.99825156, 0.5027666, 0.9964334, 0.5028424], [0.9964334, 0.5028424, 0.99131215, 0.5030559, 0.9912073, 0.51060134, 0.99632114, 0.5109571]]], "227": [1, 0.5000239, 0.50000006, 0.5000533, 0.4999997, [[0.999988, 0.49308115, 0.9999881, 0.49443293, 0.9999881, 0.4957847, 0.9999882, 0.49713647], [0.9999882, 0.49713647, 0.99998814, 0.49904543, 0.9999881, 0.50095445, 0.9999881, 0.5028634], [0.9999881, 0.5028634, 0.9999881, 0.50421524, 0.999988, 0.5055671, 0.999988, 0.5069189]], [[0.9925486, 0.49318486, 0.99257624, 0.49513352, 0.99387705, 0.49706402, 0.9964263, 0.49716982], [0.99642694, 0.49716994, 1.0000466, 0.49732015, 1.0000466, 0.5026792, 0.99642694, 0.50282943], [0.99642694, 0.50282955, 0.99387777, 0.50293535, 0.9925768, 0.5048659, 0.9925491, 0.5068145]], [[0.999988, 0.50000006, 0.999988, 0.50230634, 0.999988, 0.5046126, 0.999988, 0.5069207]], [[0.9991417, 0.4999997, 0.9991417, 0.501377, 0.9982368, 0.50275433, 0.99642694, 0.50282955], [0.99642694, 0.50282955, 0.9913271, 0.5030412, 0.9912231, 0.5105557, 0.9963154, 0.5109085]]], "228": [1, 0.5, 0.5, 0.5000585, 0.49999994, [[1, 0.49311087, 1, 0.49445683, 1, 0.49580282, 0.99999994, 0.49714875], [0.99999994, 0.49714875, 1, 0.49904972, 1, 0.5009506, 1, 0.5028515], [1, 0.5028515, 1, 0.50419736, 1, 0.50554323, 1, 0.50688916]], [[0.9925914, 0.49321452, 0.9926188, 0.495155, 0.9939143, 0.49707764, 0.99645317, 0.49718255], [0.9964534, 0.49718246, 1.000058, 0.4973314, 1.000058, 0.5026685, 0.9964534, 0.5028175], [0.99645287, 0.5028174, 0.9939141, 0.5029223, 0.9926186, 0.50484484, 0.9925912, 0.5067854]], [[1, 0.5, 1, 0.5022964, 1, 0.5045928, 1, 0.50689065]], [[0.99915683, 0.5, 0.99915683, 0.5013715, 0.9982557, 0.502743, 0.99645287, 0.5028174], [0.99645287, 0.5028174, 0.99137396, 0.50302726, 0.99127084, 0.51051164, 0.9963424, 0.51086134]]], "229": [1, 0.50002354, 0.49999997, 0.5000523, 0.5000003, [[0.9999882, 0.49313956, 0.9999882, 0.49448037, 0.9999883, 0.49582115, 0.99998826, 0.4971619], [0.99998826, 0.4971619, 0.9999883, 0.49905413, 0.99998826, 0.5009464, 0.9999882, 0.5028386], [0.9999882, 0.5028386, 0.9999882, 0.50417924, 0.9999882, 0.50551975, 0.9999882, 0.5068604]], [[0.9926094, 0.49324155, 0.99263537, 0.49517477, 0.99392545, 0.49709105, 0.99645495, 0.49719512], [0.9964554, 0.49719507, 1.000045, 0.49734277, 1.000045, 0.50265783, 0.9964554, 0.50280553], [0.9964554, 0.50280553, 0.9939259, 0.50290966, 0.9926358, 0.50482583, 0.99260974, 0.50675905]], [[0.9999882, 0.49999994, 0.9999882, 0.5022868, 0.9999882, 0.5045736, 0.9999882, 0.5068604]], [[0.99914753, 0.5000003, 0.9991476, 0.50136596, 0.9982501, 0.5027317, 0.9964554, 0.50280553], [0.9964554, 0.50280553, 0.9913974, 0.5030137, 0.99129504, 0.51046765, 0.99634546, 0.5108144]]], "230": [1, 0.5, 0.5, 0.50005746, 0.5000005, [[0.9999533, 0.49316967, 0.9999534, 0.4945045, 0.9999533, 0.49583936, 0.9999533, 0.4971742], [0.9999533, 0.4971742, 0.9999534, 0.4990582, 0.9999534, 0.5009422, 0.9999533, 0.50282615], [0.9999533, 0.50282615, 0.9999533, 0.5041609, 0.9999534, 0.5054956, 0.9999533, 0.50683033]], [[0.9926627, 0.49327078, 0.9926887, 0.49519593, 0.9939734, 0.49710414, 0.9964925, 0.4972073], [0.99649286, 0.49720734, 1.0000676, 0.49735382, 1.0000676, 0.5026473, 0.99649286, 0.5027937], [0.99649197, 0.5027937, 0.99397266, 0.5028969, 0.99268794, 0.50480545, 0.9926622, 0.50673074]], [[0.9999533, 0.5, 0.9999533, 0.5022768, 0.9999533, 0.50455356, 0.9999534, 0.50683045]], [[0.9991739, 0.50000054, 0.9991739, 0.50136054, 0.9982802, 0.5027205, 0.99649197, 0.5027937], [0.99649197, 0.5027937, 0.9914545, 0.5030001, 0.9913531, 0.51042444, 0.9963832, 0.5107684]]], "231": [1, 0.5000231, 0.5, 0.5000515, 0.5000004, [[0.99998844, 0.49319988, 0.99998844, 0.49452868, 0.99998844, 0.49585748, 0.99998856, 0.49718633], [0.99998856, 0.49718633, 0.99998856, 0.4990621, 0.99998856, 0.50093794, 0.9999885, 0.5028137], [0.9999885, 0.5028137, 0.99998856, 0.5041425, 0.99998856, 0.50547135, 0.9999885, 0.5068001]], [[0.99267185, 0.4933009, 0.99269813, 0.49521762, 0.9939775, 0.49711713, 0.99648577, 0.49721944], [0.99648577, 0.49721935, 1.0000458, 0.49736452, 1.0000458, 0.5026364, 0.99648577, 0.50278157], [0.99648476, 0.5027815, 0.99397624, 0.5028838, 0.9926969, 0.50478387, 0.99267083, 0.50670075]], [[0.99998844, 0.5, 0.9999885, 0.5022667, 0.9999885, 0.5045334, 0.9999885, 0.5068008]], [[0.99915576, 0.5000004, 0.99915576, 0.5013547, 0.99826574, 0.502709, 0.99648476, 0.5027815], [0.99648476, 0.5027815, 0.99146795, 0.50298613, 0.9913673, 0.5103806, 0.99637693, 0.5107217]]], "232": [1, 0.49999997, 0.5, 0.5000562, 0.50000024, [[0.99999994, 0.493229, 0.9999999, 0.49455214, 0.99999994, 0.49587527, 0.99999994, 0.49719837], [0.99999994, 0.49719837, 0.9999999, 0.4990663, 1, 0.50093424, 0.99999994, 0.5028022], [0.99999994, 0.5028022, 1, 0.5041251, 1, 0.50544804, 1, 0.50677097]], [[0.99271226, 0.49332917, 0.9927383, 0.49523795, 0.99401236, 0.49712965, 0.9965105, 0.4972311], [0.9965105, 0.4972311, 1.0000559, 0.497375, 1.0000559, 0.50262547, 0.9965105, 0.5027695], [0.99650955, 0.5027695, 0.99401116, 0.5028709, 0.9927371, 0.5047631, 0.99271137, 0.50667214]], [[0.99999994, 0.5, 1, 0.502257, 1, 0.504514, 0.99999994, 0.5067714]], [[0.9991696, 0.50000024, 0.9991696, 0.50134885, 0.9982832, 0.50269747, 0.99650955, 0.5027695], [0.99650955, 0.5027695, 0.99151295, 0.5029724, 0.9914133, 0.51033753, 0.9964027, 0.5106757]]], "233": [1, 0.5000227, 0.5, 0.5000502, 0.5000002, [[0.9999886, 0.49325836, 0.99998856, 0.49457577, 0.99998856, 0.49589315, 0.9999885, 0.49721056], [0.9999885, 0.49721056, 0.99998856, 0.49907023, 0.99998856, 0.5009299, 0.99998856, 0.50278956], [0.99998856, 0.50278956, 0.99998856, 0.50410694, 0.99998856, 0.50542426, 0.9999886, 0.50674164]], [[0.9927303, 0.49335682, 0.992756, 0.4952579, 0.9940249, 0.49714231, 0.9965131, 0.49724296], [0.9965131, 0.49724284, 1.000044, 0.49738562, 1.000044, 0.5026148, 0.9965131, 0.5027576], [0.9965128, 0.50275755, 0.99402463, 0.50285816, 0.9927558, 0.5047423, 0.99272996, 0.5066433]], [[0.9999886, 0.5, 0.9999886, 0.5022472, 0.9999886, 0.5044944, 0.99998856, 0.5067421]], [[0.99916136, 0.50000024, 0.9991613, 0.5013432, 0.99827856, 0.5026862, 0.9965128, 0.50275755], [0.9965128, 0.50275755, 0.9915363, 0.5029588, 0.9914374, 0.5102947, 0.99640656, 0.51063]]], "234": [1, 0.5, 0.5, 0.5000548, 0.5000003, [[0.99995494, 0.49328628, 0.99995494, 0.4945983, 0.99995494, 0.49591035, 0.99995494, 0.49722233], [0.99995494, 0.49722233, 0.99995494, 0.49907386, 0.99995494, 0.5009254, 0.99995494, 0.502777], [0.99995494, 0.502777, 0.99995494, 0.50408924, 0.99995494, 0.5054015, 0.99995494, 0.5067137]], [[0.9927811, 0.49338388, 0.9928062, 0.49527746, 0.9940699, 0.4971547, 0.99654853, 0.4972545], [0.99654853, 0.49725455, 1.000065, 0.49739617, 1.000065, 0.50260437, 0.99654853, 0.502746], [0.9965481, 0.50274605, 0.99406886, 0.5028459, 0.99280524, 0.50472397, 0.99278075, 0.5066181]], [[0.99995494, 0.49999997, 0.9999549, 0.5022379, 0.99995494, 0.50447583, 0.99995494, 0.5067137]], [[0.9991859, 0.5000003, 0.9991859, 0.50133777, 0.99830675, 0.5026752, 0.9965481, 0.50274605], [0.9965481, 0.50274605, 0.9915916, 0.50294566, 0.9914935, 0.5102527, 0.9964435, 0.51058537]]], "235": [1, 0.5000223, 0.49999994, 0.5000496, 0.50000006, [[0.9999888, 0.49331602, 0.9999888, 0.49462223, 0.9999888, 0.49592838, 0.99998885, 0.4972346], [0.99998885, 0.4972346, 0.9999888, 0.49907833, 0.99998873, 0.500922, 0.99998873, 0.5027657], [0.99998873, 0.5027657, 0.99998873, 0.5040718, 0.9999888, 0.50537777, 0.9999888, 0.5066838]], [[0.9927892, 0.4934131, 0.9928147, 0.49529842, 0.99407315, 0.4971671, 0.9965412, 0.49726605], [0.9965425, 0.497266, 1.0000447, 0.49740642, 1.0000447, 0.50259376, 0.9965425, 0.5027341], [0.9965409, 0.50273407, 0.9940728, 0.502833, 0.99281436, 0.5047018, 0.992789, 0.50658715]], [[0.9999888, 0.49999994, 0.9999888, 0.5022279, 0.9999888, 0.50445586, 0.9999888, 0.5066847]], [[0.9991691, 0.50000006, 0.9991691, 0.50133204, 0.99829364, 0.50266397, 0.9965409, 0.50273407], [0.9965409, 0.50273407, 0.9916043, 0.502932, 0.99150705, 0.5102103, 0.99643713, 0.51054007]]], "236": [1, 0.5, 0.5, 0.50005406, 0.5000001, [[1, 0.49334353, 1, 0.49464446, 1, 0.4959454, 1, 0.4972463], [1, 0.4972463, 1, 0.4990822, 1, 0.5009182, 0.99999994, 0.50275415], [0.99999994, 0.50275415, 1, 0.50405496, 1, 0.5053557, 1, 0.50665647]], [[0.9928287, 0.4934399, 0.9928537, 0.49531782, 0.99410707, 0.49717942, 0.9965656, 0.4972776], [0.9965658, 0.4972776, 1.0000539, 0.49741682, 1.0000539, 0.5025834, 0.9965658, 0.5027226], [0.99656475, 0.5027226, 0.9941063, 0.50282073, 0.9928529, 0.5046823, 0.99282795, 0.5065602]], [[1, 0.49999997, 1, 0.5022188, 1, 0.5044376, 0.99999994, 0.50665784]], [[0.99918187, 0.5000001, 0.99918187, 0.50132656, 0.99830985, 0.502653, 0.99656475, 0.5027226], [0.99656475, 0.5027226, 0.9916478, 0.50291896, 0.9915513, 0.5101688, 0.99646163, 0.5104959]]], "237": [1, 0.500022, 0.49999997, 0.5000488, 0.5, [[0.99998903, 0.493372, 0.99998903, 0.4946673, 0.999989, 0.49596268, 0.999989, 0.49725795], [0.999989, 0.49725795, 0.99998903, 0.49908605, 0.9999889, 0.5009142, 0.99998903, 0.50274235], [0.99998903, 0.50274235, 0.9999889, 0.5040375, 0.99998903, 0.5053327, 0.999989, 0.5066279]], [[0.9928477, 0.493467, 0.99287224, 0.4953373, 0.9941206, 0.49719155, 0.9965694, 0.49728894], [0.9965697, 0.4972889, 1.0000436, 0.49742702, 1.0000436, 0.502573, 0.9965697, 0.5027111], [0.99656916, 0.5027112, 0.99412024, 0.5028086, 0.992872, 0.5046629, 0.99284744, 0.50653327]], [[0.999989, 0.5, 0.99998903, 0.5022093, 0.999989, 0.5044186, 0.9999889, 0.50662863]], [[0.99917513, 0.50000006, 0.99917513, 0.501321, 0.99830663, 0.50264204, 0.99656916, 0.5027112], [0.99656916, 0.5027112, 0.9916718, 0.50290585, 0.9915761, 0.51012725, 0.9964665, 0.51045173]]], "238": [1, 0.49999997, 0.5, 0.5000532, 0.49999997, [[0.9999565, 0.49339992, 0.9999565, 0.4946897, 0.9999565, 0.4959795, 0.9999564, 0.4972693], [0.9999564, 0.4972693, 0.9999565, 0.4990896, 0.9999565, 0.5009099, 0.9999565, 0.50273025], [0.9999565, 0.50273025, 0.9999565, 0.5040202, 0.9999565, 0.5053102, 0.9999565, 0.5066001]], [[0.99289525, 0.49349448, 0.9929199, 0.4953571, 0.9941632, 0.49720353, 0.9966021, 0.49730006], [0.99660283, 0.49730006, 1.0000631, 0.49743703, 1.0000631, 0.5025629, 0.99660283, 0.50269985], [0.9966025, 0.50269985, 0.99416316, 0.5027964, 0.9929199, 0.5046434, 0.9928954, 0.5065063]], [[0.9999565, 0.49999997, 0.9999565, 0.5022, 0.9999565, 0.5044, 0.99995637, 0.5066001]], [[0.9991981, 0.49999994, 0.999198, 0.50131565, 0.998333, 0.50263137, 0.9966025, 0.50269985], [0.9966025, 0.50269985, 0.99172425, 0.502893, 0.9916293, 0.51008666, 0.99650097, 0.51040834]]], "239": [1, 0.5000216, 0.49999997, 0.50004745, 0.49999982, [[0.99998915, 0.4934274, 0.99998915, 0.49471188, 0.99998915, 0.49599636, 0.9999891, 0.49728078], [0.9999891, 0.49728078, 0.9999891, 0.49909356, 0.99998915, 0.50090635, 0.99998915, 0.5027191], [0.99998915, 0.5027191, 0.99998915, 0.5040036, 0.99998915, 0.505288, 0.99998915, 0.5065725]], [[0.9929031, 0.4935214, 0.99292773, 0.49537647, 0.9941659, 0.49721557, 0.99659514, 0.49731132], [0.99659514, 0.49731135, 1.0000412, 0.4974472, 1.0000414, 0.5025525, 0.99659514, 0.5026884], [0.9965946, 0.5026884, 0.99416506, 0.50278413, 0.99292684, 0.5046236, 0.9929025, 0.5064789]], [[0.99998915, 0.49999997, 0.99998915, 0.5021908, 0.99998915, 0.50438166, 0.9999892, 0.50657254]], [[0.9991797, 0.49999985, 0.9991798, 0.50131017, 0.99831825, 0.50262046, 0.9965946, 0.5026884], [0.9965946, 0.5026884, 0.99173576, 0.5028799, 0.9916416, 0.51004547, 0.996494, 0.51036465]]], "240": [1, 0.5, 0.50000006, 0.5000526, 0.5000001, [[1, 0.4934556, 1, 0.49473453, 0.99999994, 0.4960134, 0.9999999, 0.49729228], [0.9999999, 0.49729228, 0.9999999, 0.49909753, 0.9999999, 0.5009028, 0.9999999, 0.502708], [0.9999999, 0.502708, 0.99999994, 0.50398684, 1, 0.50526565, 1, 0.5065445]], [[0.99294215, 0.49354962, 0.9929671, 0.4953968, 0.99420035, 0.49722767, 0.99661946, 0.49732268], [0.9966205, 0.49732265, 1.0000529, 0.49745739, 1.0000529, 0.5025428, 0.9966205, 0.50267756], [0.9966195, 0.50267756, 0.99420047, 0.5027725, 0.9929671, 0.50460327, 0.99294215, 0.50645053]], [[0.99999994, 0.50000006, 0.99999994, 0.50218153, 1, 0.504363, 0.99999994, 0.50654453]], [[0.9991948, 0.5000001, 0.9991948, 0.5013051, 0.9983367, 0.5026102, 0.9966195, 0.50267756], [0.9966195, 0.50267756, 0.99177974, 0.5028675, 0.9916863, 0.51000553, 0.99651945, 0.51032215]]], "241": [1, 0.50002116, 0.49999997, 0.5000471, 0.5000003, [[0.9999893, 0.49348247, 0.9999893, 0.49475622, 0.9999892, 0.49602994, 0.9999893, 0.49730366], [0.9999893, 0.49730366, 0.9999893, 0.4991013, 0.9999893, 0.500899, 0.9999893, 0.50269663], [0.9999893, 0.50269663, 0.9999893, 0.50397027, 0.9999893, 0.5052439, 0.9999893, 0.50651747]], [[0.9929587, 0.49357447, 0.99298275, 0.4954149, 0.9942111, 0.49723968, 0.9966215, 0.4973339], [0.9966215, 0.4973339, 1.0000404, 0.49746758, 1.0000404, 0.50253296, 0.9966215, 0.50266665], [0.9966215, 0.50266665, 0.99421144, 0.5027608, 0.992983, 0.5045851, 0.9929587, 0.50642526]], [[0.9999893, 0.49999994, 0.9999893, 0.50217247, 0.9999893, 0.50434494, 0.9999893, 0.506518]], [[0.9991857, 0.50000024, 0.9991857, 0.50130004, 0.99833095, 0.50259984, 0.9966215, 0.50266665], [0.9966215, 0.50266665, 0.99180067, 0.50285506, 0.9917079, 0.5099656, 0.9965226, 0.51027966]]], "242": [1, 0.5, 0.5, 0.5000518, 0.5000001, [[0.9999579, 0.49350998, 0.9999579, 0.4947783, 0.99995786, 0.49604666, 0.9999579, 0.49731493], [0.9999579, 0.49731493, 0.99995786, 0.49910504, 0.9999579, 0.50089514, 0.99995786, 0.5026853], [0.99995786, 0.5026853, 0.9999579, 0.5039536, 0.99995786, 0.5052218, 0.99995786, 0.50649005]], [[0.9930072, 0.4936018, 0.9930316, 0.49543446, 0.9942551, 0.4972511, 0.9966555, 0.49734455], [0.9966566, 0.49734467, 1.000062, 0.49747723, 1.000062, 0.50252295, 0.9966566, 0.50265557], [0.9966552, 0.5026556, 0.9942546, 0.5027491, 0.993031, 0.50456613, 0.9930068, 0.50639904]], [[0.9999579, 0.5, 0.99995786, 0.50216335, 0.99995786, 0.5043267, 0.99995786, 0.50649095]], [[0.9992106, 0.5000001, 0.99921066, 0.5012947, 0.9983593, 0.5025892, 0.9966552, 0.5026556], [0.9966552, 0.5026556, 0.9918531, 0.5028426, 0.9917611, 0.509926, 0.9965568, 0.51023763]]], "243": [1, 0.50002086, 0.49999997, 0.5000466, 0.5000002, [[0.9999895, 0.49353668, 0.9999895, 0.49479967, 0.9999895, 0.4960627, 0.9999895, 0.49732566], [0.9999895, 0.49732566, 0.9999895, 0.4991085, 0.9999895, 0.5008913, 0.9999895, 0.5026741], [0.9999895, 0.5026741, 0.9999895, 0.5039372, 0.9999895, 0.5052002, 0.9999895, 0.5064632]], [[0.99301505, 0.49362797, 0.99303937, 0.49545342, 0.9942579, 0.49726295, 0.996649, 0.49735564], [0.996649, 0.49735564, 1.0000411, 0.49748716, 1.0000411, 0.50251323, 0.996649, 0.5026448], [0.996649, 0.5026448, 0.99425787, 0.50273746, 0.9930392, 0.5045471, 0.99301505, 0.5063726]], [[0.9999895, 0.49999997, 0.9999895, 0.5021544, 0.9999895, 0.5043088, 0.9999895, 0.5064632]], [[0.9991931, 0.50000024, 0.99919313, 0.5012896, 0.9983451, 0.502579, 0.996649, 0.5026448], [0.996649, 0.5026448, 0.99186563, 0.5028302, 0.9917744, 0.5098865, 0.99655163, 0.5101956]]], "244": [1, 0.5, 0.5, 0.500051, 0.49999994, [[0.99999994, 0.4935629, 0.99999994, 0.4948209, 1, 0.49607885, 1, 0.49733683], [1, 0.49733683, 1, 0.49911225, 1, 0.50088763, 0.9999999, 0.5026631], [0.9999999, 0.5026631, 0.99999994, 0.50392103, 0.9999999, 0.50517905, 0.99999994, 0.5064371]], [[0.9930518, 0.4936539, 0.99307597, 0.49547195, 0.9942899, 0.49727416, 0.9966715, 0.49736613], [0.99667287, 0.49736613, 1.0000517, 0.49749658, 1.0000517, 0.5025033, 0.99667287, 0.50263375], [0.9966716, 0.5026337, 0.9942896, 0.5027257, 0.99307567, 0.5045284, 0.9930519, 0.5063469]], [[0.99999994, 0.5, 0.99999994, 0.5021457, 0.99999994, 0.5042914, 0.9999999, 0.5064372]], [[0.999207, 0.4999999, 0.999207, 0.50128424, 0.9983623, 0.5025685, 0.9966716, 0.5026337], [0.9966716, 0.5026337, 0.99190664, 0.50281775, 0.9918161, 0.50984734, 0.9965748, 0.51015395]]], "245": [1, 0.5000205, 0.50000006, 0.5000461, 0.4999997, [[0.99998975, 0.49358958, 0.99998975, 0.49484247, 0.99998975, 0.49609533, 0.9999897, 0.4973482], [0.9999897, 0.4973482, 0.99998975, 0.49911636, 0.9999897, 0.50088453, 0.99998975, 0.5026527], [0.99998975, 0.5026527, 0.99998975, 0.5039053, 0.99998975, 0.5051579, 0.99998975, 0.5064105]], [[0.99306846, 0.49367896, 0.9930923, 0.49548998, 0.9943014, 0.4972853, 0.996674, 0.4973766], [0.9966754, 0.49737653, 1.000041, 0.49750596, 1.000041, 0.5024934, 0.9966754, 0.50262284], [0.9966743, 0.50262284, 0.994302, 0.50271404, 0.99309283, 0.504509, 0.9930687, 0.50631976]], [[0.99998975, 0.50000006, 0.99998975, 0.5021368, 0.99998975, 0.50427365, 0.9999897, 0.50641054]], [[0.9991996, 0.49999967, 0.9991996, 0.5012789, 0.9983582, 0.5025581, 0.9966743, 0.50262284], [0.9966743, 0.50262284, 0.9919277, 0.5028053, 0.991838, 0.50980824, 0.99657863, 0.51011246]]], "246": [1, 0.5, 0.5, 0.5000497, 0.49999943, [[0.99995923, 0.49361548, 0.99995923, 0.4948632, 0.99995923, 0.49611098, 0.99995923, 0.49735874], [0.99995923, 0.49735874, 0.99995923, 0.49911952, 0.99995923, 0.50088036, 0.9999593, 0.50264114], [0.9999593, 0.50264114, 0.99995923, 0.50388896, 0.99995923, 0.5051367, 0.99995923, 0.50638455]], [[0.99311423, 0.49370393, 0.99313796, 0.49550796, 0.9943423, 0.49729636, 0.99670583, 0.49738687], [0.99670583, 0.49738693, 1.0000583, 0.49751532, 1.0000583, 0.50248355, 0.99670583, 0.502612], [0.9967057, 0.50261205, 0.99434185, 0.5027026, 0.9931375, 0.5044913, 0.99311393, 0.50629556]], [[0.99995923, 0.5, 0.99995923, 0.5021282, 0.99995923, 0.50425637, 0.99995923, 0.5063846]], [[0.99922025, 0.49999946, 0.9992202, 0.50127363, 0.9983821, 0.50254774, 0.9967057, 0.50261205], [0.9967057, 0.50261205, 0.99197716, 0.50279313, 0.99188805, 0.5097698, 0.99661034, 0.51007164]]], "247": [1, 0.5000202, 0.49999997, 0.5000448, 0.4999997, [[0.9999899, 0.49364156, 0.9999899, 0.4948842, 0.99998987, 0.49612683, 0.99998987, 0.49736947], [0.99998987, 0.49736947, 0.99998987, 0.49912322, 0.99998987, 0.5008769, 0.99998987, 0.50263065], [0.99998987, 0.50263065, 0.9999899, 0.5038732, 0.99999, 0.5051158, 0.9999899, 0.5063584]], [[0.99312234, 0.49372935, 0.9931459, 0.49552634, 0.99434555, 0.49730796, 0.9967001, 0.49739775], [0.9967001, 0.49739772, 1.0000396, 0.49752513, 1.0000396, 0.50247425, 0.9967001, 0.5026017], [0.9966994, 0.5026017, 0.99434483, 0.5026915, 0.99314517, 0.5044731, 0.9931216, 0.50627005]], [[0.9999899, 0.5, 0.9999899, 0.5021195, 0.9999899, 0.50423896, 0.99998987, 0.5063593]], [[0.99920475, 0.49999967, 0.9992047, 0.5012688, 0.9983698, 0.50253797, 0.9966994, 0.5026017], [0.9966994, 0.5026017, 0.991989, 0.50278133, 0.9919007, 0.5097317, 0.9966049, 0.51003104]]], "248": [1, 0.5, 0.5, 0.5000479, 0.49999964, [[0.99999994, 0.49366647, 0.9999999, 0.4949043, 0.9999999, 0.49614218, 0.99999994, 0.49738005], [0.99999994, 0.49738005, 0.9999999, 0.49912673, 0.9999999, 0.5008734, 0.9999999, 0.5026201], [0.9999999, 0.5026201, 0.9999999, 0.5038579, 0.9999999, 0.5050957, 0.99999994, 0.5063336]], [[0.993158, 0.4937545, 0.99318147, 0.49554443, 0.9943765, 0.49731898, 0.9967219, 0.4974081], [0.9967219, 0.4974081, 1.0000485, 0.49753448, 1.0000485, 0.50246483, 0.9967219, 0.5025912], [0.9967213, 0.50259125, 0.99437547, 0.50268036, 0.9931804, 0.50445557, 0.9931573, 0.50624573]], [[0.99999994, 0.5, 0.99999994, 0.5021112, 0.99999994, 0.5042224, 1, 0.50633395]], [[0.99921685, 0.49999964, 0.99921685, 0.50126386, 0.9983852, 0.502528, 0.9967213, 0.50259125], [0.9967213, 0.50259125, 0.9920289, 0.50276953, 0.9919412, 0.50969386, 0.9966287, 0.50999093]]], "249": [1, 0.50001985, 0.5, 0.5000443, 0.5000001, [[0.99999, 0.49369225, 0.99999, 0.49492502, 0.9999899, 0.4961578, 0.99999, 0.4973906], [0.99999, 0.4973906, 0.99999, 0.49913007, 0.9999899, 0.5008696, 0.9999899, 0.502609], [0.9999899, 0.502609, 0.99999, 0.503842, 0.99999, 0.50507486, 0.99999, 0.5063078]], [[0.99317443, 0.4937792, 0.99319744, 0.4955624, 0.99438787, 0.49733058, 0.99672467, 0.497419], [0.9967249, 0.49741894, 1.0000386, 0.49754438, 1.0000386, 0.5024559, 0.9967249, 0.50258136], [0.99672484, 0.50258136, 0.9943881, 0.5026698, 0.9931977, 0.50443786, 0.9931747, 0.50622106]], [[0.99999, 0.5, 0.99999, 0.5021026, 0.99999, 0.5042052, 0.99999, 0.5063078]], [[0.99921024, 0.5000001, 0.9992102, 0.5012594, 0.99838173, 0.50251865, 0.99672484, 0.50258136], [0.99672484, 0.50258136, 0.9920503, 0.50275826, 0.99196327, 0.50965667, 0.9966319, 0.5099515]]], "250": [1, 0.5, 0.5, 0.5000481, 0.4999997, [[0.9999606, 0.49371833, 0.99996054, 0.49494594, 0.99996054, 0.49617356, 0.99996054, 0.4974012], [0.99996054, 0.4974012, 0.99996054, 0.49913394, 0.99996054, 0.50086665, 0.9999605, 0.50259936], [0.9999605, 0.50259936, 0.99996054, 0.5038268, 0.99996054, 0.50505424, 0.9999606, 0.5062817]], [[0.99321896, 0.4938046, 0.9932424, 0.4955805, 0.9944282, 0.497341, 0.99675566, 0.49742875], [0.99675566, 0.49742872, 1.000057, 0.49755308, 1.000057, 0.5024463, 0.99675566, 0.5025707], [0.9967555, 0.5025707, 0.9944277, 0.5026584, 0.9932418, 0.50441957, 0.99321866, 0.5061958]], [[0.9999606, 0.50000006, 0.9999606, 0.5020939, 0.9999606, 0.5041878, 0.99996066, 0.50628215]], [[0.99923164, 0.4999997, 0.99923164, 0.5012541, 0.9984063, 0.5025085, 0.9967555, 0.5025707], [0.9967555, 0.5025707, 0.9920984, 0.5027462, 0.9920119, 0.5096193, 0.9966632, 0.50991184]]], "251": [1, 0.50001955, 0.5, 0.5000434, 0.5000004, [[0.9999902, 0.4937434, 0.9999902, 0.49496606, 0.99999017, 0.49618876, 0.9999902, 0.4974114], [0.9999902, 0.4974114, 0.99999017, 0.49913704, 0.9999901, 0.50086266, 0.9999902, 0.5025883], [0.9999902, 0.5025883, 0.99999017, 0.50381106, 0.9999901, 0.50503385, 0.99999017, 0.50625664]], [[0.99322647, 0.4938297, 0.99324965, 0.49559876, 0.9944309, 0.49735266, 0.9967496, 0.49743968], [0.99675, 0.49743965, 1.0000385, 0.4975631, 1.0000385, 0.5024377, 0.99675, 0.50256115], [0.99674916, 0.5025612, 0.9944303, 0.50264823, 0.99324906, 0.5044024, 0.9932261, 0.50617164]], [[0.99999017, 0.5, 0.99999017, 0.50208557, 0.99999017, 0.50417113, 0.9999902, 0.50625724]], [[0.9992163, 0.5000004, 0.9992163, 0.5012499, 0.99839425, 0.50249946, 0.99674916, 0.5025612], [0.99674916, 0.5025612, 0.99210984, 0.5027354, 0.99202406, 0.50958276, 0.9966577, 0.50987303]]], "252": [1, 0.5, 0.49999997, 0.50004727, 0.49999994, [[1, 0.49376693, 1, 0.4949852, 1, 0.49620345, 0.99999994, 0.49742168], [0.99999994, 0.49742168, 0.9999999, 0.49914056, 0.99999994, 0.50085944, 0.9999999, 0.50257826], [0.9999999, 0.50257826, 1, 0.50379646, 0.99999994, 0.5050148, 0.99999994, 0.506233]], [[0.9932615, 0.49385187, 0.99328387, 0.49561468, 0.99446064, 0.49736285, 0.9967713, 0.49744922], [0.9967713, 0.49744925, 1.0000473, 0.4975718, 1.0000473, 0.50242805, 0.9967713, 0.5025506], [0.99677086, 0.50255066, 0.9944602, 0.502637, 0.9932835, 0.5043851, 0.99326104, 0.506148]], [[1, 0.49999997, 1, 0.50207764, 1, 0.5041553, 0.99999994, 0.5062333]], [[0.99922836, 0.49999994, 0.99922836, 0.50124466, 0.9984093, 0.5024893, 0.99677086, 0.50255066], [0.99677086, 0.50255066, 0.99214876, 0.50272346, 0.99206376, 0.5095457, 0.9966801, 0.50983375]]], "253": [1, 0.5000192, 0.50000006, 0.50004274, 0.5000001, [[0.99999034, 0.49379236, 0.99999034, 0.49500567, 0.99999034, 0.49621898, 0.99999046, 0.49743232], [0.99999046, 0.49743232, 0.99999046, 0.49914432, 0.99999046, 0.50085634, 0.9999904, 0.5025683], [0.9999904, 0.5025683, 0.99999034, 0.50378144, 0.99999034, 0.5049946, 0.99999034, 0.5062077]], [[0.9932759, 0.49387679, 0.99329835, 0.49563265, 0.9944706, 0.49737376, 0.9967722, 0.49745947], [0.9967722, 0.4974596, 1.0000359, 0.4975811, 1.0000359, 0.5024192, 0.9967722, 0.50254065], [0.99677205, 0.5025408, 0.99447024, 0.50262654, 0.99329793, 0.5043679, 0.9932757, 0.50612396]], [[0.99999034, 0.50000006, 0.99999034, 0.5020693, 0.99999034, 0.50413847, 0.99999034, 0.50620896]], [[0.99922, 0.5000001, 0.99922, 0.50124, 0.998404, 0.5024799, 0.99677205, 0.5025408], [0.99677205, 0.5025408, 0.9921674, 0.5027123, 0.99208295, 0.50950927, 0.9966837, 0.5097952]]], "254": [1, 0.49999997, 0.5, 0.5000461, 0.49999976, [[0.99996185, 0.4938169, 0.99996185, 0.49502546, 0.9999618, 0.496234, 0.99996173, 0.4974425], [0.99996173, 0.4974425, 0.9999618, 0.49914774, 0.99996185, 0.50085294, 0.99996185, 0.50255823], [0.99996185, 0.50255823, 0.99996185, 0.50376654, 0.99996185, 0.5049748, 0.9999618, 0.5061831]], [[0.99331963, 0.49389997, 0.99334204, 0.49564928, 0.9945098, 0.49738392, 0.99680305, 0.497469], [0.99680305, 0.49746907, 1.0000546, 0.49758962, 1.0000546, 0.5024099, 0.99680305, 0.50253046], [0.9968027, 0.5025305, 0.99450934, 0.5026156, 0.99334145, 0.5043504, 0.9933193, 0.50609976]], [[0.99996185, 0.5, 0.99996185, 0.502061, 0.99996185, 0.504122, 0.9999618, 0.50618446]], [[0.9992417, 0.49999976, 0.9992417, 0.50123495, 0.9984288, 0.50247014, 0.9968027, 0.5025305], [0.9968027, 0.5025305, 0.99221486, 0.5027007, 0.99213105, 0.50947315, 0.9967141, 0.5097568]]], "255": [1, 0.500019, 0.5, 0.5000418, 0.5, [[0.9999905, 0.49384108, 0.9999906, 0.4950448, 0.99999046, 0.49624848, 0.99999046, 0.4974522], [0.99999046, 0.4974522, 0.99999046, 0.49915063, 0.9999905, 0.50084907, 0.9999906, 0.5025475], [0.9999906, 0.5025475, 0.9999906, 0.5037513, 0.9999906, 0.5049551, 0.9999905, 0.5061589]], [[0.99332684, 0.49392483, 0.9933493, 0.49566722, 0.99451274, 0.4973949, 0.9967971, 0.4974793], [0.99679714, 0.4974792, 1.0000364, 0.49759892, 1.0000364, 0.5024011, 0.99679714, 0.5025208], [0.9967965, 0.5025208, 0.9945114, 0.50260526, 0.993348, 0.504334, 0.9933262, 0.50607693]], [[0.9999905, 0.5, 0.9999905, 0.50205296, 0.9999905, 0.5041059, 0.9999905, 0.5061596]], [[0.99922657, 0.5, 0.99922657, 0.5012305, 0.9984168, 0.50246096, 0.9967965, 0.5025208], [0.9967965, 0.5025208, 0.9922258, 0.5026897, 0.9921426, 0.50943726, 0.9967089, 0.5097187]]], "256": [1, 0.5, 0.5, 0.500045, 0.49999967, [[0.99999994, 0.49386472, 0.9999999, 0.49506402, 0.99999994, 0.49626327, 0.9999999, 0.49746257], [0.9999999, 0.49746257, 0.9999999, 0.49915433, 0.99999994, 0.50084615, 1, 0.5025379], [1, 0.5025379, 0.9999999, 0.50373703, 0.9999999, 0.5049361, 0.99999994, 0.5061353]], [[0.99336004, 0.49394715, 0.9933821, 0.49568325, 0.99454117, 0.49740484, 0.99681735, 0.49748865], [0.99681735, 0.49748865, 1.0000445, 0.49760738, 1.0000445, 0.50239193, 0.99681735, 0.5025107], [0.99681735, 0.5025107, 0.9945407, 0.50259453, 0.9933816, 0.5043168, 0.99336004, 0.50605327]], [[0.99999994, 0.5, 0.99999994, 0.5020451, 0.99999994, 0.5040902, 1, 0.5061356]], [[0.9992378, 0.49999967, 0.9992377, 0.5012255, 0.9984309, 0.5024513, 0.99681735, 0.5025107], [0.99681735, 0.5025107, 0.99226356, 0.50267833, 0.992181, 0.50940144, 0.99673134, 0.50968075]]] };
 
 // src/components/progress-indicator-path.js
-var f5 = Math.fround;
+var f10 = Math.fround;
 var mix2 = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
 function split2(points, t) {
   const a = mix2(points[0], points[1], t), b = mix2(points[1], points[2], t), c = mix2(points[2], points[3], t);
@@ -5450,7 +6455,7 @@ function split2(points, t) {
 }
 function rotate(cubics, angle, cx = 0, cy = 0) {
   const cos = Math.cos(angle), sin = Math.sin(angle);
-  return cubics.map((c) => c.map((v, i) => i % 2 ? f5(cy + (c[i - 1] - cx) * sin + (v - cy) * cos) : f5(cx + (v - cx) * cos - (c[i + 1] - cy) * sin)));
+  return cubics.map((c) => c.map((v, i) => i % 2 ? f10(cy + (c[i - 1] - cx) * sin + (v - cy) * cos) : f10(cx + (v - cx) * cos - (c[i + 1] - cy) * sin)));
 }
 function expand(wedge, n, cx, cy, compressed) {
   if (!compressed) return wedge;
@@ -5467,7 +6472,7 @@ function circularProgressCubics(n, amplitude, morph = false, track = false) {
     pivot = [sx, sy];
   } else {
     const a = expand(from, n, cx, cy, compressed), b = expand(to, n, sx, sy, compressed);
-    cubics = a.map((c, i) => c.map((v, j) => f5(f5(f5(1 - amplitude) * v) + f5(amplitude * b[i][j]))));
+    cubics = a.map((c, i) => c.map((v, j) => f10(f10(f10(1 - amplitude) * v) + f10(amplitude * b[i][j]))));
     pivot = [0.5, 0.5];
   }
   const angle = 1.5 * Math.PI - Math.atan2(cubics[0][1] - pivot[1], cubics[0][0] - pivot[0]);
@@ -5483,7 +6488,7 @@ function centerProgressCubics(cubics, size, stroke) {
     maxY = Math.max(maxY, c[i + 1]);
   }
   const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-  return cubics.map((c) => c.map((v, i) => f5((v - (i % 2 ? cy : cx)) * scale2 + size / 2)));
+  return cubics.map((c) => c.map((v, i) => f10((v - (i % 2 ? cy : cx)) * scale2 + size / 2)));
 }
 function measureProgressPath(cubics) {
   let total = 0;
@@ -5548,7 +6553,7 @@ var defaultStyle12 = `
   .color-probe { position:absolute; width:0; height:0; visibility:hidden; pointer-events:none; }
 `;
 var sheet = createComponentSheet(defaultStyle12);
-var clamp2 = (x) => Math.max(0, Math.min(1, x));
+var clamp3 = (x) => Math.max(0, Math.min(1, x));
 var finite2 = (value, fallback, valid = () => true) => Number.isFinite(value) && valid(value) ? value : fallback;
 var MdProgressIndicator = class extends HTMLElement {
   static get observedAttributes() {
@@ -5673,7 +6678,7 @@ var MdProgressIndicator = class extends HTMLElement {
     this.toggleAttribute("indeterminate", !!v);
   }
   get fraction() {
-    return this.indeterminate ? 0 : clamp2(this.value / this.max);
+    return this.indeterminate ? 0 : clamp3(this.value / this.max);
   }
   get strokeWidth() {
     return finite2(parseFloat(this.getAttribute("stroke-width")), 4, (v) => v > 0);
@@ -5716,7 +6721,7 @@ var MdProgressIndicator = class extends HTMLElement {
   /** A fraction of available wave height, matching the native amplitude parameter. */
   get amplitude() {
     const value = parseFloat(this.getAttribute("amplitude"));
-    return Number.isFinite(value) ? clamp2(value) : null;
+    return Number.isFinite(value) ? clamp3(value) : null;
   }
   set amplitude(v) {
     this._optional("amplitude", v);
@@ -5801,7 +6806,7 @@ var MdProgressIndicator = class extends HTMLElement {
       return this._animatedAmplitude = target;
     }
     if (this._amplitudeRun) {
-      const run = this._amplitudeRun, t = clamp2((now - run.start) / 500);
+      const run = this._amplitudeRun, t = clamp3((now - run.start) / 500);
       this._animatedAmplitude = run.from + (run.to - run.from) * cubicBezier(...run.to > run.from ? [0.2, 0, 0, 1] : [0.3, 0, 0.8, 0.15], t);
       if (t < 1) return this._animatedAmplitude;
       this._animatedAmplitude = run.to;
@@ -6039,12 +7044,12 @@ var defaultStyle13 = `
     border-radius: var(--md-sys-shape-corner-full, 9999px);
     overflow: hidden;
     background-color: transparent;
-    transition: background-color 0.2s ease;
   }
 
   :host([variant="contained"]) .loading-root {
-    background-color: var(--md-sys-color-primary-container, #EADDFF);
+    background-color: var(--md-sys-color-primary-container);
   }
+  .color-probe { position: absolute; visibility: hidden; pointer-events: none; }
 
   canvas {
     display: block;
@@ -6059,7 +7064,7 @@ var MORPH_INTERVAL = 650;
 var QUARTER_ROTATION = 90;
 var MdLoadingIndicator = class extends HTMLElement {
   static get observedAttributes() {
-    return ["variant", "size", "progress", "indeterminate", "color", "track-color", "stroke-cap", "gap-size", "stroke-width"];
+    return ["variant", "size", "progress", "indeterminate", "color", "container-color", "track-color", "stroke-cap", "gap-size", "stroke-width"];
   }
   constructor() {
     super();
@@ -6070,7 +7075,7 @@ var MdLoadingIndicator = class extends HTMLElement {
     this._startTime = 0;
     this._currentMorphIndex = 0;
     this._lastStepTime = 0;
-    this._cachedColor = "#6750A4";
+    this._cachedColor = null;
     this._colorDirty = true;
     this._observer = null;
     this._isVisible = true;
@@ -6131,31 +7136,30 @@ var MdLoadingIndicator = class extends HTMLElement {
       return this._cachedColor;
     }
     const colorAttr = this.getAttribute("color");
-    let activeColor = "";
-    if (colorAttr && (colorAttr.startsWith("#") || colorAttr.startsWith("rgb") || colorAttr.startsWith("hsl"))) {
-      activeColor = colorAttr;
-    } else {
-      const computedStyle = getComputedStyle(this);
-      if (colorAttr === "primary" && !isContained) {
-        activeColor = computedStyle.getPropertyValue("--md-sys-color-primary").trim() || "#D0BCFF";
-      } else if (colorAttr === "secondary") {
-        activeColor = computedStyle.getPropertyValue("--md-sys-color-secondary").trim() || "#CCC2DC";
-      } else if (colorAttr === "tertiary") {
-        activeColor = computedStyle.getPropertyValue("--md-sys-color-tertiary").trim() || "#EFB8C8";
-      } else if (colorAttr === "on-primary-container") {
-        activeColor = computedStyle.getPropertyValue("--md-sys-color-on-primary-container").trim() || "#EADDFF";
-      } else if (isContained) {
-        activeColor = computedStyle.getPropertyValue("--md-sys-color-on-primary-container").trim() || computedStyle.getPropertyValue("--md-sys-color-primary").trim() || "#EADDFF";
-      } else {
-        activeColor = computedStyle.getPropertyValue("--md-sys-color-primary").trim() || "#D0BCFF";
-      }
-    }
-    this._cachedColor = activeColor || "#D0BCFF";
+    const role = isContained ? "on-primary-container" : "primary";
+    const color = ["primary", "secondary", "tertiary", "on-primary-container"].includes(colorAttr) ? `var(--md-sys-color-${colorAttr})` : colorAttr && CSS.supports("color", colorAttr) ? colorAttr : `var(--md-sys-color-${role})`;
+    this._probe.style.color = "";
+    this._probe.style.color = color;
+    this._cachedColor = getComputedStyle(this._probe).color;
     this._colorDirty = false;
     return this._cachedColor;
   }
   get variant() {
     return this.getAttribute("variant") || "standalone";
+  }
+  get color() {
+    return this.getAttribute("color") || "";
+  }
+  set color(v) {
+    if (v == null) this.removeAttribute("color");
+    else this.setAttribute("color", String(v));
+  }
+  get containerColor() {
+    return this.getAttribute("container-color") || "";
+  }
+  set containerColor(v) {
+    if (v == null) this.removeAttribute("container-color");
+    else this.setAttribute("container-color", String(v));
   }
   set variant(v) {
     this.setAttribute("variant", v);
@@ -6182,7 +7186,7 @@ var MdLoadingIndicator = class extends HTMLElement {
     else this.setAttribute("progress", String(v));
   }
   get trackColor() {
-    return this.getAttribute("track-color") || "var(--md-sys-color-secondary-container, #E8DEF8)";
+    return this.getAttribute("track-color") || "var(--md-sys-color-secondary-container)";
   }
   set trackColor(v) {
     if (v === null || v === void 0) this.removeAttribute("track-color");
@@ -6310,6 +7314,7 @@ var MdLoadingIndicator = class extends HTMLElement {
     const sz = this.sizePx;
     root.style.width = `${sz}px`;
     root.style.height = `${sz}px`;
+    root.style.backgroundColor = this.variant === "contained" && CSS.supports("color", this.containerColor) ? this.containerColor : "";
     const dpr = window.devicePixelRatio || 1;
     canvas.width = sz * dpr;
     canvas.height = sz * dpr;
@@ -6334,9 +7339,10 @@ var MdLoadingIndicator = class extends HTMLElement {
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle13}</style>`}
       <div class="loading-root" role="progressbar" aria-label="Loading indicator">
-        <canvas></canvas>
+        <canvas></canvas><span class="color-probe" aria-hidden="true"></span>
       </div>
     `;
+    this._probe = this.shadowRoot.querySelector(".color-probe");
     this._updateDimensions();
     this._syncProgress();
   }
@@ -6591,17 +7597,17 @@ var MdBottomSheet = class extends HTMLElement {
   }
   close() {
     if (!this.open) return;
-    const sheet6 = this.shadowRoot.querySelector(".sheet");
+    const sheet7 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
-    if (sheet6 && scrim) {
-      sheet6.style.transition = "transform 260ms cubic-bezier(0.3, 0, 0, 1)";
-      sheet6.style.transform = "translateY(100%)";
+    if (sheet7 && scrim) {
+      sheet7.style.transition = "transform 260ms cubic-bezier(0.3, 0, 0, 1)";
+      sheet7.style.transform = "translateY(100%)";
       scrim.style.transition = "opacity 260ms linear";
       scrim.style.opacity = "0";
       setTimeout(() => {
         this.open = false;
-        sheet6.style.transform = "";
-        sheet6.style.transition = "";
+        sheet7.style.transform = "";
+        sheet7.style.transition = "";
         scrim.style.opacity = "";
         scrim.style.transition = "";
         this.dispatchEvent(new CustomEvent("close", { bubbles: true, composed: true }));
@@ -6645,28 +7651,28 @@ var MdBottomSheet = class extends HTMLElement {
   _activate() {
     document.addEventListener("keydown", this._onKeydown);
     document.body.style.overflow = "hidden";
-    const sheet6 = this.shadowRoot.querySelector(".sheet");
+    const sheet7 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
     if (scrim) {
       scrim.style.opacity = "0";
       scrim.style.transition = "opacity 250ms ease";
     }
-    if (sheet6) {
-      sheet6.style.transform = "translateY(100%)";
-      sheet6.style.transition = "none";
-      void sheet6.offsetHeight;
+    if (sheet7) {
+      sheet7.style.transform = "translateY(100%)";
+      sheet7.style.transition = "none";
+      void sheet7.offsetHeight;
       requestAnimationFrame(() => {
-        sheet6.style.transition = "transform 380ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.3, 0.64, 1))";
-        sheet6.style.transform = "translateY(0)";
+        sheet7.style.transition = "transform 380ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.3, 0.64, 1))";
+        sheet7.style.transform = "translateY(0)";
         if (scrim) scrim.style.opacity = "0.4";
       });
       setTimeout(() => {
-        sheet6.style.transition = "";
+        sheet7.style.transition = "";
         if (scrim) scrim.style.transition = "";
       }, 380);
     }
-    const f13 = this._focusable();
-    if (f13.length) f13[0].focus({ preventScroll: true });
+    const f16 = this._focusable();
+    if (f16.length) f16[0].focus({ preventScroll: true });
   }
   _deactivate() {
     document.removeEventListener("keydown", this._onKeydown);
@@ -6680,9 +7686,9 @@ var MdBottomSheet = class extends HTMLElement {
       return;
     }
     if (e.key === "Tab") {
-      const f13 = this._focusable();
-      if (!f13.length) return;
-      const first = f13[0], last = f13[f13.length - 1];
+      const f16 = this._focusable();
+      if (!f16.length) return;
+      const first = f16[0], last = f16[f16.length - 1];
       const active = this.shadowRoot.activeElement;
       if (e.shiftKey && active === first) {
         e.preventDefault();
@@ -6707,8 +7713,8 @@ var MdBottomSheet = class extends HTMLElement {
       scrim.addEventListener("click", onScrimDismiss, { signal });
     }
     const handleArea = this.shadowRoot.querySelector(".handle-area");
-    const sheet6 = this.shadowRoot.querySelector(".sheet");
-    if (!handleArea || !sheet6) return;
+    const sheet7 = this.shadowRoot.querySelector(".sheet");
+    if (!handleArea || !sheet7) return;
     let isDragging = false;
     let startY = 0;
     let currentY = 0;
@@ -6720,7 +7726,7 @@ var MdBottomSheet = class extends HTMLElement {
       startTime = performance.now();
       handleArea.setPointerCapture?.(e.pointerId);
       handleArea.classList.add("pressed");
-      sheet6.style.transition = "none";
+      sheet7.style.transition = "none";
       if (scrim) scrim.style.transition = "none";
     };
     const onPointerMove = (e) => {
@@ -6728,15 +7734,15 @@ var MdBottomSheet = class extends HTMLElement {
       currentY = e.clientY;
       const deltaY = currentY - startY;
       if (deltaY > 0) {
-        sheet6.style.transform = `translateY(${deltaY}px)`;
+        sheet7.style.transform = `translateY(${deltaY}px)`;
         if (scrim) {
-          const sheetHeight = sheet6.offsetHeight || 300;
+          const sheetHeight = sheet7.offsetHeight || 300;
           const opacity = Math.max(0, 0.4 * (1 - deltaY / sheetHeight));
           scrim.style.opacity = String(opacity);
         }
       } else {
         const rubberBand = deltaY * 0.35;
-        sheet6.style.transform = `translateY(${rubberBand}px)`;
+        sheet7.style.transform = `translateY(${rubberBand}px)`;
         if (scrim) scrim.style.opacity = "0.4";
       }
     };
@@ -6748,16 +7754,16 @@ var MdBottomSheet = class extends HTMLElement {
       const elapsed = performance.now() - startTime || 1;
       const velocityY = deltaY / elapsed;
       if (deltaY > 80 || velocityY > 0.4) {
-        sheet6.style.transition = "transform 0.22s cubic-bezier(0.3, 0, 0, 1)";
-        sheet6.style.transform = "translateY(100%)";
+        sheet7.style.transition = "transform 0.22s cubic-bezier(0.3, 0, 0, 1)";
+        sheet7.style.transform = "translateY(100%)";
         if (scrim) {
           scrim.style.transition = "opacity 0.22s linear";
           scrim.style.opacity = "0";
         }
         setTimeout(() => {
           this.open = false;
-          sheet6.style.transform = "";
-          sheet6.style.transition = "";
+          sheet7.style.transform = "";
+          sheet7.style.transition = "";
           if (scrim) {
             scrim.style.opacity = "";
             scrim.style.transition = "";
@@ -6765,14 +7771,14 @@ var MdBottomSheet = class extends HTMLElement {
           this.dispatchEvent(new CustomEvent("close", { bubbles: true, composed: true }));
         }, 220);
       } else {
-        sheet6.style.transition = "transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1)";
-        sheet6.style.transform = "translateY(0px)";
+        sheet7.style.transition = "transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1)";
+        sheet7.style.transform = "translateY(0px)";
         if (scrim) {
           scrim.style.transition = "opacity 0.32s ease";
           scrim.style.opacity = "0.4";
         }
         setTimeout(() => {
-          sheet6.style.transition = "";
+          sheet7.style.transition = "";
           if (scrim) {
             scrim.style.transition = "";
             scrim.style.opacity = "";
@@ -7818,315 +8824,210 @@ if (!customElements.get("md-top-app-bar")) {
   customElements.define("md-top-app-bar", MdTopAppBar);
 }
 
+// src/components/toolbar-padding.js
+var side = (value) => {
+  const n = Math.fround(Number(value));
+  if (Number.isNaN(n) || n < 0) throw new RangeError("Padding must be non-negative");
+  return n;
+};
+function normalizeToolbarPadding(value = 8) {
+  if (typeof value === "string") {
+    const parts = value.trim().split(/\s+/), absolute2 = parts[0] === "absolute";
+    if (absolute2) parts.shift();
+    if (!parts.length || parts.length > 4 || parts.some((p3) => !/^(?:\+?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?(?:px)?|Infinity)$/i.test(p3))) throw new RangeError("Invalid toolbar padding");
+    const p = parts.map((p3) => side(p3.replace(/px$/i, ""))), top2 = p[0], end = p[1] ?? top2, bottom2 = p[2] ?? top2, start = p[3] ?? end;
+    return absolute2 ? { left: start, top: top2, right: end, bottom: bottom2 } : { start, top: top2, end, bottom: bottom2 };
+  }
+  if (typeof value === "number") {
+    const n = side(value);
+    return { start: n, top: n, end: n, bottom: n };
+  }
+  if (!value || typeof value !== "object") throw new TypeError("Invalid toolbar padding");
+  const absolute = "left" in value || "right" in value;
+  if (absolute && ("start" in value || "end" in value)) throw new TypeError("Use logical or absolute padding sides");
+  const top = side(value.top ?? 0), bottom = side(value.bottom ?? 0);
+  return absolute ? { left: side(value.left ?? 0), top, right: side(value.right ?? 0), bottom } : { start: side(value.start ?? 0), top, end: side(value.end ?? 0), bottom };
+}
+function serializeToolbarPadding(value) {
+  const p = normalizeToolbarPadding(value);
+  return "left" in p ? `absolute ${p.top} ${p.right} ${p.bottom} ${p.left}` : `${p.top} ${p.end} ${p.bottom} ${p.start}`;
+}
+function resolveToolbarPadding(value = 8, rtl = false) {
+  const p = normalizeToolbarPadding(value), px2 = (n) => Math.min(2147483647, Math.round(n));
+  const left = px2("left" in p ? p.left : rtl ? p.end : p.start), right = px2("right" in p ? p.right : rtl ? p.start : p.end), top = px2(p.top), bottom = px2(p.bottom);
+  return { left, top, right, bottom, horizontal: left + right | 0, vertical: top + bottom | 0 };
+}
+
 // src/components/md-bottom-app-bar.js
 var defaultStyle19 = `
-  :host {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    display: block;
-    outline: none;
-    width: 100%;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
+  :host { display: block; width: 100%; min-width: 0; -webkit-tap-highlight-color: transparent; }
   .bar {
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    width: 100%;
-    height: 80px;                 /* ContainerHeight 80dp */
-    border-radius: 0;             /* CornerNone */
-    padding: 0 16px;
-    background-color: var(--md-sys-color-surface-container, #F3EDF7);
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
-    user-select: none;
-    -webkit-user-select: none;
+    box-sizing: border-box; width: 100%; border: 0; border-radius: 0;
+    background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface);
+    box-shadow: none; overflow: clip;
+    /* Browser equivalent of horizontal/bottom system-bar insets. */
+    padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   }
-
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex: 1 1 auto;
+  .content {
+    position: relative; box-sizing: border-box; display: flex; align-items: center;
+    width: 100%; height: 80px; padding: 4px 4px 0; gap: 0;
   }
-
-  .fab {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    flex: 0 0 auto;
-  }
-
-  .mat-sym {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', system-ui, sans-serif;
-    font-size: 24px;
-    line-height: 1;
-    display: inline-block;
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  }
-
-  .icon-wrap {
-    width: 48px;
-    height: 48px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
-    background-color: transparent;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    cursor: pointer;
-    outline: none;
-    user-select: none;
-    -webkit-user-select: none;
-    transition: background-color 150ms ease, color 150ms ease;
-  }
-  .icon-wrap:hover {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-  }
-  .icon-wrap:active {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 16%, transparent);
-  }
-  .icon-wrap:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #6750A4);
-    outline-offset: -2px;
-  }
-
-  .fab-btn {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background-color: var(--md-sys-color-primary-container, #EADDFF);
-    color: var(--md-sys-color-on-primary-container, #21005D);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    outline: none;
-    user-select: none;
-    -webkit-user-select: none;
-    box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px rgba(0,0,0,0.2));
-    transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 150ms ease;
-  }
-  .fab-btn:hover {
-    box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px rgba(0,0,0,0.25));
-  }
-  .fab-btn:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #6750A4);
-    outline-offset: 2px;
-  }
+  .actions { display: flex; align-items: center; flex: 1 1 0; min-width: 0; gap: 0; }
+  .fab { display: flex; align-self: stretch; align-items: flex-start; flex: none; padding-top: 8px; padding-inline-end: 12px; }
+  .fab[hidden] { display: none; }
+  slot { display: contents; }
+  ::slotted(*) { flex-shrink: 0; }
+  .content.flexible .actions, .content.flexible .fab:not([hidden]) { display: contents; }
+  .color-probe { position: absolute; visibility: hidden; pointer-events: none; }
 `;
-var bottomAppBarSheet = createComponentSheet(defaultStyle19);
+var sheet2 = createComponentSheet(defaultStyle19);
+var arrangements = {
+  start: "flex-start",
+  end: "flex-end",
+  center: "center",
+  "space-between": "space-between",
+  "space-around": "space-around",
+  "space-evenly": "space-evenly",
+  fixed: "center"
+};
 var MdBottomAppBar = class extends HTMLElement {
   static get observedAttributes() {
-    return ["container-color", "content-color", "horizontal-arrangement"];
+    return ["variant", "container-color", "content-color", "horizontal-arrangement", "expanded-height", "tonal-elevation", "content-padding", "aria-label"];
   }
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, bottomAppBarSheet);
+    adoptSheet(this.shadowRoot, sheet2);
     this._rendered = false;
     this._abortController = null;
+  }
+  get variant() {
+    return this.getAttribute("variant") === "flexible" ? "flexible" : "standard";
+  }
+  set variant(v) {
+    this._set("variant", v);
   }
   get containerColor() {
     return this.getAttribute("container-color") || "";
   }
   set containerColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("container-color");
-    else this.setAttribute("container-color", v);
+    this._set("container-color", v);
   }
   get contentColor() {
     return this.getAttribute("content-color") || "";
   }
   set contentColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("content-color");
-    else this.setAttribute("content-color", v);
+    this._set("content-color", v);
   }
   get horizontalArrangement() {
-    return this.getAttribute("horizontal-arrangement") || "space-between";
+    return this.getAttribute("horizontal-arrangement") || (this.variant === "flexible" ? "space-between" : "start");
   }
   set horizontalArrangement(v) {
-    if (v === null || v === void 0) this.removeAttribute("horizontal-arrangement");
-    else this.setAttribute("horizontal-arrangement", v);
+    this._set("horizontal-arrangement", v);
+  }
+  get expandedHeight() {
+    if (this.variant !== "flexible") return 80;
+    const n = Math.fround(Number(this.getAttribute("expanded-height")));
+    return Number.isFinite(n) && n > 0 ? n : 64;
+  }
+  set expandedHeight(v) {
+    this._set("expanded-height", v);
+  }
+  get tonalElevation() {
+    if (this.variant === "flexible") return 0;
+    const n = Math.fround(Number(this.getAttribute("tonal-elevation")));
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  }
+  set tonalElevation(v) {
+    this._set("tonal-elevation", v);
+  }
+  get contentPadding() {
+    const fallback = this.variant === "flexible" ? { start: 16, top: 0, end: 16, bottom: 0 } : { start: 4, top: 4, end: 4, bottom: 0 };
+    const value = this.getAttribute("content-padding");
+    if (value == null) return fallback;
+    try {
+      return normalizeToolbarPadding(value);
+    } catch {
+      return fallback;
+    }
+  }
+  set contentPadding(v) {
+    this._set("content-padding", v == null ? null : serializeToolbarPadding(normalizeToolbarPadding(v)));
+  }
+  _set(name, value) {
+    if (value == null) this.removeAttribute(name);
+    else this.setAttribute(name, String(value));
   }
   connectedCallback() {
-    if (!this._rendered) {
-      this.render();
-      this._rendered = true;
-      this.setupInteractions();
-    }
+    if (!this._rendered) this.render();
+    this.setupInteractions();
+    this._sync();
   }
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
   }
-  attributeChangedCallback(name, oldV, newV) {
-    if (!this._rendered || oldV === newV) return;
-    this.render();
-    this.setupInteractions();
+  attributeChangedCallback(name, oldValue, value) {
+    if (this._rendered && this.isConnected && oldValue !== value) this._sync();
   }
   render() {
-    const justify = this.horizontalArrangement === "start" ? "flex-start" : this.horizontalArrangement === "center" ? "center" : "space-between";
-    const hasAdopted = !this.containerColor && !this.contentColor && this.horizontalArrangement === "space-between" && !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>
-        :host {
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          display: block;
-          outline: none;
-          width: 100%;
-          user-select: none;
-          -webkit-user-select: none;
-        }
-
-        .bar {
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          justify-content: ${justify};
-          gap: 8px;
-          width: 100%;
-          height: 80px;                 /* ContainerHeight 80dp */
-          border-radius: 0;             /* CornerNone */
-          padding: 0 16px;
-          background-color: ${this.containerColor || "var(--md-sys-color-surface-container, #F3EDF7)"};
-          color: ${this.contentColor || "var(--md-sys-color-on-surface-variant, #49454F)"};
-          box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
-          user-select: none;
-          -webkit-user-select: none;
-        }
-
-        .actions {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          flex: 1 1 auto;
-        }
-
-        .fab {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          flex: 0 0 auto;
-        }
-
-        .mat-sym {
-          font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', system-ui, sans-serif;
-          font-size: 24px;
-          line-height: 1;
-          display: inline-block;
-          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-
-        .icon-wrap {
-          width: 48px;
-          height: 48px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 9999px;
-          background-color: transparent;
-          color: var(--md-sys-color-on-surface-variant, #49454F);
-          cursor: pointer;
-          outline: none;
-          user-select: none;
-          -webkit-user-select: none;
-          transition: background-color 150ms ease, color 150ms ease;
-        }
-        .icon-wrap:hover {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent);
-          color: var(--md-sys-color-on-surface, #1D1B20);
-        }
-        .icon-wrap:active {
-          background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 16%, transparent);
-        }
-        .icon-wrap:focus-visible {
-          outline: 2px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: -2px;
-        }
-
-        .fab-btn {
-          width: 56px;
-          height: 56px;
-          border-radius: 16px;
-          background-color: var(--md-sys-color-primary-container, #EADDFF);
-          color: var(--md-sys-color-on-primary-container, #21005D);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          outline: none;
-          user-select: none;
-          -webkit-user-select: none;
-          box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px rgba(0,0,0,0.2));
-          transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 150ms ease;
-        }
-        .fab-btn:hover {
-          box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px rgba(0,0,0,0.25));
-        }
-        .fab-btn:focus-visible {
-          outline: 2px solid var(--md-sys-color-primary, #6750A4);
-          outline-offset: 2px;
-        }
-      </style>`}
-      <footer class="bar" role="contentinfo">
-        <div class="actions">
-          <slot>
-            <span class="icon-wrap" tabindex="0" role="button" aria-label="Menu"><span class="mat-sym">menu</span></span>
-            <span class="icon-wrap" tabindex="0" role="button" aria-label="Search"><span class="mat-sym">search</span></span>
-            <span class="icon-wrap" tabindex="0" role="button" aria-label="Edit"><span class="mat-sym">edit</span></span>
-            <span class="icon-wrap" tabindex="0" role="button" aria-label="Attachment"><span class="mat-sym">attach_file</span></span>
-          </slot>
+    const adopted = !!this.shadowRoot.adoptedStyleSheets?.length;
+    this.shadowRoot.innerHTML = `${adopted ? "" : `<style>${defaultStyle19}</style>`}
+      <div class="bar" part="bar" role="group">
+        <div class="content" part="content">
+          <div class="actions" part="actions"><slot></slot></div>
+          <div class="fab" part="fab"><slot name="fab"></slot></div>
         </div>
-        <div class="fab">
-          <slot name="fab">
-            <span class="fab-btn" role="button" tabindex="0" aria-label="Add">
-              <span class="mat-sym">add</span>
-            </span>
-          </slot>
-        </div>
-      </footer>
-    `;
+      </div><span class="color-probe" aria-hidden="true"></span>`;
+    this._rendered = true;
+  }
+  _sync() {
+    const bar = this.shadowRoot.querySelector(".bar"), row = this.shadowRoot.querySelector(".content");
+    const flexible = this.variant === "flexible", rtl = getComputedStyle(this).direction === "rtl";
+    const padding = resolveToolbarPadding(this.contentPadding, rtl);
+    row.classList.toggle("flexible", flexible);
+    row.style.height = `${Math.round(this.expandedHeight)}px`;
+    for (const edge of ["left", "top", "right", "bottom"]) row.style["padding" + edge[0].toUpperCase() + edge.slice(1)] = `${padding[edge]}px`;
+    const arrangement = arrangements[this.horizontalArrangement] || (flexible ? "space-between" : "flex-start");
+    row.style.justifyContent = flexible ? arrangement : "flex-start";
+    row.style.gap = flexible && this.horizontalArrangement === "fixed" ? "32px" : "0px";
+    this.shadowRoot.querySelector(".actions").style.justifyContent = flexible ? "" : arrangement;
+    this.shadowRoot.querySelector(".fab").hidden = this.shadowRoot.querySelector('slot[name="fab"]').assignedElements().length === 0;
+    const valid = (value, fallback) => value && CSS.supports("color", value) ? value : fallback;
+    const colors = resolveSurfaceColors(this, this.shadowRoot.querySelector(".color-probe"), {
+      container: valid(this.containerColor, "var(--md-sys-color-surface-container)"),
+      content: valid(this.contentColor, ""),
+      elevation: this.tonalElevation
+    });
+    bar.style.backgroundColor = colors.container;
+    bar.style.color = colors.content;
+    bar.style.setProperty("--md-icon-button-content-color", colors.content);
+    bar.style.setProperty("--md-absolute-tonal-elevation", String(colors.total));
+    bar.setAttribute("aria-label", this.getAttribute("aria-label") || "Bottom app bar");
   }
   setupInteractions() {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-    this.shadowRoot.querySelectorAll(".icon-wrap").forEach((btn) => {
-      bindPress(btn, {
-        onPress: () => pressScale(btn, 0.88, "expressiveSpatialFast"),
-        onRelease: () => releaseScale(btn, 0.88, "expressiveSpatialMedium"),
-        signal
-      });
-      btn.addEventListener("click", () => {
-        this.dispatchEvent(new CustomEvent("action", {
-          detail: { action: btn.getAttribute("aria-label") },
-          bubbles: true,
-          composed: true
-        }));
-      }, { signal });
-    });
-    const fab = this.shadowRoot.querySelector(".fab-btn");
-    if (fab) {
-      bindPress(fab, {
-        onPress: () => pressScale(fab, 0.9, "expressiveSpatialFast"),
-        onRelease: () => releaseScale(fab, 0.9, "expressiveSpatialMedium"),
-        signal
-      });
-      fab.addEventListener("click", () => {
-        this.dispatchEvent(new CustomEvent("fab-click", { bubbles: true, composed: true }));
-      }, { signal });
-    }
+    for (const slot of this.shadowRoot.querySelectorAll("slot")) slot.addEventListener("slotchange", () => this._sync(), { signal });
+    this.shadowRoot.querySelector(".bar").addEventListener("click", (event) => {
+      if (event.defaultPrevented) return;
+      const path = event.composedPath();
+      const node = path.find((n) => n?.assignedSlot?.getRootNode() === this.shadowRoot);
+      if (!node || node.disabled || node.hasAttribute("disabled")) return;
+      if (!path.some((n) => n?.matches?.('button, a[href], md-icon-button, md-fab, [role="button"]'))) return;
+      if (node.slot === "fab") this.dispatchEvent(new CustomEvent("fab-click", { bubbles: true, composed: true }));
+      else this.dispatchEvent(new CustomEvent("action", {
+        detail: { action: node.getAttribute("data-action") || node.getAttribute("aria-label") || node.textContent.trim() },
+        bubbles: true,
+        composed: true
+      }));
+    }, { signal });
+    const stopTheme = observeThemeContext(this, () => this._sync());
+    signal.addEventListener("abort", stopTheme, { once: true });
   }
 };
-if (!customElements.get("md-bottom-app-bar")) {
-  customElements.define("md-bottom-app-bar", MdBottomAppBar);
-}
+if (!customElements.get("md-bottom-app-bar")) customElements.define("md-bottom-app-bar", MdBottomAppBar);
 
 // src/components/md-navigation-bar.js
 var defaultStyle20 = `
@@ -8501,110 +9402,11 @@ var MdNavigationBar = class extends HTMLElement {
 };
 if (!customElements.get("md-navigation-bar")) customElements.define("md-navigation-bar", MdNavigationBar);
 
-// src/motion/drawer-motion.js
-var f6 = Math.fround;
-var friction = f6(-4.2);
-var threshold = f6(0.1);
-var bits = new DataView(new ArrayBuffer(4));
-function fastCbrt(value) {
-  bits.setFloat32(0, value);
-  const raw = bits.getUint32(0);
-  const signedMask = raw + (raw >= 2147483648 ? 4294967296 : 0);
-  bits.setUint32(0, 709952852 + Math.trunc(signedMask / 3) >>> 0);
-  let estimate = bits.getFloat32(0);
-  for (let i = 0; i < 2; i++) estimate = f6(estimate - f6(f6(estimate - f6(value / f6(estimate * estimate))) * f6(1 / 3)));
-  return estimate;
-}
-function drawerEasing(fraction) {
-  if (fraction <= 0 || fraction >= 1) return fraction;
-  const progress = Math.max(f6(fraction), f6(11920929e-14));
-  const p0 = f6(-progress), p12 = f6(f6(0.4) - progress), p22 = f6(f6(0.2) - progress), p3 = f6(1 - progress);
-  const divisor = -p0 + 3 * f6(p12 - p22) + p3;
-  const a = 3 * (p0 - 2 * p12 + p22) / divisor;
-  const b = 3 * f6(p12 - p0) / divisor, c = p0 / divisor;
-  const o3 = (3 * b - a * a) / 9, q2 = (2 * a * a * a - 9 * a * b + 27 * c) / 54;
-  const root = Math.sqrt(q2 * q2 + o3 * o3 * o3);
-  const t = f6(f6(fastCbrt(f6(-q2 + root)) - fastCbrt(f6(q2 + root))) - a / 3);
-  const value = f6(f6(3 * f6(f6(f6(f6(f6(f6(1 / 3) - 1) * t) + 1) * t))) * t);
-  return Math.max(0, Math.min(1, value));
-}
-function drawerTarget(offset, width, velocity) {
-  if (offset >= 0) return 0;
-  if (offset <= -width) return -width;
-  if (Math.abs(velocity) >= 400) return velocity > 0 ? 0 : -width;
-  if (offset === -width * 0.5) return velocity > 0 ? 0 : -width;
-  return offset > -width * 0.5 ? 0 : -width;
-}
-function drawerDecayTarget(from, velocity) {
-  from = f6(from);
-  velocity = f6(velocity);
-  if (Math.abs(velocity) <= threshold) return from;
-  const duration = Math.log(Math.abs(f6(threshold / velocity))) / friction * 1e3;
-  const ratio = f6(velocity / friction);
-  return f6(f6(from - ratio) + f6(ratio * f6(Math.exp(friction * duration / 1e3))));
-}
-function drawerDecaySample(from, velocity, elapsed) {
-  from = f6(from);
-  velocity = f6(velocity);
-  const millis = Math.floor(Math.max(0, elapsed)), ratio = f6(velocity / friction);
-  const position = f6(f6(from - ratio) + f6(ratio * f6(Math.exp(f6(f6(friction * millis) / 1e3)))));
-  const speed = f6(velocity * f6(Math.exp(f6(f6(millis / 1e3) * friction))));
-  return { position, velocity: speed };
-}
-function drawerTweenSample(from, to, velocity, elapsed) {
-  from = f6(from);
-  to = f6(to);
-  velocity = f6(velocity);
-  const value = (time2) => {
-    const fraction = f6(Math.max(0, Math.min(256, time2)) / 256);
-    const eased = drawerEasing(fraction);
-    return f6(f6(f6(1 - eased) * from) + f6(eased * to));
-  };
-  const time = Math.max(0, Math.min(256, elapsed)), position = value(time);
-  return { position, velocity: time === 0 ? velocity : f6(f6(position - value(time - 1)) * 1e3) };
-}
-var DrawerOffset = class extends SpringValue {
-  settle(target, velocity, now = performance.now()) {
-    const from = f6(this.sample(now).position);
-    this.value = from;
-    this.target = target;
-    this.animation = null;
-    if (from === target) {
-      this.value = target;
-      return;
-    }
-    velocity = f6(velocity);
-    const projected = drawerDecayTarget(from, velocity);
-    const canDecay = velocity !== 0 && velocity * (target - from) >= 0 && (velocity > 0 ? projected >= target : projected <= target);
-    this.animation = {
-      kind: canDecay ? "decay" : "tween",
-      from,
-      to: target,
-      velocity,
-      start: now,
-      duration: canDecay ? Math.max(0, Math.trunc(f6(f6(1e3 * f6(Math.log(f6(threshold / Math.abs(velocity))))) / friction))) : 256
-    };
-  }
-  sample(now) {
-    const a = this.animation;
-    if (!a?.kind) return super.sample(now);
-    const elapsed = Math.max(0, now - a.start);
-    const state = a.kind === "decay" ? drawerDecaySample(a.from, a.velocity, elapsed) : drawerTweenSample(a.from, a.to, a.velocity, elapsed);
-    const crossed = a.kind === "decay" && (a.velocity > 0 ? state.position >= a.to : state.position <= a.to);
-    if (crossed || elapsed >= a.duration) {
-      this.value = this.target;
-      this.animation = null;
-      return { position: this.value, velocity: 0 };
-    }
-    return state;
-  }
-};
-
 // src/motion/velocity-tracker.js
-var f7 = Math.fround;
+var f11 = Math.fround;
 var dot = (a, b) => {
   let result = 0;
-  for (let i = 0; i < a.length; i++) result = f7(result + f7(a[i] * b[i]));
+  for (let i = 0; i < a.length; i++) result = f11(result + f11(a[i] * b[i]));
   return result;
 };
 function leastSquaresVelocity(samples, maximum = 8e3) {
@@ -8612,10 +9414,10 @@ function leastSquaresVelocity(samples, maximum = 8e3) {
   if (!newest) return 0;
   let previous = newest;
   for (let i = samples.length - 1; i >= 0 && points.length < 20; i--) {
-    const sample = samples[i], age = f7(newest.time - sample.time), gap = f7(Math.abs(sample.time - previous.time));
+    const sample = samples[i], age = f11(newest.time - sample.time), gap = f11(Math.abs(sample.time - previous.time));
     previous = sample;
     if (age > 100 || gap > 40) break;
-    points.push(f7(sample.position));
+    points.push(f11(sample.position));
     times2.push(-age);
   }
   if (points.length < 2) return 0;
@@ -8625,26 +9427,26 @@ function leastSquaresVelocity(samples, maximum = 8e3) {
   const r = Array.from({ length: n }, () => new Float32Array(n));
   for (let h = 0; h < count; h++) {
     a[0][h] = 1;
-    for (let i = 1; i < n; i++) a[i][h] = f7(a[i - 1][h] * times2[h]);
+    for (let i = 1; i < n; i++) a[i][h] = f11(a[i - 1][h] * times2[h]);
   }
   for (let j = 0; j < n; j++) {
     const w = q[j];
     w.set(a[j]);
     for (let i = 0; i < j; i++) {
       const z = q[i], projection = dot(w, z);
-      for (let h = 0; h < count; h++) w[h] = f7(w[h] - f7(projection * z[h]));
+      for (let h = 0; h < count; h++) w[h] = f11(w[h] - f11(projection * z[h]));
     }
-    const inverse = f7(1 / Math.max(f7(Math.sqrt(dot(w, w))), f7(1e-6)));
-    for (let h = 0; h < count; h++) w[h] = f7(w[h] * inverse);
+    const inverse = f11(1 / Math.max(f11(Math.sqrt(dot(w, w))), f11(1e-6)));
+    for (let h = 0; h < count; h++) w[h] = f11(w[h] * inverse);
     for (let i = 0; i < n; i++) r[j][i] = i < j ? 0 : dot(w, a[i]);
   }
   const coefficients = new Float32Array(n);
   for (let i = n - 1; i >= 0; i--) {
     let value = dot(q[i], points);
-    for (let j = n - 1; j > i; j--) value = f7(value - f7(r[i][j] * coefficients[j]));
-    coefficients[i] = f7(value / r[i][i]);
+    for (let j = n - 1; j > i; j--) value = f11(value - f11(r[i][j] * coefficients[j]));
+    coefficients[i] = f11(value / r[i][i]);
   }
-  const velocity = f7(coefficients[1] * 1e3);
+  const velocity = f11(coefficients[1] * 1e3);
   return Number.isNaN(velocity) ? 0 : Math.max(-maximum, Math.min(maximum, velocity));
 }
 var PointerVelocityTracker = class {
@@ -8653,7 +9455,7 @@ var PointerVelocityTracker = class {
     this.lastMove = 0;
   }
   add(time, position) {
-    this.samples.push({ time: Math.floor(time), position: f7(position) });
+    this.samples.push({ time: Math.floor(time), position: f11(position) });
     if (this.samples.length > 20) this.samples.shift();
   }
   down(time, position) {
@@ -8725,7 +9527,7 @@ var defaultStyle21 = `
  @keyframes drawer-ripple { from { transform:scale(0); opacity:.1; } to { transform:scale(1); opacity:0; } }
 `;
 var navigationDrawerSheet = createComponentSheet(defaultStyle21);
-var clamp3 = (value, min, max) => Math.max(min, Math.min(max, value));
+var clamp4 = (value, min, max) => Math.max(min, Math.min(max, value));
 var gestureOwners = /* @__PURE__ */ new WeakMap();
 var MdNavigationDrawer = class extends HTMLElement {
   static get observedAttributes() {
@@ -8985,7 +9787,7 @@ var MdNavigationDrawer = class extends HTMLElement {
     this._drawer.style.transformOrigin = rtl ? "left center" : "right center";
     this._content.style.scale = `${Math.fround(1 / scale2)} 1`;
     this._content.style.transformOrigin = rtl ? "left top" : "right top";
-    const fraction = this._width ? clamp3(Math.fround(Math.fround(offset + this._width) / this._width), 0, 1) : 0;
+    const fraction = this._width ? clamp4(Math.fround(Math.fround(offset + this._width) / this._width), 0, 1) : 0;
     const visible = !movable || fraction > 0 || this.open || !!this._drag?.started;
     this._drawer.inert = !visible;
     this._drawer.style.visibility = visible ? "visible" : "hidden";
@@ -9110,7 +9912,7 @@ var MdNavigationDrawer = class extends HTMLElement {
   _beginDrag(event) {
     this._drag.started = true;
     const channel2 = this._motion.channels.offset, current = channel2.sample(performance.now()).position;
-    channel2.value = channel2.target = clamp3(current, -this._width, 0);
+    channel2.value = channel2.target = clamp4(current, -this._width, 0);
     channel2.animation = null;
     this._motion.tick(performance.now());
     if (this.modal && !this._layer.open) this._layer.showModal();
@@ -9142,7 +9944,7 @@ var MdNavigationDrawer = class extends HTMLElement {
     }
     event.preventDefault();
     const channel2 = this._motion.channels.offset;
-    channel2.value = channel2.target = clamp3(Math.fround(channel2.value + Math.fround(delta * direction)), -this._width, 0);
+    channel2.value = channel2.target = clamp4(Math.fround(channel2.value + Math.fround(delta * direction)), -this._width, 0);
     channel2.animation = null;
     this._motion.tick(performance.now());
   }
@@ -9183,7 +9985,7 @@ var MdNavigationDrawer = class extends HTMLElement {
 if (!customElements.get("md-navigation-drawer")) customElements.define("md-navigation-drawer", MdNavigationDrawer);
 
 // src/motion/color-motion.js
-var clamp4 = (value, min, max) => Math.max(min, Math.min(max, value));
+var clamp5 = (value, min, max) => Math.max(min, Math.min(max, value));
 var ColorSpringVector = class {
   constructor(value) {
     this.value = this.target = value.map(Math.fround);
@@ -9240,7 +10042,7 @@ function colorVector(probe, color) {
   return [match[4] === void 0 ? 1 : components[3], components[0], components[1], components[2]].map(Math.fround);
 }
 function vectorColor([alpha, l, a, b]) {
-  return `oklab(${clamp4(l, 0, 1)} ${clamp4(a, -0.5, 0.5)} ${clamp4(b, -0.5, 0.5)} / ${clamp4(alpha, 0, 1)})`;
+  return `oklab(${clamp5(l, 0, 1)} ${clamp5(a, -0.5, 0.5)} ${clamp5(b, -0.5, 0.5)} / ${clamp5(alpha, 0, 1)})`;
 }
 var ColorMotion = class {
   constructor(element2, probe, color, draw, { role = "expressiveEffectMedium" } = {}) {
@@ -9296,9 +10098,9 @@ var ColorMotion = class {
 };
 
 // src/components/navigation-rail-layout.js
-var f8 = Math.fround;
-var lerp2 = (a, b, p) => a + Math.round((b - a) * p);
-var clamp5 = (value, max) => Math.min(max, Math.max(0, value));
+var f12 = Math.fround;
+var lerp3 = (a, b, p) => a + Math.round((b - a) * p);
+var clamp6 = (value, max) => Math.min(max, Math.max(0, value));
 var div = (a, b) => Math.trunc(a / b) || 0;
 function measureAnimatedRailItem({
   labelWidth,
@@ -9309,49 +10111,49 @@ function measureAnimatedRailItem({
   maxWidth,
   minHeight
 }) {
-  const p = Math.max(0, f8(positionProgress)), paddingProgress = clamp5(p, 1);
-  const selection = Math.max(0, f8(selectedProgress));
-  const verticalPadding = f8(f8(f8(1 - paddingProgress) * 4) + f8(paddingProgress * 16));
-  const labelW = clamp5(labelWidth, maxWidth), labelH = labelHeight;
-  const indicatorWidth = lerp2(24, 24 + labelW + 8, p) + 32;
-  const indicatorHeight = lerp2(24, Math.max(24, labelH), p) + Math.round(f8(verticalPadding * 2));
-  const rippleW = clamp5(indicatorWidth, maxWidth), rippleH = indicatorHeight;
-  const backgroundW = clamp5(Math.round(f8(indicatorWidth * selection)), maxWidth);
-  const widthTop = clamp5(Math.max(labelW, 96), maxWidth);
-  const widthStart = clamp5(rippleW + 20, maxWidth);
-  const measuredWidth = f8(widthTop + f8(f8(widthStart - widthTop) * p));
-  const measuredHeight = lerp2(rippleH + 4 + labelH, rippleH, p);
+  const p = Math.max(0, f12(positionProgress)), paddingProgress = clamp6(p, 1);
+  const selection = Math.max(0, f12(selectedProgress));
+  const verticalPadding = f12(f12(f12(1 - paddingProgress) * 4) + f12(paddingProgress * 16));
+  const labelW = clamp6(labelWidth, maxWidth), labelH = labelHeight;
+  const indicatorWidth = lerp3(24, 24 + labelW + 8, p) + 32;
+  const indicatorHeight = lerp3(24, Math.max(24, labelH), p) + Math.round(f12(verticalPadding * 2));
+  const rippleW = clamp6(indicatorWidth, maxWidth), rippleH = indicatorHeight;
+  const backgroundW = clamp6(Math.round(f12(indicatorWidth * selection)), maxWidth);
+  const widthTop = clamp6(Math.max(labelW, 96), maxWidth);
+  const widthStart = clamp6(rippleW + 20, maxWidth);
+  const measuredWidth = f12(widthTop + f12(f12(widthStart - widthTop) * p));
+  const measuredHeight = lerp3(rippleH + 4 + labelH, rippleH, p);
   const innerWidth2 = Math.round(measuredWidth);
   const width = Math.min(maxWidth, Math.max(48, innerWidth2));
   const height = Math.max(Math.round(minHeight), measuredHeight);
   const dx = div(width - innerWidth2, 2), dy = div(height - measuredHeight, 2);
   const iconYTop = Math.round(verticalPadding);
-  const iconY = lerp2(0, div(measuredHeight - 24, 2) - iconYTop, p) + iconYTop;
+  const iconY = lerp3(0, div(measuredHeight - 24, 2) - iconYTop, p) + iconYTop;
   const labelXTop = div(96 - labelW, 2);
-  const labelXStart = 68 - (topTarget && p > 0 ? 0 : f8(20 * f8(1 - p)));
-  const labelX = p < 0.5 ? labelXTop : Math.trunc(f8(labelXStart * p));
-  const labelY = p < 0.5 ? iconY + 24 + Math.round(f8(verticalPadding + 4)) : div(measuredHeight - labelH, 2);
-  const rippleX = lerp2(20, Math.round(f8(f8(20 + measuredWidth - rippleW) / 2)), p);
+  const labelXStart = 68 - (topTarget && p > 0 ? 0 : f12(20 * f12(1 - p)));
+  const labelX = p < 0.5 ? labelXTop : Math.trunc(f12(labelXStart * p));
+  const labelY = p < 0.5 ? iconY + 24 + Math.round(f12(verticalPadding + 4)) : div(measuredHeight - labelH, 2);
+  const rippleX = lerp3(20, Math.round(f12(f12(20 + measuredWidth - rippleW) / 2)), p);
   return {
     width,
     height,
     innerWidth: innerWidth2,
     measuredHeight,
-    indicator: { x: 20 + dx, y: dy, width: backgroundW, height: rippleH, opacity: clamp5(selection, 1) },
+    indicator: { x: 20 + dx, y: dy, width: backgroundW, height: rippleH, opacity: clamp6(selection, 1) },
     ripple: { x: rippleX + dx, y: dy, width: rippleW, height: rippleH },
     icon: { x: 36 + dx, y: iconY + dy, width: 24, height: 24 },
-    label: { x: labelX + dx, y: labelY + dy, width: labelW, height: labelH, opacity: clamp5(f8(f8(4 * f8(p - 0.5)) * f8(p - 0.5)), 1) }
+    label: { x: labelX + dx, y: labelY + dy, width: labelW, height: labelH, opacity: clamp6(f12(f12(4 * f12(p - 0.5)) * f12(p - 0.5)), 1) }
   };
 }
 function measureIconOnlyRailItem({ selectedProgress, maxWidth, minHeight }) {
   const width = Math.min(maxWidth, 96), height = Math.max(Math.round(minHeight), 56);
-  const selection = Math.max(0, f8(selectedProgress));
-  const backgroundW = clamp5(Math.round(f8(56 * selection)), maxWidth);
+  const selection = Math.max(0, f12(selectedProgress));
+  const backgroundW = clamp6(Math.round(f12(56 * selection)), maxWidth);
   const y = div(height - 56, 2);
   return {
     width,
     height,
-    indicator: { x: div(width - backgroundW, 2), y, width: backgroundW, height: 56, opacity: clamp5(selection, 1) },
+    indicator: { x: div(width - backgroundW, 2), y, width: backgroundW, height: 56, opacity: clamp6(selection, 1) },
     ripple: { x: div(width - 56, 2), y, width: Math.min(56, maxWidth), height: 56 },
     icon: { x: div(width - 24, 2), y: div(height - 24, 2), width: 24, height: 24 },
     label: null
@@ -10447,9 +11249,9 @@ var MdDialog = class extends HTMLElement {
         if (scrim) scrim.style.transition = "";
       }, 320);
     }
-    const f13 = this._focusable();
-    if (f13.length) {
-      setTimeout(() => f13[f13.length - 1]?.focus({ preventScroll: true }), 50);
+    const f16 = this._focusable();
+    if (f16.length) {
+      setTimeout(() => f16[f16.length - 1]?.focus({ preventScroll: true }), 50);
     }
   }
   _deactivate() {
@@ -10464,9 +11266,9 @@ var MdDialog = class extends HTMLElement {
       return;
     }
     if (e.key === "Tab") {
-      const f13 = this._focusable();
-      if (!f13.length) return;
-      const first = f13[0], last = f13[f13.length - 1];
+      const f16 = this._focusable();
+      if (!f16.length) return;
+      const first = f16[0], last = f16[f16.length - 1];
       const active = this.shadowRoot.activeElement || document.activeElement;
       if (e.shiftKey && (active === first || active === this)) {
         e.preventDefault();
@@ -15080,19 +15882,19 @@ var MdSideSheet = class extends HTMLElement {
   }
   close() {
     if (!this.open) return;
-    const sheet6 = this.shadowRoot.querySelector(".sheet");
+    const sheet7 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
-    if (sheet6 && scrim) {
+    if (sheet7 && scrim) {
       const isLeft = this.position === "left";
       const exitTransform = isLeft ? "translateX(-100%)" : "translateX(100%)";
-      sheet6.style.transition = "transform 250ms cubic-bezier(0.3, 0, 0, 1)";
-      sheet6.style.transform = exitTransform;
+      sheet7.style.transition = "transform 250ms cubic-bezier(0.3, 0, 0, 1)";
+      sheet7.style.transform = exitTransform;
       scrim.style.transition = "opacity 250ms linear";
       scrim.style.opacity = "0";
       setTimeout(() => {
         this.open = false;
-        sheet6.style.transform = "";
-        sheet6.style.transition = "";
+        sheet7.style.transform = "";
+        sheet7.style.transition = "";
         scrim.style.opacity = "";
         scrim.style.transition = "";
         this._deactivate();
@@ -15138,7 +15940,7 @@ var MdSideSheet = class extends HTMLElement {
     document.removeEventListener("keydown", this._onKeydown);
     document.addEventListener("keydown", this._onKeydown);
     document.body.style.overflow = "hidden";
-    const sheet6 = this.shadowRoot.querySelector(".sheet");
+    const sheet7 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
     if (scrim) {
       scrim.style.opacity = "0";
@@ -15147,21 +15949,21 @@ var MdSideSheet = class extends HTMLElement {
         scrim.style.opacity = "0.4";
       });
     }
-    if (sheet6) {
+    if (sheet7) {
       const isLeft = this.position === "left";
       const enterFrom = isLeft ? "translateX(-100%)" : "translateX(100%)";
-      sheet6.style.transform = enterFrom;
-      sheet6.style.transition = "transform 350ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1))";
+      sheet7.style.transform = enterFrom;
+      sheet7.style.transition = "transform 350ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1))";
       requestAnimationFrame(() => {
-        sheet6.style.transform = "translateX(0)";
+        sheet7.style.transform = "translateX(0)";
       });
       setTimeout(() => {
-        sheet6.style.transition = "";
+        sheet7.style.transition = "";
         if (scrim) scrim.style.transition = "";
       }, 350);
     }
-    const f13 = this._focusable();
-    if (f13.length) f13[0].focus({ preventScroll: true });
+    const f16 = this._focusable();
+    if (f16.length) f16[0].focus({ preventScroll: true });
   }
   _deactivate() {
     document.removeEventListener("keydown", this._onKeydown);
@@ -15175,9 +15977,9 @@ var MdSideSheet = class extends HTMLElement {
       return;
     }
     if (e.key === "Tab") {
-      const f13 = this._focusable();
-      if (!f13.length) return;
-      const first = f13[0], last = f13[f13.length - 1];
+      const f16 = this._focusable();
+      if (!f16.length) return;
+      const first = f16[0], last = f16[f16.length - 1];
       const active = this.shadowRoot.activeElement;
       if (e.shiftKey && active === first) {
         e.preventDefault();
@@ -15232,11 +16034,11 @@ function fixedTabRow({ width, tabs, rtl = false }) {
   return { size: { width, height }, positions: positions2, placements };
 }
 function scrollableTabRow({ tabs, minTabWidth = 90, edgePadding = 52 }) {
-  const f13 = Math.fround, min = f13(minTabWidth), padding = f13(edgePadding);
+  const f16 = Math.fround, min = f16(minTabWidth), padding = f16(edgePadding);
   let left = padding, layoutWidth = Math.round(padding) * 2;
   const positions2 = tabs.map((t) => {
     const width = Math.max(min, Math.max(Math.round(min), t.width)), p = { left, width, contentWidth: Math.max(t.width - 32, 24) };
-    left = f13(left + width);
+    left = f16(left + width);
     layoutWidth += Math.round(width);
     return p;
   });
@@ -15255,9 +16057,9 @@ function tabScrollOffset({ positions: positions2, selected, edgePadding = 52, ma
   return Math.max(0, Math.min(Math.max(0, total - visible), centered));
 }
 function applyTabScrollDelta({ value, maxValue, accumulator = 0 }, delta) {
-  const f13 = Math.fround, absolute = f13(f13(value + f13(delta)) + f13(accumulator)), next = Math.max(0, Math.min(f13(maxValue), absolute));
-  const consumed = f13(next - value), integer = Math.round(consumed) || 0;
-  return { value: value + integer, accumulator: f13(consumed - integer), consumed: absolute !== next ? consumed : f13(delta) };
+  const f16 = Math.fround, absolute = f16(f16(value + f16(delta)) + f16(accumulator)), next = Math.max(0, Math.min(f16(maxValue), absolute));
+  const consumed = f16(next - value), integer = Math.round(consumed) || 0;
+  return { value: value + integer, accumulator: f16(consumed - integer), consumed: absolute !== next ? consumed : f16(delta) };
 }
 function tabContentOffset({ tabWidth, rowHeight, contentSize }) {
   return { x: Math.round(Math.fround(tabWidth - contentSize.width) / 2) || 0, y: Math.round(Math.fround(rowHeight - contentSize.height) / 2) || 0 };
@@ -15294,7 +16096,7 @@ var style = `
  @keyframes tab-ripple{to{transform:scale(1);opacity:0}}
  md-tab{display:none}
 `;
-var sheet2 = createComponentSheet(style);
+var sheet3 = createComponentSheet(style);
 var nextId = 0;
 var finite3 = (value, fallback, minimum = 0) => Number.isFinite(Number(value)) && Number(value) >= minimum ? Number(value) : fallback;
 var make = (tag, name, parent) => {
@@ -15316,7 +16118,7 @@ var MdTabs = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet2);
+    adoptSheet(this.shadowRoot, sheet3);
     this._id = `md-tabs-${++nextId}`;
     this._records = [];
     this._positions = [];
@@ -15828,260 +16630,15 @@ function toolbarGroupComposed(expanded, state, animating) {
   return expanded || animating || state === "Visible";
 }
 
-// src/components/row-column-layout.js
-var f9 = Math.fround;
-var INF = 2147483647;
-var clamp6 = (v, a, b) => Math.max(a, Math.min(b, v));
-var int = (v) => clamp6(Math.trunc(v), -2147483648, INF) || 0;
-var round = (v) => clamp6(Math.round(v), -2147483648, INF) || 0;
-var bounds = (o) => ({ minMain: o.minMain ?? 0, maxMain: o.maxMain ?? INF, minCross: o.minCross ?? 0, maxCross: o.maxCross ?? INF });
-function layoutPlaceable(id, requested, constraints, children = [], data = {}) {
-  const size = { width: clamp6(requested.width, constraints.minWidth, constraints.maxWidth), height: clamp6(requested.height, constraints.minHeight, constraints.maxHeight) };
-  return { id, requested, size, constraints, offset: { x: int((size.width - requested.width) / 2), y: int((size.height - requested.height) / 2) }, children, ...data };
-}
-function minimumInteractiveLayout(o) {
-  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF };
-  const width = clamp6(o.width, c.minWidth, c.maxWidth), height = clamp6(o.height, c.minHeight, c.maxHeight);
-  const requested = { width: Math.max(48, width), height: Math.max(48, height) };
-  const touch = layoutPlaceable("touch", requested, c);
-  const body = { x: touch.offset.x + round(f9((requested.width - width) / 2)), y: touch.offset.y + round(f9((requested.height - height) / 2)), width, height };
-  return { size: touch.size, requested, body, lines: { top: Math.max(0, round(f9((48 - height) / 2))), left: Math.max(0, round(f9((48 - width) / 2))) } };
-}
-function axisConstraints(b, vertical) {
-  return vertical ? { minWidth: b.minCross, maxWidth: b.maxCross, minHeight: b.minMain, maxHeight: b.maxMain } : { minWidth: b.minMain, maxWidth: b.maxMain, minHeight: b.minCross, maxHeight: b.maxCross };
-}
-function layoutPlacements(node, x = 0, y = 0, result = {}) {
-  x += node.offset.x;
-  y += node.offset.y;
-  result[node.id] = { x, y, width: node.requested.width, height: node.requested.height };
-  for (const p of node.children) layoutPlacements(p.node, x + p.x, y + p.y, result);
-  return result;
-}
-function measureLayoutLeaf(id, input, constraints, vertical) {
-  if (input.ink) {
-    const interactive = minimumInteractiveLayout({ ...input.ink, ...constraints });
-    const body = interactive.body, offset = { x: int((interactive.size.width - interactive.requested.width) / 2), y: int((interactive.size.height - interactive.requested.height) / 2) };
-    const ink = layoutPlaceable(id + "-body", { width: body.width, height: body.height }, { minWidth: body.width, maxWidth: body.width, minHeight: body.height, maxHeight: body.height });
-    return layoutPlaceable(id, interactive.requested, constraints, [{ node: ink, x: body.x - offset.x, y: body.y - offset.y }], { line: input.line ?? null, interactiveLines: interactive.lines });
-  }
-  const natural = vertical ? { width: input.cross, height: input.main } : { width: input.main, height: input.cross };
-  const requested = input.required ? natural : { width: clamp6(natural.width, constraints.minWidth, constraints.maxWidth), height: clamp6(natural.height, constraints.minHeight, constraints.maxHeight) };
-  return layoutPlaceable(id, requested, constraints, [], { line: input.line ?? null });
-}
-function rowAlignmentLines(node) {
-  let top = null, left = null;
-  for (const p of node.children) {
-    const child = p.node, lines = child.interactiveLines;
-    if (!lines) continue;
-    const y = p.y + child.offset.y + lines.top + child.offset.y, x = p.x + child.offset.x + lines.left + child.offset.x;
-    top = top === null ? y : Math.min(top, y);
-    left = left === null ? x : Math.min(left, x);
-  }
-  return { top: top === null ? null : top + node.offset.y, left: left === null ? null : left + node.offset.x };
-}
-function arrange(main, sizes, name, rtl, vertical, spacing) {
-  const consumed = sizes.reduce((a, b) => a + b, 0), positions2 = sizes.map(() => 0), reverse = rtl && !vertical;
-  if (name === "spaced") {
-    let free = main, last = 0;
-    if (reverse) {
-      for (let i = 0; i < sizes.length; i++) {
-        positions2[i] = Math.max(0, free - sizes[i]);
-        last = Math.min(spacing, positions2[i]);
-        free = positions2[i] - last;
-      }
-      free += last;
-    } else {
-      let occupied = 0;
-      for (let i = 0; i < sizes.length; i++) {
-        positions2[i] = Math.min(occupied, main - sizes[i]);
-        last = Math.min(spacing, main - positions2[i] - sizes[i]);
-        occupied = positions2[i] + sizes[i] + last;
-      }
-      occupied -= last;
-      free = main - occupied;
-    }
-    if (free > 0) {
-      const group = round(f9(free / 2)), offset = reverse ? group - free : group;
-      for (let i = 0; i < sizes.length; i++) positions2[i] += offset;
-    }
-    return positions2;
-  }
-  let gap = 0, current = 0;
-  if (name === "center") current = f9((main - consumed) / 2);
-  else if (name === "end") current = main - consumed;
-  else if (name === "between") {
-    gap = f9((main - consumed) / Math.max(sizes.length - 1, 1));
-    if (reverse && sizes.length === 1) current = gap;
-  } else if (name === "around") {
-    gap = sizes.length ? f9((main - consumed) / sizes.length) : 0;
-    current = f9(gap / 2);
-  } else if (name === "evenly") {
-    gap = f9((main - consumed) / (sizes.length + 1));
-    current = gap;
-  }
-  if (reverse && name === "start") current = main - consumed;
-  if (reverse && name === "end") current = 0;
-  const order = reverse ? [...sizes.keys()].reverse() : [...sizes.keys()];
-  for (const i of order) {
-    positions2[i] = round(current);
-    current = f9(current + f9(f9(sizes[i]) + gap));
-  }
-  return positions2;
-}
-function crossPosition(input, size, item, vertical, rtl, before, line, defaultAlignment = "center") {
-  if (input.align === "line") {
-    if (line === null) return 0;
-    const delta = before - line;
-    return vertical && rtl ? size - item - delta : delta;
-  }
-  const alignment = input.align ?? defaultAlignment, bias = alignment === "start" ? -1 : alignment === "end" ? 1 : 0;
-  return round(f9(f9((size - item) / 2) * f9(1 + (vertical && rtl ? -bias : bias))));
-}
-function measureRowColumn(o, measure = (input, c, i) => measureLayoutLeaf("c" + i, input, c, !!o.vertical)) {
-  const vertical = !!o.vertical, rtl = !!o.rtl, b = bounds(o), inputs = o.children || [], spacing = o.arrangement === "spaced" ? 7 : 0;
-  const nodes = inputs.map(() => null), mainSizes = inputs.map(() => 0), crossSizes = inputs.map(() => 0);
-  let totalWeight = 0, fixed = 0, cross = 0, weightedCount = 0, lastSpacing = 0, relative = false;
-  const measureChild = (i, minMain, maxMain) => {
-    const input = inputs[i], desired = input.fillCrossFraction !== void 0 && b.maxCross !== INF ? round(f9(f9(input.fillCrossFraction) * f9(b.maxCross))) : null;
-    const c = axisConstraints({ minMain, maxMain, minCross: desired ?? 0, maxCross: desired ?? b.maxCross }, vertical);
-    const node = measure(input, c, i);
-    nodes[i] = node;
-    mainSizes[i] = node.size[vertical ? "height" : "width"];
-    crossSizes[i] = node.size[vertical ? "width" : "height"];
-    cross = Math.max(cross, crossSizes[i]);
-    return mainSizes[i];
-  };
-  for (let i = 0; i < inputs.length; i++) {
-    const weight = f9(inputs[i].weight || 0);
-    relative ||= inputs[i].align === "line";
-    if (weight > 0) {
-      totalWeight = f9(totalWeight + weight);
-      weightedCount++;
-    } else {
-      const remaining = b.maxMain - fixed, size = measureChild(i, 0, b.maxMain === INF ? INF : Math.max(0, remaining));
-      lastSpacing = Math.min(spacing, Math.max(0, remaining - size));
-      fixed += size + lastSpacing;
-    }
-  }
-  let weighted = 0;
-  if (weightedCount === 0) fixed -= lastSpacing;
-  else {
-    const target = b.maxMain === INF ? b.minMain : b.maxMain, totalSpacing = spacing * (weightedCount - 1), remaining = Math.max(0, target - fixed - totalSpacing), unit = f9(f9(remaining) / totalWeight);
-    let remainder = remaining;
-    for (const input of inputs) remainder -= round(f9(unit * f9(input.weight || 0)));
-    for (let i = 0; i < inputs.length; i++) if (nodes[i] === null) {
-      const correction = Math.sign(remainder);
-      remainder -= correction;
-      const main2 = Math.max(0, round(f9(unit * f9(inputs[i].weight || 0))) + correction);
-      weighted += measureChild(i, inputs[i].fill !== false && main2 !== INF ? main2 : 0, main2);
-    }
-    weighted = clamp6(int(weighted + totalSpacing), 0, b.maxMain - fixed);
-  }
-  let before = 0, after = 0;
-  if (relative) {
-    for (let i = 0; i < inputs.length; i++) if (inputs[i].align === "line") {
-      const line = nodes[i].line ?? null;
-      if (line !== null) {
-        before = Math.max(before, line);
-        after = Math.max(after, crossSizes[i] - line);
-      }
-    }
-  }
-  const main = Math.max(Math.max(0, fixed + weighted), b.minMain), breadth = Math.max(cross, b.minCross, before + after);
-  const positions2 = arrange(main, mainSizes, o.arrangement || "start", rtl, vertical, spacing);
-  const children = nodes.map((node, i) => {
-    const c = crossPosition(inputs[i], breadth, crossSizes[i], vertical, rtl, before, node.line ?? null, o.crossAlignment ?? "center");
-    return { node, x: vertical ? c : positions2[i], y: vertical ? positions2[i] : c };
-  });
-  const requested = vertical ? { width: breadth, height: main } : { width: main, height: breadth };
-  return layoutPlaceable(o.id || "row", requested, axisConstraints(b, vertical), children, { fullTargets: nodes.map((n) => n.size[vertical ? "height" : "width"]) });
-}
-function rowColumnLayout(o) {
-  const node = measureRowColumn(o);
-  return { size: node.size, requested: node.requested, placements: layoutPlacements(node) };
-}
-function rowColumnIntrinsic(o, available, query = (input, axis, space, kind) => {
-  const value = kind === "min" ? input[axis === "main" ? "intrinsicMinMain" : "intrinsicMinCross"] ?? input[axis] : input[axis];
-  return axis === "cross" && input.wrap ? value * Math.max(1, Math.ceil(input.main / Math.max(1, space))) : value;
-}) {
-  const children = o.children || [], spacing = o.arrangement === "spaced" ? 7 : 0;
-  const main = (kind) => {
-    if (!children.length) return 0;
-    let unit = 0, fixed = 0, total = 0;
-    for (const child of children) {
-      const weight = f9(child.weight || 0), size = query(child, "main", available, kind);
-      if (weight === 0) fixed += size;
-      else if (weight > 0) {
-        total = f9(total + weight);
-        unit = Math.max(unit, round(f9(f9(size) / weight)));
-      }
-    }
-    return round(f9(f9(unit) * total)) + fixed + (children.length - 1) * spacing;
-  };
-  const cross = (kind) => {
-    if (!children.length) return 0;
-    let fixed = Math.min((children.length - 1) * spacing, available), maximum = 0, total = 0;
-    for (const child of children) {
-      const weight = f9(child.weight || 0);
-      if (weight === 0) {
-        const remaining = available === INF ? INF : available - fixed, size = Math.min(query(child, "main", INF, "max"), remaining);
-        fixed += size;
-        maximum = Math.max(maximum, query(child, "cross", size, kind));
-      } else if (weight > 0) total = f9(total + weight);
-    }
-    const unit = total === 0 ? 0 : available === INF ? INF : round(f9(f9(Math.max(available - fixed, 0)) / total));
-    for (const child of children) {
-      const weight = f9(child.weight || 0);
-      if (weight > 0) maximum = Math.max(maximum, query(child, "cross", unit === INF ? INF : round(f9(f9(unit) * weight)), kind));
-    }
-    return maximum;
-  };
-  return o.vertical ? { minWidth: cross("min"), minHeight: main("min"), maxWidth: cross("max"), maxHeight: main("max") } : { minWidth: main("min"), minHeight: cross("min"), maxWidth: main("max"), maxHeight: cross("max") };
-}
-
-// src/components/toolbar-padding.js
-var side = (value) => {
-  const n = Math.fround(Number(value));
-  if (Number.isNaN(n) || n < 0) throw new RangeError("Padding must be non-negative");
-  return n;
-};
-function normalizeToolbarPadding(value = 8) {
-  if (typeof value === "string") {
-    const parts = value.trim().split(/\s+/), absolute2 = parts[0] === "absolute";
-    if (absolute2) parts.shift();
-    if (!parts.length || parts.length > 4 || parts.some((p3) => !/^(?:\+?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?(?:px)?|Infinity)$/i.test(p3))) throw new RangeError("Invalid toolbar padding");
-    const p = parts.map((p3) => side(p3.replace(/px$/i, ""))), top2 = p[0], end = p[1] ?? top2, bottom2 = p[2] ?? top2, start = p[3] ?? end;
-    return absolute2 ? { left: start, top: top2, right: end, bottom: bottom2 } : { start, top: top2, end, bottom: bottom2 };
-  }
-  if (typeof value === "number") {
-    const n = side(value);
-    return { start: n, top: n, end: n, bottom: n };
-  }
-  if (!value || typeof value !== "object") throw new TypeError("Invalid toolbar padding");
-  const absolute = "left" in value || "right" in value;
-  if (absolute && ("start" in value || "end" in value)) throw new TypeError("Use logical or absolute padding sides");
-  const top = side(value.top ?? 0), bottom = side(value.bottom ?? 0);
-  return absolute ? { left: side(value.left ?? 0), top, right: side(value.right ?? 0), bottom } : { start: side(value.start ?? 0), top, end: side(value.end ?? 0), bottom };
-}
-function serializeToolbarPadding(value) {
-  const p = normalizeToolbarPadding(value);
-  return "left" in p ? `absolute ${p.top} ${p.right} ${p.bottom} ${p.left}` : `${p.top} ${p.end} ${p.bottom} ${p.start}`;
-}
-function resolveToolbarPadding(value = 8, rtl = false) {
-  const p = normalizeToolbarPadding(value), px2 = (n) => Math.min(2147483647, Math.round(n));
-  const left = px2("left" in p ? p.left : rtl ? p.end : p.start), right = px2("right" in p ? p.right : rtl ? p.start : p.end), top = px2(p.top), bottom = px2(p.bottom);
-  return { left, top, right, bottom, horizontal: left + right | 0, vertical: top + bottom | 0 };
-}
-
 // src/components/toolbar-layout.js
-var f10 = Math.fround;
+var f13 = Math.fround;
 var round2 = Math.round;
 var int2 = (value) => Math.trunc(value) || 0;
-var lerp3 = (a, b, t) => f10(f10(a * f10(1 - t)) + f10(b * t));
+var lerp4 = (a, b, t) => f13(f13(a * f13(1 - t)) + f13(b * t));
 function toolbarFabLayout({ vertical = false, intrinsic, intrinsicCross = 64, progress, position = vertical ? "bottom" : "end", rtl = false, max = 2147483647, cross = 80, gap = 8, expandedElevation = 1, collapsedElevation = 0 }) {
-  progress = f10(progress);
-  const fabSize = round2(lerp3(56, 80, f10(1 - progress)));
-  const axis = Math.max(0, Math.min(intrinsic, max, int2(f10(intrinsic * progress))));
+  progress = f13(progress);
+  const fabSize = round2(lerp4(56, 80, f13(1 - progress)));
+  const axis = Math.max(0, Math.min(intrinsic, max, int2(f13(intrinsic * progress))));
   const main = intrinsic + round2(gap) + 56;
   const atEnd = position === (vertical ? "bottom" : "end");
   const barCross = Math.max(Math.min(64, cross), intrinsicCross);
@@ -16092,16 +16649,16 @@ function toolbarFabLayout({ vertical = false, intrinsic, intrinsicCross = 64, pr
     bar.x = size.width - bar.width - bar.x;
     fab.x = size.width - fab.width - fab.x;
   }
-  return { size, placements: { toolbar: bar, fab }, elevation: lerp3(collapsedElevation, expandedElevation, Math.min(1, progress)) };
+  return { size, placements: { toolbar: bar, fab }, elevation: lerp4(collapsedElevation, expandedElevation, Math.min(1, progress)) };
 }
 function toolbarFabConstraints({ vertical = false, contentAxis, contentIntrinsicAxis = contentAxis, contentCross = 48, contentPadding = 8, minAxis = 0, maxAxis = 2147483647, minCross = 0, maxCross = 2147483647, progress, position = vertical ? "bottom" : "end", rtl = false, scroll = 0, expandedElevation = 1, collapsedElevation = 0 }) {
   const clamp8 = (v, a, b) => Math.max(a, Math.min(b, v));
   const p = resolveToolbarPadding(contentPadding, rtl), mainPadding = vertical ? p.vertical : p.horizontal, crossPadding = vertical ? p.horizontal : p.vertical;
   if (minAxis < 0 || minCross < 0 || maxAxis < minAxis || maxCross < minCross) throw new RangeError("Invalid toolbar constraints");
-  progress = f10(progress);
+  progress = f13(progress);
   const cross = minCross === 0 ? clamp8(80, 0, maxCross) : minCross;
   const intrinsic = contentIntrinsicAxis + mainPadding, main = intrinsic + 8 + 56;
-  const target = clamp8(int2(f10(intrinsic * progress)), 0, maxAxis);
+  const target = clamp8(int2(f13(intrinsic * progress)), 0, maxAxis);
   if (target < minAxis) throw new RangeError("Invalid toolbar constraints");
   const barMinCross = Math.min(64, cross);
   const contentMain = Math.max(contentAxis, Math.max(0, minAxis - mainPadding));
@@ -16158,9 +16715,9 @@ function toolbarFabContentLayout(o) {
 }
 function toolbarBalancedPadding({ width, height, top = null, left = null, progress = 1, leading = false, trailing = false }) {
   const active = !leading || !trailing;
-  const v = active && top !== null ? f10(top * f10(progress)) : 0;
-  const h = active && left !== null ? f10(left * f10(progress)) : 0;
-  const dx = round2(Math.max(0, f10(f10(v - h) * 2))), dy = round2(Math.max(0, f10(f10(h - v) * 2)));
+  const v = active && top !== null ? f13(top * f13(progress)) : 0;
+  const h = active && left !== null ? f13(left * f13(progress)) : 0;
+  const dx = round2(Math.max(0, f13(f13(v - h) * 2))), dy = round2(Math.max(0, f13(f13(h - v) * 2)));
   return { size: { width: width + dx, height: height + dy }, placements: { content: { x: int2(dx / 2), y: int2(dy / 2), width, height } } };
 }
 function toolbarRowLayout(o) {
@@ -16193,11 +16750,11 @@ function toolbarRowLayout(o) {
     let x = 0, y = 0;
     if (!o[name + "Settled"]) {
       if (vertical) {
-        x = round2(f10((current.width - child.size.width) / 2));
+        x = round2(f13((current.width - child.size.width) / 2));
         y = anchor === "end" ? current.height - child.size.height : 0;
       } else {
         x = anchor === "end" ? current.width - child.size.width : 0;
-        y = round2(f10((current.height - child.size.height) / 2));
+        y = round2(f13((current.height - child.size.height) / 2));
       }
     }
     const delta = round2(o[name + "Delta"] ?? (name === "leading" ? o.delta ?? 0 : -(o.delta ?? 0)));
@@ -16909,7 +17466,7 @@ var MdToolbar = class extends HTMLElement {
     for (let i = 0; i < this._rowChildren.main.length; i++) {
       const element2 = this._rowChildren.main[i], leaf = node.children[i].node, p = layout.placements["content-" + i], index = [...this.children].indexOf(element2) + 1;
       const ink = this._rowInputs.main[i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf.constraints }).body : null;
-      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;` : "";
+      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;` : "";
       const rule = `:host([data-toolbar-content]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - row.x - leaf.offset.x}px!important;top:${p.y - row.y - leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`;
       this._sizeStyle.sheet.insertRule(rule, this._sizeStyle.sheet.cssRules.length);
     }
@@ -16941,8 +17498,8 @@ var MdToolbar = class extends HTMLElement {
     };
   }
   _clearRowRules() {
-    const sheet6 = this._sizeStyle.sheet;
-    while (sheet6.cssRules.length > 1) sheet6.deleteRule(1);
+    const sheet7 = this._sizeStyle.sheet;
+    while (sheet7.cssRules.length > 1) sheet7.deleteRule(1);
   }
   _drawRow(values, vertical, rtl) {
     const options = this._rowOptions(values, vertical, rtl), preferred = toolbarRowLayout(options), sizing = this._sizeStyle.sheet.cssRules[0].style;
@@ -17006,7 +17563,7 @@ var MdToolbar = class extends HTMLElement {
         if (!leaf || !p) continue;
         const index = [...this.children].indexOf(element2) + 1;
         const ink = this._rowInputs[name][i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf.constraints }).body : null;
-        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;` : "";
+        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;` : "";
         const rule = `:host([data-toolbar-row]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - rowBox.x - leaf.offset.x}px!important;top:${p.y - rowBox.y - leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`;
         this._sizeStyle.sheet.insertRule(rule, this._sizeStyle.sheet.cssRules.length);
       }
@@ -17244,120 +17801,120 @@ var MdToolbar = class extends HTMLElement {
 if (!customElements.get("md-toolbar")) customElements.define("md-toolbar", MdToolbar);
 
 // src/motion/android-fling.js
-var f11 = Math.fround;
-var inflection = f11(0.35);
-var p1 = f11(f11(0.5) * inflection);
-var p2 = f11(1 - f11(1 - inflection));
+var f14 = Math.fround;
+var inflection = f14(0.35);
+var p1 = f14(f14(0.5) * inflection);
+var p2 = f14(1 - f14(1 - inflection));
 var positions = new Float32Array(101);
 var times = new Float32Array(101);
 var xMin = 0;
 var yMin = 0;
 for (let i = 0; i < 100; i++) {
-  const alpha = f11(i / 100);
+  const alpha = f14(i / 100);
   let xMax = 1, yMax = 1, x, y, coef;
   for (; ; ) {
-    x = f11(xMin + f11(f11(xMax - xMin) / 2));
-    coef = f11(f11(3 * x) * f11(1 - x));
-    const tx = f11(f11(coef * f11(f11(f11(1 - x) * p1) + f11(x * p2))) + f11(f11(x * x) * x));
-    if (Math.abs(f11(tx - alpha)) < 1e-5) break;
+    x = f14(xMin + f14(f14(xMax - xMin) / 2));
+    coef = f14(f14(3 * x) * f14(1 - x));
+    const tx = f14(f14(coef * f14(f14(f14(1 - x) * p1) + f14(x * p2))) + f14(f14(x * x) * x));
+    if (Math.abs(f14(tx - alpha)) < 1e-5) break;
     if (tx > alpha) xMax = x;
     else xMin = x;
   }
-  positions[i] = f11(f11(coef * f11(f11(f11(1 - x) * f11(0.5)) + x)) + f11(f11(x * x) * x));
+  positions[i] = f14(f14(coef * f14(f14(f14(1 - x) * f14(0.5)) + x)) + f14(f14(x * x) * x));
   for (; ; ) {
-    y = f11(yMin + f11(f11(yMax - yMin) / 2));
-    coef = f11(f11(3 * y) * f11(1 - y));
-    const dy = f11(f11(coef * f11(f11(f11(1 - y) * f11(0.5)) + y)) + f11(f11(y * y) * y));
-    if (Math.abs(f11(dy - alpha)) < 1e-5) break;
+    y = f14(yMin + f14(f14(yMax - yMin) / 2));
+    coef = f14(f14(3 * y) * f14(1 - y));
+    const dy = f14(f14(coef * f14(f14(f14(1 - y) * f14(0.5)) + y)) + f14(f14(y * y) * y));
+    if (Math.abs(f14(dy - alpha)) < 1e-5) break;
     if (dy > alpha) yMax = y;
     else yMin = y;
   }
-  times[i] = f11(f11(coef * f11(f11(f11(1 - y) * p1) + f11(y * p2))) + f11(f11(y * y) * y));
+  times[i] = f14(f14(coef * f14(f14(f14(1 - y) * p1) + f14(y * p2))) + f14(f14(y * y) * y));
 }
 times[100] = positions[100] = 1;
-var rate = f11(Math.log(0.78) / Math.log(0.9));
+var rate = f14(Math.log(0.78) / Math.log(0.9));
 function androidFlingPosition(time) {
-  const clamped = Math.max(0, Math.min(1, f11(time))), index = Math.trunc(f11(100 * clamped));
+  const clamped = Math.max(0, Math.min(1, f14(time))), index = Math.trunc(f14(100 * clamped));
   let distanceCoefficient = 1, velocityCoefficient = 0;
   if (index < 100) {
-    const lower = f11(index / 100), upper = f11((index + 1) / 100), lo = positions[index], hi = positions[index + 1];
-    velocityCoefficient = f11(f11(hi - lo) / f11(upper - lower));
-    distanceCoefficient = f11(lo + f11(f11(clamped - lower) * velocityCoefficient));
+    const lower = f14(index / 100), upper = f14((index + 1) / 100), lo = positions[index], hi = positions[index + 1];
+    velocityCoefficient = f14(f14(hi - lo) / f14(upper - lower));
+    distanceCoefficient = f14(lo + f14(f14(clamped - lower) * velocityCoefficient));
   }
   return { distanceCoefficient, velocityCoefficient };
 }
 var AndroidFlingDecay = class {
   constructor({ density = 1, friction: friction2 = 0.015 } = {}) {
     if (!Number.isFinite(density) || density <= 0 || !Number.isFinite(friction2) || friction2 <= 0) throw new RangeError("Positive density and friction required");
-    this.density = f11(density);
-    this.friction = f11(friction2);
-    this.physical = f11(f11(f11(f11(f11(9.80665) * f11(39.37)) * this.density) * 160) * f11(0.84));
+    this.density = f14(density);
+    this.friction = f14(friction2);
+    this.physical = f14(f14(f14(f14(f14(9.80665) * f14(39.37)) * this.density) * 160) * f14(0.84));
   }
   info(velocity) {
-    velocity = f11(velocity);
-    const l = Math.log(f11(inflection * Math.abs(velocity)) / f11(this.friction * this.physical)), minusOne = rate - 1;
-    return { velocity, distance: f11(f11(this.friction * this.physical) * Math.exp(rate / minusOne * l)), duration: Math.trunc(1e3 * Math.exp(l / minusOne)) };
+    velocity = f14(velocity);
+    const l = Math.log(f14(inflection * Math.abs(velocity)) / f14(this.friction * this.physical)), minusOne = rate - 1;
+    return { velocity, distance: f14(f14(this.friction * this.physical) * Math.exp(rate / minusOne * l)), duration: Math.trunc(1e3 * Math.exp(l / minusOne)) };
   }
   target(from, velocity) {
     const info = this.info(velocity);
-    return f11(f11(from) + f11(info.distance * Math.sign(info.velocity)));
+    return f14(f14(from) + f14(info.distance * Math.sign(info.velocity)));
   }
   sample(time, from, velocity) {
-    const info = this.info(velocity), ms = Math.trunc(time), fraction = info.duration > 0 ? f11(ms / f11(info.duration)) : 1;
+    const info = this.info(velocity), ms = Math.trunc(time), fraction = info.duration > 0 ? f14(ms / f14(info.duration)) : 1;
     const spline = androidFlingPosition(fraction), sign = Math.sign(info.velocity);
-    const position = f11(f11(from) + f11(f11(info.distance * sign) * spline.distanceCoefficient));
-    const speed = f11(f11(f11(f11(spline.velocityCoefficient * sign) * info.distance) / f11(info.duration)) * 1e3);
+    const position = f14(f14(from) + f14(f14(info.distance * sign) * spline.distanceCoefficient));
+    const speed = f14(f14(f14(f14(spline.velocityCoefficient * sign) * info.distance) / f14(info.duration)) * 1e3);
     return { position, velocity: speed };
   }
 };
 
 // src/components/toolbar-scroll.js
-var f12 = Math.fround;
+var f15 = Math.fround;
 var FloatingToolbarState = class {
   constructor({ offsetLimit = -34028234663852886e22, offset = 0, contentOffset = 0 } = {}) {
-    this.offsetLimit = f12(offsetLimit);
-    this._offset = f12(offset);
-    this.contentOffset = f12(contentOffset);
+    this.offsetLimit = f15(offsetLimit);
+    this._offset = f15(offset);
+    this.contentOffset = f15(contentOffset);
   }
   get offsetLimit() {
     return this._offsetLimit;
   }
   set offsetLimit(value) {
-    this._offsetLimit = f12(value);
+    this._offsetLimit = f15(value);
   }
   get contentOffset() {
     return this._contentOffset;
   }
   set contentOffset(value) {
-    this._contentOffset = f12(value);
+    this._contentOffset = f15(value);
   }
   get offset() {
     return this._offset;
   }
   set offset(value) {
     if (this.offsetLimit > 0) throw new RangeError("offsetLimit must be nonpositive");
-    this._offset = f12(Math.max(this.offsetLimit, Math.min(0, f12(value))));
+    this._offset = f15(Math.max(this.offsetLimit, Math.min(0, f15(value))));
   }
   get collapsedFraction() {
-    return this.offsetLimit !== 0 ? f12(this.offset / this.offsetLimit) : 0;
+    return this.offsetLimit !== 0 ? f15(this.offset / this.offsetLimit) : 0;
   }
   postScroll(consumedY) {
-    consumedY = f12(consumedY);
-    this.contentOffset = f12(this.contentOffset + consumedY);
-    this.offset = f12(this.offset + consumedY);
+    consumedY = f15(consumedY);
+    this.contentOffset = f15(this.contentOffset + consumedY);
+    this.offset = f15(this.offset + consumedY);
     return { x: 0, y: 0 };
   }
   drag(delta, direction = "bottom", rtl = false) {
-    let amount = f12(delta);
-    if (rtl && (direction === "start" || direction === "end")) amount = f12(-amount);
-    this.offset = f12(this.offset + (direction === "start" || direction === "top" ? amount : f12(-amount)));
+    let amount = f15(delta);
+    if (rtl && (direction === "start" || direction === "end")) amount = f15(-amount);
+    this.offset = f15(this.offset + (direction === "start" || direction === "top" ? amount : f15(-amount)));
   }
   updateLimit({ direction = "bottom", rtl = false, x, y, width, height, parentWidth, parentHeight }) {
-    const limit = direction === "start" ? rtl ? f12(parentWidth - f12(x)) : f12(width + f12(x)) : direction === "end" ? rtl ? f12(width + f12(x)) : f12(parentWidth - f12(x)) : direction === "top" ? f12(height + f12(y)) : f12(parentHeight - f12(y));
-    this.offsetLimit = f12(-f12(limit - this.offset));
+    const limit = direction === "start" ? rtl ? f15(parentWidth - f15(x)) : f15(width + f15(x)) : direction === "end" ? rtl ? f15(width + f15(x)) : f15(parentWidth - f15(x)) : direction === "top" ? f15(height + f15(y)) : f15(parentHeight - f15(y));
+    this.offsetLimit = f15(-f15(limit - this.offset));
   }
   placement(direction = "bottom", rtl = false) {
-    const offset = rtl && (direction === "start" || direction === "end") ? f12(-this.offset) : this.offset, n = Math.round(offset) || 0;
+    const offset = rtl && (direction === "start" || direction === "end") ? f15(-this.offset) : this.offset, n = Math.round(offset) || 0;
     return { x: (direction === "start" ? n : direction === "end" ? -n : 0) || 0, y: (direction === "top" ? n : direction === "bottom" ? -n : 0) || 0 };
   }
 };
@@ -17365,17 +17922,17 @@ var ToolbarScrollExpansion = class {
   constructor({ expanded = false, reverseLayout = false, expandThreshold = 40, collapseThreshold = 40, density = 1, onExpand = () => {
   }, onCollapse = () => {
   } } = {}) {
-    Object.assign(this, { expanded, reverseLayout, expandThreshold: f12(expandThreshold), collapseThreshold: f12(collapseThreshold), density: f12(density), onExpand, onCollapse });
+    Object.assign(this, { expanded, reverseLayout, expandThreshold: f15(expandThreshold), collapseThreshold: f15(collapseThreshold), density: f15(density), onExpand, onCollapse });
     this.contentOffset = 0;
     this.updateThreshold();
   }
   updateThreshold() {
-    this.threshold = f12(this.contentOffset + (this.expanded ? f12(-f12(this.collapseThreshold * this.density)) : f12(this.expandThreshold * this.density)));
+    this.threshold = f15(this.contentOffset + (this.expanded ? f15(-f15(this.collapseThreshold * this.density)) : f15(this.expandThreshold * this.density)));
   }
   update({ expanded = this.expanded, reverseLayout = this.reverseLayout, expandThreshold = this.expandThreshold, collapseThreshold = this.collapseThreshold, onExpand = this.onExpand, onCollapse = this.onCollapse } = {}) {
-    if (this.expandThreshold !== f12(expandThreshold) || this.collapseThreshold !== f12(collapseThreshold)) {
-      this.expandThreshold = f12(expandThreshold);
-      this.collapseThreshold = f12(collapseThreshold);
+    if (this.expandThreshold !== f15(expandThreshold) || this.collapseThreshold !== f15(collapseThreshold)) {
+      this.expandThreshold = f15(expandThreshold);
+      this.collapseThreshold = f15(collapseThreshold);
       this.updateThreshold();
     }
     this.reverseLayout = reverseLayout;
@@ -17387,13 +17944,13 @@ var ToolbarScrollExpansion = class {
     }
   }
   postScroll(consumedY) {
-    const delta = f12(f12(consumedY) * (this.reverseLayout ? -1 : 1));
-    this.contentOffset = f12(this.contentOffset + delta);
+    const delta = f15(f15(consumedY) * (this.reverseLayout ? -1 : 1));
+    this.contentOffset = f15(this.contentOffset + delta);
     if (delta < 0 && this.contentOffset <= this.threshold) {
-      this.threshold = f12(this.contentOffset + f12(this.expandThreshold * this.density));
+      this.threshold = f15(this.contentOffset + f15(this.expandThreshold * this.density));
       this.onCollapse();
     } else if (delta > 0 && this.contentOffset >= this.threshold) {
-      this.threshold = f12(this.contentOffset - f12(this.collapseThreshold * this.density));
+      this.threshold = f15(this.contentOffset - f15(this.collapseThreshold * this.density));
       this.onExpand();
     }
     return { x: 0, y: 0 };
@@ -17420,7 +17977,7 @@ var FloatingToolbarScrollBehavior = class {
 var ToolbarSettling = class {
   constructor(state, velocity, { snapSpec = { stiffness: 1600, dampingRatio: 1 }, decay = new AndroidFlingDecay() } = {}) {
     this.state = state;
-    this.velocity = f12(velocity);
+    this.velocity = f15(velocity);
     this.remainingVelocity = this.velocity;
     this.snapSpec = snapSpec;
     this.decay = decay;
@@ -17428,7 +17985,7 @@ var ToolbarSettling = class {
     this.start = null;
     this.lastValue = 0;
     this.returnedVelocity = 0;
-    if (state.collapsedFraction < f12(0.01) || state.collapsedFraction === 1) return;
+    if (state.collapsedFraction < f15(0.01) || state.collapsedFraction === 1) return;
     this.phase = Math.abs(this.velocity) > 1 ? "decay" : "snap";
     this._chooseSnap();
   }
@@ -17462,12 +18019,12 @@ var ToolbarSettling = class {
     if (phase2 === "decay") {
       const duration = this.decay.info(this.velocity).duration, ended = time >= duration;
       sample = ended ? { position: this.decay.target(0, this.velocity), velocity: 0 } : this.decay.sample(time, 0, this.velocity);
-      const delta = f12(sample.position - this.lastValue), initialOffset = this.state.offset;
-      this.state.offset = f12(initialOffset + delta);
-      const consumed = Math.abs(f12(initialOffset - this.state.offset));
+      const delta = f15(sample.position - this.lastValue), initialOffset = this.state.offset;
+      this.state.offset = f15(initialOffset + delta);
+      const consumed = Math.abs(f15(initialOffset - this.state.offset));
       this.lastValue = sample.position;
       this.remainingVelocity = sample.velocity;
-      canceled = Math.abs(f12(delta - consumed)) > 0.5;
+      canceled = Math.abs(f15(delta - consumed)) > 0.5;
       if (canceled || ended) {
         this.phase = "snap";
         this.start = null;
@@ -17484,7 +18041,7 @@ var ToolbarSettling = class {
     if (this.done) return;
     if (this.phase === "decay") {
       const target = this.decay.target(0, this.velocity);
-      this.state.offset = f12(this.state.offset + f12(target - this.lastValue));
+      this.state.offset = f15(this.state.offset + f15(target - this.lastValue));
       this.remainingVelocity = 0;
       this.phase = "snap";
       this._chooseSnap();
@@ -18595,7 +19152,7 @@ var defaultStyle33 = `
     font-style: italic;
   }
 `;
-var sheet3 = createComponentSheet(defaultStyle33);
+var sheet4 = createComponentSheet(defaultStyle33);
 var MdAutocomplete = class extends HTMLElement {
   static formAssociated = true;
   static get observedAttributes() {
@@ -18608,7 +19165,7 @@ var MdAutocomplete = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet3);
+    adoptSheet(this.shadowRoot, sheet4);
     if (this.attachInternals) {
       this.#internals = this.attachInternals();
     }
@@ -18913,7 +19470,7 @@ var defaultStyle34 = `
     pointer-events: none;
   }
 `;
-var sheet4 = createComponentSheet(defaultStyle34);
+var sheet5 = createComponentSheet(defaultStyle34);
 var MdExpansionPanel = class extends HTMLElement {
   static get observedAttributes() {
     return ["open", "headline", "supporting-text", "disabled"];
@@ -18923,7 +19480,7 @@ var MdExpansionPanel = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet4);
+    adoptSheet(this.shadowRoot, sheet5);
   }
   get open() {
     return this.hasAttribute("open");
@@ -19694,7 +20251,7 @@ var defaultStyle36 = `
     object-fit: cover;
   }
 `;
-var sheet5 = createComponentSheet(defaultStyle36);
+var sheet6 = createComponentSheet(defaultStyle36);
 var MdShape = class extends HTMLElement {
   static get observedAttributes() {
     return ["name", "size", "color", "mask", "aria-label"];
@@ -19703,7 +20260,7 @@ var MdShape = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet5);
+    adoptSheet(this.shadowRoot, sheet6);
   }
   get name() {
     return this.getAttribute("name") || "sunny";
@@ -20314,7 +20871,7 @@ function signum(num) {
     return 1;
   }
 }
-function lerp4(start, stop, amount) {
+function lerp5(start, stop, amount) {
   return (1 - amount) * start + amount * stop;
 }
 function clampInt(min, max, input) {
@@ -20513,11 +21070,11 @@ var ViewingConditions = class _ViewingConditions {
     const rW = xyz[0] * 0.401288 + xyz[1] * 0.650173 + xyz[2] * -0.051461;
     const gW = xyz[0] * -0.250268 + xyz[1] * 1.204414 + xyz[2] * 0.045854;
     const bW = xyz[0] * -2079e-6 + xyz[1] * 0.048952 + xyz[2] * 0.953127;
-    const f13 = 0.8 + surround / 10;
-    const c = f13 >= 0.9 ? lerp4(0.59, 0.69, (f13 - 0.9) * 10) : lerp4(0.525, 0.59, (f13 - 0.8) * 10);
-    let d = discountingIlluminant ? 1 : f13 * (1 - 1 / 3.6 * Math.exp((-adaptingLuminance - 42) / 92));
+    const f16 = 0.8 + surround / 10;
+    const c = f16 >= 0.9 ? lerp5(0.59, 0.69, (f16 - 0.9) * 10) : lerp5(0.525, 0.59, (f16 - 0.8) * 10);
+    let d = discountingIlluminant ? 1 : f16 * (1 - 1 / 3.6 * Math.exp((-adaptingLuminance - 42) / 92));
     d = d > 1 ? 1 : d < 0 ? 0 : d;
-    const nc = f13;
+    const nc = f16;
     const rgbD = [
       d * (100 / rW) + 1 - d,
       d * (100 / gW) + 1 - d,
@@ -21982,11 +22539,11 @@ var ContrastCurve = class {
     if (contrastLevel <= -1) {
       return this.low;
     } else if (contrastLevel < 0) {
-      return lerp4(this.low, this.normal, (contrastLevel - -1) / 1);
+      return lerp5(this.low, this.normal, (contrastLevel - -1) / 1);
     } else if (contrastLevel < 0.5) {
-      return lerp4(this.normal, this.medium, (contrastLevel - 0) / 0.5);
+      return lerp5(this.normal, this.medium, (contrastLevel - 0) / 0.5);
     } else if (contrastLevel < 1) {
-      return lerp4(this.medium, this.high, (contrastLevel - 0.5) / 0.5);
+      return lerp5(this.medium, this.high, (contrastLevel - 0.5) / 0.5);
     } else {
       return this.high;
     }

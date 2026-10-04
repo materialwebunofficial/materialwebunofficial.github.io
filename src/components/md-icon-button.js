@@ -16,15 +16,22 @@ import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 const defaultStyle = `
   :host {
     display: inline-flex;
+    position: relative;
     vertical-align: middle;
     outline: none;
     -webkit-tap-highlight-color: transparent;
   }
 
+  .touch-layout {
+    display: block; flex: none;
+    width: var(--md-toolbar-control-layout-width, max(0px, round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px), var(--_md-icon-button-width)));
+    height: var(--md-toolbar-control-layout-height, max(0px, round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px), var(--_md-icon-button-height)));
+  }
+
   .btn {
-    position: var(--md-toolbar-control-position, relative);
-    left: var(--md-toolbar-control-x, auto);
-    top: var(--md-toolbar-control-y, auto);
+    position: var(--md-toolbar-control-position, absolute);
+    left: var(--md-toolbar-control-x, round(nearest, max(0px, (round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px) - var(--_md-icon-button-width)) / 2), 1px));
+    top: var(--md-toolbar-control-y, round(nearest, max(0px, (round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px) - var(--_md-icon-button-height)) / 2), 1px));
     width: 40px;
     height: 40px;
     min-width: 40px;
@@ -83,9 +90,6 @@ const defaultStyle = `
   }
   .btn:focus-visible:not([disabled]) .state-layer {
     opacity: var(--md-sys-state-focus-opacity, 0.10);
-  }
-  .btn:active:not([disabled]) .state-layer {
-    opacity: var(--md-sys-state-pressed-opacity, 0.10);
   }
 
   /* Ripple */
@@ -181,7 +185,7 @@ const defaultStyle = `
 
   /* Toolbar local content and MDC standard/vibrant themed icon-button styles. */
   .btn.standard {
-    color: var(--md-toolbar-icon-content, var(--md-sys-color-on-surface-variant, #49454f));
+    color: var(--md-icon-button-content-color, var(--md-toolbar-icon-content, var(--md-sys-color-on-surface-variant, #49454f)));
     background: var(--md-toolbar-icon-container, transparent);
   }
   .btn.standard.togglable.selected {
@@ -197,6 +201,7 @@ const defaultStyle = `
   }
   .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
   .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-icon-state-color, currentColor); }
+  .md-ripple-effect { --md-ripple-color: var(--md-toolbar-icon-state-color, currentColor); }
 
   .icon {
     display: inline-flex;
@@ -264,8 +269,11 @@ export class MdIconButton extends HTMLElement {
   }
 
   get variant() { return sanitizeAttribute(this.getAttribute('variant') || 'standard'); }
+  set variant(v) { if (v == null) this.removeAttribute('variant'); else this.setAttribute('variant', v); }
   get size() { return SIZES[this.getAttribute('size')] ? this.getAttribute('size') : 's'; }
+  set size(v) { if (v == null) this.removeAttribute('size'); else this.setAttribute('size', v); }
   get toggle() { return this.hasAttribute('toggle'); }
+  set toggle(v) { v ? this.setAttribute('toggle', '') : this.removeAttribute('toggle'); }
   get selected() { return this.hasAttribute('selected') || this.hasAttribute('checked'); }
   set selected(v) {
     if (v) {
@@ -280,7 +288,9 @@ export class MdIconButton extends HTMLElement {
   get disabled() { return this.hasAttribute('disabled'); }
   set disabled(v) { v ? this.setAttribute('disabled', '') : this.removeAttribute('disabled'); }
   get icon() { return this.getAttribute('icon') || ''; }
+  set icon(v) { if (v == null) this.removeAttribute('icon'); else this.setAttribute('icon', v); }
   get selectedIcon() { return this.getAttribute('selected-icon') || this.icon; }
+  set selectedIcon(v) { if (v == null) this.removeAttribute('selected-icon'); else this.setAttribute('selected-icon', v); }
   _getBaseRadius() {
     const s = SIZES[this.size];
     return (this.getAttribute('shape') === 'square') !== (this.toggle && this.selected) ? s.square : s.size / 2;
@@ -290,10 +300,10 @@ export class MdIconButton extends HTMLElement {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <button class="btn" type="button" part="button">
+      <span class="touch-layout"><button class="btn" type="button" part="button">
         <span class="state-layer"></span>
         <span class="icon"><slot></slot></span>
-      </button>
+      </button></span>
     `;
   }
 
@@ -349,6 +359,9 @@ export class MdIconButton extends HTMLElement {
     btn.style.height = `clamp(var(--md-toolbar-control-min-height, 0px), ${s.size}px, var(--md-toolbar-control-max-height, ${s.size}px))`;
     btn.style.minWidth = btn.style.width;
     btn.style.minHeight = btn.style.height;
+    const layout = this.shadowRoot.querySelector('.touch-layout');
+    layout.style.setProperty('--_md-icon-button-width', btn.style.width);
+    layout.style.setProperty('--_md-icon-button-height', btn.style.height);
     btn.style.borderRadius = `${this._getBaseRadius()}px`;
     btn.style.borderWidth = this.variant === 'outlined' ? `${this.size === 'xl' ? 3 : this.size === 'l' ? 2 : 1}px` : '0';
 

@@ -223,12 +223,75 @@ Range drags use the source's two-axis threshold; a release before that threshold
 also evaluates the accumulated direction. Initial reversed ranges
 are sorted. Associated HTML labels supply live names and focus; range focus
 starts at the start handle. Form-disabled fieldsets and reconnects are supported.
+An unspecified range spans `min` to `max`; the legacy `value` attribute can
+still supply its end when `range-end` is absent.
+
+Shared press ink follows the current Material3 common ripple: it remains visible
+while held, expands toward the center and fades after release. Rapid presses
+retain the previous exit. Ordinary FAB bodies stay stationary. Reduced motion
+keeps static press feedback. FAB color, label and size updates preserve the inner
+button and focus; use `icon=""` for a text-only extended FAB.
+FAB shadows follow the native 120ms incoming and 120/150ms outgoing tweens,
+retaining the most recent active hover/focus/press interaction. Independent
+hover/focus opacity enters in 15/45ms and leaves in 15ms. The source default
+focus indication is an opacity layer; the FAB has no additional outside ring.
+Ordinary FABs default to `size="baseline"` (56px). Other sizes are `small`
+(40px), `medium` (80px), and `large` (96px). The recommended large icon is 36px.
+Extended small/baseline/medium/large heights are 56/56/80/96px. Set
+`expanded="false"` or `fab.expanded = false` to collapse an icon-and-label FAB;
+its height and shape remain fixed. The new sized overloads animate width and
+label opacity independently; baseline uses the source's different enter/exit
+specs and clips the label. Interrupted transitions keep their velocity and retain
+the label until both channels finish. Text-only extended FABs keep their label.
+Small FABs keep their 40px visible surface centered in a 48px layout area.
+`--md-minimum-interactive-component-size` changes that reservation (a CSS length;
+`0px` disables it). The minimum pointer target remains 48px independently.
+`color="surface"` applies the native tonal overlay using the live `surface-tint`
+role and resting elevation; hovering changes the shadow only. Parent surfaces
+can provide their total dp elevation through `--md-absolute-tonal-elevation`
+(a number), and `--md-tonal-elevation-enabled: false` disables overlays below
+that scope. Custom `container-color` values matching a theme color receive its
+native matching content role; unmatched colors inherit the surrounding content
+color. Explicit `content-color` takes precedence. Source sRGB channel packing,
+composition and ordered role collisions are independently verified; native
+wide-gamut packing and arbitrary incoming layout constraints remain open.
+The `expanded-change` event exposes `event.detail.expanded`.
+
+Bottom app bars accept caller-provided actions and an optional `slot="fab"`;
+an empty bar contains no generated buttons. The standard variant is 80px with
+source 4px start/top/end padding. `variant="flexible"` implements the Expressive
+64px variant with 16px leading/trailing padding and SpaceBetween arrangement.
+`horizontal-arrangement="fixed"` uses the source centered 32px spacing.
+`expanded-height` configures the flexible height; invalid values use 64px.
+`contentPadding` accepts the same logical/absolute descriptors as toolbar padding.
+Both variants use live SurfaceContainer/matching content color and have no shadow.
+Standard `tonal-elevation` defaults to 0dp; flexible uses the source's fixed 0dp.
+For an embedded FAB, use `color="secondary-container" elevation="bottom-app-bar"`
+to select the native helper defaults (zero elevation in every state).
+The `action` and `fab-click` events are web conveniences for supplied controls;
+their regular native click handlers also work. Scrolling/drag behavior and full
+native constrained Row measurement still require further parity work.
+
+```html
+<md-bottom-app-bar variant="flexible" aria-label="Document actions">
+  <md-icon-button icon="menu" aria-label="Menu"></md-icon-button>
+  <md-icon-button icon="search" aria-label="Search"></md-icon-button>
+  <md-icon-button icon="more_vert" aria-label="More options"></md-icon-button>
+</md-bottom-app-bar>
+```
 
 ```html
 <md-slider steps="9" value="40" aria-label="Volume"></md-slider>
 <md-slider range range-start="20" range-end="80" aria-label="Price"></md-slider>
 <md-slider orientation="vertical" top-to-bottom="false" value="65"></md-slider>
 ```
+
+Loading indicators use live `primary` for standalone shapes and
+`on-primary-container` on `primary-container` for the contained default.
+`color` accepts a CSS color/expression or the existing role aliases; an explicit
+value overrides either variant. `container-color` / `containerColor` customizes
+the contained background. Ordinary color changes preserve the running morph
+phase. There are no component hex-color fallbacks.
 
 The navigation bar follows Expressive `ShortNavigationBar`:64px minimum height,
 56×32px indicators with icons above persistent labels, and LabelMedium in both

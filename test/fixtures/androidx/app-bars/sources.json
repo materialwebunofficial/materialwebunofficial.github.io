@@ -1,0 +1,30 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "AppBar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/AppBar.kt",
+      "sha256": "3261fd559fd0f9abff24c75f46deae40bbb76de2cc8899243fe139a18b046270"
+    },
+    {
+      "file": "BottomAppBarTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/BottomAppBarTokens.kt",
+      "sha256": "b95023384cbda19d40a6fde99eeeb279db240876e2cfdd8d0a200f0a4ff68125"
+    },
+    {
+      "file": "DockedToolbarTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/DockedToolbarTokens.kt",
+      "sha256": "bf7437f75df1d62bf1da8910eb55e66a94290cc86bebca7eef5eea150cb98444"
+    },
+    {
+      "file": "AppBarTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/AppBarTokens.kt",
+      "sha256": "b184f78af0f4dd250b0ae2b12039971ecd16a9f25a36cddd9bb68b12099439cb"
+    },
+    {
+      "file": "FabSecondaryContainerTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabSecondaryContainerTokens.kt",
+      "sha256": "3b805c60f71691812674a01dab227259315bd0e7d7996dc830df3da0dd292242"
+    }
+  ]
+}

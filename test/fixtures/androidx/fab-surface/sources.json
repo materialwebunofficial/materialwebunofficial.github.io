@@ -1,0 +1,25 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "ColorScheme.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ColorScheme.kt",
+      "sha256": "2cae5584a44f5b6ffd15203f75b67138d386642589359a047bccdc31b046fd91"
+    },
+    {
+      "file": "Color.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt",
+      "sha256": "3b8bbdd5ccc4a3200b1cedef5ff4f91574a4db508b3ac2d9ae3e465eec8468e7"
+    },
+    {
+      "file": "Surface.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Surface.kt",
+      "sha256": "b82221978167354d62462943bade5838beb4724a71155209d75debc6003bd9e2"
+    },
+    {
+      "file": "InteractiveComponentSize.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/InteractiveComponentSize.kt",
+      "sha256": "fb19262a174f765f71ac43a7a44c3398d40b8b550043c034bcd0700b5799245a"
+    }
+  ]
+}

@@ -84,9 +84,6 @@ const defaultStyle = `
   .chip:focus-visible:not(.disabled)::before {
     opacity: var(--md-sys-state-focus-state-layer-opacity, 0.10);
   }
-  .chip.pressed:not(.disabled)::before {
-    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.10);
-  }
 
   .chip.assist,
   .chip.suggestion,

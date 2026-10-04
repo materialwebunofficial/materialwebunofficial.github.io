@@ -18,7 +18,7 @@ a 4px thumb and zero initial raw offset, with the coordinate supplied through
 pressOffset. Another 360 state histories (9,288 frames) execute unchanged
 SliderState.onPress/dispatchRawDeltaInternal and RangeSliderState.onDrag/
 updateMinMaxPx bodies, plus the source scalar/range scale helpers. The field
-hosts supply controlled, auto-snapped values and Float pixel dimensions. Cases
+hosts supply controlled, auto-snapped values, integer total dimensions and Float offsets. Cases
 cover small successive deltas, repeated presses, overscroll/reversal, ranges
 with coincident/end handles, active-handle changes and dimension changes during
 and after dragging. All recorded raw offsets, values and callback comparisons
@@ -38,7 +38,8 @@ skip the finish callback, while detached range sliders retain the source's
 finally completion. Reversed initial ranges are sorted. Range release before
 slop also evaluates the accumulated direction, as in the source detector.
 Production retains raw pixel offsets and Float press/delta order instead of
-recomputing from absolute positions. HTML labels, live
+recomputing from absolute positions. Unspecified ranges span their full bounds;
+legacy `value` can still supply an end. HTML labels, live
 aria-labelledby references and start-before-end focus are web adapters.
 
 Source default tracks are 16dp; the previous advertised five size tokens were

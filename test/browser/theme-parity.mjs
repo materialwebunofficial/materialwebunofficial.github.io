@@ -71,10 +71,14 @@ export async function testThemeParity(page) {
       local.append(loading);
       local.customPalette = {primary:'#abcdef'};
       await settle();
-      output.canvas = loading._resolveActiveColor(false) === '#abcdef';
+      const resolveColor=value=>{
+        const probe=document.createElement('span');local.append(probe);probe.style.color=value;
+        const color=getComputedStyle(probe).color;probe.remove();return color;
+      };
+      output.canvas = loading._resolveActiveColor(false) === resolveColor('#abcdef');
       local.style.setProperty('--md-sys-color-primary','#fedcba');
       await settle();
-      output.canvasInline = loading._resolveActiveColor(false) === '#fedcba';
+      output.canvasInline = loading._resolveActiveColor(false) === resolveColor('#fedcba');
 
       const shadowHost = document.createElement('div');
       host.append(shadowHost);

@@ -2,27 +2,42 @@
  * Material Design 3 Expressive (M3 Expressive) Web Component: <md-fab>
  *
  * Spec: research/MD3E-actions-inputs-research.md §4 (FAB / Extended FAB)
- *   Sizes: small=40 (not recommended), medium=80 (recommended), large=96.
- *   Extended: small=56, medium=80, large=96. Baseline(legacy)=56.
+ *   Sizes: small=40, baseline=56 (default), medium=80, large=96.
+ *   Extended: small=56, baseline=56, medium=80, large=96.
  *   Color roles: primary / secondary / tertiary (and *-container variants).
  *   Elevation: rest L3, hover L4, focus/press L3.
  *
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md & docs/SECURITY-AND-A11Y-SPEC.md
  *   - Hover elevation and content-color state layer; press ripple without whole-button scaling.
  *   - Single release via setPointerCapture (bindPress). NO pointerleave release.
- *   - Single focus ring (:focus-visible). Keyboard Enter/Space via native <button>.
+ *   - Default focus opacity layer. Keyboard Enter/Space via native <button>.
  *   - XSS sanitization and AbortSignal memory safety.
  */
 
 import { bindPress, createRipple } from '../motion/interactions.js';
+import { bindFabInteractions } from '../motion/fab-interactions.js';
+import { FabExpansion, fabWidth } from '../motion/fab-expansion.js';
+import { minimumInteractiveLayout } from './row-column-layout.js';
+import { observeThemeContext } from '../theme/theme-context.js';
+import { resolveSurfaceColors } from '../theme/surface-color.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
 const defaultStyle = `
   :host { display: inline-block; outline: none; }
+  .touch-layout {
+    display: block; position: relative;
+    /* The toolbar updates this inherited size during the same layout pass.
+       Keep native coercion live in CSS instead of waiting for ResizeObserver. */
+    --_toolbar-fab-body-offset: calc(
+      round(nearest, max(0px, (round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px) - var(--md-toolbar-fab-size)) / 2), 1px)
+      + round(to-zero, min(0px, (var(--md-toolbar-fab-size) - round(nearest, var(--md-minimum-interactive-component-size, 48px), 1px)) / 2), 1px));
+  }
+  .minimum-probe { position: absolute; width: var(--md-minimum-interactive-component-size, 48px); height: 0; visibility: hidden; pointer-events: none; }
+  .color-probe { position: absolute; visibility: hidden; pointer-events: none; }
 
   .fab {
-    position: relative;
+    position: absolute;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -33,8 +48,8 @@ const defaultStyle = `
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     box-sizing: border-box;
-    color: var(--md-sys-color-on-primary, #fff);
-    background-color: var(--md-sys-color-primary, #6750A4);
+    color: var(--md-sys-color-on-primary);
+    background-color: var(--md-sys-color-primary);
     box-shadow: var(--md-sys-elevation-level-3);
     min-width: 56px;
     height: 56px;
@@ -44,53 +59,36 @@ const defaultStyle = `
     font-size: var(--md-sys-typescale-label-large-size, 14px);
     font-weight: var(--md-sys-typescale-label-large-weight, 500);
     letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-    transition:
-      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-      color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-    will-change: transform;
+    transition: none;
     outline: none;
   }
   .fab:focus { outline: none; }
-  .fab:focus-visible {
-    outline: 3px solid var(--md-sys-color-secondary, #625B71);
-    outline-offset: 2px;
-  }
 
-  .fab:not([disabled]):hover { box-shadow: var(--md-sys-elevation-level-4); }
-  .fab:not([disabled]):active { box-shadow: var(--md-sys-elevation-level-3); }
   :host([lowered]) .fab { box-shadow: var(--md-sys-elevation-level-1); }
-  :host([lowered]) .fab:hover:not([disabled]) { box-shadow: var(--md-sys-elevation-level-2); }
-  :host([lowered]) .fab.pressed:not([disabled]) { box-shadow: var(--md-sys-elevation-level-1); }
-  .fab::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; pointer-events: none; }
-  .fab:hover::before { opacity: 0.08; }
-  .fab:focus-visible::before, .fab.pressed::before { opacity: 0.1; }
+  .fab::before { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; background: rgb(from currentColor r g b / 1); opacity: var(--md-fab-state-alpha, 0); pointer-events: none; }
 
   /* Color roles (§4.3) */
-  .fab.primary      { background-color: var(--md-sys-color-primary, #6750A4); color: var(--md-sys-color-on-primary, #fff); }
-  .fab.secondary    { background-color: var(--md-sys-color-secondary, #625B71); color: var(--md-sys-color-on-secondary, #fff); }
-  .fab.tertiary     { background-color: var(--md-sys-color-tertiary, #7D5260); color: var(--md-sys-color-on-tertiary, #fff); }
-  .fab.primary-container   { background-color: var(--md-sys-color-primary-container, #EADDFF); color: var(--md-sys-color-on-primary-container, #21005D); }
-  .fab.secondary-container { background-color: var(--md-sys-color-secondary-container, #E8DEF8); color: var(--md-sys-color-on-secondary-container, #1D192B); }
-  .fab.tertiary-container  { background-color: var(--md-sys-color-tertiary-container, #FFD8E4); color: var(--md-sys-color-on-tertiary-container, #31111D); }
+  .fab.primary      { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+  .fab.secondary    { background-color: var(--md-sys-color-secondary); color: var(--md-sys-color-on-secondary); }
+  .fab.tertiary     { background-color: var(--md-sys-color-tertiary); color: var(--md-sys-color-on-tertiary); }
+  .fab.primary-container   { background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+  .fab.secondary-container { background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+  .fab.tertiary-container  { background-color: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
+  :host([color="surface"]) .fab { background-color: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); }
 
   .fab[disabled] {
     opacity: 1;
     cursor: not-allowed;
     box-shadow: none;
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent) !important;
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent) !important;
     color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent) !important;
   }
-  .fab[disabled]::before { opacity: 0; }
   /* FloatingToolbarDefaults FAB helper supplies baseline shape/icon and L2/L3. */
   .fab:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-3)); }
-  .fab:not([disabled]):hover { box-shadow: var(--md-toolbar-fab-hover-shadow, var(--md-sys-elevation-level-4)); }
-  .fab:not([disabled]):active, .fab.pressed:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-3)); }
   :host([lowered]) .fab:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-1)); }
-  :host([lowered]) .fab:not([disabled]):hover { box-shadow: var(--md-toolbar-fab-hover-shadow, var(--md-sys-elevation-level-2)); }
-  :host([lowered]) .fab:not([disabled]):active, :host([lowered]) .fab.pressed:not([disabled]) { box-shadow: var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-1)); }
   .fab.primary-container { background-color: var(--md-toolbar-fab-container, var(--md-sys-color-primary-container)); color: var(--md-toolbar-fab-content, var(--md-sys-color-on-primary-container)); }
   :host([slot="fab"]) .fab { transition: none; }
-  .fab::after { content: ''; position: absolute; min-width: 48px; min-height: 48px; width: 100%; height: 100%; }
+  .fab::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 48px); height: max(100%, 48px); transform: translate(-50%, -50%); }
 
   .fab .material-symbols-outlined {
     font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
@@ -102,18 +100,13 @@ const defaultStyle = `
     direction: ltr;
     -webkit-font-smoothing: antialiased;
   }
-  .fab .lbl { white-space: nowrap; }
-  /* Ink lives in this shadow root; document styles cannot animate it. */
-  .md-ripple-effect {
-    position: absolute;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: var(--md-sys-state-pressed-opacity, 0.1);
-    transform: scale(0);
-    animation: fab-ripple 450ms var(--md-sys-motion-easing-emphasized-decelerate, cubic-bezier(.05,.7,.1,1)) forwards;
-    pointer-events: none;
-  }
-  @keyframes fab-ripple { to { transform: scale(2.5); opacity: 0; } }
+  .content-viewport { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; }
+  .content { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; justify-content: flex-start; box-sizing: border-box; }
+  .content > .material-symbols-outlined { flex: none; }
+  .label-clip { display: inline-flex; flex: none; overflow: hidden; box-sizing: border-box; direction: ltr; }
+  .label-content { display: inline-flex; flex: none; }
+  .fab .lbl { white-space: nowrap; flex: none; }
+  .fab .label-clip[hidden], .fab .material-symbols-outlined[hidden] { display: none; }
 `;
 
 const fabSheet = createComponentSheet(defaultStyle);
@@ -122,20 +115,20 @@ const fabSheet = createComponentSheet(defaultStyle);
 const FAB = {
   small:   { h: 40,  r: 12, icon: 24, padX: 0  },
   medium:  { h: 80,  r: 20, icon: 28, padX: 0  },
-  large:   { h: 96,  r: 28, icon: 32, padX: 0  },
+  large:   { h: 96,  r: 28, icon: 36, padX: 0  },
   baseline: { h: 56, r: 16, icon: 24, padX: 0  },
 };
 // Extended FAB diameters (§4.2).
 const EXT = {
   small:   { h: 56,  r: 16, icon: 24, padX: 16 },
   medium:  { h: 80,  r: 20, icon: 28, padX: 26 },
-  large:   { h: 96,  r: 28, icon: 32, padX: 28 },
+  large:   { h: 96,  r: 28, icon: 36, padX: 28 },
   baseline: { h: 56, r: 16, icon: 24, padX: 16 },
 };
 
 export class MdFab extends HTMLElement {
   static get observedAttributes() {
-    return ['variant', 'color', 'size', 'icon', 'label', 'disabled', 'container-color', 'content-color', 'expanded', 'lowered'];
+    return ['variant', 'color', 'size', 'icon', 'label', 'disabled', 'container-color', 'content-color', 'expanded', 'lowered', 'elevation', 'aria-label'];
   }
 
   constructor() {
@@ -144,6 +137,9 @@ export class MdFab extends HTMLElement {
     adoptSheet(this.shadowRoot, fabSheet);
     this._rendered = false;
     this._abortController = null;
+    this._expansion = null;
+    this._expansionFrame = null;
+    this._lastDisabled = null;
   }
 
   connectedCallback() {
@@ -155,15 +151,13 @@ export class MdFab extends HTMLElement {
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._expansion = null;
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
-    if (name === 'variant' || name === 'color' || name === 'size' || name === 'label' || name === 'icon' ||
-        name === 'container-color' || name === 'content-color' || name === 'expanded' || name === 'lowered') {
-      this.render(); this._setup();
-    }
     this._sync();
+    if (name === 'expanded') this.dispatchEvent(new CustomEvent('expanded-change', {detail: {expanded: this.expanded}, bubbles: true, composed: true}));
   }
 
   get variant() { return sanitizeAttribute(this.getAttribute('variant') || 'surface'); }
@@ -178,13 +172,13 @@ export class MdFab extends HTMLElement {
     else this.setAttribute('color', val);
   }
 
-  get size() { return this.getAttribute('size') || 'medium'; }
+  get size() { const value = this.getAttribute('size'); return Object.hasOwn(FAB, value) ? value : 'baseline'; }
   set size(val) {
     if (val === null || val === undefined) this.removeAttribute('size');
     else this.setAttribute('size', val);
   }
 
-  get icon() { return this.getAttribute('icon') || 'add'; }
+  get icon() { return this.getAttribute('icon') ?? 'add'; }
   set icon(val) {
     if (val === null || val === undefined) this.removeAttribute('icon');
     else this.setAttribute('icon', val);
@@ -218,6 +212,9 @@ export class MdFab extends HTMLElement {
   }
 
   get lowered() { return this.hasAttribute('lowered'); }
+  get elevation() { return this.getAttribute('elevation') === 'bottom-app-bar' ? 'bottom-app-bar' : 'default'; }
+  set elevation(val) { if (val == null) this.removeAttribute('elevation'); else this.setAttribute('elevation', val); }
+
   set lowered(val) {
     if (val) this.setAttribute('lowered', '');
     else this.removeAttribute('lowered');
@@ -229,12 +226,13 @@ export class MdFab extends HTMLElement {
     else this.removeAttribute('disabled');
   }
 
-  get isExtended() { return this.expanded; }
+  get isExtended() { return this.variant === 'extended' || Boolean(this.label) || this.hasAttribute('expanded'); }
+  focus(options) { if (!this.disabled) this.shadowRoot.querySelector('.fab')?.focus(options); }
 
   _dims() {
     const s = this.size;
     const table = this.isExtended ? EXT : FAB;
-    return table[s] || (this.isExtended ? EXT.medium : FAB.medium);
+    return table[s];
   }
 
   _sync() {
@@ -242,56 +240,204 @@ export class MdFab extends HTMLElement {
     if (!fab) return;
     const d = this._dims();
     const isExt = this.isExtended;
-    fab.style.minWidth = `var(--md-toolbar-fab-size, ${d.h}px)`;
-    fab.style.width = isExt ? 'auto' : `var(--md-toolbar-fab-size, ${d.h}px)`;
+    const pressed = fab.classList.contains('pressed');
+    fab.className = `fab ${this.color} ${this.variant}${isExt ? ' extended' : ''}${pressed ? ' pressed' : ''}`;
     fab.style.height = `var(--md-toolbar-fab-size, ${d.h}px)`;
-    fab.style.padding = isExt ? `0 ${d.padX}px` : '0';
+    fab.style.padding = '0';
     fab.style.borderRadius = `var(--md-toolbar-fab-shape, ${d.r}px)`;
-    fab.style.gap = `${d.h === 96 ? 20 : d.h === 80 ? 16 : 8}px`;
+    fab.style.gap = `${this.size === 'baseline' && isExt ? 12 : d.h === 96 ? 16 : d.h === 80 ? 12 : 8}px`;
     const typeRole = d.h === 96 ? 'headline-small' : d.h === 80 ? 'title-large' : isExt && this.size !== 'baseline' ? 'title-medium' : 'label-large';
     fab.style.font = `var(--md-sys-typescale-${typeRole})`;
     fab.style.letterSpacing = `var(--md-sys-typescale-${typeRole}-tracking)`;
-    if (this.containerColor) fab.style.backgroundColor = this.containerColor;
-    if (this.contentColor) fab.style.color = this.contentColor;
+    fab.style.backgroundColor = this.containerColor;
+    fab.style.color = this.contentColor;
     const iconEl = fab.querySelector('.material-symbols-outlined');
-    if (iconEl) iconEl.style.fontSize = `var(--md-toolbar-fab-icon-size, ${d.icon}px)`;
-    const fabAriaLabel = this.getAttribute('aria-label') || (isExt && this.label ? (this.icon ? `${this.icon} ${this.label}` : this.label) : (this.label || this.icon || 'Floating action button'));
+    if (iconEl) { iconEl.style.fontSize = `var(--md-toolbar-fab-icon-size, ${d.icon}px)`; iconEl.textContent = this.icon; iconEl.hidden = !this.icon; }
+    const label = fab.querySelector('.lbl'); label.textContent = this.label;
+    const fabAriaLabel = this.getAttribute('aria-label') || this.label || this.icon || 'Floating action button';
     fab.setAttribute('aria-label', fabAriaLabel);
     fab.disabled = this.disabled;
+    this._syncColors();
     fab.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
-    fab.setAttribute('tabindex', this.disabled ? '-1' : '0');
+    // A parent toolbar can temporarily remove its controls from keyboard
+    // traversal. Theme, label and geometry updates must preserve that override.
+    if (this._lastDisabled !== this.disabled) fab.setAttribute('tabindex', this.disabled ? '-1' : '0');
+    this._lastDisabled = this.disabled;
+    this._syncExpansion(d);
+    this._interactions?.refresh();
+  }
+
+  _syncExpansion(d = this._dims()) {
+    const fab = this.shadowRoot.querySelector('.fab');
+    const content = fab.querySelector('.content');
+    const clip = fab.querySelector('.label-clip');
+    const label = fab.querySelector('.lbl');
+    const icon = fab.querySelector('.material-symbols-outlined');
+    const baseline = this.size === 'baseline';
+    const animated = this.isExtended && Boolean(this.icon && this.label);
+    // Intrinsic text is measured without the current animated clip width. This
+    // avoids width feedback when an expansion is interrupted or text changes.
+    clip.hidden = false;
+    clip.style.width = 'auto';
+    const textWidth = Math.round(parseFloat(getComputedStyle(label).width) || 0);
+    const iconWidth = this.icon ? Math.round(parseFloat(getComputedStyle(icon).width) || 0) : 0;
+    const gap = iconWidth && this.label ? baseline ? 12 : d.h === 96 ? 16 : d.h === 80 ? 12 : 8 : 0;
+    const labelWidth = textWidth + gap;
+    this._fabLayout = {d, baseline, animated, textWidth, labelWidth, iconWidth, content, clip, fab, gap};
+    const key = animated ? baseline ? 'baseline' : 'sized' : 'static';
+    if (this._expansionKind !== key || !this._expansion) {
+      this._expansionKind = key;
+      this._expansion = new FabExpansion(animated ? this.expanded : true, {baseline, labelWidth, element: this});
+    } else if (animated) this._expansion.set(this.expanded, labelWidth, performance.now());
+    if (this._expansionMedia?.matches) this._expansion.finish();
+    this._tickExpansion(performance.now());
+  }
+
+  _tickExpansion(now) {
+    if (this._expansionFrame !== null) cancelAnimationFrame(this._expansionFrame);
+    this._expansionFrame = null;
+    if (!this._fabLayout || !this._expansion) return;
+    const {d, baseline, animated, labelWidth, iconWidth, content, clip, fab, gap} = this._fabLayout;
+    const state = this._expansion.sample(now);
+    const extended = this.isExtended;
+    const showLabel = extended && Boolean(this.label) && (!animated || state.composed);
+    clip.hidden = !showLabel;
+    clip.style.opacity = String(animated ? state.alpha : 1);
+    const labelContent = clip.querySelector('.label-content');
+    labelContent.style.paddingInlineStart = `${gap}px`;
+    labelContent.style.direction = getComputedStyle(fab).direction;
+    content.style.justifyContent = extended && this.icon ? 'flex-start' : 'center';
+    let width = d.h, measuredWidth = width, start = 0, end = 0;
+    if (extended) {
+      start = baseline ? this.icon ? this.expanded ? 16 : 0 : 20 : d.padX;
+      end = baseline ? this.icon ? this.expanded ? 20 : 0 : 20 : d.padX;
+      if (animated && baseline) {
+        const visibleWidth = Math.max(0, Math.round(state.width));
+        clip.style.width = `${visibleWidth}px`;
+        width = Math.max(this.expanded ? 80 : 56, start + iconWidth + visibleWidth + end);
+        measuredWidth = width;
+        content.style.justifyContent = this.expanded ? 'flex-start' : 'center';
+      } else {
+        clip.style.width = `${labelWidth}px`;
+        const minimum = baseline ? 80 : d.h;
+        measuredWidth = Math.max(minimum, start + iconWidth + (showLabel ? labelWidth : 0) + end);
+        width = animated ? Math.max(0, fabWidth(d.h, measuredWidth, state.width)) : measuredWidth;
+      }
+    } else {
+      content.style.justifyContent = 'center';
+      clip.hidden = true;
+    }
+    fab.style.minWidth = '0';
+    fab.style.width = `var(--md-toolbar-fab-size, ${width}px)`;
+    content.style.width = `var(--md-toolbar-fab-size, ${measuredWidth}px)`;
+    content.style.paddingInlineStart = `${start}px`;
+    content.style.paddingInlineEnd = `${end}px`;
+    this._syncHitLayout();
+    if (animated && state.running && this.isConnected) this._expansionFrame = requestAnimationFrame(time => this._tickExpansion(time));
+  }
+
+  _syncHitLayout() {
+    const fab = this.shadowRoot.querySelector('.fab');
+    const layout = this.shadowRoot.querySelector('.touch-layout');
+    const probe = this.shadowRoot.querySelector('.minimum-probe');
+    const style = getComputedStyle(fab);
+    const minimum = Math.max(0, Math.round(parseFloat(getComputedStyle(probe).width) || 0));
+    const width = parseFloat(style.width) || 0, height = parseFloat(style.height) || 0;
+    // FloatingToolbar's sized FAB slot supplies fixed incoming constraints.
+    // The minimum-interactive node still requests its minimum, but Compose's
+    // Placeable coercion offsets apply before placing the visible body.
+    const sized = Boolean(style.getPropertyValue('--md-toolbar-fab-size').trim());
+    const touch = minimumInteractiveLayout({width,height,minimum,
+      ...(sized ? {minWidth:width,maxWidth:width,minHeight:height,maxHeight:height} : {})});
+    layout.style.width = `var(--md-toolbar-fab-size, ${touch.size.width}px)`;
+    layout.style.height = `var(--md-toolbar-fab-size, ${touch.size.height}px)`;
+    fab.style.left = `var(--_toolbar-fab-body-offset, ${touch.body.x}px)`;
+    fab.style.top = `var(--_toolbar-fab-body-offset, ${touch.body.y}px)`;
+    this._minimumInteractiveLines = touch.lines;
+  }
+
+  _syncColors() {
+    if (this.disabled) return;
+    const fab = this.shadowRoot.querySelector('.fab');
+    const style = getComputedStyle(fab);
+    const toolbar = Boolean(style.getPropertyValue('--md-toolbar-fab-rest-shadow').trim());
+    const toolbarContent = this.color === 'primary-container' ? style.getPropertyValue('--md-toolbar-fab-content').trim() : '';
+    const colors = resolveSurfaceColors(this, this.shadowRoot.querySelector('.color-probe'), {
+      container: style.backgroundColor,
+      content: this.contentColor || toolbarContent,
+      elevation: this.elevation === 'bottom-app-bar' ? 0 : toolbar ? 3 : this.lowered ? 1 : 6
+    });
+    fab.style.backgroundColor = colors.container;
+    fab.style.color = colors.content;
+    fab.style.setProperty('--md-absolute-tonal-elevation', String(colors.total));
   }
 
   _setup() {
     this._abortController?.abort();
+    this._expansion = null;
     this._abortController = new AbortController();
     const { signal } = this._abortController;
 
     const fab = this.shadowRoot.querySelector('.fab');
     if (!fab) return;
 
+    this._interactions = bindFabInteractions(fab, {
+      disabled: () => this.disabled,
+      configuration: () => {
+        const style = getComputedStyle(fab);
+        // FloatingActionButtonDefaults.bottomAppBarFabElevation: all states 0dp.
+        if (this.elevation === 'bottom-app-bar') return {rest: 0, hover: 0, restShadow: 'var(--md-sys-elevation-level-0)', hoverShadow: 'var(--md-sys-elevation-level-0)'};
+        const toolbar = Boolean(style.getPropertyValue('--md-toolbar-fab-rest-shadow').trim());
+        const rest = toolbar ? 3 : this.lowered ? 1 : 6;
+        const hover = toolbar ? 6 : this.lowered ? 3 : 8;
+        return {
+          rest, hover,
+          restShadow: `var(--md-toolbar-fab-rest-shadow, var(--md-sys-elevation-level-${this.lowered ? 1 : 3}))`,
+          hoverShadow: `var(--md-toolbar-fab-hover-shadow, var(--md-sys-elevation-level-${this.lowered ? 2 : 4}))`
+        };
+      }, signal
+    });
     bindPress(fab, {
       disabled: () => this.disabled,
-      onPress: event => createRipple(event, fab),
+      onPress: event => { this._interactions.press(true); createRipple(event, fab); },
+      onRelease: () => this._interactions.press(false),
       signal
     });
+    this._expansionMedia = matchMedia('(prefers-reduced-motion: reduce)');
+    this._expansionMedia.addEventListener('change', () => {
+      if (this._expansionMedia.matches) { this._expansion?.finish(); this._tickExpansion(performance.now()); }
+    }, {signal});
+    const stopTheme = observeThemeContext(this, () => this._sync());
+    document.fonts.addEventListener('loadingdone', () => this._sync(), {signal});
+    const resize = new ResizeObserver(() => { if (this.isConnected) this._sync(); });
+    resize.observe(fab.querySelector('.lbl'));
+    const bodyResize = new ResizeObserver(() => { if (this.isConnected) this._syncHitLayout(); });
+    bodyResize.observe(fab);
+    bodyResize.observe(this.shadowRoot.querySelector('.minimum-probe'));
+    signal.addEventListener('abort', () => {
+      stopTheme(); resize.disconnect(); bodyResize.disconnect();
+      if (this._expansionFrame !== null) cancelAnimationFrame(this._expansionFrame);
+      this._expansionFrame = null;
+    }, {once: true});
   }
 
   render() {
     const isExt = this.isExtended;
     const c = this.color;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    const fabAriaLabel = this.getAttribute('aria-label') || (isExt && this.label ? (this.icon ? `${this.icon} ${this.label}` : this.label) : (this.label || this.icon || 'Floating action button'));
+    const fabAriaLabel = this.getAttribute('aria-label') || this.label || this.icon || 'Floating action button';
 
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <button part="button" class="fab ${escapeHtml(c)} ${escapeHtml(this.variant)}${isExt ? ' extended' : ''}" ${this.disabled ? 'disabled' : ''}
+      <span class="touch-layout"><span class="minimum-probe" aria-hidden="true"></span><span class="color-probe" aria-hidden="true"></span><button part="button" class="fab ${escapeHtml(c)} ${escapeHtml(this.variant)}${isExt ? ' extended' : ''}" ${this.disabled ? 'disabled' : ''}
         tabindex="${this.disabled ? -1 : 0}" role="button"
         aria-label="${escapeHtml(fabAriaLabel)}"
         aria-disabled="${this.disabled}">
-        <span class="material-symbols-outlined" aria-hidden="true">${escapeHtml(this.icon)}</span>
-        ${isExt && this.label ? `<span class="lbl">${escapeHtml(this.label)}</span>` : ''}
-      </button>
+        <span class="content-viewport" aria-hidden="true"><span class="content">
+          <span class="material-symbols-outlined">${escapeHtml(this.icon)}</span>
+          <span class="label-clip"${isExt && this.label ? '' : ' hidden'}><span class="label-content"><span class="lbl">${escapeHtml(this.label)}</span></span></span>
+        </span></span>
+      </button></span>
     `;
   }
 }

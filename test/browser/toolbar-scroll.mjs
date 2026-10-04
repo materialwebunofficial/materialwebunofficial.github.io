@@ -28,6 +28,8 @@ export async function testToolbarScroll(browser,base){
   const initial=await bar.evaluate(n=>({limit:n.scrollBehavior.state.offsetLimit,size:n._frame.getBoundingClientRect().height}));near(initial.limit,-initial.size,'parent exit limit');
   await bar.evaluate(n=>n.postScroll({x:100,y:-20}));const shifted=await bar.evaluate(n=>({offset:n.scrollBehavior.state.offset,transform:n._frame.style.transform,tabindex:n.querySelector('md-fab').shadowRoot.querySelector('button').tabIndex}));
   assert.equal(shifted.offset,-20);assert.equal(shifted.transform,'translate(0px, 20px)');assert.equal(shifted.tabindex,-1);
+  await bar.evaluate(n=>{n.querySelector('md-fab').label='Create document';n.color='vibrant';});await run(32);
+  assert.equal(await bar.evaluate(n=>n.querySelector('md-fab').shadowRoot.querySelector('button').tabIndex),-1,'live FAB label/theme updates preserve hidden-toolbar traversal');
   await bar.evaluate(n=>n.postScroll({x:0,y:20}));assert.equal(await bar.evaluate(n=>n.querySelector('md-fab').shadowRoot.querySelector('button').tabIndex),0);
   for(const direction of ['start','end','top','bottom'])for(const rtl of [false,true]){
    await bar.evaluate((n,{direction,rtl})=>{n.dir=rtl?'rtl':'ltr';n.scrollBehavior=new toolbarApi.FloatingToolbarScrollBehavior({exitDirection:direction});n.postScroll({x:0,y:-20});},{direction,rtl});

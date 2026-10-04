@@ -12,7 +12,7 @@ const f = Math.fround;
 const friction = f(-4.2);
 const threshold = f(.1);
 const bits = new DataView(new ArrayBuffer(4));
-function fastCbrt(value) {
+export function fastCbrt(value) {
   bits.setFloat32(0, value); const raw = bits.getUint32(0);
   const signedMask = raw + (raw >= 0x80000000 ? 0x100000000 : 0);
   bits.setUint32(0, (0x2a510554 + Math.trunc(signedMask / 3)) >>> 0);

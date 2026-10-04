@@ -1,0 +1,60 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "FabBaselineTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabBaselineTokens.kt",
+      "sha256": "481552f1e35f77b27cb81bfd78fa8c6552a9efb29d4fa603f75d67132e0a2414"
+    },
+    {
+      "file": "FabSmallTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabSmallTokens.kt",
+      "sha256": "6dff0ad15397f9f91ede2f664232d2837da39b919b13926c5e13a486a496a060"
+    },
+    {
+      "file": "FabMediumTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabMediumTokens.kt",
+      "sha256": "49888769965e3fe97d91d445ee8c66ad7b50f163fdd3dd91f0aa79fc76e8604b"
+    },
+    {
+      "file": "FabLargeTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabLargeTokens.kt",
+      "sha256": "b00772754ecd8d9a91eafe3e3bd86f574b725984beced2d91bfb32da1b753c63"
+    },
+    {
+      "file": "ExtendedFabSmallTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ExtendedFabSmallTokens.kt",
+      "sha256": "6cc5069d5496922afbb6a8108069d7c95c0d41885a07a221fbfb630f3faf4f3f"
+    },
+    {
+      "file": "ExtendedFabMediumTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ExtendedFabMediumTokens.kt",
+      "sha256": "828e00f3899a21855b4963647e85a497237bdc7ba75394561eb94566f778c1ed"
+    },
+    {
+      "file": "ExtendedFabLargeTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ExtendedFabLargeTokens.kt",
+      "sha256": "b8c61d7bbe0e63dd72ea0c9ad327d57d2ac6f125cabfd612be2cc6726ac1e013"
+    },
+    {
+      "file": "ExtendedFabPrimaryTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ExtendedFabPrimaryTokens.kt",
+      "sha256": "2d6890ee1ac67b2b661e463f80435c65b50588a1f6a14cac12fae3339714fc14"
+    },
+    {
+      "file": "FloatingActionButtonSamples.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/samples/src/main/java/androidx/compose/material3/samples/FloatingActionButtonSamples.kt",
+      "sha256": "c94fdd36c71f03cb218cb0cfd51c8f637996f96dbe51ea975f0cfc60804f08c2"
+    },
+    {
+      "file": "ExpressiveMotionTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ExpressiveMotionTokens.kt",
+      "sha256": "deefcefc93405c69445071b40e4d9894458bb20cff18b805192c90aea5ba6c73"
+    },
+    {
+      "file": "StandardMotionTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/StandardMotionTokens.kt",
+      "sha256": "4b36c30679dcc0b1ec6010e4e40c070901151b59252d9a21d0e4348511370592"
+    }
+  ]
+}

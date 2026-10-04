@@ -14,7 +14,8 @@ object MinimumInteractiveTopAlignmentLine:AlignmentLine()
 object MinimumInteractiveLeftAlignmentLine:AlignmentLine()
 interface CompositionLocalConsumerModifierNode
 object LocalMinimumInteractiveComponentSize
-fun CompositionLocalConsumerModifierNode.currentValueOf(local:LocalMinimumInteractiveComponentSize)=48.dp
+object MinimumHost{var size=48f}
+fun CompositionLocalConsumerModifierNode.currentValueOf(local:LocalMinimumInteractiveComponentSize)=Dp(MinimumHost.size)
 fun Dp.coerceAtLeast(min:Dp)=if(this<min)min else this
 object LeafConstraints{val values=linkedMapOf<String,Constraints>()}
 data class FlowLayoutData(val fillCrossAxisFraction:Float)

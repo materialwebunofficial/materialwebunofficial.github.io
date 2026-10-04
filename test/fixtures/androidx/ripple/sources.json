@@ -1,0 +1,80 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "FloatingActionButton.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/FloatingActionButton.kt",
+      "sha256": "59d5708d5dd390dd25734c6ef2c2ebdcb1a149d82e9fe9038a75e670c1f7c9bd"
+    },
+    {
+      "file": "Elevation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/Elevation.kt",
+      "sha256": "304e9d0d7749bf1a7a2646acd7f05a7d6f5c52fe0118fd8bbfd37fbd03d08f2f"
+    },
+    {
+      "file": "RippleAnimation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material/material-ripple/src/commonMain/kotlin/androidx/compose/material/ripple/RippleAnimation.kt",
+      "sha256": "e9a09d233b3acfae31e73fe678c7d17fac9e2608e5432a9375d5e1231f9b11d1"
+    },
+    {
+      "file": "Ripple.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material/material-ripple/src/commonMain/kotlin/androidx/compose/material/ripple/Ripple.kt",
+      "sha256": "bc13968044876af2d68335922fef63ace5ba02628d22ff0b1145cd1752f78e40"
+    },
+    {
+      "file": "CommonRipple.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material/material-ripple/src/commonMain/kotlin/androidx/compose/material/ripple/CommonRipple.kt",
+      "sha256": "d5b2ac96863a89dbf0bf6562adee2566e55d443568b54925bf7ce3b4ddffd818"
+    },
+    {
+      "file": "RippleTheme.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material/material-ripple/src/commonMain/kotlin/androidx/compose/material/ripple/RippleTheme.kt",
+      "sha256": "9d353ab25178c2ffba252e1598583bc2e9a2ed9c457ff1a91eb40af4f886002a"
+    },
+    {
+      "file": "Material3Ripple.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Ripple.kt",
+      "sha256": "4b53b7ffb01ff48014cdc2f6af216c97f6463d5e25343d9db699ea4abb90bc00"
+    },
+    {
+      "file": "M3Border.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3-ripple/src/commonMain/kotlin/androidx/compose/material3/ripple/Border.kt",
+      "sha256": "8b4520a6e9d03731f90aa042ba18332b537fa2b148cecaf8be047f38a1b7068d"
+    },
+    {
+      "file": "M3CommonRipple.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3-ripple/src/commonMain/kotlin/androidx/compose/material3/ripple/CommonRipple.kt",
+      "sha256": "bedc98fb431199c95fa78cf6689253101f77b43a0ebf32d56f13e08a4105ccea"
+    },
+    {
+      "file": "M3Ripple.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3-ripple/src/commonMain/kotlin/androidx/compose/material3/ripple/Ripple.kt",
+      "sha256": "f0ba3e8b3d5b40d3977f7e4dcbf2c93dec02e19705a1141f8efe6dc81c2f0aa7"
+    },
+    {
+      "file": "M3RippleAnimation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3-ripple/src/commonMain/kotlin/androidx/compose/material3/ripple/RippleAnimation.kt",
+      "sha256": "6d3a90e3ab5d82c7a1a1c615fadcc5886343d0029540d3de4c8b151bac6c14f2"
+    },
+    {
+      "file": "M3RippleNodeConfiguration.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3-ripple/src/commonMain/kotlin/androidx/compose/material3/ripple/RippleNodeConfiguration.kt",
+      "sha256": "62ffa826e25c74a98e64fd99b550ee406349138b6a28354cb90b3b805fb20784"
+    },
+    {
+      "file": "FoundationClickable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Clickable.kt",
+      "sha256": "bbd39df63d6c0ee0b9f9c6f3c2ad9f5e43848b118a9ce20d1d0541944cb96530"
+    },
+    {
+      "file": "FabPrimaryContainerTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabPrimaryContainerTokens.kt",
+      "sha256": "b54af888659e9f397b5a42332ac1d15d271b2cce6452a71f58d39728f05aa2d1"
+    },
+    {
+      "file": "ElevationTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ElevationTokens.kt",
+      "sha256": "b0613cc2c1e30fb62da126f82f5870f7231e3cf4117f36132e466e1827de0a3c"
+    }
+  ]
+}

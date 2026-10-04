@@ -40,6 +40,16 @@ truncates Placeable's apparent-to-real half-difference. These operations remain
 separate. Toolbar native icon bounds are generated through the same original
 nodes from each measured leaf's constraints, including weighted native icons.
 
+Another 120 unbounded icon cases use the same unchanged minimum-interactive,
+SizeNode and Placeable bodies with all fifteen Expressive body size/width inputs,
+both directions and LocalMinimumInteractiveComponentSize values 0/48/49/52dp.
+The composition-local value and body dimensions are explicit host inputs;
+this fixture proves reservation and placement, not token selection. Chromium
+compares all 120 outputs in each of four variants (480 actual controls), checks
+CSS length resolution and the independent 48dp pointer target when reservation
+is zero. Regenerate only this fixture with
+`python tools/androidx-toolbar-row/generate.py --icon-expressive-only`.
+
 Chromium compares 5,120 toolbar cases against the independent Kotlin root,
 group, child and native body bounds. CSS probes distinguish resolved parent
 minimum/maximum allocation from the preferred/visible frame size, so hidden

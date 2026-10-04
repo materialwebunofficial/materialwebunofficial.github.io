@@ -1449,6 +1449,26 @@ export function initShowcase() {
       toolbar.shape = shapes[event.detail.selectedIndex] ?? null;
     });
   });
+  document.querySelectorAll('[data-fab-toggle]').forEach(control => {
+    const examples = document.getElementById(control.dataset.fabToggle);
+    if (!examples) return;
+    const fabs = [...examples.querySelectorAll('md-fab')];
+    const update = () => {
+      const expanded = fabs.some(fab => fab.expanded);
+      control.label = expanded ? 'Collapse labels' : 'Expand labels';
+      control.setAttribute('aria-expanded', String(expanded));
+      const button = control.shadowRoot?.querySelector('button');
+      button?.setAttribute('aria-controls', examples.id);
+      button?.setAttribute('aria-expanded', String(expanded));
+    };
+    control.addEventListener('click', () => {
+      const expanded = fabs.some(fab => fab.expanded);
+      for (const fab of fabs) fab.expanded = !expanded;
+      update();
+    });
+    examples.addEventListener('expanded-change', update);
+    update();
+  });
   document.querySelectorAll('[data-toolbar-toggle]').forEach(control => {
     const toolbar = document.getElementById(control.dataset.toolbarToggle);
     if (!toolbar) return;

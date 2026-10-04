@@ -2,7 +2,7 @@
  * Material Design 3 Expressive (M3 Expressive) Shared Interaction Helper
  *
  * Implements the AGENT-INTERACTION-CONTRACT:
- *  - Press = JS spring scale (and optional border-radius morph). Hover = CSS only.
+ *  - Components choose press shape/geometry; shared ink follows Material3 CommonRippleNode.
  *  - Single release: setPointerCapture on pointerdown, release on pointerup / pointercancel.
  *  - Single click guarantee: NEVER dispatches synthetic CustomEvent('click'). The browser's
  *    natural click event handles consumer callbacks.
@@ -11,43 +11,8 @@
  */
 
 import { SpringPhysics } from './spring-physics.js';
-
-/**
- * State Layer & Ripple Entegratörü
- */
-export function createRipple(event, containerElement) {
-  if (!containerElement || !event) return;
-  const rect = containerElement.getBoundingClientRect();
-  if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-  const circle = document.createElement('span');
-  const diameter = Math.max(rect.width, rect.height) * 1.5;
-  const radius = diameter / 2;
-
-  circle.style.width = circle.style.height = `${diameter}px`;
-  const clientX = event.type?.startsWith('pointer') ? event.clientX : rect.left + rect.width / 2;
-  const clientY = event.type?.startsWith('pointer') ? event.clientY : rect.top + rect.height / 2;
-
-  circle.style.left = `${clientX - rect.left - radius}px`;
-  circle.style.top = `${clientY - rect.top - radius}px`;
-  circle.classList.add('md-ripple-effect');
-
-  const existing = containerElement.querySelector('.md-ripple-effect');
-  if (existing) existing.remove();
-
-  // Clip only the ink, so the focus outline and expanded hit area remain visible.
-  let ink = containerElement.querySelector('.md-ink');
-  if (!ink) {
-    ink = document.createElement('span');
-    ink.className = 'md-ink';
-    ink.style.cssText = 'position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none';
-    containerElement.appendChild(ink);
-  }
-  ink.appendChild(circle);
-
-  setTimeout(() => {
-    circle.remove();
-  }, 450);
-}
+import {collectPressRipples} from './ripple.js';
+export {createRipple} from './ripple.js';
 
 /** Animate scale down on press. */
 export function pressScale(el, scale = 0.95, preset = 'expressiveSpatialFast') {
@@ -91,6 +56,7 @@ export function bindPress(el, {
   let isPressed = false;
   let pointerId = null;
   let canceledClick = false;
+  const pressRipples = new Set();
   const native = el.matches('button, input, a[href]');
 
   const start = (e) => {
@@ -99,14 +65,14 @@ export function bindPress(el, {
     if (e?.isPrimary === false) return;
     isPressed = true;
     canceledClick = false;
+    if (typeof e?.pointerId === 'number') pointerId = e.pointerId;
     try {
       if (e && typeof e.pointerId === 'number') {
         el.setPointerCapture(e.pointerId);
-        pointerId = e.pointerId;
       }
     } catch (_) {}
     el.classList.add('pressed');
-    onPress?.(e);
+    collectPressRipples(e, pressRipples, () => onPress?.(e));
   };
 
   const end = () => {
@@ -114,6 +80,7 @@ export function bindPress(el, {
     isPressed = false;
     el.classList.remove('pressed');
     onRelease?.();
+    for (const ripple of pressRipples) ripple.finish();
     if (pointerId !== null) {
       try { el.releasePointerCapture(pointerId); } catch (_) {}
       pointerId = null;
@@ -132,8 +99,15 @@ export function bindPress(el, {
     canceledClick = hit ? !el.contains(hit) : e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
     end();
   }, listenerOptions);
-  el.addEventListener('pointercancel', () => { canceledClick = true; end(); }, listenerOptions);
-  el.addEventListener('lostpointercapture', end, listenerOptions);
+  el.addEventListener('pointercancel', e => {
+    if (pointerId !== null && e.pointerId !== pointerId) return;
+    canceledClick = true; end();
+  }, listenerOptions);
+  el.addEventListener('lostpointercapture', e => {
+    if (pointerId !== null && e.pointerId !== pointerId) return;
+    if (isPressed) canceledClick = true;
+    end();
+  }, listenerOptions);
   el.addEventListener('blur', end, listenerOptions);
   el.addEventListener('click', e => {
     if (ignoreEvent(e)) return;
@@ -145,7 +119,14 @@ export function bindPress(el, {
     }
     onActivate?.(e);
   }, { ...listenerOptions, capture: true });
-  signal?.addEventListener('abort', end, { once: true });
+  const clearRipples = () => { for (const ripple of [...pressRipples]) ripple.dispose(); };
+  const disabledObserver = globalThis.MutationObserver ? new MutationObserver(() => {
+    // Clickable emits PressInteraction.Cancel when disabled while retaining
+    // its indication node. Let the existing ripple finish its normal exit.
+    if (disabled()) { canceledClick = true; end(); }
+  }) : null;
+  disabledObserver?.observe(el, {attributes:true,attributeFilter:['disabled','aria-disabled']});
+  signal?.addEventListener('abort', () => { end(); clearRipples(); disabledObserver?.disconnect(); }, { once: true });
 
   el.addEventListener('keydown', (e) => {
     if (ignoreEvent(e)) return;

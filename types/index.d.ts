@@ -83,12 +83,19 @@ export class MdIconButton extends MdBaseComponent {
 }
 
 export class MdFab extends MdBaseComponent {
-  variant: 'surface' | 'primary' | 'secondary' | 'tertiary';
-  size: 'small' | 'medium' | 'large';
-  shape: 'round' | 'square';
+  variant: 'surface' | 'primary' | 'secondary' | 'tertiary' | 'extended';
+  color: 'primary' | 'secondary' | 'tertiary' | 'primary-container' | 'secondary-container' | 'tertiary-container' | 'surface';
+  /** Ordinary default: baseline (56px). Extended small also remains 56px when collapsed. */
+  size: 'small' | 'baseline' | 'medium' | 'large';
   icon: string;
   label: string;
+  containerColor: string;
+  contentColor: string;
+  expanded: boolean;
+  readonly isExtended: boolean;
   lowered: boolean;
+  /** bottom-app-bar uses AndroidX's zero elevation in every interaction state. */
+  elevation: 'default' | 'bottom-app-bar';
 }
 
 export class MdCard extends MdBaseComponent {
@@ -231,10 +238,12 @@ export class MdProgressIndicator extends MdBaseComponent {
 }
 
 export class MdLoadingIndicator extends MdBaseComponent {
-  shape: 'circle' | 'square' | 'triangle' | 'star' | 'heart';
-  size: number;
-  speed: number;
+  variant: 'standalone' | 'contained';
+  size: string | number;
+  progress: number | null;
+  indeterminate: boolean;
   color: string;
+  containerColor: string;
 }
 
 export class MdBottomSheet extends MdBaseComponent {
@@ -280,8 +289,18 @@ export class MdTopAppBar extends MdBaseComponent {
 }
 
 export class MdBottomAppBar extends MdBaseComponent {
-  showFab: boolean;
-  fabIcon: string;
+  variant: 'standard' | 'flexible';
+  containerColor: string;
+  contentColor: string;
+  horizontalArrangement: 'start' | 'end' | 'center' | 'space-between' | 'space-around' | 'space-evenly' | 'fixed';
+  /** Standard: 80px. Flexible defaults to 64px; invalid heights use that default. */
+  get expandedHeight(): number;
+  set expandedHeight(value: number | null | undefined);
+  /** Standard Surface tonal elevation, 0dp by default; flexible uses source 0dp. */
+  get tonalElevation(): number;
+  set tonalElevation(value: number | null | undefined);
+  get contentPadding(): ToolbarContentPadding;
+  set contentPadding(value: ToolbarContentPadding | null | undefined);
 }
 
 export interface NavigationBarItem {
