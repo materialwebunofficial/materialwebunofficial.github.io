@@ -9,7 +9,19 @@ const locations={
  'BottomAppBarTokens.kt':prefix+'tokens/BottomAppBarTokens.kt',
  'DockedToolbarTokens.kt':prefix+'tokens/DockedToolbarTokens.kt',
  'AppBarTokens.kt':prefix+'tokens/AppBarTokens.kt',
- 'FabSecondaryContainerTokens.kt':prefix+'tokens/FabSecondaryContainerTokens.kt'
+ 'FabSecondaryContainerTokens.kt':prefix+'tokens/FabSecondaryContainerTokens.kt',
+ 'IconButton.kt':prefix+'IconButton.kt',
+ 'IconButtonDefaults.kt':prefix+'IconButtonDefaults.kt',
+ 'IconButtonTokens.kt':prefix+'tokens/IconButtonTokens.kt',
+ 'FilledIconButtonTokens.kt':prefix+'tokens/FilledIconButtonTokens.kt',
+ 'FilledTonalIconButtonTokens.kt':prefix+'tokens/FilledTonalIconButtonTokens.kt',
+ 'OutlinedIconButtonTokens.kt':prefix+'tokens/OutlinedIconButtonTokens.kt',
+ 'AppBarSmallTokens.kt':prefix+'tokens/AppBarSmallTokens.kt',
+ 'AppBarMediumTokens.kt':prefix+'tokens/AppBarMediumTokens.kt',
+ 'AppBarLargeTokens.kt':prefix+'tokens/AppBarLargeTokens.kt',
+ 'AppBarMediumFlexibleTokens.kt':prefix+'tokens/AppBarMediumFlexibleTokens.kt',
+ 'AppBarLargeFlexibleTokens.kt':prefix+'tokens/AppBarLargeFlexibleTokens.kt',
+ 'Box.kt':'compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt'
 };
 const sources=await Promise.all(Object.entries(locations).map(async([file,location])=>{
  const url=`https://raw.githubusercontent.com/androidx/androidx/${revision}/${location}`;

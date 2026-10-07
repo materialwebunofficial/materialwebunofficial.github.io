@@ -48,10 +48,8 @@ const defaultStyle = `
     user-select: none;
     background: transparent;
     overflow: visible;
-    transition:
-      background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      border-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease);
+    /* IconButtonColors returns state colors directly; shape/ripple animate separately. */
+    transition: none;
   }
 
   /* Focus Ring */
@@ -149,8 +147,8 @@ const defaultStyle = `
 
   /* Outlined */
   .btn.outlined {
-    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-    color: var(--md-sys-color-on-surface-variant, #49454f);
+    border: 1px solid var(--md-icon-button-outline-color, var(--md-sys-color-outline-variant, #cac4d0));
+    color: var(--md-icon-button-content-color, var(--md-sys-color-on-surface-variant, #49454f));
     background: transparent;
   }
   .btn.outlined.togglable.selected {
@@ -165,21 +163,21 @@ const defaultStyle = `
     box-shadow: none !important;
     pointer-events: none;
   }
-  .btn.filled:disabled {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  .btn.filled:disabled, .btn.filled.togglable:disabled {
+    background-color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .1);
+    color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38);
   }
-  .btn.tonal:disabled {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  .btn.tonal:disabled, .btn.tonal.togglable:disabled {
+    background-color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .1);
+    color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38);
   }
   .btn.standard:disabled {
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+    color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38);
     background: transparent;
   }
-  .btn.outlined:disabled {
-    border-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  .btn.outlined:disabled, .btn.outlined.togglable:disabled {
+    border-color: var(--md-icon-button-disabled-content-color, rgb(from var(--md-sys-color-outline-variant, #cac4d0) r g b / .38));
+    color: var(--md-icon-button-disabled-content-color, rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38));
     background: transparent;
   }
 
@@ -195,11 +193,10 @@ const defaultStyle = `
   .btn.standard.togglable.selected:is(:hover,:focus-visible,:active):not(:disabled) {
     color: var(--md-toolbar-icon-interacting-content, var(--md-toolbar-icon-selected-content, var(--md-sys-color-primary, #6750a4)));
   }
-  .btn.standard:disabled {
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  .btn.standard:disabled, .btn.standard.togglable:disabled {
+    color: var(--md-icon-button-disabled-content-color, rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38));
     background: var(--md-toolbar-icon-container, transparent);
   }
-  .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
   .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-icon-state-color, currentColor); }
   .md-ripple-effect { --md-ripple-color: var(--md-toolbar-icon-state-color, currentColor); }
 
@@ -363,7 +360,7 @@ export class MdIconButton extends HTMLElement {
     layout.style.setProperty('--_md-icon-button-width', btn.style.width);
     layout.style.setProperty('--_md-icon-button-height', btn.style.height);
     btn.style.borderRadius = `${this._getBaseRadius()}px`;
-    btn.style.borderWidth = this.variant === 'outlined' ? `${this.size === 'xl' ? 3 : this.size === 'l' ? 2 : 1}px` : '0';
+    btn.style.borderWidth = this.variant === 'outlined' && !(this.toggle && this.selected) ? `${this.size === 'xl' ? 3 : this.size === 'l' ? 2 : 1}px` : '0';
 
     const iconSlot = this.shadowRoot.querySelector('.icon');
     if (iconSlot) {

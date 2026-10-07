@@ -32,3 +32,4 @@ Thumbs.db
 # Required build and regression entry points (also override local tooling excludes).
 !scripts/generate-motion-tokens.js
 !scripts/test-expressive-parity.mjs
+!scripts/test-app-bars.mjs

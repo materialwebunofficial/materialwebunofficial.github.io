@@ -6,6 +6,8 @@
 import { SpringPhysics } from './motion/spring-physics.js';
 import { applyDynamicTheme, rgbToHct, hexToRgb, hctToHex } from './theme/hct-color-engine.js';
 import {FloatingToolbarScrollBehavior,ToolbarScrollExpansion} from './components/toolbar-scroll.js';
+import {TopAppBarScrollBehavior} from './components/top-app-bar-scroll.js';
+import {BottomAppBarScrollBehavior} from './components/bottom-app-bar-scroll.js';
 
 const STORAGE_KEYS = {
   THEME_MODE: 'md3e_theme_mode',
@@ -1489,6 +1491,16 @@ export function initShowcase() {
     if(toolbar.dataset.toolbarScrollMode==='expand'){
       toolbar.scrollExpansion=new ToolbarScrollExpansion({expanded:toolbar.expanded,onExpand:()=>toolbar.expand(),onCollapse:()=>toolbar.collapse()});
     }else toolbar.scrollBehavior=new FloatingToolbarScrollBehavior({exitDirection:'bottom'});
+  });
+  document.querySelectorAll('[data-top-app-bar-scroll]').forEach(bar=>{
+    const content=document.getElementById(bar.dataset.topAppBarScroll);
+    if(!content)return;
+    bar.scrollBehavior=TopAppBarScrollBehavior.enterAlways({isScrollingContentAtStart:()=>content.scrollTop===0});
+    bar.scrollTarget=content;
+  });
+  document.querySelectorAll('[data-bottom-app-bar-scroll]').forEach(bar=>{
+    const content=document.getElementById(bar.dataset.bottomAppBarScroll);if(!content)return;
+    bar.scrollBehavior=BottomAppBarScrollBehavior.exitAlways({element:bar});bar.scrollTarget=content;
   });
 
   // Stepper Interactive Wizard Wiring

@@ -242,7 +242,7 @@ export class MdFab extends HTMLElement {
     const isExt = this.isExtended;
     const pressed = fab.classList.contains('pressed');
     fab.className = `fab ${this.color} ${this.variant}${isExt ? ' extended' : ''}${pressed ? ' pressed' : ''}`;
-    fab.style.height = `var(--md-toolbar-fab-size, ${d.h}px)`;
+    fab.style.height = `clamp(var(--md-toolbar-control-min-height, 0px), var(--md-toolbar-fab-size, ${d.h}px), var(--md-toolbar-control-max-height, 2147483647px))`;
     fab.style.padding = '0';
     fab.style.borderRadius = `var(--md-toolbar-fab-shape, ${d.r}px)`;
     fab.style.gap = `${this.size === 'baseline' && isExt ? 12 : d.h === 96 ? 16 : d.h === 80 ? 12 : 8}px`;
@@ -328,7 +328,7 @@ export class MdFab extends HTMLElement {
       clip.hidden = true;
     }
     fab.style.minWidth = '0';
-    fab.style.width = `var(--md-toolbar-fab-size, ${width}px)`;
+    fab.style.width = `clamp(var(--md-toolbar-control-min-width, 0px), var(--md-toolbar-fab-size, ${width}px), var(--md-toolbar-control-max-width, 2147483647px))`;
     content.style.width = `var(--md-toolbar-fab-size, ${measuredWidth}px)`;
     content.style.paddingInlineStart = `${start}px`;
     content.style.paddingInlineEnd = `${end}px`;
@@ -343,16 +343,19 @@ export class MdFab extends HTMLElement {
     const style = getComputedStyle(fab);
     const minimum = Math.max(0, Math.round(parseFloat(getComputedStyle(probe).width) || 0));
     const width = parseFloat(style.width) || 0, height = parseFloat(style.height) || 0;
-    // FloatingToolbar's sized FAB slot supplies fixed incoming constraints.
+    // Sized toolbar and app-bar slots supply native incoming constraints.
     // The minimum-interactive node still requests its minimum, but Compose's
     // Placeable coercion offsets apply before placing the visible body.
     const sized = Boolean(style.getPropertyValue('--md-toolbar-fab-size').trim());
+    const constraints = Object.fromEntries([['minWidth','min-width'],['maxWidth','max-width'],['minHeight','min-height'],['maxHeight','max-height']].flatMap(([key,variable])=>{
+      const value=parseFloat(style.getPropertyValue('--md-toolbar-control-'+variable));return Number.isFinite(value)?[[key,value]]:[];
+    }));
     const touch = minimumInteractiveLayout({width,height,minimum,
-      ...(sized ? {minWidth:width,maxWidth:width,minHeight:height,maxHeight:height} : {})});
-    layout.style.width = `var(--md-toolbar-fab-size, ${touch.size.width}px)`;
-    layout.style.height = `var(--md-toolbar-fab-size, ${touch.size.height}px)`;
-    fab.style.left = `var(--_toolbar-fab-body-offset, ${touch.body.x}px)`;
-    fab.style.top = `var(--_toolbar-fab-body-offset, ${touch.body.y}px)`;
+      ...(sized ? {minWidth:width,maxWidth:width,minHeight:height,maxHeight:height} : {}),...constraints});
+    layout.style.width = `var(--md-toolbar-control-layout-width, var(--md-toolbar-fab-size, ${touch.size.width}px))`;
+    layout.style.height = `var(--md-toolbar-control-layout-height, var(--md-toolbar-fab-size, ${touch.size.height}px))`;
+    fab.style.left = `var(--md-toolbar-control-x, var(--_toolbar-fab-body-offset, ${touch.body.x}px))`;
+    fab.style.top = `var(--md-toolbar-control-y, var(--_toolbar-fab-body-offset, ${touch.body.y}px))`;
     this._minimumInteractiveLines = touch.lines;
   }
 

@@ -215,13 +215,13 @@ var SpringPhysics = class {
       velocity = current.velocity;
       previous.anim.cancel();
     }
-    const write3 = (value) => {
+    const write5 = (value) => {
       if (property === "scale") element2.style.scale = value === 1 ? "" : String(value);
       else if (property === "border-radius") element2.style.borderRadius = `${Math.max(0, value)}px`;
       else element2.style[property] = ["opacity", "zIndex", "flexGrow", "flexShrink"].includes(property) ? String(value) : `${value}px`;
     };
     if (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      write3(to);
+      write5(to);
       states.delete(property);
       return;
     }
@@ -249,7 +249,7 @@ var SpringPhysics = class {
     };
     anim.onfinish = () => {
       if (states.get(property)?.anim !== anim) return;
-      write3(to);
+      write5(to);
       states.delete(property);
       if (element2._activeSpringAnim === anim) element2._activeSpringAnim = null;
     };
@@ -266,10 +266,10 @@ function springDuration({
   dampingRatio = 0.8,
   visibilityThreshold = 0.01
 }) {
-  const f16 = Math.fround;
-  const displacement = f16(f16(f16(from) - f16(to)) / f16(visibilityThreshold));
-  const initialVelocity = f16(f16(velocity) / f16(visibilityThreshold));
-  const damping = f16(dampingRatio), k = f16(stiffness);
+  const f22 = Math.fround;
+  const displacement = f22(f22(f22(from) - f22(to)) / f22(visibilityThreshold));
+  const initialVelocity = f22(f22(velocity) / f22(visibilityThreshold));
+  const damping = f22(dampingRatio), k = f22(stiffness);
   if (damping === 0) return 9223372036854;
   if (displacement === 0 && initialVelocity === 0) return 0;
   const b = 2 * damping * Math.sqrt(k);
@@ -574,11 +574,11 @@ function rippleFrame({ width, height, originX = width / 2, originY = height / 2,
   const fadingOut = finishAt !== null && time >= Math.max(RIPPLE_TIMING.expand, finishAt);
   const fadeStart = finishAt === null ? Infinity : Math.max(RIPPLE_TIMING.expand, finishAt);
   const alpha = fadingOut ? f2(Math.max(0, 1 - f2((time - fadeStart) / RIPPLE_TIMING.fadeOut))) : finishAt !== null && time >= finishAt && time < RIPPLE_TIMING.expand ? 1 : f2(Math.min(time / RIPPLE_TIMING.fadeIn, 1));
-  const x = f2(width / 2), y = f2(height / 2);
+  const x = f2(width / 2), y2 = f2(height / 2);
   return {
     radius: lerp(radii.start, radius2 === void 0 ? radii.end : f2(radius2), drawerEasing(fraction)),
     x: lerp(bounded ? f2(originX) : x, x, fraction),
-    y: lerp(bounded ? f2(originY) : y, y, fraction),
+    y: lerp(bounded ? f2(originY) : y2, y2, fraction),
     alpha,
     done: finishAt !== null && time >= fadeStart + RIPPLE_TIMING.fadeOut,
     settled: time >= RIPPLE_TIMING.expand && !fadingOut
@@ -604,10 +604,10 @@ function createRipple(event, container) {
     surfaces.set(container, ripples);
   }
   for (const ripple of ripples) ripple.finish();
-  const rect2 = container.getBoundingClientRect(), width = container.clientWidth, height = container.clientHeight;
+  const rect4 = container.getBoundingClientRect(), width = container.clientWidth, height = container.clientHeight;
   const pointer = event.type?.startsWith("pointer");
-  const originX = pointer && rect2.width ? (event.clientX - rect2.left) * width / rect2.width : width / 2;
-  const originY = pointer && rect2.height ? (event.clientY - rect2.top) * height / rect2.height : height / 2;
+  const originX = pointer && rect4.width ? (event.clientX - rect4.left) * width / rect4.width : width / 2;
+  const originY = pointer && rect4.height ? (event.clientY - rect4.top) * height / rect4.height : height / 2;
   const geometry = { width, height, originX, originY };
   let ink = container.querySelector(":scope > .md-ink");
   if (!ink) {
@@ -844,8 +844,8 @@ function safeJsonParse(raw, fallback = null) {
 function createComponentSheet(cssText) {
   if (typeof CSSStyleSheet !== "undefined" && typeof CSSStyleSheet.prototype.replaceSync === "function") {
     try {
-      const sheet7 = new CSSStyleSheet();
-      sheet7.replaceSync(cssText + `
+      const sheet8 = new CSSStyleSheet();
+      sheet8.replaceSync(cssText + `
         @media (prefers-reduced-motion: reduce) {
           :host, *, *::before, *::after {
             transition-duration: 0s !important;
@@ -855,17 +855,17 @@ function createComponentSheet(cssText) {
           }
         }
       `);
-      return sheet7;
+      return sheet8;
     } catch (_) {
       return null;
     }
   }
   return null;
 }
-function adoptSheet(shadowRoot, sheet7) {
-  if (sheet7 && shadowRoot && "adoptedStyleSheets" in shadowRoot) {
+function adoptSheet(shadowRoot, sheet8) {
+  if (sheet8 && shadowRoot && "adoptedStyleSheets" in shadowRoot) {
     try {
-      shadowRoot.adoptedStyleSheets = [sheet7];
+      shadowRoot.adoptedStyleSheets = [sheet8];
     } catch (_) {
     }
   }
@@ -1761,10 +1761,8 @@ var defaultStyle3 = `
     user-select: none;
     background: transparent;
     overflow: visible;
-    transition:
-      background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      border-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease);
+    /* IconButtonColors returns state colors directly; shape/ripple animate separately. */
+    transition: none;
   }
 
   /* Focus Ring */
@@ -1862,8 +1860,8 @@ var defaultStyle3 = `
 
   /* Outlined */
   .btn.outlined {
-    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-    color: var(--md-sys-color-on-surface-variant, #49454f);
+    border: 1px solid var(--md-icon-button-outline-color, var(--md-sys-color-outline-variant, #cac4d0));
+    color: var(--md-icon-button-content-color, var(--md-sys-color-on-surface-variant, #49454f));
     background: transparent;
   }
   .btn.outlined.togglable.selected {
@@ -1878,21 +1876,21 @@ var defaultStyle3 = `
     box-shadow: none !important;
     pointer-events: none;
   }
-  .btn.filled:disabled {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  .btn.filled:disabled, .btn.filled.togglable:disabled {
+    background-color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .1);
+    color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38);
   }
-  .btn.tonal:disabled {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  .btn.tonal:disabled, .btn.tonal.togglable:disabled {
+    background-color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .1);
+    color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38);
   }
   .btn.standard:disabled {
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+    color: rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38);
     background: transparent;
   }
-  .btn.outlined:disabled {
-    border-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 12%, transparent);
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  .btn.outlined:disabled, .btn.outlined.togglable:disabled {
+    border-color: var(--md-icon-button-disabled-content-color, rgb(from var(--md-sys-color-outline-variant, #cac4d0) r g b / .38));
+    color: var(--md-icon-button-disabled-content-color, rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38));
     background: transparent;
   }
 
@@ -1908,11 +1906,10 @@ var defaultStyle3 = `
   .btn.standard.togglable.selected:is(:hover,:focus-visible,:active):not(:disabled) {
     color: var(--md-toolbar-icon-interacting-content, var(--md-toolbar-icon-selected-content, var(--md-sys-color-primary, #6750a4)));
   }
-  .btn.standard:disabled {
-    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
+  .btn.standard:disabled, .btn.standard.togglable:disabled {
+    color: var(--md-icon-button-disabled-content-color, rgb(from var(--md-sys-color-on-surface, #1d1b20) r g b / .38));
     background: var(--md-toolbar-icon-container, transparent);
   }
-  .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
   .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-icon-state-color, currentColor); }
   .md-ripple-effect { --md-ripple-color: var(--md-toolbar-icon-state-color, currentColor); }
 
@@ -2094,7 +2091,7 @@ var MdIconButton = class extends HTMLElement {
     layout.style.setProperty("--_md-icon-button-width", btn.style.width);
     layout.style.setProperty("--_md-icon-button-height", btn.style.height);
     btn.style.borderRadius = `${this._getBaseRadius()}px`;
-    btn.style.borderWidth = this.variant === "outlined" ? `${this.size === "xl" ? 3 : this.size === "l" ? 2 : 1}px` : "0";
+    btn.style.borderWidth = this.variant === "outlined" && !(this.toggle && this.selected) ? `${this.size === "xl" ? 3 : this.size === "l" ? 2 : 1}px` : "0";
     const iconSlot = this.shadowRoot.querySelector(".icon");
     if (iconSlot) {
       iconSlot.style.fontSize = `${s.iconSize}px`;
@@ -2422,11 +2419,11 @@ function minimumInteractiveLayout(o) {
 function axisConstraints(b, vertical) {
   return vertical ? { minWidth: b.minCross, maxWidth: b.maxCross, minHeight: b.minMain, maxHeight: b.maxMain } : { minWidth: b.minMain, maxWidth: b.maxMain, minHeight: b.minCross, maxHeight: b.maxCross };
 }
-function layoutPlacements(node, x = 0, y = 0, result = {}) {
+function layoutPlacements(node, x = 0, y2 = 0, result = {}) {
   x += node.offset.x;
-  y += node.offset.y;
-  result[node.id] = { x, y, width: node.requested.width, height: node.requested.height };
-  for (const p of node.children) layoutPlacements(p.node, x + p.x, y + p.y, result);
+  y2 += node.offset.y;
+  result[node.id] = { x, y: y2, width: node.requested.width, height: node.requested.height };
+  for (const p of node.children) layoutPlacements(p.node, x + p.x, y2 + p.y, result);
   return result;
 }
 function measureLayoutLeaf(id, input, constraints, vertical) {
@@ -2445,8 +2442,8 @@ function rowAlignmentLines(node) {
   for (const p of node.children) {
     const child = p.node, lines = child.interactiveLines;
     if (!lines) continue;
-    const y = p.y + child.offset.y + lines.top + child.offset.y, x = p.x + child.offset.x + lines.left + child.offset.x;
-    top = top === null ? y : Math.min(top, y);
+    const y2 = p.y + child.offset.y + lines.top + child.offset.y, x = p.x + child.offset.x + lines.left + child.offset.x;
+    top = top === null ? y2 : Math.min(top, y2);
     left = left === null ? x : Math.min(left, x);
   }
   return { top: top === null ? null : top + node.offset.y, left: left === null ? null : left + node.offset.x };
@@ -2510,7 +2507,7 @@ function crossPosition(input, size, item, vertical, rtl, before, line, defaultAl
   return round(f4(f4((size - item) / 2) * f4(1 + (vertical && rtl ? -bias : bias))));
 }
 function measureRowColumn(o, measure = (input, c, i) => measureLayoutLeaf("c" + i, input, c, !!o.vertical)) {
-  const vertical = !!o.vertical, rtl = !!o.rtl, b = bounds(o), inputs = o.children || [], spacing = o.arrangement === "spaced" ? 7 : 0;
+  const vertical = !!o.vertical, rtl = !!o.rtl, b = bounds(o), inputs = o.children || [], spacing = o.arrangement === "spaced" ? round(o.spacing ?? 7) : 0;
   const nodes = inputs.map(() => null), mainSizes = inputs.map(() => 0), crossSizes = inputs.map(() => 0);
   let totalWeight = 0, fixed = 0, cross = 0, weightedCount = 0, lastSpacing = 0, relative = false;
   const measureChild = (i, minMain, maxMain) => {
@@ -2678,14 +2675,14 @@ function resolveSurfaceColor(probe, color) {
   return { css, key: packed ?? css, packed };
 }
 function resolveSurfaceColors(host, probe, { container, content, elevation = 0 }) {
-  const style2 = getComputedStyle(host), resolved = /* @__PURE__ */ new Map();
+  const style3 = getComputedStyle(host), resolved = /* @__PURE__ */ new Map();
   const resolve = (color) => {
     if (!resolved.has(color)) resolved.set(color, resolveSurfaceColor(probe, color));
     return resolved.get(color);
   };
   const roles = [...new Set(CONTENT_COLOR_ROLES.flat())];
-  const values = roles.map((role) => style2.getPropertyValue("--md-sys-color-" + role).trim());
-  const signature = JSON.stringify([style2.color, values]);
+  const values = roles.map((role) => style3.getPropertyValue("--md-sys-color-" + role).trim());
+  const signature = JSON.stringify([style3.color, values]);
   let cached = schemeCache.get(host);
   if (cached?.signature !== signature) {
     const scheme2 = {};
@@ -2698,15 +2695,15 @@ function resolveSurfaceColors(host, probe, { container, content, elevation = 0 }
   const scheme = cached.scheme;
   const background = resolve(container);
   const foreground = content ? resolve(content).css : matchingContentColor(background.key, scheme);
-  const parent = parseFloat(style2.getPropertyValue("--md-absolute-tonal-elevation")) || 0;
+  const parent = parseFloat(style3.getPropertyValue("--md-absolute-tonal-elevation")) || 0;
   const total = f5(f5(parent) + f5(elevation));
-  const enabled = !["false", "0"].includes(style2.getPropertyValue("--md-tonal-elevation-enabled").trim());
-  const tint = style2.getPropertyValue("--md-sys-color-surface-tint").trim();
+  const enabled = !["false", "0"].includes(style3.getPropertyValue("--md-tonal-elevation-enabled").trim());
+  const tint = style3.getPropertyValue("--md-sys-color-surface-tint").trim();
   const tintColor = tint ? resolve(tint) : null;
   const tonal = enabled && background.key === scheme.surface && background.packed !== void 0 && tintColor?.packed !== void 0;
   return {
     container: tonal ? srgbCss(tonalSurfaceColor(background.packed, tintColor.packed, total)) : background.css,
-    content: typeof foreground === "number" ? srgbCss(foreground) : foreground ?? style2.color,
+    content: typeof foreground === "number" ? srgbCss(foreground) : foreground ?? style3.color,
     total
   };
 }
@@ -2939,7 +2936,7 @@ var MdFab = class extends HTMLElement {
     const isExt = this.isExtended;
     const pressed = fab.classList.contains("pressed");
     fab.className = `fab ${this.color} ${this.variant}${isExt ? " extended" : ""}${pressed ? " pressed" : ""}`;
-    fab.style.height = `var(--md-toolbar-fab-size, ${d.h}px)`;
+    fab.style.height = `clamp(var(--md-toolbar-control-min-height, 0px), var(--md-toolbar-fab-size, ${d.h}px), var(--md-toolbar-control-max-height, 2147483647px))`;
     fab.style.padding = "0";
     fab.style.borderRadius = `var(--md-toolbar-fab-shape, ${d.r}px)`;
     fab.style.gap = `${this.size === "baseline" && isExt ? 12 : d.h === 96 ? 16 : d.h === 80 ? 12 : 8}px`;
@@ -3024,7 +3021,7 @@ var MdFab = class extends HTMLElement {
       clip.hidden = true;
     }
     fab.style.minWidth = "0";
-    fab.style.width = `var(--md-toolbar-fab-size, ${width}px)`;
+    fab.style.width = `clamp(var(--md-toolbar-control-min-width, 0px), var(--md-toolbar-fab-size, ${width}px), var(--md-toolbar-control-max-width, 2147483647px))`;
     content.style.width = `var(--md-toolbar-fab-size, ${measuredWidth}px)`;
     content.style.paddingInlineStart = `${start}px`;
     content.style.paddingInlineEnd = `${end}px`;
@@ -3035,30 +3032,35 @@ var MdFab = class extends HTMLElement {
     const fab = this.shadowRoot.querySelector(".fab");
     const layout = this.shadowRoot.querySelector(".touch-layout");
     const probe = this.shadowRoot.querySelector(".minimum-probe");
-    const style2 = getComputedStyle(fab);
+    const style3 = getComputedStyle(fab);
     const minimum = Math.max(0, Math.round(parseFloat(getComputedStyle(probe).width) || 0));
-    const width = parseFloat(style2.width) || 0, height = parseFloat(style2.height) || 0;
-    const sized = Boolean(style2.getPropertyValue("--md-toolbar-fab-size").trim());
+    const width = parseFloat(style3.width) || 0, height = parseFloat(style3.height) || 0;
+    const sized = Boolean(style3.getPropertyValue("--md-toolbar-fab-size").trim());
+    const constraints = Object.fromEntries([["minWidth", "min-width"], ["maxWidth", "max-width"], ["minHeight", "min-height"], ["maxHeight", "max-height"]].flatMap(([key, variable]) => {
+      const value = parseFloat(style3.getPropertyValue("--md-toolbar-control-" + variable));
+      return Number.isFinite(value) ? [[key, value]] : [];
+    }));
     const touch = minimumInteractiveLayout({
       width,
       height,
       minimum,
-      ...sized ? { minWidth: width, maxWidth: width, minHeight: height, maxHeight: height } : {}
+      ...sized ? { minWidth: width, maxWidth: width, minHeight: height, maxHeight: height } : {},
+      ...constraints
     });
-    layout.style.width = `var(--md-toolbar-fab-size, ${touch.size.width}px)`;
-    layout.style.height = `var(--md-toolbar-fab-size, ${touch.size.height}px)`;
-    fab.style.left = `var(--_toolbar-fab-body-offset, ${touch.body.x}px)`;
-    fab.style.top = `var(--_toolbar-fab-body-offset, ${touch.body.y}px)`;
+    layout.style.width = `var(--md-toolbar-control-layout-width, var(--md-toolbar-fab-size, ${touch.size.width}px))`;
+    layout.style.height = `var(--md-toolbar-control-layout-height, var(--md-toolbar-fab-size, ${touch.size.height}px))`;
+    fab.style.left = `var(--md-toolbar-control-x, var(--_toolbar-fab-body-offset, ${touch.body.x}px))`;
+    fab.style.top = `var(--md-toolbar-control-y, var(--_toolbar-fab-body-offset, ${touch.body.y}px))`;
     this._minimumInteractiveLines = touch.lines;
   }
   _syncColors() {
     if (this.disabled) return;
     const fab = this.shadowRoot.querySelector(".fab");
-    const style2 = getComputedStyle(fab);
-    const toolbar = Boolean(style2.getPropertyValue("--md-toolbar-fab-rest-shadow").trim());
-    const toolbarContent = this.color === "primary-container" ? style2.getPropertyValue("--md-toolbar-fab-content").trim() : "";
+    const style3 = getComputedStyle(fab);
+    const toolbar = Boolean(style3.getPropertyValue("--md-toolbar-fab-rest-shadow").trim());
+    const toolbarContent = this.color === "primary-container" ? style3.getPropertyValue("--md-toolbar-fab-content").trim() : "";
     const colors = resolveSurfaceColors(this, this.shadowRoot.querySelector(".color-probe"), {
-      container: style2.backgroundColor,
+      container: style3.backgroundColor,
       content: this.contentColor || toolbarContent,
       elevation: this.elevation === "bottom-app-bar" ? 0 : toolbar ? 3 : this.lowered ? 1 : 6
     });
@@ -3076,9 +3078,9 @@ var MdFab = class extends HTMLElement {
     this._interactions = bindFabInteractions(fab, {
       disabled: () => this.disabled,
       configuration: () => {
-        const style2 = getComputedStyle(fab);
+        const style3 = getComputedStyle(fab);
         if (this.elevation === "bottom-app-bar") return { rest: 0, hover: 0, restShadow: "var(--md-sys-elevation-level-0)", hoverShadow: "var(--md-sys-elevation-level-0)" };
-        const toolbar = Boolean(style2.getPropertyValue("--md-toolbar-fab-rest-shadow").trim());
+        const toolbar = Boolean(style3.getPropertyValue("--md-toolbar-fab-rest-shadow").trim());
         const rest = toolbar ? 3 : this.lowered ? 1 : 6;
         const hover = toolbar ? 6 : this.lowered ? 3 : 8;
         return {
@@ -4050,7 +4052,7 @@ function sliderTrackLayout({
 function sliderTrackPath({ bounds: b, radii }) {
   const [tl, tr, br, bl] = roundedOutlineRadii({ bounds: b, radii }).map((r2) => r2[0]);
   const { left: l, top: t, right: r, bottom: z } = b;
-  const arc = (radius2, x, y) => radius2 > 0 ? `A${radius2} ${radius2} 0 0 1 ${x} ${y}` : `L${x} ${y}`;
+  const arc = (radius2, x, y2) => radius2 > 0 ? `A${radius2} ${radius2} 0 0 1 ${x} ${y2}` : `L${x} ${y2}`;
   return `M${l + tl} ${t}H${r - tr}${arc(tr, r, t + tr)}V${z - br}${arc(br, r - br, z)}H${l + bl}${arc(bl, l, z - bl)}V${t + tl}${arc(tl, l + tl, t)}Z`;
 }
 
@@ -4417,10 +4419,10 @@ var MdSlider = class extends HTMLElement {
     if (p && finish) this._emit("change");
   }
   _pointerCoordinates(e, p) {
-    const root = this._root, rect2 = root.getBoundingClientRect();
-    const x = Math.fround(rect2.width ? (e.clientX - rect2.left) * root.clientWidth / rect2.width : 0);
-    const y = Math.fround(rect2.height ? (e.clientY - rect2.top) * root.clientHeight / rect2.height : 0);
-    return { axis: p.vertical ? y : x, cross: p.vertical ? x : y };
+    const root = this._root, rect4 = root.getBoundingClientRect();
+    const x = Math.fround(rect4.width ? (e.clientX - rect4.left) * root.clientWidth / rect4.width : 0);
+    const y2 = Math.fround(rect4.height ? (e.clientY - rect4.top) * root.clientHeight / rect4.height : 0);
+    return { axis: p.vertical ? y2 : x, cross: p.vertical ? x : y2 };
   }
   _updatePointer(delta) {
     const p = this._pointer;
@@ -5836,12 +5838,12 @@ var MdCheckbox = class extends HTMLElement {
   }
   _sync() {
     const root = this.shadowRoot.querySelector(".chk-root");
-    const box = this.shadowRoot.querySelector(".box");
-    if (!root || !box) return;
+    const box3 = this.shadowRoot.querySelector(".box");
+    if (!root || !box3) return;
     this._internals?.setFormValue(this.checked ? this.value : null, JSON.stringify({ checked: this.checked, indeterminate: this.indeterminate }));
     root.className = `chk-root${this.disabled ? " disabled" : ""}`;
-    box.className = `box${this.checked && !this.indeterminate ? " checked" : ""}${this.indeterminate ? " indeterminate" : ""}${this.error ? " error" : ""}`;
-    box.style.borderWidth = `${this.outlineStroke}px`;
+    box3.className = `box${this.checked && !this.indeterminate ? " checked" : ""}${this.indeterminate ? " indeterminate" : ""}${this.error ? " error" : ""}`;
+    box3.style.borderWidth = `${this.outlineStroke}px`;
     this.shadowRoot.querySelector(".mark-check").style.strokeWidth = `${this.checkmarkStroke}px`;
     this._syncMark();
     root.setAttribute("tabindex", this.disabled ? "-1" : "0");
@@ -6437,7 +6439,7 @@ function linearWaveSegments(start, end, { height, stroke = 4, wavelength, amplit
     let points = [[i * dx, 0], [(i + 0.5) * dx, (i % 2 ? -1 : 1) * dy], [(i + 1) * dx, 0]];
     if (b < 1) points = split(points, b)[0];
     if (a > 0) points = split(points, a / b)[1];
-    result.push(points.map(([x, y]) => [x - shift, height / 2 + y * amplitude]));
+    result.push(points.map(([x, y2]) => [x - shift, height / 2 + y2 * amplitude]));
   }
   return result;
 }
@@ -6554,7 +6556,7 @@ var defaultStyle12 = `
 `;
 var sheet = createComponentSheet(defaultStyle12);
 var clamp3 = (x) => Math.max(0, Math.min(1, x));
-var finite2 = (value, fallback, valid = () => true) => Number.isFinite(value) && valid(value) ? value : fallback;
+var finite2 = (value, fallback, valid2 = () => true) => Number.isFinite(value) && valid2(value) ? value : fallback;
 var MdProgressIndicator = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -6906,7 +6908,7 @@ var MdProgressIndicator = class extends HTMLElement {
     } else this._drawCircularWave(ctx, now, elapsed, amplitude);
     ctx.restore();
   }
-  _lines(ctx, lines, color, width, cap, y) {
+  _lines(ctx, lines, color, width, cap, y2) {
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
     ctx.lineCap = cap;
@@ -6915,14 +6917,14 @@ var MdProgressIndicator = class extends HTMLElement {
         ctx.fillStyle = color;
         if (cap === "round") {
           ctx.beginPath();
-          ctx.arc(a, y, width / 2, 0, 2 * Math.PI);
+          ctx.arc(a, y2, width / 2, 0, 2 * Math.PI);
           ctx.fill();
-        } else if (cap === "square") ctx.fillRect(a - width / 2, y - width / 2, width, width);
+        } else if (cap === "square") ctx.fillRect(a - width / 2, y2 - width / 2, width, width);
         continue;
       }
       ctx.beginPath();
-      ctx.moveTo(a, y);
-      ctx.lineTo(b, y);
+      ctx.moveTo(a, y2);
+      ctx.lineTo(b, y2);
       ctx.stroke();
     }
   }
@@ -7008,16 +7010,16 @@ function drawMorph(ctx, pair, progress, scale2) {
     minY = Math.min(minY, c[i + 1]);
     maxY = Math.max(maxY, c[i + 1]);
   }
-  const x = (minX + maxX) / 2, y = (minY + maxY) / 2;
+  const x = (minX + maxX) / 2, y2 = (minY + maxY) / 2;
   ctx.beginPath();
-  ctx.moveTo((cubics[0][0] - x) * scale2, (cubics[0][1] - y) * scale2);
+  ctx.moveTo((cubics[0][0] - x) * scale2, (cubics[0][1] - y2) * scale2);
   for (const c of cubics) ctx.bezierCurveTo(
     (c[2] - x) * scale2,
-    (c[3] - y) * scale2,
+    (c[3] - y2) * scale2,
     (c[4] - x) * scale2,
-    (c[5] - y) * scale2,
+    (c[5] - y2) * scale2,
     (c[6] - x) * scale2,
-    (c[7] - y) * scale2
+    (c[7] - y2) * scale2
   );
   ctx.closePath();
   ctx.fill();
@@ -7597,17 +7599,17 @@ var MdBottomSheet = class extends HTMLElement {
   }
   close() {
     if (!this.open) return;
-    const sheet7 = this.shadowRoot.querySelector(".sheet");
+    const sheet8 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
-    if (sheet7 && scrim) {
-      sheet7.style.transition = "transform 260ms cubic-bezier(0.3, 0, 0, 1)";
-      sheet7.style.transform = "translateY(100%)";
+    if (sheet8 && scrim) {
+      sheet8.style.transition = "transform 260ms cubic-bezier(0.3, 0, 0, 1)";
+      sheet8.style.transform = "translateY(100%)";
       scrim.style.transition = "opacity 260ms linear";
       scrim.style.opacity = "0";
       setTimeout(() => {
         this.open = false;
-        sheet7.style.transform = "";
-        sheet7.style.transition = "";
+        sheet8.style.transform = "";
+        sheet8.style.transition = "";
         scrim.style.opacity = "";
         scrim.style.transition = "";
         this.dispatchEvent(new CustomEvent("close", { bubbles: true, composed: true }));
@@ -7651,28 +7653,28 @@ var MdBottomSheet = class extends HTMLElement {
   _activate() {
     document.addEventListener("keydown", this._onKeydown);
     document.body.style.overflow = "hidden";
-    const sheet7 = this.shadowRoot.querySelector(".sheet");
+    const sheet8 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
     if (scrim) {
       scrim.style.opacity = "0";
       scrim.style.transition = "opacity 250ms ease";
     }
-    if (sheet7) {
-      sheet7.style.transform = "translateY(100%)";
-      sheet7.style.transition = "none";
-      void sheet7.offsetHeight;
+    if (sheet8) {
+      sheet8.style.transform = "translateY(100%)";
+      sheet8.style.transition = "none";
+      void sheet8.offsetHeight;
       requestAnimationFrame(() => {
-        sheet7.style.transition = "transform 380ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.3, 0.64, 1))";
-        sheet7.style.transform = "translateY(0)";
+        sheet8.style.transition = "transform 380ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.3, 0.64, 1))";
+        sheet8.style.transform = "translateY(0)";
         if (scrim) scrim.style.opacity = "0.4";
       });
       setTimeout(() => {
-        sheet7.style.transition = "";
+        sheet8.style.transition = "";
         if (scrim) scrim.style.transition = "";
       }, 380);
     }
-    const f16 = this._focusable();
-    if (f16.length) f16[0].focus({ preventScroll: true });
+    const f22 = this._focusable();
+    if (f22.length) f22[0].focus({ preventScroll: true });
   }
   _deactivate() {
     document.removeEventListener("keydown", this._onKeydown);
@@ -7686,9 +7688,9 @@ var MdBottomSheet = class extends HTMLElement {
       return;
     }
     if (e.key === "Tab") {
-      const f16 = this._focusable();
-      if (!f16.length) return;
-      const first = f16[0], last = f16[f16.length - 1];
+      const f22 = this._focusable();
+      if (!f22.length) return;
+      const first = f22[0], last = f22[f22.length - 1];
       const active = this.shadowRoot.activeElement;
       if (e.shiftKey && active === first) {
         e.preventDefault();
@@ -7713,8 +7715,8 @@ var MdBottomSheet = class extends HTMLElement {
       scrim.addEventListener("click", onScrimDismiss, { signal });
     }
     const handleArea = this.shadowRoot.querySelector(".handle-area");
-    const sheet7 = this.shadowRoot.querySelector(".sheet");
-    if (!handleArea || !sheet7) return;
+    const sheet8 = this.shadowRoot.querySelector(".sheet");
+    if (!handleArea || !sheet8) return;
     let isDragging = false;
     let startY = 0;
     let currentY = 0;
@@ -7726,7 +7728,7 @@ var MdBottomSheet = class extends HTMLElement {
       startTime = performance.now();
       handleArea.setPointerCapture?.(e.pointerId);
       handleArea.classList.add("pressed");
-      sheet7.style.transition = "none";
+      sheet8.style.transition = "none";
       if (scrim) scrim.style.transition = "none";
     };
     const onPointerMove = (e) => {
@@ -7734,15 +7736,15 @@ var MdBottomSheet = class extends HTMLElement {
       currentY = e.clientY;
       const deltaY = currentY - startY;
       if (deltaY > 0) {
-        sheet7.style.transform = `translateY(${deltaY}px)`;
+        sheet8.style.transform = `translateY(${deltaY}px)`;
         if (scrim) {
-          const sheetHeight = sheet7.offsetHeight || 300;
+          const sheetHeight = sheet8.offsetHeight || 300;
           const opacity = Math.max(0, 0.4 * (1 - deltaY / sheetHeight));
           scrim.style.opacity = String(opacity);
         }
       } else {
         const rubberBand = deltaY * 0.35;
-        sheet7.style.transform = `translateY(${rubberBand}px)`;
+        sheet8.style.transform = `translateY(${rubberBand}px)`;
         if (scrim) scrim.style.opacity = "0.4";
       }
     };
@@ -7754,16 +7756,16 @@ var MdBottomSheet = class extends HTMLElement {
       const elapsed = performance.now() - startTime || 1;
       const velocityY = deltaY / elapsed;
       if (deltaY > 80 || velocityY > 0.4) {
-        sheet7.style.transition = "transform 0.22s cubic-bezier(0.3, 0, 0, 1)";
-        sheet7.style.transform = "translateY(100%)";
+        sheet8.style.transition = "transform 0.22s cubic-bezier(0.3, 0, 0, 1)";
+        sheet8.style.transform = "translateY(100%)";
         if (scrim) {
           scrim.style.transition = "opacity 0.22s linear";
           scrim.style.opacity = "0";
         }
         setTimeout(() => {
           this.open = false;
-          sheet7.style.transform = "";
-          sheet7.style.transition = "";
+          sheet8.style.transform = "";
+          sheet8.style.transition = "";
           if (scrim) {
             scrim.style.opacity = "";
             scrim.style.transition = "";
@@ -7771,14 +7773,14 @@ var MdBottomSheet = class extends HTMLElement {
           this.dispatchEvent(new CustomEvent("close", { bubbles: true, composed: true }));
         }, 220);
       } else {
-        sheet7.style.transition = "transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1)";
-        sheet7.style.transform = "translateY(0px)";
+        sheet8.style.transition = "transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1)";
+        sheet8.style.transform = "translateY(0px)";
         if (scrim) {
           scrim.style.transition = "opacity 0.32s ease";
           scrim.style.opacity = "0.4";
         }
         setTimeout(() => {
-          sheet7.style.transition = "";
+          sheet8.style.transition = "";
           if (scrim) {
             scrim.style.transition = "";
             scrim.style.opacity = "";
@@ -8349,10 +8351,10 @@ var MdTooltip = class extends HTMLElement {
     if (!this._target) return;
     const tip = this.shadowRoot.querySelector(".tip");
     if (!tip) return;
-    const rect2 = this._target.getBoundingClientRect();
+    const rect4 = this._target.getBoundingClientRect();
     const isBottom = this.placement === "bottom";
-    const top = isBottom ? rect2.bottom + 8 : rect2.top - 8;
-    const left = rect2.left + rect2.width / 2;
+    const top = isBottom ? rect4.bottom + 8 : rect4.top - 8;
+    const left = rect4.left + rect4.width / 2;
     tip.style.position = "fixed";
     tip.style.top = `${top}px`;
     tip.style.left = `${left}px`;
@@ -8513,316 +8515,118 @@ if (!customElements.get("md-badge")) {
   customElements.define("md-badge", MdBadge);
 }
 
-// src/components/md-top-app-bar.js
-var defaultStyle18 = `
-  :host {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none; display: block; outline: none; width: 100%; }
-
-  .bar {
-    box-sizing: border-box;
-    display: flex;
-    align-items: flex-start;
-    width: 100%;
-    /* CornerNone(0) \u2014 AppBarTokens.ContainerShape */
-    border-radius: 0;
-    padding: 0 4px; /* Leading/Trailing space 4dp */
-    background-color: var(--md-sys-color-surface, #FEF7FF);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    box-shadow: none;
-    user-select: none;
-    -webkit-user-select: none;
-    transition:
-      background-color var(--md-sys-motion-duration-short2, 100ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-      box-shadow var(--md-sys-motion-duration-medium1, 250ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.42, 1.67, 0.21, 0.9));
+// src/motion/color-motion.js
+var clamp4 = (value, min, max) => Math.max(min, Math.min(max, value));
+var ColorSpringVector = class {
+  constructor(value) {
+    this.value = this.target = value.map(Math.fround);
+    this.animation = null;
   }
-
-  /* Scrolled: surface -> surface-container + elevation L2 */
-  :host([scrolled]) .bar {
-    background-color: var(--md-sys-color-surface-container, #F3EDF7);
-    box-shadow: var(--md-sys-elevation-level-2, 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15));
-  }
-
-  /* Small (center-aligned) 64dp */
-  .bar[data-variant="small"] { min-height: 64px; align-items: center; }
-  .bar[data-variant="small"] .titles { text-align: center; }
-  .bar[data-variant="small"] .headline {
-    font: var(--md-sys-typescale-title-large, 400 22px/28px Roboto, sans-serif);
-  }
-  .bar[data-variant="small"] .subtitle {
-    font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
-  }
-
-  /* Medium 112dp */
-  .bar[data-variant="medium"] { min-height: 112px; }
-  .bar[data-variant="medium"] .headline {
-    font: var(--md-sys-typescale-headline-small, 400 24px/32px Roboto, sans-serif);
-  }
-
-  /* Medium flexible 112dp, HeadlineMedium(28) + LabelLarge(14) */
-  .bar[data-variant="medium-flexible"] { min-height: 112px; }
-  :host([subtitle]:not([subtitle=""])) .bar[data-variant="medium-flexible"] { min-height: 136px; }
-  .bar[data-variant="medium-flexible"] .headline {
-    font: var(--md-sys-typescale-headline-medium, 400 28px/36px Roboto, sans-serif);
-  }
-  .bar[data-variant="medium-flexible"] .subtitle {
-    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-  }
-
-  /* Large 152dp */
-  .bar[data-variant="large"] { min-height: 152px; }
-  .bar[data-variant="large"] .headline {
-    font: var(--md-sys-typescale-headline-medium, 400 28px/36px Roboto, sans-serif);
-  }
-
-  /* Large flexible 152dp, DisplaySmall(36) + TitleMedium(16) */
-  .bar[data-variant="large-flexible"] { min-height: 120px; }
-  :host([subtitle]:not([subtitle=""])) .bar[data-variant="large-flexible"] { min-height: 152px; }
-  .bar[data-variant="large-flexible"] .headline {
-    font: var(--md-sys-typescale-display-small, 400 36px/44px Roboto, sans-serif);
-  }
-  .bar[data-variant="large-flexible"] .subtitle {
-    font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
-  }
-
-  .leading, .trailing {
-    display: flex;
-    align-items: center;
-    gap: 0; /* IconButtonSpace 0dp */
-    min-height: 48px; /* touch target */
-    flex: 0 0 auto;
-  }
-  .bar:not([data-variant="small"]) .leading,
-  .bar:not([data-variant="small"]) .trailing { padding-top: 8px; }
-
-  .titles {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
-    padding: 8px;
-  }
-  .bar:not([data-variant="small"]) .titles {
-    align-self: flex-end;
-    padding-bottom: 12px;
-  }
-  .headline {
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .subtitle {
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .subtitle:empty { display: none; }
-
-  /* Icon slot wrappers: 48x48 hit area, hover = CSS only */
-  .icon-wrap {
-    width: 48px; height: 48px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: var(--md-sys-shape-corner-full, 9999px);
-    background-color: transparent;
-    cursor: pointer;
-    outline: none;
-    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-  }
-  .icon-wrap:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent); }
-  .icon-wrap.pressed:hover { background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 10%, transparent); }
-  .icon-wrap:focus { outline: none; }
-  .icon-wrap:focus-visible {
-    outline: 3px solid var(--md-sys-color-primary, #6750A4);
-    outline-offset: 2px;
-  }
-  .mat-sym {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', system-ui, sans-serif;
-    font-size: 24px;
-    line-height: 1;
-    display: inline-block;
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  }
-
-  ::slotted([slot="leading"]) { color: var(--md-sys-color-on-surface, #1D1B20); }
-  ::slotted([slot="trailing"]) { color: var(--md-sys-color-on-surface-variant, #49454F); }
-`;
-var topAppBarSheet = createComponentSheet(defaultStyle18);
-var MdTopAppBar = class extends HTMLElement {
-  static get observedAttributes() {
-    return [
-      "variant",
-      "headline",
-      "subtitle",
-      "scrolled",
-      "expanded-height",
-      "collapsed-height",
-      "title-horizontal-alignment",
-      "container-color",
-      "content-color",
-      "horizontal-arrangement"
-    ];
-  }
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, topAppBarSheet);
-    this._rendered = false;
-    this._abortController = null;
-  }
-  get variant() {
-    return sanitizeAttribute(this.getAttribute("variant") || "small");
-  }
-  get headline() {
-    return this.getAttribute("headline") || "";
-  }
-  get subtitle() {
-    return this.getAttribute("subtitle") || "";
-  }
-  get scrolled() {
-    return this.hasAttribute("scrolled");
-  }
-  set scrolled(v) {
-    v ? this.setAttribute("scrolled", "") : this.removeAttribute("scrolled");
-  }
-  get expandedHeight() {
-    const h = parseFloat(this.getAttribute("expanded-height"));
-    return isNaN(h) ? 152 : h;
-  }
-  set expandedHeight(v) {
-    if (v === null || v === void 0) this.removeAttribute("expanded-height");
-    else this.setAttribute("expanded-height", String(v));
-  }
-  get collapsedHeight() {
-    const h = parseFloat(this.getAttribute("collapsed-height"));
-    return isNaN(h) ? 64 : h;
-  }
-  set collapsedHeight(v) {
-    if (v === null || v === void 0) this.removeAttribute("collapsed-height");
-    else this.setAttribute("collapsed-height", String(v));
-  }
-  get titleHorizontalAlignment() {
-    return this.getAttribute("title-horizontal-alignment") || "center";
-  }
-  set titleHorizontalAlignment(v) {
-    if (v === null || v === void 0) this.removeAttribute("title-horizontal-alignment");
-    else this.setAttribute("title-horizontal-alignment", v);
-  }
-  get containerColor() {
-    return this.getAttribute("container-color") || "";
-  }
-  set containerColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("container-color");
-    else this.setAttribute("container-color", v);
-  }
-  get contentColor() {
-    return this.getAttribute("content-color") || "";
-  }
-  set contentColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("content-color");
-    else this.setAttribute("content-color", v);
-  }
-  get horizontalArrangement() {
-    return this.getAttribute("horizontal-arrangement") || "start";
-  }
-  set horizontalArrangement(v) {
-    if (v === null || v === void 0) this.removeAttribute("horizontal-arrangement");
-    else this.setAttribute("horizontal-arrangement", v);
-  }
-  connectedCallback() {
-    if (!this._rendered) {
-      this.render();
-      this._rendered = true;
-      this.setupInteractions();
+  sample(now) {
+    const animation = this.animation;
+    if (!animation) return { value: [...this.value], velocity: [0, 0, 0, 0] };
+    const elapsed = Math.max(0, now - animation.start);
+    if (elapsed >= animation.duration) {
+      this.finish();
+      return this.sample(now);
     }
+    const states = animation.channels.map((channel2) => SpringPhysics.solve({
+      ...channel2,
+      from: Math.fround(channel2.from - channel2.to),
+      to: 0,
+      time: Math.floor(elapsed) / 1e3
+    }));
+    return {
+      value: states.map((state, index) => Math.fround(state.position + animation.channels[index].to)),
+      velocity: states.map((state) => Math.fround(state.velocity))
+    };
   }
-  disconnectedCallback() {
-    this._abortController?.abort();
-    this._abortController = null;
-  }
-  attributeChangedCallback(name, oldV, newV) {
-    if (!this._rendered || oldV === newV) return;
-    if (name === "headline") {
-      const h = this.shadowRoot.querySelector(".headline");
-      if (h) h.textContent = newV || "";
-    } else if (name === "subtitle") {
-      const s = this.shadowRoot.querySelector(".subtitle");
-      if (s) s.textContent = newV || "";
-    } else if (name === "variant" || name === "container-color" || name === "content-color" || name === "expanded-height" || name === "collapsed-height") {
-      this.render();
-      this.setupInteractions();
+  to(value, spec, { now = performance.now(), snap = false } = {}) {
+    const target = value.map(Math.fround);
+    if (target.every((component, index) => component === this.target[index])) return;
+    const current = this.sample(now);
+    this.target = target;
+    if (snap) {
+      this.finish();
+      return;
     }
+    const channels = target.map((to, index) => ({
+      from: current.value[index],
+      to,
+      velocity: current.velocity[index],
+      stiffness: Math.fround(spec.stiffness),
+      dampingRatio: Math.fround(spec.dampingRatio)
+    }));
+    this.animation = { channels, start: now, duration: Math.max(...channels.map((channel2) => springDuration(channel2))) };
   }
-  render() {
-    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle18}</style>`}
-      <header class="bar" data-variant="${escapeHtml(this.variant)}" role="banner">
-        <div class="leading">
-          <slot name="leading">
-            <span class="icon-wrap" tabindex="0" role="button" aria-label="Navigation">
-              <span class="mat-sym">menu</span>
-            </span>
-          </slot>
-        </div>
-        <div class="titles">
-          <span class="headline">${escapeHtml(this.headline)}</span>
-          <span class="subtitle">${escapeHtml(this.subtitle)}</span>
-        </div>
-        <div class="trailing">
-          <slot name="trailing">
-            <span class="icon-wrap" tabindex="0" role="button" aria-label="Search">
-              <span class="mat-sym">search</span>
-            </span>
-            <span class="icon-wrap" tabindex="0" role="button" aria-label="More options">
-              <span class="mat-sym">more_vert</span>
-            </span>
-          </slot>
-        </div>
-      </header>
-    `;
-  }
-  setupInteractions() {
-    this._abortController?.abort();
-    this._abortController = new AbortController();
-    const { signal } = this._abortController;
-    this.shadowRoot.querySelectorAll(".icon-wrap").forEach((el) => {
-      let pressed = false;
-      el.addEventListener("pointerdown", (e) => {
-        el.setPointerCapture?.(e.pointerId);
-        pressed = true;
-        el.classList.add("pressed");
-        SpringPhysics.animateProperty(el, "scale", 1, 0.92, "expressiveSpatialFast");
-      }, { signal });
-      const release = () => {
-        if (!pressed) return;
-        pressed = false;
-        el.classList.remove("pressed");
-        SpringPhysics.animateProperty(el, "scale", 0.92, 1, "expressiveSpatialMedium");
-      };
-      el.addEventListener("pointerup", release, { signal });
-      el.addEventListener("pointercancel", release, { signal });
-      el.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        el.classList.add("pressed");
-        SpringPhysics.animateProperty(el, "scale", 1, 0.92, "expressiveSpatialFast");
-      }, { signal });
-      el.addEventListener("keyup", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        el.classList.remove("pressed");
-        SpringPhysics.animateProperty(el, "scale", 0.92, 1, "expressiveSpatialMedium");
-        el.click();
-      }, { signal });
-    });
+  finish() {
+    this.value = [...this.target];
+    this.animation = null;
   }
 };
-if (!customElements.get("md-top-app-bar")) {
-  customElements.define("md-top-app-bar", MdTopAppBar);
+function colorVector(probe, color) {
+  probe.style.color = `oklab(from ${color} l a b / alpha)`;
+  const resolved = getComputedStyle(probe).color;
+  const match = /^oklab\(\s*([\d.e+-]+)%?\s+([\d.e+-]+)\s+([\d.e+-]+)(?:\s*\/\s*([\d.e+-]+)%?)?\s*\)$/.exec(resolved);
+  if (!match) throw new TypeError(`Cannot resolve an Oklab color: ${resolved}`);
+  const components = match.slice(1).map(Number);
+  return [match[4] === void 0 ? 1 : components[3], components[0], components[1], components[2]].map(Math.fround);
 }
+function vectorColor([alpha, l, a, b]) {
+  return `oklab(${clamp4(l, 0, 1)} ${clamp4(a, -0.5, 0.5)} ${clamp4(b, -0.5, 0.5)} / ${clamp4(alpha, 0, 1)})`;
+}
+var ColorMotion = class {
+  constructor(element2, probe, color, draw, { role = "expressiveEffectMedium" } = {}) {
+    this.element = element2;
+    this.probe = probe;
+    this.color = color;
+    this.draw = draw;
+    this.role = role;
+    this.vector = new ColorSpringVector(colorVector(probe, color));
+    this.raf = null;
+    this.disposed = false;
+    this.media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+    this.onPreference = () => {
+      if (this.media.matches) this.finish();
+    };
+    this.media?.addEventListener("change", this.onPreference);
+    this.render(performance.now());
+  }
+  set(color, { snap = false } = {}) {
+    if (this.disposed) return;
+    if (color === this.color) return;
+    this.color = color;
+    this.vector.to(
+      colorVector(this.probe, color),
+      SpringPhysics.getPreset(this.role, this.element),
+      { snap: snap || this.media?.matches }
+    );
+    this.tick(performance.now());
+  }
+  render(now) {
+    if (this.disposed) return;
+    const state = this.vector.sample(now);
+    this.draw(this.vector.animation ? vectorColor(state.value) : this.color);
+  }
+  tick(now) {
+    if (this.disposed) return;
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.render(now);
+    if (this.vector.animation) this.raf = requestAnimationFrame((time) => this.tick(time));
+  }
+  finish() {
+    if (this.disposed) return;
+    this.vector.finish();
+    this.tick(performance.now());
+  }
+  dispose() {
+    this.disposed = true;
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.media?.removeEventListener("change", this.onPreference);
+  }
+};
 
 // src/components/toolbar-padding.js
 var side = (value) => {
@@ -8858,48 +8662,1294 @@ function resolveToolbarPadding(value = 8, rtl = false) {
   return { left, top, right, bottom, horizontal: left + right | 0, vertical: top + bottom | 0 };
 }
 
-// src/components/md-bottom-app-bar.js
-var defaultStyle19 = `
-  :host { display: block; width: 100%; min-width: 0; -webkit-tap-highlight-color: transparent; }
-  .bar {
-    box-sizing: border-box; width: 100%; border: 0; border-radius: 0;
-    background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface);
-    box-shadow: none; overflow: clip;
-    /* Browser equivalent of horizontal/bottom system-bar insets. */
-    padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
-  }
-  .content {
-    position: relative; box-sizing: border-box; display: flex; align-items: center;
-    width: 100%; height: 80px; padding: 4px 4px 0; gap: 0;
-  }
-  .actions { display: flex; align-items: center; flex: 1 1 0; min-width: 0; gap: 0; }
-  .fab { display: flex; align-self: stretch; align-items: flex-start; flex: none; padding-top: 8px; padding-inline-end: 12px; }
-  .fab[hidden] { display: none; }
-  slot { display: contents; }
-  ::slotted(*) { flex-shrink: 0; }
-  .content.flexible .actions, .content.flexible .fab:not([hidden]) { display: contents; }
-  .color-probe { position: absolute; visibility: hidden; pointer-events: none; }
-`;
-var sheet2 = createComponentSheet(defaultStyle19);
-var arrangements = {
-  start: "flex-start",
-  end: "flex-end",
-  center: "center",
-  "space-between": "space-between",
-  "space-around": "space-around",
-  "space-evenly": "space-evenly",
-  fixed: "center"
+// src/components/top-app-bar-layout.js
+var INF2 = 2147483647;
+var f11 = Math.fround;
+var round2 = (v) => Math.max(-2147483648, Math.min(INF2, Math.round(f11(v)))) || 0;
+var half = (v) => Math.trunc(v / 2) || 0;
+var clamp5 = (v, a, b) => Math.max(a, Math.min(b, v));
+function measureTopAppBar(o, measure = (name, c) => {
+  const input = o[name] || { width: 0, height: 0 };
+  const size = { width: clamp5(input.width, c.minWidth, c.maxWidth), height: clamp5(input.height, c.minHeight, c.maxHeight) };
+  return layoutPlaceable(name, size, c, [], { line: input.baseline ?? null });
+}) {
+  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF2, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF2 };
+  const rtl = !!o.rtl, p = resolveToolbarPadding(o.contentPadding ?? 0, rtl), startPadding = rtl ? p.right : p.left, endPadding = rtl ? p.left : p.right;
+  const childConstraints = { ...c, minWidth: 0 };
+  const navigation = measure("navigationIcon", childConstraints), actions = measure("actionIcons", childConstraints);
+  const start = Math.max(12, navigation.size.width), end = actions.size.width;
+  const maxTitleWidth = c.maxWidth === INF2 ? INF2 : Math.max(0, c.maxWidth - start - end - startPadding - endPadding);
+  const title = measure("title", { ...childConstraints, maxWidth: maxTitleWidth });
+  const offset = Number.isNaN(o.scrolledOffset) ? 0 : round2(o.scrolledOffset ?? 0);
+  const maximumHeight = Math.max(round2(o.height ?? 64), title.size.height) + p.top + p.bottom;
+  const height = c.maxHeight === INF2 ? maximumHeight : Math.max(0, maximumHeight + offset);
+  const contentHeight = height + p.top - p.bottom;
+  let titleX = o.alignment === "center" ? round2(f11(f11(c.maxWidth - title.size.width) * 0.5)) : o.alignment === "end" ? c.maxWidth - title.size.width : 0;
+  if (titleX < start) titleX += startPadding + start - titleX;
+  else if (titleX + title.size.width > c.maxWidth - end) titleX += startPadding + c.maxWidth - end - titleX - title.size.width;
+  let titleY = half(contentHeight - title.size.height);
+  if (o.vertical === "bottom") {
+    const baseline = title.line ?? 0, padding2 = o.titleBottomPadding ?? 0;
+    const bottom = padding2 - (title.size.height - baseline), adjusted = bottom + title.size.height > maximumHeight ? maximumHeight - title.size.height : bottom;
+    titleY = contentHeight - title.size.height - (padding2 === 0 ? 0 : Math.max(0, adjusted));
+  } else if (o.vertical === "top") titleY = 0;
+  const relative = (node, x, y2) => ({ node, x: rtl && c.maxWidth !== 0 ? c.maxWidth - node.size.width - x : x, y: y2 });
+  return layoutPlaceable(o.id || "row", { width: c.maxWidth, height }, c, [
+    relative(navigation, startPadding, half(contentHeight - navigation.size.height)),
+    relative(title, titleX, titleY),
+    relative(actions, c.maxWidth - actions.size.width - endPadding, half(contentHeight - actions.size.height))
+  ], { maximumHeight, maxTitleWidth });
+}
+function topAppBarLayout(o, measure) {
+  const node = measureTopAppBar(o, measure);
+  return { node, size: node.size, requested: node.requested, placements: layoutPlacements(node) };
+}
+function paddingBox(id, c, start, end, rtl, measure) {
+  const horizontal = start + end, inner = { ...c, minWidth: Math.max(0, c.minWidth - horizontal), maxWidth: Math.max(0, c.maxWidth - horizontal) };
+  const child = measure(inner), width = clamp5(child.size.width + horizontal, c.minWidth, c.maxWidth), height = clamp5(child.size.height, c.minHeight, c.maxHeight);
+  const x = rtl ? end : start;
+  return layoutPlaceable(id, { width, height }, c, [{ node: child, x, y: 0 }], { line: child.line === null || child.line === void 0 ? null : child.line + child.offset.y });
+}
+function box(id, inputs, c, rtl) {
+  const children = inputs.map((input, i) => measureLayoutLeaf(input.id || id + "-" + i, { main: input.width, cross: input.height, ...input }, { ...c, minWidth: 0, minHeight: 0 }, false));
+  const width = Math.max(c.minWidth, ...children.map((n) => n.size.width)), height = Math.max(c.minHeight, ...children.map((n) => n.size.height));
+  const placed = children.map((node) => ({ node, x: rtl && width !== 0 ? width - node.size.width : 0, y: 0 }));
+  const lines = children.filter((n) => n.line !== null && n.line !== void 0).map((n) => n.line + n.offset.y * 2);
+  return layoutPlaceable(id, { width, height }, c, placed, { line: lines.length ? Math.max(...lines) : null });
+}
+function topAppBarContentLayout(o) {
+  const rtl = !!o.rtl;
+  return topAppBarLayout(o, (name, c) => {
+    if (name === "navigationIcon") return paddingBox(name, c, 4, 0, rtl, (b) => box("navigation-box", o.navigation || [], b, rtl));
+    if (name === "actionIcons") return paddingBox(name, c, 0, 4, rtl, (b) => {
+      const row2 = measureRowColumn({ id: "actions-row", rtl, arrangement: "end", crossAlignment: "center", minMain: 0, maxMain: b.maxWidth, minCross: 0, maxCross: b.maxHeight, children: (o.actions || []).map((n) => ({ main: n.width, cross: n.height, ...n })) }, (input, constraints, i) => measureLayoutLeaf(input.id || "action-" + i, input, constraints, false));
+      const width = Math.max(b.minWidth, row2.size.width), height = Math.max(b.minHeight, row2.size.height);
+      return layoutPlaceable("actions-box", { width, height }, b, [{ node: row2, x: rtl && width !== 0 ? width - row2.size.width : 0, y: 0 }]);
+    });
+    return paddingBox(name, c, 4, 4, rtl, (b) => {
+      if (!o.subtitleProvided) return box("title-box", o.title || [], b, rtl);
+      const column = measureRowColumn({ id: "title-column", vertical: true, rtl, arrangement: "start", crossAlignment: o.alignment || "start", minMain: b.minHeight, maxMain: b.maxHeight, minCross: b.minWidth, maxCross: b.maxWidth, children: [{ id: "headline-box", children: o.title || [] }, { id: "subtitle-box", children: o.subtitle || [] }] }, (input, constraints) => box(input.id, input.children, constraints, rtl));
+      const lines = column.children.filter((p) => p.node.line !== null && p.node.line !== void 0).map((p) => p.y + p.node.offset.y * 2 + p.node.line);
+      column.line = lines.length ? Math.max(...lines) : null;
+      return column;
+    });
+  });
+}
+
+// src/motion/top-app-bar-motion.js
+var f12 = Math.fround;
+var valid = (r) => {
+  const s = Math.max(0, Math.min(1, r));
+  return Math.abs(f12(s - r)) > f12(105e-8) ? NaN : s;
 };
-var MdBottomAppBar = class extends HTMLElement {
+function transform(fraction, x1, y1, x2, y2) {
+  fraction = f12(fraction);
+  if (!(fraction > 0 && fraction < 1)) return fraction;
+  const progress = Math.max(fraction, f12(11920929e-14)), p0 = f12(-progress), p12 = f12(f12(x1) - progress), p22 = f12(f12(x2) - progress), p3 = f12(1 - progress);
+  let a = 3 * (p0 - 2 * p12 + p22), b = 3 * f12(p12 - p0), c = p0;
+  const divisor = -p0 + 3 * f12(p12 - p22) + p3;
+  let t;
+  if (Math.abs(divisor) < 1e-7) {
+    if (Math.abs(a) < 1e-7) t = Math.abs(b) < 1e-7 ? NaN : valid(f12(-c / b));
+    else {
+      const root = Math.sqrt(b * b - 4 * a * c);
+      t = valid(f12((root - b) / (2 * a)));
+      if (Number.isNaN(t)) t = valid(f12((-b - root) / (2 * a)));
+    }
+  } else {
+    a /= divisor;
+    b /= divisor;
+    c /= divisor;
+    const o3 = (3 * b - a * a) / 9, q2 = (2 * a * a * a - 9 * a * b + 27 * c) / 54, discriminant = q2 * q2 + o3 * o3 * o3, a3 = a / 3;
+    if (discriminant < 0) {
+      const r = Math.sqrt(-(o3 * o3 * o3)), phi = Math.acos(Math.max(-1, Math.min(1, -q2 / r))), t1 = f12(2 * fastCbrt(f12(r)));
+      for (const angle of [phi, phi + 2 * Math.PI, phi + 4 * Math.PI]) {
+        t = valid(f12(t1 * Math.cos(angle / 3) - a3));
+        if (!Number.isNaN(t)) break;
+      }
+    } else if (discriminant === 0) {
+      const u = -fastCbrt(f12(q2));
+      t = valid(f12(f12(2 * u) - f12(a3)));
+      if (Number.isNaN(t)) t = valid(f12(-u - f12(a3)));
+    } else {
+      const sd = Math.sqrt(discriminant);
+      t = valid(f12(f12(fastCbrt(f12(-q2 + sd)) - fastCbrt(f12(q2 + sd))) - a3));
+    }
+  }
+  if (Number.isNaN(t)) throw new RangeError("Top app bar easing has no solution");
+  const aY = f12(f12(1 / 3) + f12(f12(y1) - f12(y2))), bY = f12(f12(y2) - f12(2 * f12(y1)));
+  return Math.max(0, Math.min(1, f12(f12(3 * f12(f12(f12(aY * t) + bY) * t + f12(y1))) * t)));
+}
+var topAppBarTitleAlpha = (fraction) => transform(fraction, 0.8, 0, 0.8, 0.15);
+var topAppBarColorFraction = (fraction) => transform(fraction, 0.4, 0, 1, 1);
+
+// src/motion/velocity-tracker.js
+var f13 = Math.fround;
+var dot = (a, b) => {
+  let result = 0;
+  for (let i = 0; i < a.length; i++) result = f13(result + f13(a[i] * b[i]));
+  return result;
+};
+function leastSquaresVelocity(samples, maximum = 8e3) {
+  const points = [], times2 = [], newest = samples.at(-1);
+  if (!newest) return 0;
+  let previous = newest;
+  for (let i = samples.length - 1; i >= 0 && points.length < 20; i--) {
+    const sample = samples[i], age = f13(newest.time - sample.time), gap = f13(Math.abs(sample.time - previous.time));
+    previous = sample;
+    if (age > 100 || gap > 40) break;
+    points.push(f13(sample.position));
+    times2.push(-age);
+  }
+  if (points.length < 2) return 0;
+  const count = points.length, n = Math.min(3, count);
+  const a = Array.from({ length: n }, () => new Float32Array(count));
+  const q = Array.from({ length: n }, () => new Float32Array(count));
+  const r = Array.from({ length: n }, () => new Float32Array(n));
+  for (let h = 0; h < count; h++) {
+    a[0][h] = 1;
+    for (let i = 1; i < n; i++) a[i][h] = f13(a[i - 1][h] * times2[h]);
+  }
+  for (let j = 0; j < n; j++) {
+    const w = q[j];
+    w.set(a[j]);
+    for (let i = 0; i < j; i++) {
+      const z = q[i], projection = dot(w, z);
+      for (let h = 0; h < count; h++) w[h] = f13(w[h] - f13(projection * z[h]));
+    }
+    const inverse = f13(1 / Math.max(f13(Math.sqrt(dot(w, w))), f13(1e-6)));
+    for (let h = 0; h < count; h++) w[h] = f13(w[h] * inverse);
+    for (let i = 0; i < n; i++) r[j][i] = i < j ? 0 : dot(w, a[i]);
+  }
+  const coefficients = new Float32Array(n);
+  for (let i = n - 1; i >= 0; i--) {
+    let value = dot(q[i], points);
+    for (let j = n - 1; j > i; j--) value = f13(value - f13(r[i][j] * coefficients[j]));
+    coefficients[i] = f13(value / r[i][i]);
+  }
+  const velocity = f13(coefficients[1] * 1e3);
+  return Number.isNaN(velocity) ? 0 : Math.max(-maximum, Math.min(maximum, velocity));
+}
+var PointerVelocityTracker = class {
+  constructor() {
+    this.samples = [];
+    this.lastMove = 0;
+  }
+  add(time, position) {
+    this.samples.push({ time: Math.floor(time), position: f13(position) });
+    if (this.samples.length > 20) this.samples.shift();
+  }
+  down(time, position) {
+    this.samples = [];
+    this.add(time, position);
+    this.lastMove = Math.floor(time);
+  }
+  move(time, position) {
+    this.add(time, position);
+    this.lastMove = Math.floor(time);
+  }
+  up(time, maximum = 8e3) {
+    if (Math.floor(time) - this.lastMove > 40) this.samples = [];
+    return leastSquaresVelocity(this.samples, maximum);
+  }
+};
+
+// src/components/md-top-app-bar.js
+var style = `
+ :host{display:block;box-sizing:border-box;width:100%;min-width:0;height:var(--_top-app-bar-height,auto);touch-action:var(--_top-app-bar-touch-action,auto);-webkit-tap-highlight-color:transparent}
+ :host([hidden]){display:none!important}
+ .bar{box-sizing:border-box;width:100%;background:var(--md-sys-color-surface);border:0;border-radius:0;box-shadow:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px)}
+ .viewport{position:relative;width:100%;overflow:clip}
+ .row{position:absolute;box-sizing:border-box;width:100%;overflow:clip}
+ .group,.titles,.line{position:absolute;box-sizing:border-box;min-width:0;margin:0;padding:0}
+ .line{width:max-content;white-space:nowrap}
+ .headline,.subtitle{display:block;white-space:pre;overflow:hidden;text-overflow:ellipsis}
+ .headline-line{font:var(--md-sys-typescale-title-large);letter-spacing:var(--md-sys-typescale-title-large-tracking)}
+ .subtitle-line{font:var(--md-sys-typescale-label-medium);letter-spacing:var(--md-sys-typescale-label-medium-tracking)}
+ .expanded.medium .headline-line{font:var(--md-sys-typescale-headline-small);letter-spacing:var(--md-sys-typescale-headline-small-tracking)}
+ .expanded.large .headline-line,.expanded.medium-flexible .headline-line{font:var(--md-sys-typescale-headline-medium);letter-spacing:var(--md-sys-typescale-headline-medium-tracking)}
+ .expanded.medium-flexible .subtitle-line{font:var(--md-sys-typescale-label-large);letter-spacing:var(--md-sys-typescale-label-large-tracking)}
+ .expanded.large-flexible .headline-line{font:var(--md-sys-typescale-display-small);letter-spacing:var(--md-sys-typescale-display-small-tracking)}
+ .expanded.large-flexible .subtitle-line{font:var(--md-sys-typescale-title-medium);letter-spacing:var(--md-sys-typescale-title-medium-tracking)}
+ .baseline{display:inline-block;width:0;height:0;vertical-align:baseline}
+ slot{display:contents}
+ ::slotted(*){flex:none}
+ ::slotted([hidden]){display:none!important}
+ .color-probe{position:absolute;visibility:hidden;pointer-events:none}
+ [hidden]{display:none!important}
+`;
+var sheet2 = createComponentSheet(style);
+var INF3 = 2147483647;
+var f14 = Math.fround;
+var variants = ["small", "center-aligned", "medium", "large", "medium-flexible", "large-flexible"];
+var make = (tag, name, parent) => {
+  const n = document.createElement(tag);
+  n.className = name;
+  parent.append(n);
+  return n;
+};
+var write2 = (n, key, value) => {
+  if (n.style[key] !== value) n.style[key] = value;
+};
+var rect = (n, p) => {
+  for (const [key, value] of Object.entries({ left: p.x, top: p.y, width: p.width, height: p.height })) write2(n, key, value + "px");
+};
+var find = (n, id) => n.id === id ? n : n.children.map((p) => find(p.node, id)).find(Boolean);
+var validColor = (value, fallback) => value && CSS.supports("color", value) ? value : fallback;
+var MdTopAppBar = class extends HTMLElement {
   static get observedAttributes() {
-    return ["variant", "container-color", "content-color", "horizontal-arrangement", "expanded-height", "tonal-elevation", "content-padding", "aria-label"];
+    return ["variant", "headline", "subtitle", "scrolled", "expanded-height", "collapsed-height", "height-offset", "overlapped-fraction", "title-horizontal-alignment", "content-padding", "container-color", "scrolled-container-color", "content-color", "navigation-icon-content-color", "title-content-color", "action-icon-content-color", "subtitle-content-color", "aria-label"];
   }
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     adoptSheet(this.shadowRoot, sheet2);
     this._rendered = false;
+    this._queued = false;
+    this._scrollBehavior = null;
+    this._scrollTarget = null;
+  }
+  _set(name, value) {
+    if (value == null) this.removeAttribute(name);
+    else this.setAttribute(name, String(value));
+  }
+  get variant() {
+    const v = this.getAttribute("variant");
+    return variants.includes(v) ? v : "small";
+  }
+  set variant(v) {
+    this._set("variant", v);
+  }
+  get headline() {
+    return this.getAttribute("headline") || "";
+  }
+  set headline(v) {
+    this._set("headline", v);
+  }
+  get subtitle() {
+    return this.getAttribute("subtitle") || "";
+  }
+  set subtitle(v) {
+    this._set("subtitle", v);
+  }
+  get scrolled() {
+    return this.hasAttribute("scrolled");
+  }
+  set scrolled(v) {
+    this.toggleAttribute("scrolled", !!v);
+  }
+  get twoRows() {
+    return !["small", "center-aligned"].includes(this.variant);
+  }
+  get _flexible() {
+    return this.variant.endsWith("-flexible");
+  }
+  get _subtitleProvided() {
+    return (!this.twoRows || this._flexible) && (this.hasAttribute("subtitle") || !!this.querySelector('[slot="subtitle"]'));
+  }
+  _height(name, fallback) {
+    const raw = this.getAttribute(name), n = f14(Number(raw));
+    return raw !== null && Number.isFinite(n) ? n : fallback;
+  }
+  get _defaultExpandedHeight() {
+    return { small: 64, "center-aligned": 64, medium: 112, large: 152, "medium-flexible": this._subtitleProvided ? 136 : 112, "large-flexible": this._subtitleProvided ? 152 : 120 }[this.variant];
+  }
+  get expandedHeight() {
+    return Math.max(this.twoRows ? this.collapsedHeight : -Infinity, this._height("expanded-height", this._defaultExpandedHeight));
+  }
+  set expandedHeight(v) {
+    if (v != null && !Number.isNaN(Number(v)) && Number(v) !== Infinity && (!Number.isFinite(f14(Number(v))) || this.twoRows && Number(v) < this.collapsedHeight)) throw new RangeError("Expanded height must be finite and at least the collapsed height");
+    this._set("expanded-height", v);
+  }
+  get collapsedHeight() {
+    return this._height("collapsed-height", 64);
+  }
+  set collapsedHeight(v) {
+    if (v != null && !Number.isNaN(Number(v)) && Number(v) !== Infinity) {
+      const n = f14(Number(v));
+      if (!Number.isFinite(n) || this.twoRows && n > this._height("expanded-height", this._defaultExpandedHeight)) throw new RangeError("Collapsed height must be finite and at most the expanded height");
+    }
+    this._set("collapsed-height", v);
+  }
+  get heightOffset() {
+    if (this._scrollBehavior) return this._scrollBehavior.state.heightOffset;
+    const n = f14(Number(this.getAttribute("height-offset")));
+    return Number.isFinite(n) ? Math.max(this.heightOffsetLimit, Math.min(0, n)) : 0;
+  }
+  set heightOffset(v) {
+    if (this._scrollBehavior) this._scrollBehavior.state.heightOffset = v == null ? 0 : v;
+    else this._set("height-offset", v);
+  }
+  get heightOffsetLimit() {
+    return this._scrollBehavior?.state.heightOffsetLimit ?? -(this.twoRows ? this.expandedHeight - this.collapsedHeight : Math.max(0, this.expandedHeight));
+  }
+  get collapsedFraction() {
+    return this.heightOffsetLimit === 0 ? 0 : f14(this.heightOffset / this.heightOffsetLimit);
+  }
+  get overlappedFraction() {
+    if (this.scrolled) return 1;
+    if (this._scrollBehavior) return this._scrollBehavior.state.overlappedFraction;
+    const n = f14(Number(this.getAttribute("overlapped-fraction")));
+    return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
+  }
+  set overlappedFraction(v) {
+    this._set("overlapped-fraction", v);
+  }
+  get scrollBehavior() {
+    return this._scrollBehavior;
+  }
+  set scrollBehavior(value) {
+    if (value != null && (!value.state || !["onPreScroll", "onPostScroll", "onPostFling", "settle"].every((key) => typeof value[key] === "function") || !["subscribe", "updateHeightOffsetLimit"].every((key) => typeof value.state[key] === "function"))) throw new TypeError("Expected a TopAppBarScrollBehavior");
+    this._cancelScrollSettle();
+    this._stopState?.();
+    this._scrollBehavior = value ?? null;
+    this._measuredScrollSize = null;
+    this._bindScrollState();
+    if (this.isConnected) {
+      this._configureScroll();
+      this._queue();
+    }
+  }
+  get scrollTarget() {
+    return this._scrollTarget;
+  }
+  set scrollTarget(value) {
+    if (value != null && value !== window && !(value instanceof HTMLElement)) throw new TypeError("Expected an HTMLElement or window scroll target");
+    this._cancelScrollSettle();
+    this._scrollTarget = value ?? null;
+    if (this.isConnected) this._configureScroll();
+  }
+  get scrollState() {
+    return this._scrollBehavior?.state ?? null;
+  }
+  preScroll(available = { x: 0, y: 0 }) {
+    this._cancelScrollSettle();
+    const result = this._scrollBehavior?.onPreScroll(available) || { x: 0, y: 0 };
+    this._sync();
+    return result;
+  }
+  postScroll(consumed = { x: 0, y: 0 }, available = { x: 0, y: 0 }) {
+    this._cancelScrollSettle();
+    const result = this._scrollBehavior?.onPostScroll(consumed, available) || { x: 0, y: 0 };
+    this._sync();
+    return result;
+  }
+  postFling(consumed = { x: 0, y: 0 }, available = { x: 0, y: 0 }) {
+    return this._runScrollSettle(available.y ?? 0, true, consumed);
+  }
+  get titleHorizontalAlignment() {
+    if (this.variant === "center-aligned") return "center";
+    if (["medium", "large"].includes(this.variant)) return "start";
+    const v = this.getAttribute("title-horizontal-alignment");
+    return ["start", "center", "end"].includes(v) ? v : "start";
+  }
+  set titleHorizontalAlignment(v) {
+    this._set("title-horizontal-alignment", v);
+  }
+  get contentPadding() {
+    try {
+      return normalizeToolbarPadding(this.getAttribute("content-padding") ?? 0);
+    } catch {
+      return normalizeToolbarPadding(0);
+    }
+  }
+  set contentPadding(v) {
+    this._set("content-padding", v == null ? null : serializeToolbarPadding(v));
+  }
+  get containerColor() {
+    return this.getAttribute("container-color") || "";
+  }
+  set containerColor(v) {
+    this._set("container-color", v);
+  }
+  get scrolledContainerColor() {
+    return this.getAttribute("scrolled-container-color") || "";
+  }
+  set scrolledContainerColor(v) {
+    this._set("scrolled-container-color", v);
+  }
+  get contentColor() {
+    return this.getAttribute("content-color") || "";
+  }
+  set contentColor(v) {
+    this._set("content-color", v);
+  }
+  get navigationIconContentColor() {
+    return this.getAttribute("navigation-icon-content-color") || "";
+  }
+  set navigationIconContentColor(v) {
+    this._set("navigation-icon-content-color", v);
+  }
+  get titleContentColor() {
+    return this.getAttribute("title-content-color") || "";
+  }
+  set titleContentColor(v) {
+    this._set("title-content-color", v);
+  }
+  get actionIconContentColor() {
+    return this.getAttribute("action-icon-content-color") || "";
+  }
+  set actionIconContentColor(v) {
+    this._set("action-icon-content-color", v);
+  }
+  get subtitleContentColor() {
+    return this.getAttribute("subtitle-content-color") || "";
+  }
+  set subtitleContentColor(v) {
+    this._set("subtitle-content-color", v);
+  }
+  connectedCallback() {
+    if (!this._rendered) this.render();
+    this._measuredScrollSize = null;
+    this.setupInteractions();
+    this._bindScrollState();
+    this._sync();
+    this._configureScroll();
+  }
+  disconnectedCallback() {
+    this._abort?.abort();
+    this._abort = null;
+    this._resize?.disconnect();
+    this._mutation?.disconnect();
+    this._color?.dispose();
+    this._color = null;
+    this._stopState?.();
+    this._stopState = null;
+    this._scrollAbort?.abort();
+    this._cancelScrollSettle();
+  }
+  attributeChangedCallback(name, oldValue, value) {
+    if (oldValue === value) return;
+    if (name === "height-offset" && this._scrollBehavior) this._scrollBehavior.state.heightOffset = value === null ? 0 : Number(value);
+    if (this._rendered && this.isConnected) this._sync();
+  }
+  render() {
+    this._bar = make("div", "bar", this.shadowRoot);
+    this._bar.setAttribute("part", "bar");
+    this._bar.setAttribute("role", "group");
+    this._viewport = make("div", "viewport", this._bar);
+    this._viewport.setAttribute("part", "content");
+    this._top = make("div", "row collapsed", this._viewport);
+    this._bottom = make("div", "row expanded", this._viewport);
+    this._leading = make("div", "group leading", this._top);
+    this._trailing = make("div", "group trailing", this._top);
+    const slot = (name, parent) => {
+      const n = make("slot", "", parent);
+      n.name = name;
+      return n;
+    };
+    this._navigation = slot("leading", this._leading);
+    this._actions = slot("trailing", this._trailing);
+    this._titles = {};
+    for (const [name, parent] of [["top", this._top], ["bottom", this._bottom]]) {
+      const group = make("div", "titles", parent), records = [];
+      for (const kind of ["headline", "subtitle"]) {
+        const line = make("div", "line " + kind + "-line", group), s = slot(name === "top" ? kind === "headline" ? "collapsed-title" : "collapsed-subtitle" : kind === "headline" ? "title" : "subtitle", line);
+        const label = make("span", kind, s), text = document.createTextNode("");
+        label.append(text);
+        const baseline = make("span", "baseline", label);
+        baseline.setAttribute("aria-hidden", "true");
+        records.push({ line, slot: s, label, text, baseline, kind });
+      }
+      this._titles[name] = { group, records };
+    }
+    this._probe = make("span", "color-probe", this.shadowRoot);
+    this._probe.setAttribute("aria-hidden", "true");
+    this._sizes = make("style", "", this.shadowRoot);
+    this._sizes.textContent = ":host{}";
+    this._rendered = true;
+  }
+  _queue() {
+    if (this._queued || !this.isConnected) return;
+    this._queued = true;
+    queueMicrotask(() => {
+      this._queued = false;
+      if (this.isConnected) this._sync();
+    });
+  }
+  _clearRules() {
+    while (this._sizes.sheet.cssRules.length > 1) this._sizes.sheet.deleteRule(1);
+  }
+  _sync() {
+    if (!this._rendered || !this.isConnected) return;
+    this._bottom.className = "row expanded " + this.variant;
+    this._bottom.hidden = !this.twoRows;
+    this._bar.setAttribute("aria-label", this.getAttribute("aria-label") || "Top app bar");
+    const subtitle = this._subtitleProvided;
+    for (const [name, title] of Object.entries(this._titles)) for (const record of title.records) {
+      const value = record.kind === "headline" ? this.headline : this.subtitle;
+      if (record.text.data !== value) record.text.data = value;
+      record.line.hidden = record.kind === "subtitle" && !subtitle;
+      const slotName = !this.twoRows && name === "top" ? record.kind === "headline" ? "title" : "subtitle" : name === "top" ? record.kind === "headline" ? "collapsed-title" : "collapsed-subtitle" : record.kind === "headline" ? "title" : "subtitle";
+      if (record.slot.name !== slotName) record.slot.name = slotName;
+      if (name === "bottom" && !this.twoRows) record.slot.name = "unused-" + record.kind;
+    }
+    this._layout();
+    this._colors();
+  }
+  _colors() {
+    const css = getComputedStyle(this), resolve = (value, fallback) => {
+      this._probe.style.color = validColor(value, fallback);
+      return getComputedStyle(this._probe).color;
+    };
+    const role = (name) => css.getPropertyValue("--md-sys-color-" + name).trim();
+    const container = resolve(this.containerColor, role("surface")), scrolled = resolve(this.scrolledContainerColor, role("surface-container"));
+    for (const [node, value, fallback] of [[this._leading, this.navigationIconContentColor, "on-surface"], [this._trailing, this.actionIconContentColor, "on-surface-variant"]]) {
+      const color = resolve(value, validColor(this.contentColor, role(fallback)));
+      write2(node, "color", color);
+      node.style.setProperty("--md-icon-button-content-color", color);
+      node.style.setProperty("--md-icon-button-outline-color", color);
+      node.style.setProperty("--md-icon-button-disabled-content-color", `rgb(from ${color} r g b / .38)`);
+    }
+    for (const title of Object.values(this._titles)) for (const record of title.records) write2(record.line, "color", resolve(record.kind === "headline" ? this.titleContentColor : this.subtitleContentColor, validColor(this.contentColor, role(record.kind === "headline" ? "on-surface" : "on-surface-variant"))));
+    if (this.twoRows) {
+      this._color?.dispose();
+      this._color = null;
+      const fraction = this.scrolled ? 1 : this.collapsedFraction, progress = topAppBarColorFraction(fraction), a = colorVector(this._probe, container), b = colorVector(this._probe, scrolled);
+      write2(this._bar, "backgroundColor", fraction === 0 ? container : fraction === 1 ? scrolled : vectorColor(a.map((v, i) => f14(f14(f14(1 - progress) * v) + f14(progress * b[i])))));
+      write2(this._titles.top.group, "opacity", String(topAppBarTitleAlpha(this.collapsedFraction)));
+      write2(this._titles.bottom.group, "opacity", String(f14(1 - this.collapsedFraction)));
+      this._titles.top.group.setAttribute("aria-hidden", String(this.collapsedFraction < 0.5));
+      this._titles.bottom.group.setAttribute("aria-hidden", String(this.collapsedFraction >= 0.5));
+      this._titles.top.group.inert = this.collapsedFraction < 0.5;
+      this._titles.bottom.group.inert = this.collapsedFraction >= 0.5;
+    } else {
+      const target = this.overlappedFraction > 0.01 ? scrolled : container;
+      if (!this._color) this._color = new ColorMotion(this, this._probe, target, (c) => write2(this._bar, "backgroundColor", c));
+      else this._color.set(target);
+      write2(this._titles.top.group, "opacity", "1");
+      this._titles.top.group.removeAttribute("aria-hidden");
+      this._titles.top.group.inert = false;
+    }
+  }
+  _leaf(n, id) {
+    const r = n.getBoundingClientRect(), button = n.localName === "md-icon-button" ? n.shadowRoot?.querySelector("button") : null, css = getComputedStyle(n);
+    const b = button ? getComputedStyle(button) : null, minimum = parseFloat(css.getPropertyValue("--md-minimum-interactive-component-size"));
+    const baseline = Number(n.getAttribute("data-last-baseline")), weight = Number(n.getAttribute("data-app-bar-weight"));
+    return { id, width: Math.round(r.width), height: Math.round(r.height), line: n.hasAttribute("data-last-baseline") && Number.isFinite(baseline) ? Math.round(baseline) : null, weight: weight > 0 ? f14(Math.min(weight, 34028234663852886e22)) : 0, fill: n.getAttribute("data-app-bar-fill") !== "false", ink: b ? { width: Math.round(parseFloat(b.width)), height: Math.round(parseFloat(b.height)), minimum: Number.isFinite(minimum) ? minimum : 48 } : null };
+  }
+  _layout() {
+    this._clearRules();
+    const rtl = getComputedStyle(this).direction === "rtl", sizing = this._sizes.sheet.cssRules[0].style;
+    const dimension = () => {
+      const s = getComputedStyle(this);
+      return Math.max(0, Math.round(parseFloat(s.height) || 0) - (s.boxSizing === "border-box" ? (parseFloat(s.paddingTop) || 0) + (parseFloat(s.paddingBottom) || 0) + (parseFloat(s.borderTopWidth) || 0) + (parseFloat(s.borderBottomWidth) || 0) : 0));
+    };
+    sizing.setProperty("--_top-app-bar-height", "0px");
+    const minHeight = dimension();
+    sizing.setProperty("--_top-app-bar-height", "1000000px");
+    const cap = dimension(), maxHeight = cap >= 1e6 ? INF3 : Math.max(minHeight, cap);
+    sizing.removeProperty("--_top-app-bar-height");
+    const inset = Math.round(parseFloat(getComputedStyle(this._bar).paddingTop) || 0);
+    const width = Math.max(0, Math.round(this._viewport.getBoundingClientRect().width)), entries = [], collect = (slot, prefix) => slot.assignedElements().filter((n) => getComputedStyle(n).display !== "none").map((n, i) => {
+      const input = this._leaf(n, prefix + i);
+      entries.push({ n, input });
+      return input;
+    });
+    const navigation = collect(this._navigation, "navigation-"), actions = collect(this._actions, "action-");
+    const rows = {};
+    let y2 = 0;
+    for (const name of this.twoRows ? ["top", "bottom"] : ["top"]) {
+      const title = this._titles[name], input = {};
+      for (const record of title.records) {
+        rect(record.line, { x: 0, y: 0, width: 0, height: 0 });
+        write2(record.line, "width", "max-content");
+        write2(record.line, "height", "auto");
+        const elements = collect(record.slot, name + "-" + record.kind + "-");
+        if (elements.length) input[record.kind] = elements;
+        else {
+          const r = record.label.getBoundingClientRect(), baseline = record.baseline.getBoundingClientRect();
+          input[record.kind] = [{ id: name + "-" + record.kind, width: Math.ceil(r.width), height: Math.round(r.height), line: Math.round(baseline.top - r.top) }];
+        }
+      }
+      const height = name === "bottom" ? f14(this.expandedHeight - this.collapsedHeight) : this.twoRows ? this.collapsedHeight : this.expandedHeight;
+      const available = maxHeight === INF3 ? INF3 : Math.max(0, maxHeight - inset - y2), minimum = this.twoRows ? 0 : Math.max(0, minHeight - inset);
+      const layout = topAppBarContentLayout({ id: name + "-row", minWidth: width, maxWidth: width, minHeight: minimum, maxHeight: available, rtl, height, scrolledOffset: name === "bottom" || !this.twoRows ? this.heightOffset : 0, alignment: this.titleHorizontalAlignment, vertical: name === "bottom" ? "bottom" : "center", titleBottomPadding: name === "bottom" ? this.variant.startsWith("medium") ? 24 : 28 : 0, contentPadding: this.twoRows ? 0 : this.contentPadding, navigation: name === "top" ? navigation : [], actions: name === "top" ? actions : [], title: input.headline, subtitle: input.subtitle, subtitleProvided: this._subtitleProvided });
+      rows[name] = layout;
+      const row2 = name === "top" ? this._top : this._bottom;
+      rect(row2, { x: 0, y: y2, ...layout.size });
+      const positions2 = layout.placements;
+      rect(title.group, positions2.title);
+      for (const record of title.records) {
+        const box3 = positions2[record.kind === "headline" ? "headline-box" : "subtitle-box"] || positions2["title-box"];
+        if (!box3) continue;
+        const leaf2 = positions2[name + "-" + record.kind] || box3;
+        rect(record.line, { x: leaf2.x - positions2.title.x, y: leaf2.y - positions2.title.y, width: leaf2.width, height: box3.height });
+      }
+      if (name === "top") {
+        rect(this._leading, positions2.navigationIcon);
+        rect(this._trailing, positions2.actionIcons);
+      }
+      for (const { n, input: leafInput } of entries) {
+        const leaf2 = find(layout.node, leafInput.id), p = positions2[leafInput.id];
+        if (!leaf2 || !p) continue;
+        const parent = n.slot === "leading" ? positions2.navigationIcon : n.slot === "trailing" ? positions2.actionIcons : positions2[n.slot.includes("subtitle") ? "subtitle-box" : "headline-box"] || positions2["title-box"];
+        if (!parent) continue;
+        const body = leafInput.ink ? minimumInteractiveLayout({ ...leafInput.ink, ...leaf2.constraints }).body : null;
+        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf2.size.width}px;--md-toolbar-control-layout-height:${leaf2.size.height}px;` : "";
+        const index = [...this.children].indexOf(n) + 1;
+        this._sizes.sheet.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - parent.x - leaf2.offset.x}px!important;top:${p.y - parent.y - leaf2.offset.y}px!important;width:${leaf2.size.width}px!important;height:${leaf2.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf2.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf2.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf2.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf2.constraints.maxHeight}px;${native}}`, this._sizes.sheet.cssRules.length);
+      }
+      y2 += layout.size.height;
+    }
+    const observed = new Set(entries.flatMap(({ n }) => [n, n.shadowRoot?.querySelector("button")].filter(Boolean)));
+    for (const n of this._observedChildren || []) if (!observed.has(n)) this._resize?.unobserve(n);
+    for (const n of observed) if (!this._observedChildren?.has(n)) this._resize?.observe(n);
+    this._observedChildren = observed;
+    this._layoutRows = rows;
+    write2(this._viewport, "height", y2 + "px");
+    sizing.setProperty("--_top-app-bar-height", Math.max(minHeight, y2 + inset) + "px");
+    if (this._scrollBehavior) {
+      const size = rows[this.twoRows ? "bottom" : "top"].size, key = `${this.twoRows}:${size.width}:${size.height}`;
+      if (key !== this._measuredScrollSize) {
+        this._measuredScrollSize = key;
+        this._scrollBehavior.state.updateHeightOffsetLimit(size.height);
+      }
+    }
+  }
+  _bindScrollState() {
+    this._stopState?.();
+    this._stopState = this.isConnected && this._scrollBehavior ? this._scrollBehavior.state.subscribe(() => this._queue()) : null;
+  }
+  _configureScroll() {
+    this._scrollAbort?.abort();
+    if (!this.isConnected || !this._rendered) return;
+    this._scrollAbort = new AbortController();
+    const { signal } = this._scrollAbort, target = this._scrollTarget;
+    const scrolling = () => target === window ? document.scrollingElement : target;
+    let last = scrolling()?.scrollTop || 0;
+    target?.addEventListener("scroll", () => {
+      const current = scrolling()?.scrollTop || 0, delta = f14(last - current);
+      last = current;
+      if (!delta) return;
+      const b = this._scrollBehavior;
+      if (!b) return;
+      if (b.kind === "enter-always") b.onPreScroll({ x: 0, y: delta });
+      this.postScroll({ x: 0, y: delta });
+    }, { signal, passive: true });
+    target?.addEventListener("wheel", (event) => {
+      const b = this._scrollBehavior, n = scrolling();
+      if (!b || !n || event.defaultPrevented || event.ctrlKey || !event.deltaY) return;
+      const unit = event.deltaMode === 1 ? parseFloat(getComputedStyle(n).lineHeight) || 16 : event.deltaMode === 2 ? n.clientHeight : 1, available = f14(-event.deltaY * unit), pre = this.preScroll({ x: 0, y: available }), remaining = f14(available - pre.y), before = n.scrollTop;
+      event.preventDefault();
+      n.scrollTo({ top: before - remaining, left: n.scrollLeft + event.deltaX * unit, behavior: "instant" });
+      const consumed = f14(before - n.scrollTop);
+      last = n.scrollTop;
+      this.postScroll({ x: 0, y: consumed }, { x: 0, y: f14(remaining - consumed) });
+    }, { signal, passive: false });
+    target?.addEventListener("scrollend", () => this.postFling(), { signal, passive: true });
+    this.addEventListener("pointerdown", (event) => this._barDragStart(event), { signal });
+    this.addEventListener("pointermove", (event) => this._barDragMove(event), { signal });
+    const stop = (event) => this._barDragStop(event);
+    for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) this.addEventListener(type, stop, { signal });
+    this.addEventListener("click", (event) => {
+      if (this._suppressDragClick && event.detail !== 0) {
+        this._suppressDragClick = false;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    }, { signal, capture: true });
+    this._reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    this._reduced.addEventListener("change", () => {
+      if (this._reduced.matches) {
+        this._scrollSettle?.finish();
+        this._scrollTick(performance.now());
+      }
+    }, { signal });
+    this._sizes.sheet.cssRules[0].style.setProperty("--_top-app-bar-touch-action", this._scrollBehavior && !this._scrollBehavior.isPinned ? "pan-x" : "auto");
+  }
+  _cancelScrollSettle() {
+    if (this._scrollRaf) cancelAnimationFrame(this._scrollRaf);
+    this._scrollRaf = 0;
+    this._scrollSettle = null;
+    this._scrollResolve?.({ x: 0, y: 0 });
+    this._scrollResolve = null;
+    const drag = this._drag;
+    this._drag = null;
+    if (drag && this.hasPointerCapture(drag.id)) this.releasePointerCapture(drag.id);
+  }
+  _runScrollSettle(velocity, fromContent = false, consumed = { x: 0, y: 0 }) {
+    this._cancelScrollSettle();
+    if (!this.isConnected || !this._scrollBehavior) return Promise.resolve({ x: 0, y: 0 });
+    const motion = this._scrollSettle = fromContent ? this._scrollBehavior.onPostFling(consumed, { x: 0, y: velocity }) : this._scrollBehavior.settle(velocity);
+    const promise = new Promise((resolve) => this._scrollResolve = resolve);
+    if (this._reduced?.matches) motion.finish();
+    if (motion.done) this._scrollTick(performance.now());
+    else this._scrollRaf = requestAnimationFrame((time) => this._scrollTick(time));
+    return promise;
+  }
+  _scrollTick(now) {
+    this._scrollRaf = 0;
+    const motion = this._scrollSettle;
+    if (!motion) return;
+    motion.sampleFrame(now, () => this._sync());
+    this._sync();
+    if (motion.done) {
+      this._scrollSettle = null;
+      this._scrollResolve?.({ x: 0, y: motion.returnedVelocity });
+      this._scrollResolve = null;
+    } else this._scrollRaf = requestAnimationFrame((time) => this._scrollTick(time));
+  }
+  _barDragStart(event) {
+    if (!this._scrollBehavior || this._scrollBehavior.isPinned || event.defaultPrevented || event.button !== 0 || event.isPrimary === false) return;
+    this._cancelScrollSettle();
+    const tracker = new PointerVelocityTracker();
+    tracker.down(event.timeStamp, event.clientY);
+    this._drag = { id: event.pointerId, last: event.clientY, active: false, slop: new HorizontalTouchSlop(pointerSlop(event.pointerType)), tracker };
+    this._suppressDragClick = false;
+  }
+  _barDragMove(event) {
+    const drag = this._drag;
+    if (!drag || drag.id !== event.pointerId) return;
+    if (event.defaultPrevented) {
+      if (drag.active) this._runScrollSettle(0);
+      else this._cancelScrollSettle();
+      return;
+    }
+    const delta = event.clientY - drag.last;
+    drag.last = event.clientY;
+    for (const sample of event.getCoalescedEvents?.() || []) {
+      if (sample.timeStamp === event.timeStamp && sample.clientY === event.clientY) continue;
+      drag.tracker.move(sample.timeStamp, sample.clientY);
+    }
+    drag.tracker.move(event.timeStamp, event.clientY);
+    let amount = delta;
+    if (!drag.active) {
+      amount = drag.slop.add(delta);
+      if (amount === null) return;
+      drag.active = true;
+      try {
+        this.setPointerCapture(event.pointerId);
+      } catch {
+      }
+    }
+    event.preventDefault();
+    this._scrollBehavior.state.heightOffset = f14(this.heightOffset + amount);
+    this._suppressDragClick = true;
+    this._sync();
+  }
+  _barDragStop(event) {
+    if (event.type === "lostpointercapture" && event.target !== this) return;
+    const drag = this._drag;
+    if (!drag || drag.id !== event.pointerId) return;
+    this._drag = null;
+    if (this.hasPointerCapture(event.pointerId)) this.releasePointerCapture(event.pointerId);
+    if (drag.active) this._runScrollSettle(event.type === "pointerup" ? drag.tracker.up(event.timeStamp) : 0);
+  }
+  setupInteractions() {
+    this._abort?.abort();
+    this._resize?.disconnect();
+    this._mutation?.disconnect();
+    this._abort = new AbortController();
+    const { signal } = this._abort;
+    for (const slot of this.shadowRoot.querySelectorAll("slot")) slot.addEventListener("slotchange", () => this._queue(), { signal });
+    this._observedChildren = /* @__PURE__ */ new Set();
+    this._resize = new ResizeObserver(() => this._queue());
+    this._resize.observe(this);
+    this._mutation = new MutationObserver(() => this._queue());
+    this._mutation.observe(this, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["slot", "size", "variant", "width", "style", "class", "disabled", "hidden", "label", "icon", "data-last-baseline", "data-app-bar-weight", "data-app-bar-fill"] });
+    const stopTheme = observeThemeContext(this, () => this._queue());
+    signal.addEventListener("abort", stopTheme, { once: true });
+    document.fonts?.addEventListener("loadingdone", () => this._queue(), { signal });
+    document.fonts?.ready.then(() => {
+      if (!signal.aborted) this._queue();
+    });
+    this._bar.addEventListener("click", (event) => {
+      if (event.defaultPrevented) return;
+      const path = event.composedPath(), node = path.find((n) => n?.assignedSlot?.getRootNode() === this.shadowRoot);
+      if (!node || !["leading", "trailing"].includes(node.slot) || node.disabled || node.hasAttribute("disabled") || !path.some((n) => n?.matches?.('button,a[href],md-icon-button,[role="button"]'))) return;
+      this.dispatchEvent(new CustomEvent(node.slot === "leading" ? "navigation-click" : "action", { bubbles: true, composed: true, detail: { action: node.getAttribute("data-action") || node.getAttribute("aria-label") || node.textContent.trim() } }));
+    }, { signal });
+  }
+};
+if (!customElements.get("md-top-app-bar")) customElements.define("md-top-app-bar", MdTopAppBar);
+
+// src/motion/android-fling.js
+var f15 = Math.fround;
+var inflection = f15(0.35);
+var p1 = f15(f15(0.5) * inflection);
+var p2 = f15(1 - f15(1 - inflection));
+var positions = new Float32Array(101);
+var times = new Float32Array(101);
+var xMin = 0;
+var yMin = 0;
+for (let i = 0; i < 100; i++) {
+  const alpha = f15(i / 100);
+  let xMax = 1, yMax = 1, x, y2, coef;
+  for (; ; ) {
+    x = f15(xMin + f15(f15(xMax - xMin) / 2));
+    coef = f15(f15(3 * x) * f15(1 - x));
+    const tx = f15(f15(coef * f15(f15(f15(1 - x) * p1) + f15(x * p2))) + f15(f15(x * x) * x));
+    if (Math.abs(f15(tx - alpha)) < 1e-5) break;
+    if (tx > alpha) xMax = x;
+    else xMin = x;
+  }
+  positions[i] = f15(f15(coef * f15(f15(f15(1 - x) * f15(0.5)) + x)) + f15(f15(x * x) * x));
+  for (; ; ) {
+    y2 = f15(yMin + f15(f15(yMax - yMin) / 2));
+    coef = f15(f15(3 * y2) * f15(1 - y2));
+    const dy = f15(f15(coef * f15(f15(f15(1 - y2) * f15(0.5)) + y2)) + f15(f15(y2 * y2) * y2));
+    if (Math.abs(f15(dy - alpha)) < 1e-5) break;
+    if (dy > alpha) yMax = y2;
+    else yMin = y2;
+  }
+  times[i] = f15(f15(coef * f15(f15(f15(1 - y2) * p1) + f15(y2 * p2))) + f15(f15(y2 * y2) * y2));
+}
+times[100] = positions[100] = 1;
+var rate = f15(Math.log(0.78) / Math.log(0.9));
+function androidFlingPosition(time) {
+  const clamped = Math.max(0, Math.min(1, f15(time))), index = Math.trunc(f15(100 * clamped));
+  let distanceCoefficient = 1, velocityCoefficient = 0;
+  if (index < 100) {
+    const lower = f15(index / 100), upper = f15((index + 1) / 100), lo = positions[index], hi = positions[index + 1];
+    velocityCoefficient = f15(f15(hi - lo) / f15(upper - lower));
+    distanceCoefficient = f15(lo + f15(f15(clamped - lower) * velocityCoefficient));
+  }
+  return { distanceCoefficient, velocityCoefficient };
+}
+var AndroidFlingDecay = class {
+  constructor({ density = 1, friction: friction2 = 0.015 } = {}) {
+    if (!Number.isFinite(density) || density <= 0 || !Number.isFinite(friction2) || friction2 <= 0) throw new RangeError("Positive density and friction required");
+    this.density = f15(density);
+    this.friction = f15(friction2);
+    this.physical = f15(f15(f15(f15(f15(9.80665) * f15(39.37)) * this.density) * 160) * f15(0.84));
+  }
+  info(velocity) {
+    velocity = f15(velocity);
+    const l = Math.log(f15(inflection * Math.abs(velocity)) / f15(this.friction * this.physical)), minusOne = rate - 1;
+    return { velocity, distance: f15(f15(this.friction * this.physical) * Math.exp(rate / minusOne * l)), duration: Math.trunc(1e3 * Math.exp(l / minusOne)) };
+  }
+  target(from, velocity) {
+    const info = this.info(velocity);
+    return f15(f15(from) + f15(info.distance * Math.sign(info.velocity)));
+  }
+  sample(time, from, velocity) {
+    const info = this.info(velocity), ms = Math.trunc(time), fraction = info.duration > 0 ? f15(ms / f15(info.duration)) : 1;
+    const spline = androidFlingPosition(fraction), sign = Math.sign(info.velocity);
+    const position = f15(f15(from) + f15(f15(info.distance * sign) * spline.distanceCoefficient));
+    const speed = f15(f15(f15(f15(spline.velocityCoefficient * sign) * info.distance) / f15(info.duration)) * 1e3);
+    return { position, velocity: speed };
+  }
+};
+
+// src/components/top-app-bar-scroll.js
+var f16 = Math.fround;
+var MAX_FLOAT = 34028234663852886e22;
+var zero = () => ({ x: 0, y: 0 });
+var y = (v) => f16(v?.y ?? 0);
+var clamp6 = (value, minimum) => {
+  if (minimum > 0) throw new RangeError("heightOffsetLimit must be nonpositive");
+  return value < minimum ? minimum : value > 0 ? 0 : value;
+};
+var TopAppBarState = class _TopAppBarState {
+  constructor({ heightOffsetLimit = -MAX_FLOAT, heightOffset = 0, contentOffset = 0, isScrollingContentAtStart = () => true } = {}) {
+    this._listeners = /* @__PURE__ */ new Set();
+    this._heightOffsetLimit = f16(heightOffsetLimit);
+    this._heightOffset = f16(heightOffset);
+    this._contentOffset = f16(contentOffset);
+    this.isScrollingContentAtStart = isScrollingContentAtStart;
+  }
+  _set(key, value) {
+    value = f16(value);
+    if (Object.is(this[key], value)) return;
+    this[key] = value;
+    for (const listener of this._listeners) listener(this);
+  }
+  subscribe(listener) {
+    this._listeners.add(listener);
+    return () => this._listeners.delete(listener);
+  }
+  get heightOffsetLimit() {
+    return this._heightOffsetLimit;
+  }
+  set heightOffsetLimit(v) {
+    this._set("_heightOffsetLimit", v);
+  }
+  get heightOffset() {
+    return this._heightOffset;
+  }
+  set heightOffset(v) {
+    this._set("_heightOffset", clamp6(f16(v), this.heightOffsetLimit));
+  }
+  get contentOffset() {
+    return this._contentOffset;
+  }
+  set contentOffset(v) {
+    this._set("_contentOffset", v);
+  }
+  get collapsedFraction() {
+    return this.heightOffsetLimit !== 0 ? f16(this.heightOffset / this.heightOffsetLimit) : 0;
+  }
+  get overlappedFraction() {
+    if (!this.isScrollingContentAtStart() && this.contentOffset === 0) return 1;
+    return this.heightOffsetLimit !== 0 ? f16(1 - f16(clamp6(f16(this.heightOffsetLimit + Math.abs(this.contentOffset)), this.heightOffsetLimit) / this.heightOffsetLimit)) : 0;
+  }
+  updateHeightOffsetLimit(height) {
+    this.heightOffsetLimit = f16(-f16(f16(height) - this.heightOffset));
+  }
+  save() {
+    return [this.heightOffsetLimit, this.heightOffset, this.contentOffset];
+  }
+  static restore(values) {
+    return new _TopAppBarState({ heightOffsetLimit: values[0], heightOffset: values[1], contentOffset: values[2] });
+  }
+};
+var TopAppBarScrollBehavior = class _TopAppBarScrollBehavior {
+  constructor({ kind = "enter-always", state = new TopAppBarState(), canScroll = () => true, isScrollingContentAtStart, reverseLayout = false, snapAnimationSpec = { stiffness: 1600, dampingRatio: 1 }, flingAnimationSpec = new AndroidFlingDecay() } = {}) {
+    if (!["pinned", "enter-always", "exit-until-collapsed", "legacy-enter-always"].includes(kind)) throw new RangeError("Unknown top app bar scroll behavior");
+    this.kind = kind;
+    this.state = state;
+    this.canScroll = canScroll;
+    this.reverseLayout = reverseLayout;
+    this.isPinned = kind === "pinned";
+    this.snapAnimationSpec = this.isPinned ? null : snapAnimationSpec;
+    this.flingAnimationSpec = this.isPinned ? null : flingAnimationSpec;
+    if (isScrollingContentAtStart != null && (kind === "pinned" || kind === "enter-always")) state.isScrollingContentAtStart = isScrollingContentAtStart;
+    this.nestedScrollConnection = this;
+  }
+  static pinned(options = {}) {
+    return new _TopAppBarScrollBehavior({ ...options, kind: "pinned" });
+  }
+  static enterAlways(options = {}) {
+    return new _TopAppBarScrollBehavior({ ...options, kind: "enter-always" });
+  }
+  static exitUntilCollapsed(options = {}) {
+    return new _TopAppBarScrollBehavior({ ...options, kind: "exit-until-collapsed" });
+  }
+  static legacyEnterAlways(options = {}) {
+    return new _TopAppBarScrollBehavior({ ...options, kind: "legacy-enter-always" });
+  }
+  onPreScroll(available) {
+    const amount = y(available);
+    if (this.isPinned || !this.canScroll() || this.kind === "exit-until-collapsed" && amount > 0) return zero();
+    const previous = this.state.heightOffset;
+    this.state.heightOffset = f16(previous + amount);
+    return previous !== this.state.heightOffset && !(this.kind === "legacy-enter-always" && this.reverseLayout) ? { x: 0, y: amount } : zero();
+  }
+  onPostScroll(consumed, available = { x: 0, y: 0 }) {
+    if (!this.canScroll()) return zero();
+    const amount = y(consumed), remaining = y(available), s = this.state;
+    s.contentOffset = f16(s.contentOffset + amount);
+    if (this.kind === "legacy-enter-always" && !this.reverseLayout) s.heightOffset = f16(s.heightOffset + amount);
+    if (this.kind === "exit-until-collapsed") {
+      if (remaining < 0 || amount < 0) {
+        const before = s.heightOffset;
+        s.heightOffset = f16(before + amount);
+        return { x: 0, y: f16(s.heightOffset - before) };
+      }
+      if (remaining > 0) {
+        const before = s.heightOffset;
+        s.heightOffset = f16(before + remaining);
+        return { x: 0, y: f16(s.heightOffset - before) };
+      }
+    }
+    return zero();
+  }
+  onPostFling(consumed = { x: 0, y: 0 }, available = { x: 0, y: 0 }) {
+    const velocity = y(available), s = this.state;
+    if (velocity > 0 && (this.kind !== "legacy-enter-always" || s.heightOffset === 0 || s.heightOffset === s.heightOffsetLimit)) s.contentOffset = 0;
+    return this.isPinned ? TopAppBarSettling.complete(s) : this.settle(velocity);
+  }
+  settle(velocity = 0) {
+    return new TopAppBarSettling(this.state, velocity, { snapAnimationSpec: this.snapAnimationSpec, flingAnimationSpec: this.flingAnimationSpec });
+  }
+};
+var TopAppBarSettling = class _TopAppBarSettling {
+  constructor(state, velocity, { snapAnimationSpec = { stiffness: 1600, dampingRatio: 1 }, flingAnimationSpec = new AndroidFlingDecay() } = {}) {
+    this.state = state;
+    this.velocity = f16(velocity);
+    this.remainingVelocity = this.velocity;
+    this.snapAnimationSpec = snapAnimationSpec;
+    this.decay = flingAnimationSpec;
+    this.phase = "done";
+    this.start = null;
+    this.lastValue = 0;
+    this.returnedVelocity = 0;
+    if (state.collapsedFraction < f16(0.01) || state.collapsedFraction === 1) return;
+    this.phase = this.decay !== null && Math.abs(this.velocity) > 1 ? "decay" : "snap";
+    this._chooseSnap();
+  }
+  static complete(state) {
+    const motion = new _TopAppBarSettling(state, 0, { snapAnimationSpec: null, flingAnimationSpec: null });
+    motion.phase = "done";
+    motion.returnedVelocity = 0;
+    return motion;
+  }
+  _complete() {
+    this.phase = "done";
+    this.returnedVelocity = this.remainingVelocity;
+  }
+  _chooseSnap() {
+    if (this.phase !== "snap") return;
+    if (this.snapAnimationSpec === null || !(this.state.heightOffset < 0 && this.state.heightOffset > this.state.heightOffsetLimit)) {
+      this._complete();
+      return;
+    }
+    this.snapFrom = this.state.heightOffset;
+    this.snapTarget = this.state.collapsedFraction < 0.5 ? 0 : this.state.heightOffsetLimit;
+  }
+  get done() {
+    return this.phase === "done";
+  }
+  sampleFrame(now, afterOffsetWrite = () => {
+  }) {
+    if (this.done) return null;
+    if (this.start === null) {
+      this.start = now;
+      if (this.phase === "snap") {
+        this.snap = new SpringValue(this.snapFrom);
+        this.snap.to(this.snapTarget, this.snapAnimationSpec, { now, velocity: 0 });
+      }
+    }
+    const phase2 = this.phase, time = now - this.start;
+    let sample, canceled = false;
+    if (phase2 === "decay") {
+      const ended = time >= this.decay.info(this.velocity).duration;
+      sample = ended ? { position: this.decay.target(0, this.velocity), velocity: 0 } : this.decay.sample(time, 0, this.velocity);
+      const delta = f16(sample.position - this.lastValue), before = this.state.heightOffset;
+      this.state.heightOffset = f16(before + delta);
+      const consumed = Math.abs(f16(before - this.state.heightOffset));
+      this.lastValue = sample.position;
+      this.remainingVelocity = sample.velocity;
+      canceled = Math.abs(f16(delta - consumed)) > 0.5;
+      afterOffsetWrite();
+      if (canceled || ended) {
+        this.phase = "snap";
+        this.start = null;
+        this._chooseSnap();
+      }
+    } else {
+      sample = this.snap.sample(now);
+      this.state.heightOffset = sample.position;
+      afterOffsetWrite();
+      if (!this.snap.animation) this._complete();
+    }
+    return { phase: phase2, time, value: sample.position, velocity: sample.velocity, offset: this.state.heightOffset, canceled };
+  }
+  finish() {
+    if (this.done) return;
+    if (this.phase === "decay") {
+      this.state.heightOffset = f16(this.state.heightOffset + f16(this.decay.target(0, this.velocity) - this.lastValue));
+      this.remainingVelocity = 0;
+      this.phase = "snap";
+      this._chooseSnap();
+      if (this.done) return;
+    }
+    this.state.heightOffset = this.snapTarget;
+    this._complete();
+  }
+};
+
+// src/components/bottom-app-bar-scroll.js
+var f17 = Math.fround;
+var MAX_FLOAT2 = 34028234663852886e22;
+var zero2 = () => ({ x: 0, y: 0 });
+var BottomAppBarState = class _BottomAppBarState {
+  constructor({ heightOffsetLimit = -MAX_FLOAT2, heightOffset = 0, contentOffset = 0 } = {}) {
+    this._listeners = /* @__PURE__ */ new Set();
+    this._heightOffsetLimit = f17(heightOffsetLimit);
+    this._heightOffset = f17(heightOffset);
+    this._contentOffset = f17(contentOffset);
+  }
+  _set(key, value) {
+    value = f17(value);
+    if (Object.is(this[key], value)) return;
+    this[key] = value;
+    for (const listener of this._listeners) listener(this);
+  }
+  subscribe(listener) {
+    this._listeners.add(listener);
+    return () => this._listeners.delete(listener);
+  }
+  get heightOffsetLimit() {
+    return this._heightOffsetLimit;
+  }
+  set heightOffsetLimit(value) {
+    this._set("_heightOffsetLimit", value);
+  }
+  get heightOffset() {
+    return this._heightOffset;
+  }
+  set heightOffset(value) {
+    if (this.heightOffsetLimit > 0) throw new RangeError("heightOffsetLimit must be nonpositive");
+    value = f17(value);
+    this._set("_heightOffset", value < this.heightOffsetLimit ? this.heightOffsetLimit : value > 0 ? 0 : value);
+  }
+  get contentOffset() {
+    return this._contentOffset;
+  }
+  set contentOffset(value) {
+    this._set("_contentOffset", value);
+  }
+  get collapsedFraction() {
+    return this.heightOffsetLimit !== 0 ? f17(this.heightOffset / this.heightOffsetLimit) : 0;
+  }
+  updateHeightOffsetLimit(height) {
+    this.heightOffsetLimit = f17(-height);
+  }
+  save() {
+    return [this.heightOffsetLimit, this.heightOffset, this.contentOffset];
+  }
+  static restore(values) {
+    return new _BottomAppBarState({ heightOffsetLimit: values[0], heightOffset: values[1], contentOffset: values[2] });
+  }
+};
+var BottomAppBarSettling = class _BottomAppBarSettling extends TopAppBarSettling {
+  constructor(state, velocity, options = {}) {
+    super(state, velocity, { snapAnimationSpec: options.snapAnimationSpec === void 0 ? SpringPhysics.getPreset("expressiveSpatialFast", options.element ?? null) : options.snapAnimationSpec, flingAnimationSpec: options.flingAnimationSpec === void 0 ? new AndroidFlingDecay() : options.flingAnimationSpec });
+  }
+  static complete(state) {
+    const motion = new _BottomAppBarSettling(state, 0, { snapAnimationSpec: null, flingAnimationSpec: null });
+    motion.phase = "done";
+    motion.returnedVelocity = 0;
+    return motion;
+  }
+};
+var BottomAppBarScrollBehavior = class _BottomAppBarScrollBehavior {
+  constructor(options = {}) {
+    this.state = options.state ?? new BottomAppBarState();
+    this.canScroll = options.canScroll ?? (() => true);
+    this.isPinned = false;
+    this._element = options.element ?? null;
+    this._defaultSnap = options.snapAnimationSpec === void 0;
+    this._snap = options.snapAnimationSpec;
+    this.flingAnimationSpec = options.flingAnimationSpec === void 0 ? new AndroidFlingDecay() : options.flingAnimationSpec;
+    this.nestedScrollConnection = this;
+  }
+  static exitAlways(options = {}) {
+    return new _BottomAppBarScrollBehavior(options);
+  }
+  setElement(element2) {
+    if (this._element === null) this._element = element2;
+  }
+  get snapAnimationSpec() {
+    return this._defaultSnap ? SpringPhysics.getPreset("expressiveSpatialFast", this._element) : this._snap;
+  }
+  set snapAnimationSpec(value) {
+    this._defaultSnap = false;
+    this._snap = value;
+  }
+  onPreScroll() {
+    return zero2();
+  }
+  onPostScroll(consumed, available = { x: 0, y: 0 }) {
+    if (!this.canScroll()) return zero2();
+    const amount = f17(consumed?.y ?? 0), s = this.state;
+    s.contentOffset = f17(s.contentOffset + amount);
+    s.heightOffset = f17(s.heightOffset + amount);
+    return zero2();
+  }
+  onPostFling(consumed = { x: 0, y: 0 }, available = { x: 0, y: 0 }) {
+    const velocity = f17(available?.y ?? 0), s = this.state;
+    if (velocity > 0 && (s.heightOffset === 0 || s.heightOffset === s.heightOffsetLimit)) s.contentOffset = 0;
+    return this.settle(velocity);
+  }
+  settle(velocity = 0) {
+    return new BottomAppBarSettling(this.state, velocity, { snapAnimationSpec: this.snapAnimationSpec, flingAnimationSpec: this.flingAnimationSpec });
+  }
+};
+
+// src/components/bottom-app-bar-layout.js
+var INF4 = 2147483647;
+var f18 = Math.fround;
+var round3 = (v) => Math.round(f18(v)) || 0;
+var clamp7 = (v, a, b) => Math.max(a, Math.min(b, v));
+var arrangements = { "space-between": "between", "space-around": "around", "space-evenly": "evenly", fixed: "spaced" };
+function padding(id, c, p, measure) {
+  const dx = p.left + p.right, dy = p.top + p.bottom;
+  const inner = { minWidth: Math.max(0, c.minWidth - dx), maxWidth: c.maxWidth === INF4 ? INF4 : Math.max(0, c.maxWidth - dx), minHeight: Math.max(0, c.minHeight - dy), maxHeight: c.maxHeight === INF4 ? INF4 : Math.max(0, c.maxHeight - dy) };
+  const child = measure(inner), requested = { width: clamp7(child.size.width + dx, c.minWidth, c.maxWidth), height: clamp7(child.size.height + dy, c.minHeight, c.maxHeight) };
+  return layoutPlaceable(id, requested, c, [{ node: child, x: p.left, y: p.top }]);
+}
+function fill(id, c, axis, measure) {
+  const max = axis === "width" ? "maxWidth" : "maxHeight", min = axis === "width" ? "minWidth" : "minHeight";
+  const inner = c[max] === INF4 ? c : { ...c, [min]: c[max] };
+  const child = measure(inner);
+  return layoutPlaceable(id, child.size, c, [{ node: child, x: 0, y: 0 }]);
+}
+function leaf(input, c) {
+  return measureLayoutLeaf(input.id, { main: input.width, cross: input.height, ...input }, c, false);
+}
+function row(id, c, inputs, rtl, arrangement, measure = leaf) {
+  return measureRowColumn({ id, rtl, minMain: c.minWidth, maxMain: c.maxWidth, minCross: c.minHeight, maxCross: c.maxHeight, crossAlignment: "center", arrangement: arrangements[arrangement] || arrangement, spacing: 32, children: inputs.map((n) => ({ main: n.width, cross: n.height, ...n })) }, measure);
+}
+function box2(id, c, inputs, rtl) {
+  const children = inputs.map((input) => leaf(input, { ...c, minWidth: 0, minHeight: 0 }));
+  const width = Math.max(c.minWidth, ...children.map((n) => n.size.width)), height = Math.max(c.minHeight, ...children.map((n) => n.size.height));
+  return layoutPlaceable(id, { width, height }, c, children.map((node) => ({ node, x: rtl && width !== 0 ? width - node.size.width : 0, y: 0 })));
+}
+function bottomAppBarLayout(o) {
+  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF4, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF4 }, rtl = !!o.rtl, flexible = o.variant === "flexible";
+  const p = resolveToolbarPadding(o.contentPadding ?? (flexible ? { start: 16, top: 0, end: 16, bottom: 0 } : { start: 4, top: 4, end: 4, bottom: 0 }), rtl);
+  const insets = Object.fromEntries(["left", "top", "right", "bottom"].map((edge) => [edge, Math.max(0, round3(o.insets?.[edge] ?? 0))]));
+  const name = arrangements[o.arrangement] || o.arrangement, arrangement = ["start", "end", "center", "between", "around", "evenly", "spaced"].includes(name) ? name : flexible ? "between" : "start";
+  const node = fill("bar", c, "width", (outer) => padding("insets", outer, insets, (incoming) => {
+    const height = clamp7(round3(o.height ?? (flexible ? 64 : 80)), incoming.minHeight, incoming.maxHeight), sized = { ...incoming, minHeight: height, maxHeight: height };
+    const child = padding("content-padding", sized, p, (inner) => {
+      if (flexible) return row("content-row", inner, [...o.actions || [], ...o.fabs || []], rtl, arrangement);
+      const children = [{ id: "actions", weight: 1, fill: true }, ...o.fabs?.length ? [{ id: "fab" }] : []];
+      return row("content-row", inner, children, rtl, "start", (input, b) => input.id === "actions" ? row("actions-row", b, o.actions || [], rtl, arrangement) : fill("fab-fill", b, "height", (full) => padding("fab-padding", full, resolveToolbarPadding({ start: 0, top: 8, end: 12, bottom: 0 }, rtl), (inside) => box2("fab-box", inside, o.fabs, rtl))));
+    });
+    return layoutPlaceable("content-height", child.size, incoming, [{ node: child, x: 0, y: 0 }]);
+  }));
+  return { node, size: node.size, requested: node.requested, placements: layoutPlacements(node) };
+}
+function bottomAppBarScrollLayout(o, state) {
+  const surface = bottomAppBarLayout(o);
+  state.updateHeightOffsetLimit(surface.size.height);
+  const height = f18(surface.size.height + state.heightOffset);
+  if (Number.isNaN(height)) throw new RangeError("Bottom app bar height cannot be NaN");
+  const node = layoutPlaceable("scroll-root", { width: surface.size.width, height: Math.min(INF4, round3(Math.max(0, height))) }, surface.node.constraints, [{ node: surface.node, x: 0, y: 0 }]);
+  return { node, size: node.size, requested: node.requested, placements: layoutPlacements(node) };
+}
+
+// src/components/md-bottom-app-bar.js
+var defaultStyle18 = `
+  :host { display: block; position: relative; width: 100%; min-width: 0; height: var(--_bottom-app-bar-height, 80px); touch-action:var(--_bottom-app-bar-touch-action,auto); -webkit-tap-highlight-color: transparent; }
+  :host([hidden]) { display: none !important; }
+  .bar {
+    position: relative; box-sizing: border-box; width: 100%; border: 0; border-radius: 0;
+    background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface);
+    box-shadow: none; overflow: clip;
+    padding: 0;
+  }
+  .content {
+    position: absolute; box-sizing: border-box; display: block;
+    width: 100%; height: 80px; padding: 4px 4px 0; gap: 0;
+  }
+  .actions { position: absolute; display: block; min-width: 0; }
+  .fab { position: absolute; box-sizing: border-box; display: block; padding-top: 8px; padding-inline-end: 12px; }
+  .fab[hidden] { display: none; }
+  slot { display: contents; }
+  ::slotted(*) { flex-shrink: 0; }
+  ::slotted([hidden]) { display: none !important; }
+  .content.flexible .actions, .content.flexible .fab:not([hidden]) { display: contents; }
+  .color-probe { position: absolute; visibility: hidden; pointer-events: none; }
+  .inset-probe { position: absolute; visibility: hidden; pointer-events: none; padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+  .minimum-probe { position: absolute; visibility: hidden; pointer-events: none; height: 0; }
+`;
+var sheet3 = createComponentSheet(defaultStyle18);
+var INF5 = 2147483647;
+var find2 = (node, id) => node.id === id ? node : node.children.map((p) => find2(p.node, id)).find(Boolean);
+var write3 = (node, key, value) => {
+  if (node.style[key] !== value) node.style[key] = value;
+};
+var rect2 = (node, p) => {
+  for (const [key, value] of Object.entries({ left: p.x, top: p.y, width: p.width, height: p.height })) write3(node, key, value + "px");
+};
+var MdBottomAppBar = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["variant", "container-color", "content-color", "horizontal-arrangement", "expanded-height", "tonal-elevation", "content-padding", "aria-label", "touch-exploration"];
+  }
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    adoptSheet(this.shadowRoot, sheet3);
+    this._rendered = false;
     this._abortController = null;
+    this._queued = false;
+    this._scrollBehavior = null;
+    this._scrollTarget = null;
   }
   get variant() {
     return this.getAttribute("variant") === "flexible" ? "flexible" : "standard";
@@ -8954,6 +10004,69 @@ var MdBottomAppBar = class extends HTMLElement {
   set contentPadding(v) {
     this._set("content-padding", v == null ? null : serializeToolbarPadding(normalizeToolbarPadding(v)));
   }
+  get touchExplorationEnabled() {
+    return this.hasAttribute("touch-exploration");
+  }
+  set touchExplorationEnabled(value) {
+    this.toggleAttribute("touch-exploration", !!value);
+  }
+  get _activeScrollBehavior() {
+    return this.touchExplorationEnabled ? null : this._scrollBehavior;
+  }
+  get scrollBehavior() {
+    return this._scrollBehavior;
+  }
+  set scrollBehavior(value) {
+    if (value != null && (!value.state || typeof value.state.subscribe !== "function" || typeof value.state.updateHeightOffsetLimit !== "function" || typeof value.nestedScrollConnection?.onPostScroll !== "function" || typeof value.nestedScrollConnection?.onPostFling !== "function")) throw new TypeError("Expected a BottomAppBarScrollBehavior");
+    this._cancelScrollSettle();
+    this._stopState?.();
+    this._scrollBehavior = value ?? null;
+    value?.setElement?.(this);
+    this._bindScrollState();
+    if (this.isConnected) {
+      this._sync();
+      this._configureScroll();
+    }
+  }
+  get scrollTarget() {
+    return this._scrollTarget;
+  }
+  set scrollTarget(value) {
+    if (value != null && value !== window && !(value instanceof HTMLElement)) throw new TypeError("Expected an HTMLElement or window scroll target");
+    this._cancelScrollSettle();
+    this._scrollTarget = value ?? null;
+    if (this.isConnected) this._configureScroll();
+  }
+  get scrollState() {
+    return this._scrollBehavior?.state ?? null;
+  }
+  get heightOffset() {
+    return this.scrollState?.heightOffset ?? 0;
+  }
+  set heightOffset(value) {
+    if (this.scrollState) this.scrollState.heightOffset = value ?? 0;
+  }
+  get heightOffsetLimit() {
+    return this.scrollState?.heightOffsetLimit ?? 0;
+  }
+  get collapsedFraction() {
+    return this.scrollState?.collapsedFraction ?? 0;
+  }
+  preScroll(available = { x: 0, y: 0 }) {
+    this._cancelScrollSettle();
+    const c = this._activeScrollBehavior?.nestedScrollConnection, result = c?.onPreScroll?.(available) || { x: 0, y: 0 };
+    this._sync();
+    return result;
+  }
+  postScroll(consumed = { x: 0, y: 0 }, available = { x: 0, y: 0 }) {
+    this._cancelScrollSettle();
+    const result = this._activeScrollBehavior?.nestedScrollConnection.onPostScroll(consumed, available) || { x: 0, y: 0 };
+    this._sync();
+    return result;
+  }
+  postFling(consumed = { x: 0, y: 0 }, available = { x: 0, y: 0 }) {
+    return this._runScrollSettle(available.y ?? 0, true, consumed);
+  }
   _set(name, value) {
     if (value == null) this.removeAttribute(name);
     else this.setAttribute(name, String(value));
@@ -8961,55 +10074,262 @@ var MdBottomAppBar = class extends HTMLElement {
   connectedCallback() {
     if (!this._rendered) this.render();
     this.setupInteractions();
+    this._bindScrollState();
     this._sync();
+    this._configureScroll();
   }
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._resize?.disconnect();
+    this._mutation?.disconnect();
+    this._stopState?.();
+    this._stopState = null;
+    this._scrollAbort?.abort();
+    this._cancelScrollSettle();
   }
   attributeChangedCallback(name, oldValue, value) {
-    if (this._rendered && this.isConnected && oldValue !== value) this._sync();
+    if (this._rendered && this.isConnected && oldValue !== value) {
+      if (name === "touch-exploration") {
+        this._cancelScrollSettle();
+        this._configureScroll();
+      }
+      this._sync();
+    }
   }
   render() {
     const adopted = !!this.shadowRoot.adoptedStyleSheets?.length;
-    this.shadowRoot.innerHTML = `${adopted ? "" : `<style>${defaultStyle19}</style>`}
+    this.shadowRoot.innerHTML = `${adopted ? "" : `<style>${defaultStyle18}</style>`}
       <div class="bar" part="bar" role="group">
         <div class="content" part="content">
           <div class="actions" part="actions"><slot></slot></div>
           <div class="fab" part="fab"><slot name="fab"></slot></div>
         </div>
-      </div><span class="color-probe" aria-hidden="true"></span>`;
+      </div><span class="color-probe" aria-hidden="true"></span><span class="inset-probe" aria-hidden="true"></span><span class="minimum-probe" aria-hidden="true"></span>`;
+    this._sizes = document.createElement("style");
+    this._sizes.textContent = ":host{}";
+    this.shadowRoot.append(this._sizes);
     this._rendered = true;
   }
+  _queue() {
+    if (this._queued || !this.isConnected) return;
+    this._queued = true;
+    queueMicrotask(() => {
+      this._queued = false;
+      if (this.isConnected) this._sync();
+    });
+  }
   _sync() {
-    const bar = this.shadowRoot.querySelector(".bar"), row = this.shadowRoot.querySelector(".content");
+    const bar = this.shadowRoot.querySelector(".bar"), row2 = this.shadowRoot.querySelector(".content");
     const flexible = this.variant === "flexible", rtl = getComputedStyle(this).direction === "rtl";
-    const padding = resolveToolbarPadding(this.contentPadding, rtl);
-    row.classList.toggle("flexible", flexible);
-    row.style.height = `${Math.round(this.expandedHeight)}px`;
-    for (const edge of ["left", "top", "right", "bottom"]) row.style["padding" + edge[0].toUpperCase() + edge.slice(1)] = `${padding[edge]}px`;
-    const arrangement = arrangements[this.horizontalArrangement] || (flexible ? "space-between" : "flex-start");
-    row.style.justifyContent = flexible ? arrangement : "flex-start";
-    row.style.gap = flexible && this.horizontalArrangement === "fixed" ? "32px" : "0px";
-    this.shadowRoot.querySelector(".actions").style.justifyContent = flexible ? "" : arrangement;
+    const padding2 = resolveToolbarPadding(this.contentPadding, rtl);
+    row2.classList.toggle("flexible", flexible);
+    for (const edge of ["left", "top", "right", "bottom"]) row2.style["padding" + edge[0].toUpperCase() + edge.slice(1)] = `${padding2[edge]}px`;
     this.shadowRoot.querySelector(".fab").hidden = this.shadowRoot.querySelector('slot[name="fab"]').assignedElements().length === 0;
-    const valid = (value, fallback) => value && CSS.supports("color", value) ? value : fallback;
+    this._layout();
+    const valid2 = (value, fallback) => value && CSS.supports("color", value) ? value : fallback;
     const colors = resolveSurfaceColors(this, this.shadowRoot.querySelector(".color-probe"), {
-      container: valid(this.containerColor, "var(--md-sys-color-surface-container)"),
-      content: valid(this.contentColor, ""),
+      container: valid2(this.containerColor, "var(--md-sys-color-surface-container)"),
+      content: valid2(this.contentColor, ""),
       elevation: this.tonalElevation
     });
     bar.style.backgroundColor = colors.container;
     bar.style.color = colors.content;
     bar.style.setProperty("--md-icon-button-content-color", colors.content);
+    bar.style.setProperty("--md-icon-button-outline-color", colors.content);
+    bar.style.setProperty("--md-icon-button-disabled-content-color", `rgb(from ${colors.content} r g b / .38)`);
     bar.style.setProperty("--md-absolute-tonal-elevation", String(colors.total));
     bar.setAttribute("aria-label", this.getAttribute("aria-label") || "Bottom app bar");
   }
+  _leaf(node, id) {
+    const css = getComputedStyle(node), r = node.getBoundingClientRect();
+    const button = ["md-icon-button", "md-fab"].includes(node.localName) ? node.shadowRoot?.querySelector("button") : null, b = button ? getComputedStyle(button) : null;
+    const probe = this.shadowRoot.querySelector(".minimum-probe");
+    probe.style.fontSize = css.fontSize;
+    probe.style.width = css.getPropertyValue("--md-minimum-interactive-component-size").trim() || "48px";
+    const minimum = parseFloat(getComputedStyle(probe).width), weight = Number(node.getAttribute("data-app-bar-weight")), line = Number(node.getAttribute("data-app-bar-alignment-line"));
+    return { id, width: Math.round(r.width), height: Math.round(r.height), weight: weight > 0 ? Math.fround(Math.min(weight, 34028234663852886e22)) : 0, fill: node.getAttribute("data-app-bar-fill") !== "false", align: node.getAttribute("data-app-bar-align") || "center", line: node.hasAttribute("data-app-bar-alignment-line") && Number.isFinite(line) ? Math.round(line) : null, ink: b ? { width: Math.round(parseFloat(b.width) || 0), height: Math.round(parseFloat(b.height) || 0), minimum: Number.isFinite(minimum) ? minimum : 48 } : null };
+  }
+  _layout() {
+    while (this._sizes.sheet.cssRules.length > 1) this._sizes.sheet.deleteRule(1);
+    const sizing = this._sizes.sheet.cssRules[0].style;
+    const dimension = () => {
+      const css2 = getComputedStyle(this);
+      return Math.max(0, Math.round((parseFloat(css2.height) || 0) - (css2.boxSizing === "border-box" ? (parseFloat(css2.paddingTop) || 0) + (parseFloat(css2.paddingBottom) || 0) + (parseFloat(css2.borderTopWidth) || 0) + (parseFloat(css2.borderBottomWidth) || 0) : 0)));
+    };
+    sizing.setProperty("--_bottom-app-bar-height", "0px");
+    const minHeight = dimension();
+    sizing.setProperty("--_bottom-app-bar-height", "1000000px");
+    const cap = dimension(), maxHeight = cap >= 1e6 ? INF5 : Math.max(minHeight, cap);
+    sizing.removeProperty("--_bottom-app-bar-height");
+    const bar = this.shadowRoot.querySelector(".bar"), content = this.shadowRoot.querySelector(".content"), actions = this.shadowRoot.querySelector(".actions"), fab = this.shadowRoot.querySelector(".fab"), rtl = getComputedStyle(this).direction === "rtl", width = Math.max(0, Math.round(bar.getBoundingClientRect().width));
+    const css = getComputedStyle(this.shadowRoot.querySelector(".inset-probe")), insets = Object.fromEntries(["left", "top", "right", "bottom"].map((edge) => [edge, parseFloat(css["padding" + edge[0].toUpperCase() + edge.slice(1)]) || 0]));
+    const entries = [], collect = (name, prefix) => this.shadowRoot.querySelector(name).assignedElements().filter((n) => getComputedStyle(n).display !== "none").map((n, i) => {
+      const input2 = this._leaf(n, prefix + i);
+      entries.push({ n, input: input2 });
+      return input2;
+    });
+    const input = { minWidth: width, maxWidth: width, minHeight, maxHeight, rtl, variant: this.variant, height: this.expandedHeight, contentPadding: this.contentPadding, arrangement: this.horizontalArrangement, insets, actions: collect("slot:not([name])", "action"), fabs: collect('slot[name="fab"]', "fab") };
+    const state = this._activeScrollBehavior?.state, layout = state ? bottomAppBarScrollLayout(input, state) : bottomAppBarLayout(input);
+    const positions2 = layout.placements, origin = positions2["content-height"], surface = positions2.bar;
+    rect2(content, { ...origin, x: origin.x - surface.x, y: origin.y - surface.y });
+    write3(bar, "height", surface.height + "px");
+    write3(bar, "top", surface.y + "px");
+    write3(bar, "left", surface.x + "px");
+    const flexible = this.variant === "flexible";
+    if (!flexible) {
+      const p = positions2["actions-row"];
+      rect2(actions, { x: p.x - origin.x, y: p.y - origin.y, width: p.width, height: p.height });
+      const q = positions2["fab-fill"];
+      if (q) rect2(fab, { x: q.x - origin.x, y: q.y - origin.y, width: q.width, height: q.height });
+    }
+    for (const { n, input: input2 } of entries) {
+      const leaf2 = find2(layout.node, input2.id), p = positions2[input2.id], parent = flexible ? origin : n.slot === "fab" ? positions2["fab-fill"] : positions2["actions-row"];
+      const body = input2.ink ? minimumInteractiveLayout({ ...input2.ink, ...leaf2.constraints }).body : null;
+      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf2.size.width}px;--md-toolbar-control-layout-height:${leaf2.size.height}px;` : "";
+      const index = [...this.children].indexOf(n) + 1;
+      this._sizes.sheet.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - parent.x - leaf2.offset.x}px!important;top:${p.y - parent.y - leaf2.offset.y}px!important;width:${leaf2.size.width}px!important;height:${leaf2.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;--md-toolbar-control-min-width:${leaf2.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf2.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf2.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf2.constraints.maxHeight}px;${native}}`, this._sizes.sheet.cssRules.length);
+    }
+    const observed = new Set(entries.flatMap(({ n }) => [n, n.shadowRoot?.querySelector("button")].filter(Boolean)));
+    for (const n of this._observedChildren || []) if (!observed.has(n)) this._resize?.unobserve(n);
+    for (const n of observed) if (!this._observedChildren?.has(n)) this._resize?.observe(n);
+    this._observedChildren = observed;
+    this._layoutResult = layout;
+    sizing.setProperty("--_bottom-app-bar-height", layout.size.height + "px");
+  }
+  _bindScrollState() {
+    this._stopState?.();
+    this._stopState = this.isConnected && this._scrollBehavior ? this._scrollBehavior.state.subscribe(() => this._queue()) : null;
+  }
+  _configureScroll() {
+    this._scrollAbort?.abort();
+    if (!this.isConnected || !this._rendered) return;
+    this._scrollAbort = new AbortController();
+    const { signal } = this._scrollAbort, target = this._scrollTarget;
+    const scrolling = () => target === window ? document.scrollingElement : target;
+    let last = scrolling()?.scrollTop || 0;
+    target?.addEventListener("scroll", () => {
+      const current = scrolling()?.scrollTop || 0, delta = Math.fround(last - current);
+      last = current;
+      if (delta) this.postScroll({ x: 0, y: delta });
+    }, { signal, passive: true });
+    target?.addEventListener("scrollend", () => this.postFling(), { signal, passive: true });
+    this.addEventListener("pointerdown", (event) => this._barDragStart(event), { signal });
+    this.addEventListener("pointermove", (event) => this._barDragMove(event), { signal });
+    const stop = (event) => this._barDragStop(event);
+    for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) this.addEventListener(type, stop, { signal });
+    this.addEventListener("click", (event) => {
+      if (this._suppressDragClick && event.detail !== 0) {
+        this._suppressDragClick = false;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    }, { signal, capture: true });
+    this._reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    this._reduced.addEventListener("change", () => {
+      if (this._reduced.matches) {
+        this._scrollSettle?.finish();
+        this._scrollTick(performance.now());
+      }
+    }, { signal });
+    this._sizes.sheet.cssRules[0].style.setProperty("--_bottom-app-bar-touch-action", this._activeScrollBehavior && !this._activeScrollBehavior.isPinned ? "pan-x" : "auto");
+  }
+  _cancelScrollSettle() {
+    if (this._scrollRaf) cancelAnimationFrame(this._scrollRaf);
+    this._scrollRaf = 0;
+    this._scrollSettle = null;
+    this._scrollResolve?.({ x: 0, y: 0 });
+    this._scrollResolve = null;
+    const drag = this._drag;
+    this._drag = null;
+    if (drag && this.hasPointerCapture(drag.id)) this.releasePointerCapture(drag.id);
+  }
+  _runScrollSettle(velocity, fromContent = false, consumed = { x: 0, y: 0 }) {
+    this._cancelScrollSettle();
+    const b = this._activeScrollBehavior;
+    if (!this.isConnected || !b) return Promise.resolve({ x: 0, y: 0 });
+    const motion = this._scrollSettle = fromContent ? b.nestedScrollConnection.onPostFling(consumed, { x: 0, y: velocity }) : new BottomAppBarSettling(b.state, velocity, { snapAnimationSpec: b.snapAnimationSpec, flingAnimationSpec: b.flingAnimationSpec });
+    const promise = new Promise((resolve) => this._scrollResolve = resolve);
+    if (this._reduced?.matches) motion.finish();
+    if (motion.done) this._scrollTick(performance.now());
+    else this._scrollRaf = requestAnimationFrame((time) => this._scrollTick(time));
+    return promise;
+  }
+  _scrollTick(now) {
+    this._scrollRaf = 0;
+    const motion = this._scrollSettle;
+    if (!motion) return;
+    motion.sampleFrame(now, () => this._sync());
+    this._sync();
+    if (motion.done) {
+      this._scrollSettle = null;
+      this._scrollResolve?.({ x: 0, y: motion.returnedVelocity });
+      this._scrollResolve = null;
+    } else this._scrollRaf = requestAnimationFrame((time) => this._scrollTick(time));
+  }
+  _barDragStart(event) {
+    const b = this._activeScrollBehavior;
+    if (!b || b.isPinned || event.defaultPrevented || event.button !== 0 || event.isPrimary === false) return;
+    this._cancelScrollSettle();
+    const tracker = new PointerVelocityTracker();
+    tracker.down(event.timeStamp, event.clientY);
+    this._drag = { id: event.pointerId, last: event.clientY, active: false, slop: new HorizontalTouchSlop(pointerSlop(event.pointerType)), tracker };
+    this._suppressDragClick = false;
+  }
+  _barDragMove(event) {
+    const drag = this._drag;
+    if (!drag || drag.id !== event.pointerId) return;
+    if (event.defaultPrevented) {
+      if (drag.active) this._runScrollSettle(0);
+      else this._cancelScrollSettle();
+      return;
+    }
+    const delta = event.clientY - drag.last;
+    drag.last = event.clientY;
+    for (const sample of event.getCoalescedEvents?.() || []) {
+      if (sample.timeStamp === event.timeStamp && sample.clientY === event.clientY) continue;
+      drag.tracker.move(sample.timeStamp, sample.clientY);
+    }
+    drag.tracker.move(event.timeStamp, event.clientY);
+    let amount = delta;
+    if (!drag.active) {
+      amount = drag.slop.add(delta);
+      if (amount === null) return;
+      drag.active = true;
+      try {
+        this.setPointerCapture(event.pointerId);
+      } catch {
+      }
+    }
+    event.preventDefault();
+    this.scrollState.heightOffset = Math.fround(this.heightOffset - amount);
+    this._suppressDragClick = true;
+    this._sync();
+  }
+  _barDragStop(event) {
+    if (event.type === "lostpointercapture" && event.target !== this) return;
+    const drag = this._drag;
+    if (!drag || drag.id !== event.pointerId) return;
+    this._drag = null;
+    if (this.hasPointerCapture(event.pointerId)) this.releasePointerCapture(event.pointerId);
+    if (drag.active) this._runScrollSettle(event.type === "pointerup" ? drag.tracker.up(event.timeStamp) : 0);
+  }
   setupInteractions() {
     this._abortController?.abort();
+    this._resize?.disconnect();
+    this._mutation?.disconnect();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-    for (const slot of this.shadowRoot.querySelectorAll("slot")) slot.addEventListener("slotchange", () => this._sync(), { signal });
+    for (const slot of this.shadowRoot.querySelectorAll("slot")) slot.addEventListener("slotchange", () => this._queue(), { signal });
+    this._observedChildren = /* @__PURE__ */ new Set();
+    this._resize = new ResizeObserver(() => this._queue());
+    this._resize.observe(this);
+    this._mutation = new MutationObserver(() => this._queue());
+    this._mutation.observe(this, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["slot", "size", "variant", "style", "class", "disabled", "hidden", "label", "icon", "data-app-bar-weight", "data-app-bar-fill", "data-app-bar-align", "data-app-bar-alignment-line"] });
+    document.fonts?.addEventListener("loadingdone", () => this._queue(), { signal });
+    document.fonts?.ready.then(() => {
+      if (!signal.aborted) this._queue();
+    });
     this.shadowRoot.querySelector(".bar").addEventListener("click", (event) => {
       if (event.defaultPrevented) return;
       const path = event.composedPath();
@@ -9023,14 +10343,14 @@ var MdBottomAppBar = class extends HTMLElement {
         composed: true
       }));
     }, { signal });
-    const stopTheme = observeThemeContext(this, () => this._sync());
+    const stopTheme = observeThemeContext(this, () => this._queue());
     signal.addEventListener("abort", stopTheme, { once: true });
   }
 };
 if (!customElements.get("md-bottom-app-bar")) customElements.define("md-bottom-app-bar", MdBottomAppBar);
 
 // src/components/md-navigation-bar.js
-var defaultStyle20 = `
+var defaultStyle19 = `
   :host { display:block; width:100%; user-select:none; -webkit-user-select:none; }
   .bar {
     box-sizing:border-box; width:100%; border-radius:0;
@@ -9080,10 +10400,10 @@ var defaultStyle20 = `
   .md-ripple-effect { position:absolute; border-radius:50%; background:currentColor; opacity:0; animation:navigation-ripple 450ms linear; }
   @keyframes navigation-ripple { from { transform:scale(0); opacity:.1; } to { transform:scale(1); opacity:0; } }
 `;
-var navigationBarSheet = createComponentSheet(defaultStyle20);
-var place = (node, x, y, width, height) => {
+var navigationBarSheet = createComponentSheet(defaultStyle19);
+var place = (node, x, y2, width, height) => {
   node.style.insetInlineStart = `${x}px`;
-  node.style.top = `${y}px`;
+  node.style.top = `${y2}px`;
   if (width !== void 0) node.style.width = `${width}px`;
   if (height !== void 0) node.style.height = `${height}px`;
 };
@@ -9231,7 +10551,7 @@ var MdNavigationBar = class extends HTMLElement {
     for (const record of this._records) record.motion?.dispose();
     const hasAdopted = !!this.shadowRoot.adoptedStyleSheets?.length;
     const items = this.items;
-    this.shadowRoot.innerHTML = `${hasAdopted ? "" : `<style>${defaultStyle20}</style>`}
+    this.shadowRoot.innerHTML = `${hasAdopted ? "" : `<style>${defaultStyle19}</style>`}
       <nav class="bar"><div class="items" role="tablist" aria-orientation="horizontal">
       ${items.map((item, index) => `<button class="item" type="button" role="tab" data-index="${index}"
         aria-label="${escapeHtml(item.ariaLabel ?? item.label ?? item.icon ?? "")}">
@@ -9282,8 +10602,8 @@ var MdNavigationBar = class extends HTMLElement {
       return;
     }
     const maxWidth = Math.floor(width / count);
-    let padding = this.arrangement === "centered" && count <= 6 ? Math.round(Math.fround(Math.fround(Math.fround((100 - 10 * (count + 3)) / 2) / 100) * width)) : 0;
-    const minWidth = Math.floor((width - 2 * padding) / count);
+    let padding2 = this.arrangement === "centered" && count <= 6 ? Math.round(Math.fround(Math.fround(Math.fround((100 - 10 * (count + 3)) / 2) / 100) * width)) : 0;
+    const minWidth = Math.floor((width - 2 * padding2) / count);
     const widths = this._records.map((record) => {
       record.position = this._positionFor(record);
       record.button.dataset.iconPosition = record.position;
@@ -9294,11 +10614,11 @@ var MdNavigationBar = class extends HTMLElement {
       height = Math.max(height, start ? Math.max(24, intrinsicHeight) + 16 : 24 + intrinsicHeight + (record.label ? 24 : 20));
       const intrinsicWidth = start && record.label ? 60 + natural.width : Math.max(56, natural.width);
       const itemWidth = this.arrangement === "centered" ? Math.min(maxWidth, Math.max(minWidth, intrinsicWidth)) : maxWidth;
-      padding -= Math.floor((itemWidth - minWidth) / 2);
+      padding2 -= Math.floor((itemWidth - minWidth) / 2);
       return itemWidth;
     });
     group.style.height = `${height}px`;
-    let x = padding;
+    let x = padding2;
     this._records.forEach((record, index) => {
       const itemWidth = widths[index], start = record.position === "start";
       place(record.button, x, 0, itemWidth, height);
@@ -9402,79 +10722,8 @@ var MdNavigationBar = class extends HTMLElement {
 };
 if (!customElements.get("md-navigation-bar")) customElements.define("md-navigation-bar", MdNavigationBar);
 
-// src/motion/velocity-tracker.js
-var f11 = Math.fround;
-var dot = (a, b) => {
-  let result = 0;
-  for (let i = 0; i < a.length; i++) result = f11(result + f11(a[i] * b[i]));
-  return result;
-};
-function leastSquaresVelocity(samples, maximum = 8e3) {
-  const points = [], times2 = [], newest = samples.at(-1);
-  if (!newest) return 0;
-  let previous = newest;
-  for (let i = samples.length - 1; i >= 0 && points.length < 20; i--) {
-    const sample = samples[i], age = f11(newest.time - sample.time), gap = f11(Math.abs(sample.time - previous.time));
-    previous = sample;
-    if (age > 100 || gap > 40) break;
-    points.push(f11(sample.position));
-    times2.push(-age);
-  }
-  if (points.length < 2) return 0;
-  const count = points.length, n = Math.min(3, count);
-  const a = Array.from({ length: n }, () => new Float32Array(count));
-  const q = Array.from({ length: n }, () => new Float32Array(count));
-  const r = Array.from({ length: n }, () => new Float32Array(n));
-  for (let h = 0; h < count; h++) {
-    a[0][h] = 1;
-    for (let i = 1; i < n; i++) a[i][h] = f11(a[i - 1][h] * times2[h]);
-  }
-  for (let j = 0; j < n; j++) {
-    const w = q[j];
-    w.set(a[j]);
-    for (let i = 0; i < j; i++) {
-      const z = q[i], projection = dot(w, z);
-      for (let h = 0; h < count; h++) w[h] = f11(w[h] - f11(projection * z[h]));
-    }
-    const inverse = f11(1 / Math.max(f11(Math.sqrt(dot(w, w))), f11(1e-6)));
-    for (let h = 0; h < count; h++) w[h] = f11(w[h] * inverse);
-    for (let i = 0; i < n; i++) r[j][i] = i < j ? 0 : dot(w, a[i]);
-  }
-  const coefficients = new Float32Array(n);
-  for (let i = n - 1; i >= 0; i--) {
-    let value = dot(q[i], points);
-    for (let j = n - 1; j > i; j--) value = f11(value - f11(r[i][j] * coefficients[j]));
-    coefficients[i] = f11(value / r[i][i]);
-  }
-  const velocity = f11(coefficients[1] * 1e3);
-  return Number.isNaN(velocity) ? 0 : Math.max(-maximum, Math.min(maximum, velocity));
-}
-var PointerVelocityTracker = class {
-  constructor() {
-    this.samples = [];
-    this.lastMove = 0;
-  }
-  add(time, position) {
-    this.samples.push({ time: Math.floor(time), position: f11(position) });
-    if (this.samples.length > 20) this.samples.shift();
-  }
-  down(time, position) {
-    this.samples = [];
-    this.add(time, position);
-    this.lastMove = Math.floor(time);
-  }
-  move(time, position) {
-    this.add(time, position);
-    this.lastMove = Math.floor(time);
-  }
-  up(time, maximum = 8e3) {
-    if (Math.floor(time) - this.lastMove > 40) this.samples = [];
-    return leastSquaresVelocity(this.samples, maximum);
-  }
-};
-
 // src/components/md-navigation-drawer.js
-var defaultStyle21 = `
+var defaultStyle20 = `
  :host { display:block; width:var(--md-navigation-drawer-width,var(--drawer-default-width,360px));
    max-width:100%; height:100%; outline:none; user-select:none; -webkit-user-select:none; }
  :host([data-variant="modal"]) { display:contents; }
@@ -9526,8 +10775,8 @@ var defaultStyle21 = `
  .md-ripple-effect { position:absolute; border-radius:50%; background:currentColor; opacity:0; animation:drawer-ripple 450ms linear; }
  @keyframes drawer-ripple { from { transform:scale(0); opacity:.1; } to { transform:scale(1); opacity:0; } }
 `;
-var navigationDrawerSheet = createComponentSheet(defaultStyle21);
-var clamp4 = (value, min, max) => Math.max(min, Math.min(max, value));
+var navigationDrawerSheet = createComponentSheet(defaultStyle20);
+var clamp8 = (value, min, max) => Math.max(min, Math.min(max, value));
 var gestureOwners = /* @__PURE__ */ new WeakMap();
 var MdNavigationDrawer = class extends HTMLElement {
   static get observedAttributes() {
@@ -9697,7 +10946,7 @@ var MdNavigationDrawer = class extends HTMLElement {
     this.dataset.variant = this.variant;
     const items = this.items, tag = this.modal ? "dialog" : "div";
     this.style.setProperty("--drawer-default-width", items.length ? "360px" : "240px");
-    this.shadowRoot.innerHTML = `${this.shadowRoot.adoptedStyleSheets?.length ? "" : `<style>${defaultStyle21}</style>`}
+    this.shadowRoot.innerHTML = `${this.shadowRoot.adoptedStyleSheets?.length ? "" : `<style>${defaultStyle20}</style>`}
     <${tag} class="layer" ${this.modal ? 'aria-modal="true"' : ""}>
      ${this.modal ? '<div class="scrim" part="scrim" aria-hidden="true"></div>' : ""}
      <nav class="drawer" part="drawer" tabindex="-1"><div class="drawer-content">
@@ -9750,7 +10999,7 @@ var MdNavigationDrawer = class extends HTMLElement {
   _syncOpen(animate) {
     if (!this.isConnected || !this._drawer) return;
     if (this.variant === "dismissible") {
-      const style2 = getComputedStyle(this), requested = parseFloat(style2.getPropertyValue("--md-navigation-drawer-width")) || (this.items.length ? 360 : 240);
+      const style3 = getComputedStyle(this), requested = parseFloat(style3.getPropertyValue("--md-navigation-drawer-width")) || (this.items.length ? 360 : 240);
       this._width = Math.min(requested, 360, this.parentElement?.clientWidth || innerWidth);
       this.style.setProperty("--drawer-measured-width", `${this._width}px`);
     } else this._width = this._drawer.offsetWidth;
@@ -9787,7 +11036,7 @@ var MdNavigationDrawer = class extends HTMLElement {
     this._drawer.style.transformOrigin = rtl ? "left center" : "right center";
     this._content.style.scale = `${Math.fround(1 / scale2)} 1`;
     this._content.style.transformOrigin = rtl ? "left top" : "right top";
-    const fraction = this._width ? clamp4(Math.fround(Math.fround(offset + this._width) / this._width), 0, 1) : 0;
+    const fraction = this._width ? clamp8(Math.fround(Math.fround(offset + this._width) / this._width), 0, 1) : 0;
     const visible = !movable || fraction > 0 || this.open || !!this._drag?.started;
     this._drawer.inert = !visible;
     this._drawer.style.visibility = visible ? "visible" : "hidden";
@@ -9893,7 +11142,7 @@ var MdNavigationDrawer = class extends HTMLElement {
     gestureOwners.set(this.ownerDocument, this);
     const tracker = new PointerVelocityTracker();
     tracker.down(event.timeStamp, event.clientX);
-    const style2 = getComputedStyle(this), touchSlop = Number.parseFloat(style2.getPropertyValue("--md-navigation-drawer-touch-slop")), maximum = Number.parseFloat(style2.getPropertyValue("--md-navigation-drawer-maximum-fling-velocity"));
+    const style3 = getComputedStyle(this), touchSlop = Number.parseFloat(style3.getPropertyValue("--md-navigation-drawer-touch-slop")), maximum = Number.parseFloat(style3.getPropertyValue("--md-navigation-drawer-maximum-fling-velocity"));
     this._drag = {
       id: event.pointerId,
       x: event.clientX,
@@ -9912,7 +11161,7 @@ var MdNavigationDrawer = class extends HTMLElement {
   _beginDrag(event) {
     this._drag.started = true;
     const channel2 = this._motion.channels.offset, current = channel2.sample(performance.now()).position;
-    channel2.value = channel2.target = clamp4(current, -this._width, 0);
+    channel2.value = channel2.target = clamp8(current, -this._width, 0);
     channel2.animation = null;
     this._motion.tick(performance.now());
     if (this.modal && !this._layer.open) this._layer.showModal();
@@ -9944,7 +11193,7 @@ var MdNavigationDrawer = class extends HTMLElement {
     }
     event.preventDefault();
     const channel2 = this._motion.channels.offset;
-    channel2.value = channel2.target = clamp4(Math.fround(channel2.value + Math.fround(delta * direction)), -this._width, 0);
+    channel2.value = channel2.target = clamp8(Math.fround(channel2.value + Math.fround(delta * direction)), -this._width, 0);
     channel2.animation = null;
     this._motion.tick(performance.now());
   }
@@ -9984,123 +11233,10 @@ var MdNavigationDrawer = class extends HTMLElement {
 };
 if (!customElements.get("md-navigation-drawer")) customElements.define("md-navigation-drawer", MdNavigationDrawer);
 
-// src/motion/color-motion.js
-var clamp5 = (value, min, max) => Math.max(min, Math.min(max, value));
-var ColorSpringVector = class {
-  constructor(value) {
-    this.value = this.target = value.map(Math.fround);
-    this.animation = null;
-  }
-  sample(now) {
-    const animation = this.animation;
-    if (!animation) return { value: [...this.value], velocity: [0, 0, 0, 0] };
-    const elapsed = Math.max(0, now - animation.start);
-    if (elapsed >= animation.duration) {
-      this.finish();
-      return this.sample(now);
-    }
-    const states = animation.channels.map((channel2) => SpringPhysics.solve({
-      ...channel2,
-      from: Math.fround(channel2.from - channel2.to),
-      to: 0,
-      time: Math.floor(elapsed) / 1e3
-    }));
-    return {
-      value: states.map((state, index) => Math.fround(state.position + animation.channels[index].to)),
-      velocity: states.map((state) => Math.fround(state.velocity))
-    };
-  }
-  to(value, spec, { now = performance.now(), snap = false } = {}) {
-    const target = value.map(Math.fround);
-    if (target.every((component, index) => component === this.target[index])) return;
-    const current = this.sample(now);
-    this.target = target;
-    if (snap) {
-      this.finish();
-      return;
-    }
-    const channels = target.map((to, index) => ({
-      from: current.value[index],
-      to,
-      velocity: current.velocity[index],
-      stiffness: Math.fround(spec.stiffness),
-      dampingRatio: Math.fround(spec.dampingRatio)
-    }));
-    this.animation = { channels, start: now, duration: Math.max(...channels.map((channel2) => springDuration(channel2))) };
-  }
-  finish() {
-    this.value = [...this.target];
-    this.animation = null;
-  }
-};
-function colorVector(probe, color) {
-  probe.style.color = `oklab(from ${color} l a b / alpha)`;
-  const resolved = getComputedStyle(probe).color;
-  const match = /^oklab\(\s*([\d.e+-]+)%?\s+([\d.e+-]+)\s+([\d.e+-]+)(?:\s*\/\s*([\d.e+-]+)%?)?\s*\)$/.exec(resolved);
-  if (!match) throw new TypeError(`Cannot resolve an Oklab color: ${resolved}`);
-  const components = match.slice(1).map(Number);
-  return [match[4] === void 0 ? 1 : components[3], components[0], components[1], components[2]].map(Math.fround);
-}
-function vectorColor([alpha, l, a, b]) {
-  return `oklab(${clamp5(l, 0, 1)} ${clamp5(a, -0.5, 0.5)} ${clamp5(b, -0.5, 0.5)} / ${clamp5(alpha, 0, 1)})`;
-}
-var ColorMotion = class {
-  constructor(element2, probe, color, draw, { role = "expressiveEffectMedium" } = {}) {
-    this.element = element2;
-    this.probe = probe;
-    this.color = color;
-    this.draw = draw;
-    this.role = role;
-    this.vector = new ColorSpringVector(colorVector(probe, color));
-    this.raf = null;
-    this.disposed = false;
-    this.media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
-    this.onPreference = () => {
-      if (this.media.matches) this.finish();
-    };
-    this.media?.addEventListener("change", this.onPreference);
-    this.render(performance.now());
-  }
-  set(color, { snap = false } = {}) {
-    if (this.disposed) return;
-    if (color === this.color) return;
-    this.color = color;
-    this.vector.to(
-      colorVector(this.probe, color),
-      SpringPhysics.getPreset(this.role, this.element),
-      { snap: snap || this.media?.matches }
-    );
-    this.tick(performance.now());
-  }
-  render(now) {
-    if (this.disposed) return;
-    const state = this.vector.sample(now);
-    this.draw(this.vector.animation ? vectorColor(state.value) : this.color);
-  }
-  tick(now) {
-    if (this.disposed) return;
-    if (this.raf !== null) cancelAnimationFrame(this.raf);
-    this.raf = null;
-    this.render(now);
-    if (this.vector.animation) this.raf = requestAnimationFrame((time) => this.tick(time));
-  }
-  finish() {
-    if (this.disposed) return;
-    this.vector.finish();
-    this.tick(performance.now());
-  }
-  dispose() {
-    this.disposed = true;
-    if (this.raf !== null) cancelAnimationFrame(this.raf);
-    this.raf = null;
-    this.media?.removeEventListener("change", this.onPreference);
-  }
-};
-
 // src/components/navigation-rail-layout.js
-var f12 = Math.fround;
+var f19 = Math.fround;
 var lerp3 = (a, b, p) => a + Math.round((b - a) * p);
-var clamp6 = (value, max) => Math.min(max, Math.max(0, value));
+var clamp9 = (value, max) => Math.min(max, Math.max(0, value));
 var div = (a, b) => Math.trunc(a / b) || 0;
 function measureAnimatedRailItem({
   labelWidth,
@@ -10111,17 +11247,17 @@ function measureAnimatedRailItem({
   maxWidth,
   minHeight
 }) {
-  const p = Math.max(0, f12(positionProgress)), paddingProgress = clamp6(p, 1);
-  const selection = Math.max(0, f12(selectedProgress));
-  const verticalPadding = f12(f12(f12(1 - paddingProgress) * 4) + f12(paddingProgress * 16));
-  const labelW = clamp6(labelWidth, maxWidth), labelH = labelHeight;
+  const p = Math.max(0, f19(positionProgress)), paddingProgress = clamp9(p, 1);
+  const selection = Math.max(0, f19(selectedProgress));
+  const verticalPadding = f19(f19(f19(1 - paddingProgress) * 4) + f19(paddingProgress * 16));
+  const labelW = clamp9(labelWidth, maxWidth), labelH = labelHeight;
   const indicatorWidth = lerp3(24, 24 + labelW + 8, p) + 32;
-  const indicatorHeight = lerp3(24, Math.max(24, labelH), p) + Math.round(f12(verticalPadding * 2));
-  const rippleW = clamp6(indicatorWidth, maxWidth), rippleH = indicatorHeight;
-  const backgroundW = clamp6(Math.round(f12(indicatorWidth * selection)), maxWidth);
-  const widthTop = clamp6(Math.max(labelW, 96), maxWidth);
-  const widthStart = clamp6(rippleW + 20, maxWidth);
-  const measuredWidth = f12(widthTop + f12(f12(widthStart - widthTop) * p));
+  const indicatorHeight = lerp3(24, Math.max(24, labelH), p) + Math.round(f19(verticalPadding * 2));
+  const rippleW = clamp9(indicatorWidth, maxWidth), rippleH = indicatorHeight;
+  const backgroundW = clamp9(Math.round(f19(indicatorWidth * selection)), maxWidth);
+  const widthTop = clamp9(Math.max(labelW, 96), maxWidth);
+  const widthStart = clamp9(rippleW + 20, maxWidth);
+  const measuredWidth = f19(widthTop + f19(f19(widthStart - widthTop) * p));
   const measuredHeight = lerp3(rippleH + 4 + labelH, rippleH, p);
   const innerWidth2 = Math.round(measuredWidth);
   const width = Math.min(maxWidth, Math.max(48, innerWidth2));
@@ -10130,38 +11266,38 @@ function measureAnimatedRailItem({
   const iconYTop = Math.round(verticalPadding);
   const iconY = lerp3(0, div(measuredHeight - 24, 2) - iconYTop, p) + iconYTop;
   const labelXTop = div(96 - labelW, 2);
-  const labelXStart = 68 - (topTarget && p > 0 ? 0 : f12(20 * f12(1 - p)));
-  const labelX = p < 0.5 ? labelXTop : Math.trunc(f12(labelXStart * p));
-  const labelY = p < 0.5 ? iconY + 24 + Math.round(f12(verticalPadding + 4)) : div(measuredHeight - labelH, 2);
-  const rippleX = lerp3(20, Math.round(f12(f12(20 + measuredWidth - rippleW) / 2)), p);
+  const labelXStart = 68 - (topTarget && p > 0 ? 0 : f19(20 * f19(1 - p)));
+  const labelX = p < 0.5 ? labelXTop : Math.trunc(f19(labelXStart * p));
+  const labelY = p < 0.5 ? iconY + 24 + Math.round(f19(verticalPadding + 4)) : div(measuredHeight - labelH, 2);
+  const rippleX = lerp3(20, Math.round(f19(f19(20 + measuredWidth - rippleW) / 2)), p);
   return {
     width,
     height,
     innerWidth: innerWidth2,
     measuredHeight,
-    indicator: { x: 20 + dx, y: dy, width: backgroundW, height: rippleH, opacity: clamp6(selection, 1) },
+    indicator: { x: 20 + dx, y: dy, width: backgroundW, height: rippleH, opacity: clamp9(selection, 1) },
     ripple: { x: rippleX + dx, y: dy, width: rippleW, height: rippleH },
     icon: { x: 36 + dx, y: iconY + dy, width: 24, height: 24 },
-    label: { x: labelX + dx, y: labelY + dy, width: labelW, height: labelH, opacity: clamp6(f12(f12(4 * f12(p - 0.5)) * f12(p - 0.5)), 1) }
+    label: { x: labelX + dx, y: labelY + dy, width: labelW, height: labelH, opacity: clamp9(f19(f19(4 * f19(p - 0.5)) * f19(p - 0.5)), 1) }
   };
 }
 function measureIconOnlyRailItem({ selectedProgress, maxWidth, minHeight }) {
   const width = Math.min(maxWidth, 96), height = Math.max(Math.round(minHeight), 56);
-  const selection = Math.max(0, f12(selectedProgress));
-  const backgroundW = clamp6(Math.round(f12(56 * selection)), maxWidth);
-  const y = div(height - 56, 2);
+  const selection = Math.max(0, f19(selectedProgress));
+  const backgroundW = clamp9(Math.round(f19(56 * selection)), maxWidth);
+  const y2 = div(height - 56, 2);
   return {
     width,
     height,
-    indicator: { x: div(width - backgroundW, 2), y, width: backgroundW, height: 56, opacity: clamp6(selection, 1) },
-    ripple: { x: div(width - 56, 2), y, width: Math.min(56, maxWidth), height: 56 },
+    indicator: { x: div(width - backgroundW, 2), y: y2, width: backgroundW, height: 56, opacity: clamp9(selection, 1) },
+    ripple: { x: div(width - 56, 2), y: y2, width: Math.min(56, maxWidth), height: 56 },
     icon: { x: div(width - 24, 2), y: div(height - 24, 2), width: 24, height: 24 },
     label: null
   };
 }
 
 // src/components/md-navigation-rail.js
-var defaultStyle22 = `
+var defaultStyle21 = `
   :host { display:inline-block; height:100%; max-width:100%; vertical-align:top; user-select:none; -webkit-user-select:none; }
   .rail {
     position:relative; box-sizing:border-box; display:flex; flex-direction:column;
@@ -10208,7 +11344,7 @@ var defaultStyle22 = `
   .md-ripple-effect { position:absolute; border-radius:50%; background:currentColor; opacity:0; animation:rail-ripple 450ms linear; }
   @keyframes rail-ripple { from { transform:scale(0); opacity:.1; } to { transform:scale(1); opacity:0; } }
 `;
-var navigationRailSheet = createComponentSheet(defaultStyle22);
+var navigationRailSheet = createComponentSheet(defaultStyle21);
 var place2 = (node, g) => {
   if (!node || !g) return;
   node.style.insetInlineStart = `${g.x}px`;
@@ -10392,7 +11528,7 @@ var MdNavigationRail = class extends HTMLElement {
       r.colorMotion?.dispose();
     }
     const items = this.items, hasAdopted = !!this.shadowRoot.adoptedStyleSheets?.length;
-    this.shadowRoot.innerHTML = `${hasAdopted ? "" : `<style>${defaultStyle22}</style>`}
+    this.shadowRoot.innerHTML = `${hasAdopted ? "" : `<style>${defaultStyle21}</style>`}
       <nav class="rail"><div class="header" hidden><slot name="header"></slot></div>
       <div class="items" role="tablist" aria-orientation="vertical">
       ${items.map((item, index) => `<button class="item" type="button" role="tab" data-index="${index}"
@@ -10532,16 +11668,16 @@ var MdNavigationRail = class extends HTMLElement {
     rail.style.width = `${width}px`;
     const gap = Math.round(v.gap), contentHeight = geometries.reduce((sum, g) => sum + g.height, 0) + Math.max(0, geometries.length - 1) * gap;
     group.style.minHeight = `${Math.max(0, contentHeight)}px`;
-    let y = 0;
-    if (this.arrangement === "bottom") y = group.clientHeight - contentHeight;
+    let y2 = 0;
+    if (this.arrangement === "bottom") y2 = group.clientHeight - contentHeight;
     else if (this.arrangement === "center") {
       const origin = group.getBoundingClientRect().top - rail.getBoundingClientRect().top;
-      y = Math.round((rail.clientHeight - contentHeight) / 2) - origin;
+      y2 = Math.round((rail.clientHeight - contentHeight) / 2) - origin;
     }
     this._records.forEach((r, index) => {
       const g = geometries[index];
-      place2(r.button, { x: 0, y, width: g.width, height: g.height });
-      y += g.height + gap;
+      place2(r.button, { x: 0, y: y2, width: g.width, height: g.height });
+      y2 += g.height + gap;
       place2(r.indicator, g.indicator);
       place2(r.ripple, g.ripple);
       place2(r.icon, g.icon);
@@ -10582,7 +11718,7 @@ var MdNavigationRail = class extends HTMLElement {
 if (!customElements.get("md-navigation-rail")) customElements.define("md-navigation-rail", MdNavigationRail);
 
 // src/components/md-segmented-button.js
-var defaultStyle23 = `
+var defaultStyle22 = `
   :host {
     display: inline-flex;
     outline: none;
@@ -10694,7 +11830,7 @@ var defaultStyle23 = `
     pointer-events: none;
   }
 `;
-var segmentedButtonSheet = createComponentSheet(defaultStyle23);
+var segmentedButtonSheet = createComponentSheet(defaultStyle22);
 var MdSegmentedButton = class extends HTMLElement {
   static get observedAttributes() {
     return ["selected-index", "selected-indices", "items", "multi-select", "disabled", "checked", "selected", "space"];
@@ -10892,7 +12028,7 @@ var MdSegmentedButton = class extends HTMLElement {
     const isMulti = this.multiSelect;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle23}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle22}</style>`}
       <div class="container" role="${isMulti ? "group" : "radiogroup"}" style="${this.space ? `gap: ${this.space}px;` : ""}">
         ${items.map((item) => {
       const icon2 = typeof item === "object" && item !== null ? item.icon : "";
@@ -10916,7 +12052,7 @@ if (!customElements.get("md-segmented-button")) {
 }
 
 // src/components/md-dialog.js
-var defaultStyle24 = `
+var defaultStyle23 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -11040,7 +12176,7 @@ var defaultStyle24 = `
     outline-offset: 2px;
   }
 `;
-var dialogSheet = createComponentSheet(defaultStyle24);
+var dialogSheet = createComponentSheet(defaultStyle23);
 var MdDialog = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -11182,7 +12318,7 @@ var MdDialog = class extends HTMLElement {
     const titleColor = this.titleContentColor;
     const textColor = this.textContentColor;
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle24}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle23}</style>`}
       <div class="scrim" part="scrim"></div>
       <div class="dialog-container" part="dialog-container">
         <div class="dialog" role="dialog" aria-modal="true"
@@ -11249,9 +12385,9 @@ var MdDialog = class extends HTMLElement {
         if (scrim) scrim.style.transition = "";
       }, 320);
     }
-    const f16 = this._focusable();
-    if (f16.length) {
-      setTimeout(() => f16[f16.length - 1]?.focus({ preventScroll: true }), 50);
+    const f22 = this._focusable();
+    if (f22.length) {
+      setTimeout(() => f22[f22.length - 1]?.focus({ preventScroll: true }), 50);
     }
   }
   _deactivate() {
@@ -11266,9 +12402,9 @@ var MdDialog = class extends HTMLElement {
       return;
     }
     if (e.key === "Tab") {
-      const f16 = this._focusable();
-      if (!f16.length) return;
-      const first = f16[0], last = f16[f16.length - 1];
+      const f22 = this._focusable();
+      if (!f22.length) return;
+      const first = f22[0], last = f22[f22.length - 1];
       const active = this.shadowRoot.activeElement || document.activeElement;
       if (e.shiftKey && (active === first || active === this)) {
         e.preventDefault();
@@ -11306,7 +12442,7 @@ if (!customElements.get("md-dialog")) {
 }
 
 // src/components/md-divider.js
-var defaultStyle25 = `
+var defaultStyle24 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -11346,7 +12482,7 @@ var defaultStyle25 = `
     height: calc(100% - 16px);
   }
 `;
-var dividerSheet = createComponentSheet(defaultStyle25);
+var dividerSheet = createComponentSheet(defaultStyle24);
 var MdDivider = class extends HTMLElement {
   static get observedAttributes() {
     return ["inset", "vertical", "thickness", "color"];
@@ -11417,7 +12553,7 @@ var MdDivider = class extends HTMLElement {
   render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle25}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle24}</style>`}
       <hr class="line${this.inset ? " inset" : ""}${this.vertical ? " vertical" : ""}" aria-hidden="true">
     `;
   }
@@ -11427,7 +12563,7 @@ if (!customElements.get("md-divider")) {
 }
 
 // src/components/md-carousel.js
-var defaultStyle26 = `
+var defaultStyle25 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -11569,7 +12705,7 @@ var defaultStyle26 = `
     pointer-events: none;
   }
 `;
-var carouselSheet = createComponentSheet(defaultStyle26);
+var carouselSheet = createComponentSheet(defaultStyle25);
 var DEMO_ITEMS = [
   {
     id: 1,
@@ -11812,7 +12948,7 @@ var MdCarousel = class extends HTMLElement {
     const items = this.itemsList;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle26}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle25}</style>`}
       <div class="carousel-container" role="region" aria-label="Photo Carousel">
         <div class="carousel-track" role="listbox" tabindex="0" aria-label="Carousel items">
           ${items.map((it, idx) => `
@@ -11841,7 +12977,7 @@ if (!customElements.get("md-carousel")) {
 }
 
 // src/components/md-date-picker.js
-var defaultStyle27 = `
+var defaultStyle26 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -12253,7 +13389,7 @@ var defaultStyle27 = `
     }
   }
 `;
-var datePickerSheet = createComponentSheet(defaultStyle27);
+var datePickerSheet = createComponentSheet(defaultStyle26);
 var MONTH_NAMES = [
   "January",
   "February",
@@ -12808,7 +13944,7 @@ var MdDatePicker = class extends HTMLElement {
     }
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle27}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle26}</style>`}
       ${this.inline ? cardContentHtml : `<div class="scrim" role="dialog" aria-modal="true">${cardContentHtml}</div>`}
     `;
   }
@@ -12818,7 +13954,7 @@ if (!customElements.get("md-date-picker")) {
 }
 
 // src/components/md-time-picker.js
-var defaultStyle28 = `
+var defaultStyle27 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -13238,7 +14374,7 @@ var defaultStyle28 = `
     }
   }
 `;
-var timePickerSheet = createComponentSheet(defaultStyle28);
+var timePickerSheet = createComponentSheet(defaultStyle27);
 var MdTimePicker = class extends HTMLElement {
   static get observedAttributes() {
     return ["open", "value", "mode", "is-24-hour", "rich-colors", "layout-type", "inline", "hour", "minute", "variant"];
@@ -13521,9 +14657,9 @@ var MdTimePicker = class extends HTMLElement {
     const clockFace = this.shadowRoot.querySelector(".clock-face");
     if (clockFace) {
       const updateFromAngle = (e) => {
-        const rect2 = clockFace.getBoundingClientRect();
-        const cx = rect2.left + rect2.width / 2;
-        const cy = rect2.top + rect2.height / 2;
+        const rect4 = clockFace.getBoundingClientRect();
+        const cx = rect4.left + rect4.width / 2;
+        const cy = rect4.top + rect4.height / 2;
         const dx = e.clientX - cx;
         const dy = e.clientY - cy;
         let rad = Math.atan2(dy, dx) + Math.PI / 2;
@@ -13752,7 +14888,7 @@ var MdTimePicker = class extends HTMLElement {
     `;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle28}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle27}</style>`}
       ${this.inline ? dialogContent : `<div class="scrim" role="dialog" aria-modal="true">${dialogContent}</div>`}
     `;
   }
@@ -13792,8 +14928,8 @@ function listItemCorners({
 } = {}) {
   const key = pressed ? "pressedShape" : dragged ? "draggedShape" : selected ? "selectedShape" : focused ? "focusedShape" : hovered ? "hoveredShape" : "shape";
   const fallback = key === "shape" ? small : key === "hoveredShape" ? medium : large;
-  const value = shapes[key], valid = (number4) => typeof number4 === "number" && Number.isFinite(number4) && number4 >= 0;
-  const corners = valid(value) ? [value, value, value, value] : Array.isArray(value) && value.length === 4 && value.every(valid) ? [...value] : [fallback, fallback, fallback, fallback];
+  const value = shapes[key], valid2 = (number4) => typeof number4 === "number" && Number.isFinite(number4) && number4 >= 0;
+  const corners = valid2(value) ? [value, value, value, value] : Array.isArray(value) && value.length === 4 && value.every(valid2) ? [...value] : [fallback, fallback, fallback, fallback];
   if (segmented && key === "shape") {
     if (index === 0) corners[0] = corners[1] = large;
     if (index === count - 1) corners[2] = corners[3] = large;
@@ -13828,17 +14964,17 @@ function measureInteractiveListItem({
   const minimum = minHeight || Math.min(maxHeight, Math.max(0, [56, 72, 88][type - 1] - verticalPadding));
   const height = Math.max(minimum, Math.min(maxHeight, Math.max(l?.height ?? 0, t?.height ?? 0, mainHeight)));
   const resultWidth = Number.isFinite(width) ? width : (l?.width ?? 0) + (t?.width ?? 0) + Math.max(o?.width ?? 0, c?.width ?? 0, s?.width ?? 0);
-  const y = (size) => alignment === "top" || alignment === "auto" && height >= 60 ? 0 : alignment === "bottom" ? height - size : Math.round((height - size) / 2);
+  const y2 = (size) => alignment === "top" || alignment === "auto" && height >= 60 ? 0 : alignment === "bottom" ? height - size : Math.round((height - size) / 2);
   const placements = {}, mainX = l?.width ?? 0;
-  let mainY = y(mainHeight);
-  if (l) placements.leading = { ...l, x: 0, y: y(l.height) };
+  let mainY = y2(mainHeight);
+  if (l) placements.leading = { ...l, x: 0, y: y2(l.height) };
   for (const [name, child] of [["overline", o], ["content", c], ["supporting", s]]) {
     if (child) {
       placements[name] = { ...child, x: mainX, y: mainY };
       mainY += child.height;
     }
   }
-  if (t) placements.trailing = { ...t, x: resultWidth - t.width, y: y(t.height) };
+  if (t) placements.trailing = { ...t, x: resultWidth - t.width, y: y2(t.height) };
   return { width: resultWidth, height, type, placements };
 }
 
@@ -14177,7 +15313,7 @@ var MdListItem = class extends HTMLElement {
     this._measure();
   }
   _shapeTarget() {
-    const style2 = getComputedStyle(this), radius2 = (name) => number(style2.getPropertyValue(`--md-sys-shape-corner-${name}`), { large: 16, medium: 12, "extra-small": 4 }[name]);
+    const style3 = getComputedStyle(this), radius2 = (name) => number(style3.getPropertyValue(`--md-sys-shape-corner-${name}`), { large: 16, medium: 12, "extra-small": 4 }[name]);
     const list = this.closest("md-list"), items = list ? list._items.filter((item) => item.variant === "segmented") : [this];
     const shapes = this.shapes, custom = number(this.shape, NaN);
     if (shapes.shape === void 0 && Number.isFinite(custom)) shapes.shape = Math.max(0, custom);
@@ -14213,7 +15349,7 @@ var MdListItem = class extends HTMLElement {
       this._item.style.borderEndStartRadius = `${Math.max(0, values.bottomStart)}px`;
     });
     else this._shapeMotion.set(Object.fromEntries(keys.map((key, i) => [key, { value: target[i], role: "expressiveSpatialFast" }])));
-    const style2 = getComputedStyle(this), role = (name) => style2.getPropertyValue(`--md-sys-color-${name}`).trim() || { surface: "#FEF7FF", "on-surface": "#1D1B20", "on-surface-variant": "#49454F", "secondary-container": "#E8DEF8", "on-secondary-container": "#1D192B", "tertiary-container": "#FFD8E4", "on-tertiary-container": "#31111D" }[name];
+    const style3 = getComputedStyle(this), role = (name) => style3.getPropertyValue(`--md-sys-color-${name}`).trim() || { surface: "#FEF7FF", "on-surface": "#1D1B20", "on-surface-variant": "#49454F", "secondary-container": "#E8DEF8", "on-secondary-container": "#1D192B", "tertiary-container": "#FFD8E4", "on-tertiary-container": "#31111D" }[name];
     const roles = listItemColorRoles({ enabled: this.enabled, selected: this.selected, dragged: this.dragged });
     const options = this.colors, prefix = !this.enabled ? "disabled" : this.dragged ? "dragged" : this.selected ? "selected" : "";
     const names = { container: "containerColor", content: "contentColor", leading: "leadingContentColor", trailing: "trailingContentColor", overline: "overlineContentColor", supporting: "supportingContentColor" };
@@ -14232,7 +15368,7 @@ var MdListItem = class extends HTMLElement {
   }
   _measure() {
     if (!this.isConnected || !this._item) return;
-    const style2 = getComputedStyle(this._item), start = number(style2.paddingInlineStart, 16), end = number(style2.paddingInlineEnd, 16), top = number(style2.paddingTop, 10), bottom = number(style2.paddingBottom, 10);
+    const style3 = getComputedStyle(this._item), start = number(style3.paddingInlineStart, 16), end = number(style3.paddingInlineEnd, 16), top = number(style3.paddingTop, 10), bottom = number(style3.paddingBottom, 10);
     const minimum = number(getComputedStyle(this).getPropertyValue("--md-minimum-interactive-component-size"), 48);
     this._leading.style.setProperty("--md-minimum-interactive-component-size", `${Math.max(0, minimum - start - 12)}px`);
     this._trailing.style.setProperty("--md-minimum-interactive-component-size", `${Math.max(0, minimum - end - 12)}px`);
@@ -14356,8 +15492,8 @@ function calculateMenuPosition({ anchor, windowSize, size, position = "below", r
     }
     return length >= total - 2 * margin ? Math.round((total - length) / 2) : Math.max(margin, Math.min(total - margin - length, candidates.at(-1) + offset));
   };
-  const x = choose(xs, windowSize.width, size.width, horizontalMargin, Math.round(offsetX) * (rtl ? -1 : 1)), y = choose(ys, windowSize.height, size.height, verticalMargin, Math.round(offsetY));
-  return { x, y, origin: menuTransformOrigin(anchor, { left: x, top: y, right: x + size.width, bottom: y + size.height }) };
+  const x = choose(xs, windowSize.width, size.width, horizontalMargin, Math.round(offsetX) * (rtl ? -1 : 1)), y2 = choose(ys, windowSize.height, size.height, verticalMargin, Math.round(offsetY));
+  return { x, y: y2, origin: menuTransformOrigin(anchor, { left: x, top: y2, right: x + size.width, bottom: y2 + size.height }) };
 }
 function menuItemCorners({ selected = false, index = 0, count = 1, dropdown = false, small = 4, medium = 12 } = {}) {
   if (dropdown) return [0, 0, 0, 0];
@@ -14431,8 +15567,8 @@ function radius(el, name, fallback) {
   return number2(getComputedStyle(el).getPropertyValue("--md-sys-shape-corner-" + name), fallback);
 }
 function shape(value, fallback) {
-  const valid = (v) => typeof v === "number" && Number.isFinite(v) && v >= 0;
-  return valid(value) ? [value, value, value, value] : Array.isArray(value) && value.length === 4 && value.every(valid) ? value : fallback;
+  const valid2 = (v) => typeof v === "number" && Number.isFinite(v) && v >= 0;
+  return valid2(value) ? [value, value, value, value] : Array.isArray(value) && value.length === 4 && value.every(valid2) ? value : fallback;
 }
 function drawCorners(node, values) {
   for (const [key, property] of [["a", "borderStartStartRadius"], ["b", "borderStartEndRadius"], ["c", "borderEndEndRadius"], ["d", "borderEndStartRadius"]]) node.style[property] = Math.max(0, values[key]) + "px";
@@ -14741,7 +15877,7 @@ var MdMenu = class extends HTMLElement {
     const anchor = this._anchor();
     if (!anchor) return;
     this._menu.classList.toggle("scrollable", this._menu.scrollHeight > Math.max(0, innerHeight - 96));
-    const rect2 = anchor.getBoundingClientRect(), bounds2 = { left: Math.round(rect2.left), top: Math.round(rect2.top), right: Math.round(rect2.right), bottom: Math.round(rect2.bottom) };
+    const rect4 = anchor.getBoundingClientRect(), bounds2 = { left: Math.round(rect4.left), top: Math.round(rect4.top), right: Math.round(rect4.right), bottom: Math.round(rect4.bottom) };
     const input = { anchor: bounds2, windowSize: { width: innerWidth, height: innerHeight }, size: { width: this._menu.offsetWidth, height: this._menu.offsetHeight }, position: this.anchorPosition, rtl: getComputedStyle(this).direction === "rtl", offsetX: this.offsetX, offsetY: this.offsetY, horizontalMargin: this.variant === "dropdown" ? 0 : 8 };
     const result = calculateMenuPosition(input);
     this._positionInput = input;
@@ -15272,7 +16408,7 @@ var MdMenuItem = class extends HTMLElement {
   }
   _syncColors() {
     const roles = menuItemColorRoles({ enabled: this.enabled, selected: this.selected, selectable: this.selectionMode !== "none", vibrant: this.variant === "vibrant" }), options = this.colors;
-    const prefix = !this.enabled ? "disabled" : this.selected && this.selectionMode !== "none" ? "selected" : "", names = { content: "textColor", leading: "leadingIconColor", trailing: "trailingContentColor", container: "containerColor" }, style2 = getComputedStyle(this);
+    const prefix = !this.enabled ? "disabled" : this.selected && this.selectionMode !== "none" ? "selected" : "", names = { content: "textColor", leading: "leadingIconColor", trailing: "trailingContentColor", container: "containerColor" }, style3 = getComputedStyle(this);
     const resolved = Object.fromEntries(Object.entries(roles).map(([key, entry]) => {
       const base = names[key], name = prefix ? prefix + base[0].toUpperCase() + base.slice(1) : base, option = options[name] ?? (key === "trailing" ? options[name.replace("Content", "Icon")] : null);
       if (typeof option === "string" && CSS.supports("color", option)) {
@@ -15280,7 +16416,7 @@ var MdMenuItem = class extends HTMLElement {
         return [key, getComputedStyle(this._probe).color];
       }
       const fallback = { "on-surface": "#1d1b20", "on-surface-variant": "#49454f", "surface-container-low": "#f7f2fa", "tertiary-container": "#ffd8e4", "on-tertiary-container": "#31111d", "tertiary": "#7d5260", "on-tertiary": "#fff" };
-      const color = entry.role === "transparent" ? "transparent" : style2.getPropertyValue("--md-sys-color-" + entry.role).trim() || fallback[entry.role];
+      const color = entry.role === "transparent" ? "transparent" : style3.getPropertyValue("--md-sys-color-" + entry.role).trim() || fallback[entry.role];
       return [key, entry.alpha === 1 || entry.alpha === 0 ? color : `color-mix(in srgb,${color} ${entry.alpha * 100}%,transparent)`];
     }));
     this._button.style.color = resolved.content;
@@ -15291,8 +16427,8 @@ var MdMenuItem = class extends HTMLElement {
   }
   _measure() {
     if (!this.isConnected || !this._button || this._button.offsetWidth === 0) return;
-    const style2 = getComputedStyle(this._button), width = number2(style2.width, this._button.clientWidth) - number2(style2.paddingInlineStart, 12) - number2(style2.paddingInlineEnd, 12);
-    const leading = this._leading.hidden ? 0 : number2(getComputedStyle(this._leading).width, 0), trailing = this._trailing.hidden ? 0 : number2(getComputedStyle(this._trailing).width, 0), gap = number2(style2.columnGap, 8);
+    const style3 = getComputedStyle(this._button), width = number2(style3.width, this._button.clientWidth) - number2(style3.paddingInlineStart, 12) - number2(style3.paddingInlineEnd, 12);
+    const leading = this._leading.hidden ? 0 : number2(getComputedStyle(this._leading).width, 0), trailing = this._trailing.hidden ? 0 : number2(getComputedStyle(this._trailing).width, 0), gap = number2(style3.columnGap, 8);
     this.shadowRoot.querySelector(".text").style.maxWidth = Math.ceil(Math.max(0, width - leading - trailing - (this._leading.hidden ? 0 : gap) - (this._trailing.hidden ? 0 : gap)) * 64) / 64 + "px";
   }
   _openSubmenu(focus) {
@@ -15344,7 +16480,7 @@ var MdMenuItem = class extends HTMLElement {
 for (const [name, component] of [["md-menu-group", MdMenuGroup], ["md-menu-item", MdMenuItem], ["md-menu", MdMenu]]) if (!customElements.get(name)) customElements.define(name, component);
 
 // src/components/md-search-bar.js
-var defaultStyle29 = `
+var defaultStyle28 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none; display: block; outline: none; position: relative; }
@@ -15455,7 +16591,7 @@ var defaultStyle29 = `
     outline-offset: -3px;
   }
 `;
-var searchBarSheet = createComponentSheet(defaultStyle29);
+var searchBarSheet = createComponentSheet(defaultStyle28);
 var MdSearchBar = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -15557,7 +16693,7 @@ var MdSearchBar = class extends HTMLElement {
   render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle29}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle28}</style>`}
       <div class="wrapper" role="search">
         <div class="bar">
           <span class="leading material-symbols-rounded">search</span>
@@ -15656,7 +16792,7 @@ if (!customElements.get("md-search-bar")) {
 }
 
 // src/components/md-side-sheet.js
-var defaultStyle30 = `
+var defaultStyle29 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -15775,7 +16911,7 @@ var defaultStyle30 = `
     color: var(--md-sys-color-on-surface-variant, #CAC4D0);
   }
 `;
-var sideSheetSheet = createComponentSheet(defaultStyle30);
+var sideSheetSheet = createComponentSheet(defaultStyle29);
 var MdSideSheet = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -15882,19 +17018,19 @@ var MdSideSheet = class extends HTMLElement {
   }
   close() {
     if (!this.open) return;
-    const sheet7 = this.shadowRoot.querySelector(".sheet");
+    const sheet8 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
-    if (sheet7 && scrim) {
+    if (sheet8 && scrim) {
       const isLeft = this.position === "left";
       const exitTransform = isLeft ? "translateX(-100%)" : "translateX(100%)";
-      sheet7.style.transition = "transform 250ms cubic-bezier(0.3, 0, 0, 1)";
-      sheet7.style.transform = exitTransform;
+      sheet8.style.transition = "transform 250ms cubic-bezier(0.3, 0, 0, 1)";
+      sheet8.style.transform = exitTransform;
       scrim.style.transition = "opacity 250ms linear";
       scrim.style.opacity = "0";
       setTimeout(() => {
         this.open = false;
-        sheet7.style.transform = "";
-        sheet7.style.transition = "";
+        sheet8.style.transform = "";
+        sheet8.style.transition = "";
         scrim.style.opacity = "";
         scrim.style.transition = "";
         this._deactivate();
@@ -15915,7 +17051,7 @@ var MdSideSheet = class extends HTMLElement {
     const drawerContainerColor = this.drawerContainerColor;
     const drawerContentColor = this.drawerContentColor;
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle30}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle29}</style>`}
       <div class="scrim" part="scrim"></div>
       <aside class="sheet" role="dialog" aria-modal="true"
         aria-label="${escapeHtml(headline || "Side Sheet")}"
@@ -15940,7 +17076,7 @@ var MdSideSheet = class extends HTMLElement {
     document.removeEventListener("keydown", this._onKeydown);
     document.addEventListener("keydown", this._onKeydown);
     document.body.style.overflow = "hidden";
-    const sheet7 = this.shadowRoot.querySelector(".sheet");
+    const sheet8 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
     if (scrim) {
       scrim.style.opacity = "0";
@@ -15949,21 +17085,21 @@ var MdSideSheet = class extends HTMLElement {
         scrim.style.opacity = "0.4";
       });
     }
-    if (sheet7) {
+    if (sheet8) {
       const isLeft = this.position === "left";
       const enterFrom = isLeft ? "translateX(-100%)" : "translateX(100%)";
-      sheet7.style.transform = enterFrom;
-      sheet7.style.transition = "transform 350ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1))";
+      sheet8.style.transform = enterFrom;
+      sheet8.style.transition = "transform 350ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1))";
       requestAnimationFrame(() => {
-        sheet7.style.transform = "translateX(0)";
+        sheet8.style.transform = "translateX(0)";
       });
       setTimeout(() => {
-        sheet7.style.transition = "";
+        sheet8.style.transition = "";
         if (scrim) scrim.style.transition = "";
       }, 350);
     }
-    const f16 = this._focusable();
-    if (f16.length) f16[0].focus({ preventScroll: true });
+    const f22 = this._focusable();
+    if (f22.length) f22[0].focus({ preventScroll: true });
   }
   _deactivate() {
     document.removeEventListener("keydown", this._onKeydown);
@@ -15977,9 +17113,9 @@ var MdSideSheet = class extends HTMLElement {
       return;
     }
     if (e.key === "Tab") {
-      const f16 = this._focusable();
-      if (!f16.length) return;
-      const first = f16[0], last = f16[f16.length - 1];
+      const f22 = this._focusable();
+      if (!f22.length) return;
+      const first = f22[0], last = f22[f22.length - 1];
       const active = this.shadowRoot.activeElement;
       if (e.shiftKey && active === first) {
         e.preventDefault();
@@ -16016,7 +17152,7 @@ function tabBaselineLayout({ width, text = null, icon: icon2 = null, fontScale =
   const textWidth = text ? Math.min(width, text.width + 32) : 0, iconWidth = icon2 ? Math.min(width, icon2.width) : 0;
   const w = Math.max(textWidth, iconWidth), distance = Math.round(Math.fround(20 * Math.fround(fontScale)));
   const h = Math.max(text && icon2 ? 72 : 48, (icon2?.height || 0) + (text?.height || 0) + distance), placements = {};
-  const place3 = (name, x, y, width2, height) => placements[name] = { x: rtl ? w - width2 - x : x, y, width: width2, height };
+  const place3 = (name, x, y2, width2, height) => placements[name] = { x: rtl ? w - width2 - x : x, y: y2, width: width2, height };
   if (text && icon2) {
     const baselineOffset = text.firstBaseline === text.lastBaseline ? 14 : 6;
     const textY = h - text.lastBaseline - baselineOffset - 3, iconOffset = icon2.height + distance - text.firstBaseline;
@@ -16034,11 +17170,11 @@ function fixedTabRow({ width, tabs, rtl = false }) {
   return { size: { width, height }, positions: positions2, placements };
 }
 function scrollableTabRow({ tabs, minTabWidth = 90, edgePadding = 52 }) {
-  const f16 = Math.fround, min = f16(minTabWidth), padding = f16(edgePadding);
-  let left = padding, layoutWidth = Math.round(padding) * 2;
+  const f22 = Math.fround, min = f22(minTabWidth), padding2 = f22(edgePadding);
+  let left = padding2, layoutWidth = Math.round(padding2) * 2;
   const positions2 = tabs.map((t) => {
     const width = Math.max(min, Math.max(Math.round(min), t.width)), p = { left, width, contentWidth: Math.max(t.width - 32, 24) };
-    left = f16(left + width);
+    left = f22(left + width);
     layoutWidth += Math.round(width);
     return p;
   });
@@ -16057,16 +17193,16 @@ function tabScrollOffset({ positions: positions2, selected, edgePadding = 52, ma
   return Math.max(0, Math.min(Math.max(0, total - visible), centered));
 }
 function applyTabScrollDelta({ value, maxValue, accumulator = 0 }, delta) {
-  const f16 = Math.fround, absolute = f16(f16(value + f16(delta)) + f16(accumulator)), next = Math.max(0, Math.min(f16(maxValue), absolute));
-  const consumed = f16(next - value), integer = Math.round(consumed) || 0;
-  return { value: value + integer, accumulator: f16(consumed - integer), consumed: absolute !== next ? consumed : f16(delta) };
+  const f22 = Math.fround, absolute = f22(f22(value + f22(delta)) + f22(accumulator)), next = Math.max(0, Math.min(f22(maxValue), absolute));
+  const consumed = f22(next - value), integer = Math.round(consumed) || 0;
+  return { value: value + integer, accumulator: f22(consumed - integer), consumed: absolute !== next ? consumed : f22(delta) };
 }
 function tabContentOffset({ tabWidth, rowHeight, contentSize }) {
   return { x: Math.round(Math.fround(tabWidth - contentSize.width) / 2) || 0, y: Math.round(Math.fround(rowHeight - contentSize.height) / 2) || 0 };
 }
 
 // src/components/md-tabs.js
-var style = `
+var style2 = `
  :host{display:block;width:100%;min-width:0;box-sizing:border-box;user-select:none;-webkit-user-select:none}
  .surface{position:relative;background:var(--md-sys-color-surface,#FFFBFE)}
  .viewport{position:relative;width:100%;overflow:visible}
@@ -16096,20 +17232,20 @@ var style = `
  @keyframes tab-ripple{to{transform:scale(1);opacity:0}}
  md-tab{display:none}
 `;
-var sheet3 = createComponentSheet(style);
+var sheet4 = createComponentSheet(style2);
 var nextId = 0;
 var finite3 = (value, fallback, minimum = 0) => Number.isFinite(Number(value)) && Number(value) >= minimum ? Number(value) : fallback;
-var make = (tag, name, parent) => {
+var make2 = (tag, name, parent) => {
   const el = document.createElement(tag);
   if (name) el.className = name;
   parent?.append(el);
   return el;
 };
-var px = (el, rect2) => {
-  el.style.left = `${rect2.x}px`;
-  el.style.top = `${rect2.y}px`;
-  el.style.width = `${rect2.width}px`;
-  el.style.height = `${rect2.height}px`;
+var px = (el, rect4) => {
+  el.style.left = `${rect4.x}px`;
+  el.style.top = `${rect4.y}px`;
+  el.style.width = `${rect4.width}px`;
+  el.style.height = `${rect4.height}px`;
 };
 var MdTabs = class extends HTMLElement {
   static get observedAttributes() {
@@ -16118,20 +17254,20 @@ var MdTabs = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet3);
+    adoptSheet(this.shadowRoot, sheet4);
     this._id = `md-tabs-${++nextId}`;
     this._records = [];
     this._positions = [];
     this._panels = /* @__PURE__ */ new Map();
     this._scrollSelection = null;
-    this._surface = make("div", "surface", this.shadowRoot);
-    this._divider = make("div", "divider", this._surface);
-    this._viewport = make("div", "viewport", this._surface);
-    this._row = make("div", "tablist", this._viewport);
+    this._surface = make2("div", "surface", this.shadowRoot);
+    this._divider = make2("div", "divider", this._surface);
+    this._viewport = make2("div", "viewport", this._surface);
+    this._row = make2("div", "tablist", this._viewport);
     this._row.setAttribute("role", "tablist");
-    this._indicator = make("div", "indicator", this._row);
+    this._indicator = make2("div", "indicator", this._row);
     this._indicator.hidden = true;
-    make("slot", "", this.shadowRoot);
+    make2("slot", "", this.shadowRoot);
   }
   get tabs() {
     if (this.hasAttribute("tabs")) {
@@ -16320,20 +17456,20 @@ var MdTabs = class extends HTMLElement {
     }
   }
   _newRecord() {
-    const button = make("button", "tab");
+    const button = make2("button", "tab");
     button.type = "button";
     button.setAttribute("role", "tab");
     button.id = `${this._id}-tab-${++nextId}`;
-    make("span", "state", button);
-    const content = make("span", "tab-content", button), label = make("span", "label", content);
-    const first = make("span", "baseline", label), text = document.createTextNode("");
+    make2("span", "state", button);
+    const content = make2("span", "tab-content", button), label = make2("span", "label", content);
+    const first = make2("span", "baseline", label), text = document.createTextNode("");
     label.append(text);
-    const last = make("span", "baseline", label);
-    const icon2 = make("span", "icon", content);
+    const last = make2("span", "baseline", label);
+    const icon2 = make2("span", "icon", content);
     icon2.setAttribute("aria-hidden", "true");
     first.setAttribute("aria-hidden", "true");
     last.setAttribute("aria-hidden", "true");
-    const measure = make("span", "measure", button), probe = make("span", "color-probe", button);
+    const measure = make2("span", "measure", button), probe = make2("span", "color-probe", button);
     measure.setAttribute("aria-hidden", "true");
     probe.setAttribute("aria-hidden", "true");
     this._row.insertBefore(button, this._indicator);
@@ -16422,8 +17558,8 @@ var MdTabs = class extends HTMLElement {
     const hasText = !r.label.hidden, hasIcon = !r.icon.hidden;
     const textWidth = hasText ? Math.max(0, Math.min(natural, width - (leading && hasIcon ? 64 : 32))) : 0;
     r.label.style.width = `${textWidth}px`;
-    const rect2 = r.label.getBoundingClientRect();
-    const text = hasText ? { width: textWidth, height: Math.ceil(rect2.height), firstBaseline: Math.round(r.first.getBoundingClientRect().top - rect2.top), lastBaseline: Math.round(r.last.getBoundingClientRect().top - rect2.top) } : null;
+    const rect4 = r.label.getBoundingClientRect();
+    const text = hasText ? { width: textWidth, height: Math.ceil(rect4.height), firstBaseline: Math.round(r.first.getBoundingClientRect().top - rect4.top), lastBaseline: Math.round(r.last.getBoundingClientRect().top - rect4.top) } : null;
     const icon2 = hasIcon ? { width: Math.min(24, width), height: 24 } : null;
     const fontScale = parseFloat(getComputedStyle(r.label).fontSize) / 14;
     if (leading) {
@@ -16442,18 +17578,18 @@ var MdTabs = class extends HTMLElement {
     const allocated = this.scrollable ? Number.MAX_SAFE_INTEGER : data.length ? Math.trunc(viewportWidth / data.length) : 0;
     const measures = data.map((r) => this._measure(r, allocated, this._rtl));
     const inputs = measures.map((m) => ({ width: m.naturalWidth, height: m.size.height }));
-    const row = this.scrollable ? scrollableTabRow({ tabs: inputs, minTabWidth: this.minTabWidth, edgePadding: this.edgePadding }) : fixedTabRow({ width: viewportWidth, tabs: inputs, rtl: this._rtl });
-    this._positions = row.positions;
-    this._rowWidth = row.size.width;
-    this._row.style.width = `${row.size.width}px`;
-    this._row.style.height = `${row.size.height}px`;
+    const row2 = this.scrollable ? scrollableTabRow({ tabs: inputs, minTabWidth: this.minTabWidth, edgePadding: this.edgePadding }) : fixedTabRow({ width: viewportWidth, tabs: inputs, rtl: this._rtl });
+    this._positions = row2.positions;
+    this._rowWidth = row2.size.width;
+    this._row.style.width = `${row2.size.width}px`;
+    this._row.style.height = `${row2.size.height}px`;
     this._divider.hidden = !data.length;
     data.forEach((r, i) => {
-      const p = row.positions[i], m = measures[i];
+      const p = row2.positions[i], m = measures[i];
       r._measure = m;
       const physicalWidth = this.scrollable ? Math.max(Math.round(this.minTabWidth), m.naturalWidth) : p.width, left = Math.round(p.left);
-      px(r.button, { x: this._rtl ? row.size.width - left - physicalWidth : left, y: 0, width: physicalWidth, height: row.size.height });
-      const offset2 = tabContentOffset({ tabWidth: physicalWidth, rowHeight: row.size.height, contentSize: m.size });
+      px(r.button, { x: this._rtl ? row2.size.width - left - physicalWidth : left, y: 0, width: physicalWidth, height: row2.size.height });
+      const offset2 = tabContentOffset({ tabWidth: physicalWidth, rowHeight: row2.size.height, contentSize: m.size });
       px(r.content, { ...offset2, ...m.size });
       if (m.placements.text) {
         const t = m.placements.text;
@@ -16461,7 +17597,7 @@ var MdTabs = class extends HTMLElement {
       }
       if (m.placements.icon) px(r.icon, m.placements.icon);
     });
-    const position = row.positions[this.selected];
+    const position = row2.positions[this.selected];
     this._indicator.hidden = !position;
     if (!position) {
       this._indicatorMotion?.dispose();
@@ -16541,7 +17677,7 @@ var MdTabs = class extends HTMLElement {
       desired.add(panel);
       let state = this._panels.get(panel);
       if (!state) {
-        const label = make("span", "");
+        const label = make2("span", "");
         label.hidden = true;
         label.id = `${r.button.id}-panel-label`;
         panel.before(label);
@@ -16631,15 +17767,15 @@ function toolbarGroupComposed(expanded, state, animating) {
 }
 
 // src/components/toolbar-layout.js
-var f13 = Math.fround;
-var round2 = Math.round;
+var f20 = Math.fround;
+var round4 = Math.round;
 var int2 = (value) => Math.trunc(value) || 0;
-var lerp4 = (a, b, t) => f13(f13(a * f13(1 - t)) + f13(b * t));
+var lerp4 = (a, b, t) => f20(f20(a * f20(1 - t)) + f20(b * t));
 function toolbarFabLayout({ vertical = false, intrinsic, intrinsicCross = 64, progress, position = vertical ? "bottom" : "end", rtl = false, max = 2147483647, cross = 80, gap = 8, expandedElevation = 1, collapsedElevation = 0 }) {
-  progress = f13(progress);
-  const fabSize = round2(lerp4(56, 80, f13(1 - progress)));
-  const axis = Math.max(0, Math.min(intrinsic, max, int2(f13(intrinsic * progress))));
-  const main = intrinsic + round2(gap) + 56;
+  progress = f20(progress);
+  const fabSize = round4(lerp4(56, 80, f20(1 - progress)));
+  const axis = Math.max(0, Math.min(intrinsic, max, int2(f20(intrinsic * progress))));
+  const main = intrinsic + round4(gap) + 56;
   const atEnd = position === (vertical ? "bottom" : "end");
   const barCross = Math.max(Math.min(64, cross), intrinsicCross);
   const bar = vertical ? { x: int2((cross - barCross) / 2), y: atEnd ? intrinsic - axis : main - intrinsic, width: barCross, height: axis } : { x: atEnd ? intrinsic - axis : main - intrinsic, y: int2((cross - barCross) / 2), width: axis, height: barCross };
@@ -16652,21 +17788,21 @@ function toolbarFabLayout({ vertical = false, intrinsic, intrinsicCross = 64, pr
   return { size, placements: { toolbar: bar, fab }, elevation: lerp4(collapsedElevation, expandedElevation, Math.min(1, progress)) };
 }
 function toolbarFabConstraints({ vertical = false, contentAxis, contentIntrinsicAxis = contentAxis, contentCross = 48, contentPadding = 8, minAxis = 0, maxAxis = 2147483647, minCross = 0, maxCross = 2147483647, progress, position = vertical ? "bottom" : "end", rtl = false, scroll = 0, expandedElevation = 1, collapsedElevation = 0 }) {
-  const clamp8 = (v, a, b) => Math.max(a, Math.min(b, v));
+  const clamp11 = (v, a, b) => Math.max(a, Math.min(b, v));
   const p = resolveToolbarPadding(contentPadding, rtl), mainPadding = vertical ? p.vertical : p.horizontal, crossPadding = vertical ? p.horizontal : p.vertical;
   if (minAxis < 0 || minCross < 0 || maxAxis < minAxis || maxCross < minCross) throw new RangeError("Invalid toolbar constraints");
-  progress = f13(progress);
-  const cross = minCross === 0 ? clamp8(80, 0, maxCross) : minCross;
+  progress = f20(progress);
+  const cross = minCross === 0 ? clamp11(80, 0, maxCross) : minCross;
   const intrinsic = contentIntrinsicAxis + mainPadding, main = intrinsic + 8 + 56;
-  const target = clamp8(int2(f13(intrinsic * progress)), 0, maxAxis);
+  const target = clamp11(int2(f20(intrinsic * progress)), 0, maxAxis);
   if (target < minAxis) throw new RangeError("Invalid toolbar constraints");
   const barMinCross = Math.min(64, cross);
   const contentMain = Math.max(contentAxis, Math.max(0, minAxis - mainPadding));
-  const contentBreadth = clamp8(contentCross, Math.max(0, barMinCross - crossPadding), Math.max(0, maxCross - crossPadding));
+  const contentBreadth = clamp11(contentCross, Math.max(0, barMinCross - crossPadding), Math.max(0, maxCross - crossPadding));
   const viewportMain = Math.min(contentMain, Math.max(0, target - mainPadding));
-  const barMain = clamp8(viewportMain + mainPadding, minAxis, target);
-  const barCross = clamp8(contentBreadth + crossPadding, barMinCross, maxCross);
-  const apparentMain = clamp8(main, minAxis, maxAxis), offset = int2((apparentMain - main) / 2);
+  const barMain = clamp11(viewportMain + mainPadding, minAxis, target);
+  const barCross = clamp11(contentBreadth + crossPadding, barMinCross, maxCross);
+  const apparentMain = clamp11(main, minAxis, maxAxis), offset = int2((apparentMain - main) / 2);
   const mirrored = rtl && (!vertical || cross !== 0);
   const layout = toolbarFabLayout({ vertical, intrinsic, intrinsicCross: barCross, progress, position, rtl: mirrored, max: barMain, cross, expandedElevation, collapsedElevation });
   const requested = layout.size;
@@ -16681,7 +17817,7 @@ function toolbarFabConstraints({ vertical = false, contentAxis, contentIntrinsic
     bar.y = int2((cross - barCross) / 2);
   }
   const viewport = { x: bar.x + p.left, y: bar.y + p.top, width: vertical ? contentBreadth : viewportMain, height: vertical ? viewportMain : contentBreadth };
-  const side2 = contentMain - viewportMain, consumed = clamp8(scroll, 0, side2);
+  const side2 = contentMain - viewportMain, consumed = clamp11(scroll, 0, side2);
   const content = { x: viewport.x, y: viewport.y, width: vertical ? contentBreadth : contentMain, height: vertical ? contentMain : contentBreadth };
   if (vertical) content.y -= consumed;
   else content.x += rtl && viewportMain !== 0 ? viewportMain - contentMain + consumed : -consumed;
@@ -16715,24 +17851,24 @@ function toolbarFabContentLayout(o) {
 }
 function toolbarBalancedPadding({ width, height, top = null, left = null, progress = 1, leading = false, trailing = false }) {
   const active = !leading || !trailing;
-  const v = active && top !== null ? f13(top * f13(progress)) : 0;
-  const h = active && left !== null ? f13(left * f13(progress)) : 0;
-  const dx = round2(Math.max(0, f13(f13(v - h) * 2))), dy = round2(Math.max(0, f13(f13(h - v) * 2)));
+  const v = active && top !== null ? f20(top * f20(progress)) : 0;
+  const h = active && left !== null ? f20(left * f20(progress)) : 0;
+  const dx = round4(Math.max(0, f20(f20(v - h) * 2))), dy = round4(Math.max(0, f20(f20(h - v) * 2)));
   return { size: { width: width + dx, height: height + dy }, placements: { content: { x: int2(dx / 2), y: int2(dy / 2), width, height } } };
 }
 function toolbarRowLayout(o) {
-  const vertical = !!o.vertical, rtl = !!o.rtl, clamp8 = (v, a, b) => Math.max(a, Math.min(b, v));
+  const vertical = !!o.vertical, rtl = !!o.rtl, clamp11 = (v, a, b) => Math.max(a, Math.min(b, v));
   const p = resolveToolbarPadding(o.contentPadding, rtl), mainPadding = vertical ? p.vertical : p.horizontal, crossPadding = vertical ? p.horizontal : p.vertical;
   const outer = { minMain: o.minMain ?? 0, maxMain: o.maxMain ?? 2147483647, minCross: o.minCross ?? 0, maxCross: o.maxCross ?? 2147483647 };
-  const wrap = { ...outer, minCross: clamp8(64, outer.minCross, outer.maxCross) };
+  const wrap = { ...outer, minCross: clamp11(64, outer.minCross, outer.maxCross) };
   const padded = { minMain: Math.max(0, wrap.minMain - mainPadding), maxMain: wrap.maxMain === 2147483647 ? wrap.maxMain : Math.max(0, wrap.maxMain - mainPadding), minCross: Math.max(0, wrap.minCross - crossPadding), maxCross: wrap.maxCross === 2147483647 ? wrap.maxCross : Math.max(0, wrap.maxCross - crossPadding) };
   const toAxis = (c) => vertical ? { minMain: c.minHeight, maxMain: c.maxHeight, minCross: c.minWidth, maxCross: c.maxWidth } : { minMain: c.minWidth, maxMain: c.maxWidth, minCross: c.minHeight, maxCross: c.maxHeight };
   const fixed = (count) => Array.from({ length: count }, () => ({ main: 48, cross: 48 }));
   const groups = { leading: o.leading ?? fixed(1), main: o.main ?? fixed(3), trailing: o.trailing ?? fixed(1) }, fullTargets = {}, fullSizes = {};
   let lines = { top: null, left: null };
-  const row = (name, c) => measureRowColumn({ id: name + "-row", vertical, rtl, ...toAxis(c), children: groups[name], arrangement: "start", crossAlignment: "start" }, (input, b, i) => measureLayoutLeaf(name + i, input, b, vertical));
+  const row2 = (name, c) => measureRowColumn({ id: name + "-row", vertical, rtl, ...toAxis(c), children: groups[name], arrangement: "start", crossAlignment: "start" }, (input, b, i) => measureLayoutLeaf(name + i, input, b, vertical));
   const measureGroup = (name, c) => {
-    const child = row(name, c);
+    const child = row2(name, c);
     fullSizes[name] = child.size;
     fullTargets[name] = child.size[vertical ? "height" : "width"];
     if (name === "main") {
@@ -16742,29 +17878,29 @@ function toolbarRowLayout(o) {
       return layoutPlaceable("balanced", balance.size, c, [{ node: child, x: p3.x, y: p3.y }]);
     }
     const sample = o[name + "Sample"] ?? o.sample ?? child.size[vertical ? "height" : "width"];
-    const sampleCross = Math.max(0, round2(o[name + "Cross"] ?? child.size[vertical ? "width" : "height"]));
-    const requested2 = vertical ? { width: sampleCross, height: Math.max(0, round2(sample)) } : { width: Math.max(0, round2(sample)), height: sampleCross };
-    const current = { width: clamp8(requested2.width, c.minWidth, c.maxWidth), height: clamp8(requested2.height, c.minHeight, c.maxHeight) };
+    const sampleCross = Math.max(0, round4(o[name + "Cross"] ?? child.size[vertical ? "width" : "height"]));
+    const requested2 = vertical ? { width: sampleCross, height: Math.max(0, round4(sample)) } : { width: Math.max(0, round4(sample)), height: sampleCross };
+    const current = { width: clamp11(requested2.width, c.minWidth, c.maxWidth), height: clamp11(requested2.height, c.minHeight, c.maxHeight) };
     const alignment = o[name + "Current"] ?? o.current ?? "none";
     const anchor = alignment === "none" ? vertical ? name === "leading" ? "end" : "start" : name === "leading" ? "start" : "end" : alignment;
-    let x = 0, y = 0;
+    let x = 0, y2 = 0;
     if (!o[name + "Settled"]) {
       if (vertical) {
-        x = round2(f13((current.width - child.size.width) / 2));
-        y = anchor === "end" ? current.height - child.size.height : 0;
+        x = round4(f20((current.width - child.size.width) / 2));
+        y2 = anchor === "end" ? current.height - child.size.height : 0;
       } else {
         x = anchor === "end" ? current.width - child.size.width : 0;
-        y = round2(f13((current.height - child.size.height) / 2));
+        y2 = round4(f20((current.height - child.size.height) / 2));
       }
     }
-    const delta = round2(o[name + "Delta"] ?? (name === "leading" ? o.delta ?? 0 : -(o.delta ?? 0)));
-    if (vertical) y += delta;
+    const delta = round4(o[name + "Delta"] ?? (name === "leading" ? o.delta ?? 0 : -(o.delta ?? 0)));
+    if (vertical) y2 += delta;
     else x += delta;
-    return layoutPlaceable(name, current, c, [{ node: child, x, y }]);
+    return layoutPlaceable(name, current, c, [{ node: child, x, y: y2 }]);
   };
   const groupNames = ["leading", "main", "trailing"].filter((name) => name === "main" || groups[name].length && o[name + "Composed"] !== false);
   const content = measureRowColumn({ id: "content", vertical, rtl, ...padded, children: groupNames.map(() => ({})), arrangement: "center" }, (_, c, i) => measureGroup(groupNames[i], c));
-  const requested = { width: clamp8(content.size.width + p.horizontal, vertical ? wrap.minCross : wrap.minMain, vertical ? wrap.maxCross : wrap.maxMain), height: clamp8(content.size.height + p.vertical, vertical ? wrap.minMain : wrap.minCross, vertical ? wrap.maxMain : wrap.maxCross) };
+  const requested = { width: clamp11(content.size.width + p.horizontal, vertical ? wrap.minCross : wrap.minMain, vertical ? wrap.maxCross : wrap.maxMain), height: clamp11(content.size.height + p.vertical, vertical ? wrap.minMain : wrap.minCross, vertical ? wrap.maxMain : wrap.maxCross) };
   const paddingNode = layoutPlaceable("padded", requested, axisConstraints(wrap, vertical), [{ node: content, x: p.left, y: p.top }]);
   const root = layoutPlaceable("root", paddingNode.size, axisConstraints(outer, vertical), [{ node: paddingNode, x: 0, y: 0 }]);
   if (["leading", "trailing"].some((name) => groups[name].length && o[name + "Composed"] === false)) {
@@ -16776,8 +17912,8 @@ function toolbarRowLayout(o) {
   }
   return { size: root.size, placements: layoutPlacements(root), fullTargets, fullSizes, lines, node: root };
 }
-function toolbarColors(style2 = "standard") {
-  return style2 === "vibrant" ? { toolbarContainer: "primary-container", toolbarContent: "on-primary-container", fabContainer: "tertiary-container", fabContent: "on-tertiary-container" } : { toolbarContainer: "surface-container", toolbarContent: "on-surface", fabContainer: "primary-container", fabContent: "on-primary-container" };
+function toolbarColors(style3 = "standard") {
+  return style3 === "vibrant" ? { toolbarContainer: "primary-container", toolbarContent: "on-primary-container", fabContainer: "tertiary-container", fabContent: "on-tertiary-container" } : { toolbarContainer: "surface-container", toolbarContent: "on-surface", fabContainer: "primary-container", fabContent: "on-primary-container" };
 }
 
 // src/shapes/outline-shadow.js
@@ -16808,18 +17944,18 @@ var OutlineShadow = class {
   hide() {
     this.layer.style.display = "none";
   }
-  draw(outline, box, shadows) {
-    if (!shadows.length || box.width <= 0 || box.height <= 0) {
+  draw(outline, box3, shadows) {
+    if (!shadows.length || box3.width <= 0 || box3.height <= 0) {
       this.hide();
       return;
     }
     this.layer.style.display = "block";
-    this.layer.style.left = box.x + "px";
-    this.layer.style.top = box.y + "px";
-    attributes(this.layer, { width: box.width, height: box.height, viewBox: `0 0 ${box.width} ${box.height}` });
+    this.layer.style.left = box3.x + "px";
+    this.layer.style.top = box3.y + "px";
+    attributes(this.layer, { width: box3.width, height: box3.height, viewBox: `0 0 ${box3.width} ${box3.height}` });
     attributes(this.path, { d: `M${outline.points.map((p) => p.join(" ")).join("L")}Z` });
     const margin = Math.ceil(Math.max(...shadows.map((s) => s[2] + Math.abs(s[3]) + Math.max(Math.abs(s[0]), Math.abs(s[1])))) + 2);
-    attributes(this.filter, { x: -margin, y: -margin, width: box.width + 2 * margin, height: box.height + 2 * margin });
+    attributes(this.filter, { x: -margin, y: -margin, width: box3.width + 2 * margin, height: box3.height + 2 * margin });
     if (this.parts?.length !== shadows.length) {
       this.filter.replaceChildren();
       this.parts = shadows.map((_, i) => {
@@ -16841,18 +17977,18 @@ var OutlineShadow = class {
       }
       this.filter.append(merge);
     }
-    shadows.forEach(([x, y, blur, spread, r, g, b, alpha], i) => {
+    shadows.forEach(([x, y2, blur, spread, r, g, b, alpha], i) => {
       const part = this.parts[i];
       attributes(part.spread, { radius: Math.abs(spread), operator: spread < 0 ? "erode" : "dilate" });
       attributes(part.blur, { stdDeviation: Math.max(0, blur) / 2 });
-      attributes(part.offset, { dx: x, dy: y });
+      attributes(part.offset, { dx: x, dy: y2 });
       attributes(part.color, { "flood-color": `rgb(${r},${g},${b})`, "flood-opacity": alpha });
     });
   }
 };
 
 // src/components/md-toolbar.js
-var defaultStyle31 = `
+var defaultStyle30 = `
  :host{display:inline-block;vertical-align:middle;outline:none;-webkit-tap-highlight-color:transparent}
  :host([variant="docked"]),:host(:not([variant])){display:block}
  :host([data-toolbar-fab]),:host([data-toolbar-row]){width:var(--_toolbar-width,auto);height:var(--_toolbar-height,auto);min-width:0;min-height:0;max-width:100%;max-height:100%}
@@ -16894,17 +18030,17 @@ var defaultStyle31 = `
  :host([data-toolbar-measuring]) .group{position:relative!important;left:0!important;top:0!important;width:max-content!important;height:auto!important}
  :host([data-toolbar-measuring]) .frame[data-orientation="vertical"] .group{width:auto!important;height:max-content!important}
 `;
-var toolbarSheet = createComponentSheet(defaultStyle31);
+var toolbarSheet = createComponentSheet(defaultStyle30);
 var token = (role) => `var(--md-sys-color-${role})`;
 var number3 = (value, fallback) => Number.isFinite(Number(value)) && value !== null ? Number(value) : fallback;
-var write2 = (node, key, value) => {
+var write4 = (node, key, value) => {
   if (node.style[key] !== value) node.style[key] = value;
 };
-var rect = (node, p) => {
-  write2(node, "left", p.x + "px");
-  write2(node, "top", p.y + "px");
-  write2(node, "width", p.width + "px");
-  write2(node, "height", p.height + "px");
+var rect3 = (node, p) => {
+  write4(node, "left", p.x + "px");
+  write4(node, "top", p.y + "px");
+  write4(node, "width", p.width + "px");
+  write4(node, "height", p.height + "px");
 };
 var parseShadows = (text) => [...text.matchAll(/(rgba?\([^)]*\))\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px\s+(-?[\d.]+)px/g)].map((m) => {
   const color = m[1].match(/[\d.]+/g).map(Number);
@@ -17175,9 +18311,9 @@ var MdToolbar = class extends HTMLElement {
   render() {
     if (this._rendered) return;
     if (!this.shadowRoot.adoptedStyleSheets?.length) {
-      const style2 = document.createElement("style");
-      style2.textContent = defaultStyle31;
-      this.shadowRoot.append(style2);
+      const style3 = document.createElement("style");
+      style3.textContent = defaultStyle30;
+      this.shadowRoot.append(style3);
     }
     this._sizeStyle = document.createElement("style");
     this._sizeStyle.textContent = ":host{--_toolbar-width:auto;--_toolbar-height:auto}";
@@ -17243,11 +18379,11 @@ var MdToolbar = class extends HTMLElement {
     this._hasFabContent = this._hasFab && this._slots.main.assignedNodes().every((n) => n.nodeType === 1 || !n.textContent?.trim());
     this.toggleAttribute("data-toolbar-content", this._hasFabContent);
     if (hadFabContent && !this._hasFabContent) {
-      write2(this._viewport, "direction", "");
-      write2(this._groups.main, "direction", "");
-      for (const key of ["width", "height", "left", "top"]) write2(this._groups.main, key, "");
+      write4(this._viewport, "direction", "");
+      write4(this._groups.main, "direction", "");
+      for (const key of ["width", "height", "left", "top"]) write4(this._groups.main, key, "");
     }
-    if (hadRow && !this._hasRow) for (const node of [this._main, ...Object.values(this._clips), ...Object.values(this._groups)]) for (const key of ["width", "height", "left", "top"]) write2(node, key, "");
+    if (hadRow && !this._hasRow) for (const node of [this._main, ...Object.values(this._clips), ...Object.values(this._groups)]) for (const key of ["width", "height", "left", "top"]) write4(node, key, "");
     this.toggleAttribute("data-toolbar-row", this._hasRow);
     this._frame.dataset.row = String(this._hasRow);
     this.toggleAttribute("data-toolbar-measuring", true);
@@ -17296,9 +18432,9 @@ var MdToolbar = class extends HTMLElement {
       if (sizing.getPropertyValue(variable(key)) !== text) sizing.setProperty(variable(key), text);
     };
     const contentSize = (key) => {
-      const style2 = getComputedStyle(this);
-      let value = parseFloat(style2[key]) || 0;
-      if (style2.boxSizing === "border-box") value -= key === "width" ? (parseFloat(style2.paddingLeft) || 0) + (parseFloat(style2.paddingRight) || 0) + (parseFloat(style2.borderLeftWidth) || 0) + (parseFloat(style2.borderRightWidth) || 0) : (parseFloat(style2.paddingTop) || 0) + (parseFloat(style2.paddingBottom) || 0) + (parseFloat(style2.borderTopWidth) || 0) + (parseFloat(style2.borderBottomWidth) || 0);
+      const style3 = getComputedStyle(this);
+      let value = parseFloat(style3[key]) || 0;
+      if (style3.boxSizing === "border-box") value -= key === "width" ? (parseFloat(style3.paddingLeft) || 0) + (parseFloat(style3.paddingRight) || 0) + (parseFloat(style3.borderLeftWidth) || 0) + (parseFloat(style3.borderRightWidth) || 0) : (parseFloat(style3.paddingTop) || 0) + (parseFloat(style3.paddingBottom) || 0) + (parseFloat(style3.borderTopWidth) || 0) + (parseFloat(style3.borderBottomWidth) || 0);
       return Math.max(0, Math.round(value));
     };
     set(axis, preferredAxis);
@@ -17397,57 +18533,57 @@ var MdToolbar = class extends HTMLElement {
     const vertical = this.orientation === "vertical", axis = vertical ? "height" : "width", rtl = getComputedStyle(this).direction === "rtl";
     const frame = this._frame, surface = this._surface, main = this._metrics.main;
     let elevation;
-    const padding = resolveToolbarPadding(this._hasFab ? this.toolbarContentPadding : this.contentPadding, rtl), paddingCss = `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px`;
+    const padding2 = resolveToolbarPadding(this._hasFab ? this.toolbarContentPadding : this.contentPadding, rtl), paddingCss = `${padding2.top}px ${padding2.right}px ${padding2.bottom}px ${padding2.left}px`;
     if (this.style.getPropertyValue("--_toolbar-content-padding") !== paddingCss) this.style.setProperty("--_toolbar-content-padding", paddingCss);
     for (const name of ["leading", "trailing"]) {
       const full = this._metrics[name][axis], size = Math.max(0, Math.round(values[name]));
       const clipped = this._clips[name], group = this._groups[name];
-      write2(clipped, axis, size + "px");
-      write2(clipped, vertical ? "width" : "height", Math.max(0, Math.round(values[name + "Cross"] ?? this._metrics[name][vertical ? "width" : "height"])) + "px");
+      write4(clipped, axis, size + "px");
+      write4(clipped, vertical ? "width" : "height", Math.max(0, Math.round(values[name + "Cross"] ?? this._metrics[name][vertical ? "width" : "height"])) + "px");
       const settled = this._motion && !this._motion.channels[name].animation && !this._motion.channels[name + "Cross"].animation && !this._motion.channels[name + "Offset"].animation;
       if (settled) {
         this._alignment[name] = null;
         this._visibilityState[name] = this.effectiveExpanded ? "Visible" : "PostExit";
       }
       const offset = (this._alignment?.[name] === "end" ? size - full : 0) + Math.round(values[name + "Offset"]);
-      write2(group, "transform", `translate${vertical ? "Y" : "X"}(${offset}px)`);
+      write4(group, "transform", `translate${vertical ? "Y" : "X"}(${offset}px)`);
       this._setInert(clipped, size === 0 && !this.effectiveExpanded && !!settled, "main");
     }
     if (this._hasFab) {
       const options = { vertical, contentAxis: main[axis], contentCross: main[vertical ? "width" : "height"], contentPadding: this.toolbarContentPadding, ...this._constraints, progress: values.progress, position: this.fabPosition, rtl, expandedElevation: this.expandedShadowElevation, collapsedElevation: this.collapsedShadowElevation };
       const layout = this._hasFabContent ? toolbarFabContentLayout({ ...options, main: this._rowInputs.main }) : toolbarFabConstraints(options);
       this._layout = layout;
-      write2(frame, "width", layout.size.width + "px");
-      write2(frame, "height", layout.size.height + "px");
-      rect(surface, layout.placements.toolbar);
-      rect(this._fab, layout.placements.fab);
-      write2(this._viewport, "width", layout.placements.viewport.width + "px");
-      write2(this._viewport, "height", layout.placements.viewport.height + "px");
-      write2(this._viewport, "left", padding.left + "px");
-      write2(this._viewport, "top", padding.top + "px");
+      write4(frame, "width", layout.size.width + "px");
+      write4(frame, "height", layout.size.height + "px");
+      rect3(surface, layout.placements.toolbar);
+      rect3(this._fab, layout.placements.fab);
+      write4(this._viewport, "width", layout.placements.viewport.width + "px");
+      write4(this._viewport, "height", layout.placements.viewport.height + "px");
+      write4(this._viewport, "left", padding2.left + "px");
+      write4(this._viewport, "top", padding2.top + "px");
       this._fab.style.setProperty("--md-toolbar-fab-size", layout.placements.fab.width + "px");
       elevation = layout.elevation;
       this._setInert(this._main, layout.placements.toolbar[axis] === 0, "fab");
-      write2(this._main, "padding", paddingCss);
+      write4(this._main, "padding", paddingCss);
       if (this._hasFabContent) this._drawFabContent(layout, vertical, rtl);
     } else if (this._hasRow) {
       this._drawRow(values, vertical, rtl);
       elevation = values.elevation;
     } else {
-      for (const node of [frame, surface]) for (const key of ["width", "height", "left", "top"]) write2(node, key, "");
-      write2(this._viewport, "width", "");
-      write2(this._viewport, "height", "");
-      write2(this._viewport, "left", "");
-      write2(this._viewport, "top", "");
+      for (const node of [frame, surface]) for (const key of ["width", "height", "left", "top"]) write4(node, key, "");
+      write4(this._viewport, "width", "");
+      write4(this._viewport, "height", "");
+      write4(this._viewport, "left", "");
+      write4(this._viewport, "top", "");
       this._main.inert = false;
-      if (this.variant === "docked") write2(this._main, "padding", "0");
+      if (this.variant === "docked") write4(this._main, "padding", "0");
       else {
         const child = this._slots.main.assignedElements()[0], button = child?.localName === "md-icon-button" ? child.shadowRoot?.querySelector("button") : null;
         const visual = button?.getBoundingClientRect(), layout = child?.getBoundingClientRect();
         const top = visual && layout ? Math.trunc((layout.height - visual.height) / 2) : null, left = visual && layout ? Math.trunc((layout.width - visual.width) / 2) : null;
         const balance = toolbarBalancedPadding({ ...main, top, left, progress: values.padding, leading: this.effectiveExpanded && this._present("leading"), trailing: this.effectiveExpanded && this._present("trailing") });
         const p = balance.placements.content;
-        write2(this._main, "padding", `${p.y}px ${p.x}px ${balance.size.height - main.height - p.y}px ${balance.size.width - main.width - p.x}px`);
+        write4(this._main, "padding", `${p.y}px ${p.x}px ${balance.size.height - main.height - p.y}px ${balance.size.width - main.width - p.x}px`);
       }
       elevation = this.variant === "docked" ? 0 : values.elevation;
     }
@@ -17456,18 +18592,18 @@ var MdToolbar = class extends HTMLElement {
     this._drawScroll();
   }
   _drawFabContent(layout, vertical, rtl) {
-    const group = this._groups.main, node = layout.node, row = layout.placements.content;
-    write2(this._viewport, "direction", vertical || layout.placements.viewport.width === 0 ? "ltr" : "");
-    write2(group, "direction", rtl ? "rtl" : "ltr");
-    rect(group, { ...node.requested, x: node.offset.x, y: node.offset.y });
+    const group = this._groups.main, node = layout.node, row2 = layout.placements.content;
+    write4(this._viewport, "direction", vertical || layout.placements.viewport.width === 0 ? "ltr" : "");
+    write4(group, "direction", rtl ? "rtl" : "ltr");
+    rect3(group, { ...node.requested, x: node.offset.x, y: node.offset.y });
     const extent = layout.scroll.content, viewport = layout.placements.viewport;
-    rect(this._scrollExtent, { x: !vertical && rtl && viewport.width !== 0 ? viewport.width - extent : 0, y: 0, width: vertical ? 1 : extent, height: vertical ? extent : 1 });
+    rect3(this._scrollExtent, { x: !vertical && rtl && viewport.width !== 0 ? viewport.width - extent : 0, y: 0, width: vertical ? 1 : extent, height: vertical ? extent : 1 });
     this._clearRowRules();
     for (let i = 0; i < this._rowChildren.main.length; i++) {
-      const element2 = this._rowChildren.main[i], leaf = node.children[i].node, p = layout.placements["content-" + i], index = [...this.children].indexOf(element2) + 1;
-      const ink = this._rowInputs.main[i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf.constraints }).body : null;
-      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;` : "";
-      const rule = `:host([data-toolbar-content]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - row.x - leaf.offset.x}px!important;top:${p.y - row.y - leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`;
+      const element2 = this._rowChildren.main[i], leaf2 = node.children[i].node, p = layout.placements["content-" + i], index = [...this.children].indexOf(element2) + 1;
+      const ink = this._rowInputs.main[i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf2.constraints }).body : null;
+      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf2.size.width}px;--md-toolbar-control-layout-height:${leaf2.size.height}px;` : "";
+      const rule = `:host([data-toolbar-content]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - row2.x - leaf2.offset.x}px!important;top:${p.y - row2.y - leaf2.offset.y}px!important;width:${leaf2.size.width}px!important;height:${leaf2.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf2.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf2.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf2.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf2.constraints.maxHeight}px;${native}}`;
       this._sizeStyle.sheet.insertRule(rule, this._sizeStyle.sheet.cssRules.length);
     }
   }
@@ -17498,8 +18634,8 @@ var MdToolbar = class extends HTMLElement {
     };
   }
   _clearRowRules() {
-    const sheet7 = this._sizeStyle.sheet;
-    while (sheet7.cssRules.length > 1) sheet7.deleteRule(1);
+    const sheet8 = this._sizeStyle.sheet;
+    while (sheet8.cssRules.length > 1) sheet8.deleteRule(1);
   }
   _drawRow(values, vertical, rtl) {
     const options = this._rowOptions(values, vertical, rtl), preferred = toolbarRowLayout(options), sizing = this._sizeStyle.sheet.cssRules[0].style;
@@ -17517,7 +18653,7 @@ var MdToolbar = class extends HTMLElement {
     const base = { width: dimension("width"), height: dimension("height") }, saved = { width: this._frame.style.width, height: this._frame.style.height };
     const set = (key, value) => {
       sizing.setProperty("--_toolbar-" + key, value + "px");
-      write2(this._frame, key, value + "px");
+      write4(this._frame, key, value + "px");
     };
     set("width", 0);
     set("height", 0);
@@ -17530,7 +18666,7 @@ var MdToolbar = class extends HTMLElement {
     }
     for (const key of ["width", "height"]) {
       sizing.setProperty("--_toolbar-" + key, weighted && key === (vertical ? "height" : "width") ? "100%" : preferred.size[key] + "px");
-      write2(this._frame, key, saved[key]);
+      write4(this._frame, key, saved[key]);
     }
     const axis = vertical ? "height" : "width", crossAxis = vertical ? "width" : "height";
     const parentDisplay = this.parentElement ? getComputedStyle(this.parentElement).display : "";
@@ -17541,37 +18677,37 @@ var MdToolbar = class extends HTMLElement {
     this._rowFullTargets = layout.fullTargets;
     this._rowFullSizes = layout.fullSizes;
     if (previous && ["leading", "trailing"].some((name) => previous[name]?.width !== layout.fullSizes[name]?.width || previous[name]?.height !== layout.fullSizes[name]?.height)) this._queueLayout();
-    write2(this._frame, "width", layout.size.width + "px");
-    write2(this._frame, "height", layout.size.height + "px");
-    rect(this._surface, { x: 0, y: 0, ...layout.size });
+    write4(this._frame, "width", layout.size.width + "px");
+    write4(this._frame, "height", layout.size.height + "px");
+    rect3(this._surface, { x: 0, y: 0, ...layout.size });
     this._clearRowRules();
     const findNode = (node, id) => node.id === id ? node : node.children.map((p) => findNode(p.node, id)).find(Boolean);
     for (const name of ["leading", "main", "trailing"]) {
-      const container = name === "main" ? this._main : this._clips[name], box = layout.placements[name === "main" ? "balanced" : name], rowBox = layout.placements[name + "-row"], group = this._groups[name];
-      write2(container, "padding", "0");
-      if (!box || !rowBox) {
-        rect(container, { x: 0, y: 0, width: 0, height: 0 });
-        rect(group, { x: 0, y: 0, width: 0, height: 0 });
+      const container = name === "main" ? this._main : this._clips[name], box3 = layout.placements[name === "main" ? "balanced" : name], rowBox = layout.placements[name + "-row"], group = this._groups[name];
+      write4(container, "padding", "0");
+      if (!box3 || !rowBox) {
+        rect3(container, { x: 0, y: 0, width: 0, height: 0 });
+        rect3(group, { x: 0, y: 0, width: 0, height: 0 });
         continue;
       }
-      rect(container, box);
+      rect3(container, box3);
       const shift = (this._alignment?.[name] === "end" ? Math.max(0, Math.round(values[name])) - this._metrics[name][vertical ? "height" : "width"] : 0) + Math.round(values[name + "Offset"] || 0);
-      const local = { ...rowBox, x: rowBox.x - box.x - (name !== "main" && !vertical ? shift : 0), y: rowBox.y - box.y - (name !== "main" && vertical ? shift : 0) };
-      rect(group, local);
+      const local = { ...rowBox, x: rowBox.x - box3.x - (name !== "main" && !vertical ? shift : 0), y: rowBox.y - box3.y - (name !== "main" && vertical ? shift : 0) };
+      rect3(group, local);
       for (let i = 0; i < this._rowChildren[name].length; i++) {
-        const element2 = this._rowChildren[name][i], id = name + i, leaf = findNode(layout.node, id), p = layout.placements[id];
-        if (!leaf || !p) continue;
+        const element2 = this._rowChildren[name][i], id = name + i, leaf2 = findNode(layout.node, id), p = layout.placements[id];
+        if (!leaf2 || !p) continue;
         const index = [...this.children].indexOf(element2) + 1;
-        const ink = this._rowInputs[name][i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf.constraints }).body : null;
-        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;` : "";
-        const rule = `:host([data-toolbar-row]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - rowBox.x - leaf.offset.x}px!important;top:${p.y - rowBox.y - leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`;
+        const ink = this._rowInputs[name][i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf2.constraints }).body : null;
+        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf2.size.width}px;--md-toolbar-control-layout-height:${leaf2.size.height}px;` : "";
+        const rule = `:host([data-toolbar-row]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - rowBox.x - leaf2.offset.x}px!important;top:${p.y - rowBox.y - leaf2.offset.y}px!important;width:${leaf2.size.width}px!important;height:${leaf2.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf2.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf2.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf2.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf2.constraints.maxHeight}px;${native}}`;
         this._sizeStyle.sheet.insertRule(rule, this._sizeStyle.sheet.cssRules.length);
       }
     }
-    write2(this._viewport, "width", "");
-    write2(this._viewport, "height", "");
-    write2(this._viewport, "left", "");
-    write2(this._viewport, "top", "");
+    write4(this._viewport, "width", "");
+    write4(this._viewport, "height", "");
+    write4(this._viewport, "left", "");
+    write4(this._viewport, "top", "");
     this._main.inert = false;
   }
   _configureScroll() {
@@ -17654,9 +18790,9 @@ var MdToolbar = class extends HTMLElement {
     if (!this._rendered) return;
     const behavior = this.variant === "floating" && !this.touchExplorationEnabled ? this._scrollBehavior : null;
     const p = behavior?.state.placement(behavior.exitDirection, getComputedStyle(this).direction === "rtl") || { x: 0, y: 0 };
-    write2(this._frame, "transform", p.x || p.y ? `translate(${p.x}px,${p.y}px)` : "");
+    write4(this._frame, "transform", p.x || p.y ? `translate(${p.x}px,${p.y}px)` : "");
     const horizontal = ["start", "end"].includes(behavior?.exitDirection);
-    write2(this._frame, "touchAction", behavior ? horizontal ? "pan-y" : "pan-x" : "");
+    write4(this._frame, "touchAction", behavior ? horizontal ? "pan-y" : "pan-x" : "");
     if (behavior && behavior.state.offset !== 0) {
       for (const control of this._scrollControls()) {
         if (!this._focusIndices.has(control)) this._focusIndices.set(control, control.getAttribute("tabindex"));
@@ -17746,19 +18882,19 @@ var MdToolbar = class extends HTMLElement {
     }
   }
   _drawShape(rtl) {
-    const surface = this._surface, style2 = getComputedStyle(surface);
-    const width = parseFloat(style2.width) || 0, height = parseFloat(style2.height) || 0;
+    const surface = this._surface, style3 = getComputedStyle(surface);
+    const width = parseFloat(style3.width) || 0, height = parseFloat(style3.height) || 0;
     this._shapeBox = { x: surface.offsetLeft, y: surface.offsetTop, width, height };
     const outline = cornerShapeOutline(this.shape, width, height, rtl);
     this._shapeOutline = outline;
     surface.dataset.shape = outline.type;
     if (outline.type === "rounded") {
-      write2(surface, "borderRadius", `${outline.radii.map((r) => r[0] + "px").join(" ")} / ${outline.radii.map((r) => r[1] + "px").join(" ")}`);
-      write2(surface, "clipPath", "");
+      write4(surface, "borderRadius", `${outline.radii.map((r) => r[0] + "px").join(" ")} / ${outline.radii.map((r) => r[1] + "px").join(" ")}`);
+      write4(surface, "clipPath", "");
       this._shapeShadow.hide();
     } else {
-      write2(surface, "borderRadius", "0px");
-      write2(surface, "clipPath", outline.type === "generic" ? `polygon(${outline.points.map((p) => p.map((v) => v + "px").join(" ")).join(",")})` : "");
+      write4(surface, "borderRadius", "0px");
+      write4(surface, "clipPath", outline.type === "generic" ? `polygon(${outline.points.map((p) => p.map((v) => v + "px").join(" ")).join(",")})` : "");
       if (outline.type !== "generic") this._shapeShadow.hide();
     }
   }
@@ -17769,7 +18905,7 @@ var MdToolbar = class extends HTMLElement {
       return b.map((n, j) => a[j] + (n - a[j]) * t);
     });
     const cut = this._shapeOutline?.type === "generic";
-    write2(this._surface, "boxShadow", cut || !shadows.length ? "none" : shadows.map((v) => `${v.slice(0, 4).map((n) => n + "px").join(" ")} rgba(${v.slice(4).join(",")})`).join(","));
+    write4(this._surface, "boxShadow", cut || !shadows.length ? "none" : shadows.map((v) => `${v.slice(0, 4).map((n) => n + "px").join(" ")} rgba(${v.slice(4).join(",")})`).join(","));
     if (cut) this._shapeShadow.draw(this._shapeOutline, this._shapeBox, shadows);
     this._surface.dataset.elevation = String(elevation);
   }
@@ -17800,121 +18936,53 @@ var MdToolbar = class extends HTMLElement {
 };
 if (!customElements.get("md-toolbar")) customElements.define("md-toolbar", MdToolbar);
 
-// src/motion/android-fling.js
-var f14 = Math.fround;
-var inflection = f14(0.35);
-var p1 = f14(f14(0.5) * inflection);
-var p2 = f14(1 - f14(1 - inflection));
-var positions = new Float32Array(101);
-var times = new Float32Array(101);
-var xMin = 0;
-var yMin = 0;
-for (let i = 0; i < 100; i++) {
-  const alpha = f14(i / 100);
-  let xMax = 1, yMax = 1, x, y, coef;
-  for (; ; ) {
-    x = f14(xMin + f14(f14(xMax - xMin) / 2));
-    coef = f14(f14(3 * x) * f14(1 - x));
-    const tx = f14(f14(coef * f14(f14(f14(1 - x) * p1) + f14(x * p2))) + f14(f14(x * x) * x));
-    if (Math.abs(f14(tx - alpha)) < 1e-5) break;
-    if (tx > alpha) xMax = x;
-    else xMin = x;
-  }
-  positions[i] = f14(f14(coef * f14(f14(f14(1 - x) * f14(0.5)) + x)) + f14(f14(x * x) * x));
-  for (; ; ) {
-    y = f14(yMin + f14(f14(yMax - yMin) / 2));
-    coef = f14(f14(3 * y) * f14(1 - y));
-    const dy = f14(f14(coef * f14(f14(f14(1 - y) * f14(0.5)) + y)) + f14(f14(y * y) * y));
-    if (Math.abs(f14(dy - alpha)) < 1e-5) break;
-    if (dy > alpha) yMax = y;
-    else yMin = y;
-  }
-  times[i] = f14(f14(coef * f14(f14(f14(1 - y) * p1) + f14(y * p2))) + f14(f14(y * y) * y));
-}
-times[100] = positions[100] = 1;
-var rate = f14(Math.log(0.78) / Math.log(0.9));
-function androidFlingPosition(time) {
-  const clamped = Math.max(0, Math.min(1, f14(time))), index = Math.trunc(f14(100 * clamped));
-  let distanceCoefficient = 1, velocityCoefficient = 0;
-  if (index < 100) {
-    const lower = f14(index / 100), upper = f14((index + 1) / 100), lo = positions[index], hi = positions[index + 1];
-    velocityCoefficient = f14(f14(hi - lo) / f14(upper - lower));
-    distanceCoefficient = f14(lo + f14(f14(clamped - lower) * velocityCoefficient));
-  }
-  return { distanceCoefficient, velocityCoefficient };
-}
-var AndroidFlingDecay = class {
-  constructor({ density = 1, friction: friction2 = 0.015 } = {}) {
-    if (!Number.isFinite(density) || density <= 0 || !Number.isFinite(friction2) || friction2 <= 0) throw new RangeError("Positive density and friction required");
-    this.density = f14(density);
-    this.friction = f14(friction2);
-    this.physical = f14(f14(f14(f14(f14(9.80665) * f14(39.37)) * this.density) * 160) * f14(0.84));
-  }
-  info(velocity) {
-    velocity = f14(velocity);
-    const l = Math.log(f14(inflection * Math.abs(velocity)) / f14(this.friction * this.physical)), minusOne = rate - 1;
-    return { velocity, distance: f14(f14(this.friction * this.physical) * Math.exp(rate / minusOne * l)), duration: Math.trunc(1e3 * Math.exp(l / minusOne)) };
-  }
-  target(from, velocity) {
-    const info = this.info(velocity);
-    return f14(f14(from) + f14(info.distance * Math.sign(info.velocity)));
-  }
-  sample(time, from, velocity) {
-    const info = this.info(velocity), ms = Math.trunc(time), fraction = info.duration > 0 ? f14(ms / f14(info.duration)) : 1;
-    const spline = androidFlingPosition(fraction), sign = Math.sign(info.velocity);
-    const position = f14(f14(from) + f14(f14(info.distance * sign) * spline.distanceCoefficient));
-    const speed = f14(f14(f14(f14(spline.velocityCoefficient * sign) * info.distance) / f14(info.duration)) * 1e3);
-    return { position, velocity: speed };
-  }
-};
-
 // src/components/toolbar-scroll.js
-var f15 = Math.fround;
+var f21 = Math.fround;
 var FloatingToolbarState = class {
   constructor({ offsetLimit = -34028234663852886e22, offset = 0, contentOffset = 0 } = {}) {
-    this.offsetLimit = f15(offsetLimit);
-    this._offset = f15(offset);
-    this.contentOffset = f15(contentOffset);
+    this.offsetLimit = f21(offsetLimit);
+    this._offset = f21(offset);
+    this.contentOffset = f21(contentOffset);
   }
   get offsetLimit() {
     return this._offsetLimit;
   }
   set offsetLimit(value) {
-    this._offsetLimit = f15(value);
+    this._offsetLimit = f21(value);
   }
   get contentOffset() {
     return this._contentOffset;
   }
   set contentOffset(value) {
-    this._contentOffset = f15(value);
+    this._contentOffset = f21(value);
   }
   get offset() {
     return this._offset;
   }
   set offset(value) {
     if (this.offsetLimit > 0) throw new RangeError("offsetLimit must be nonpositive");
-    this._offset = f15(Math.max(this.offsetLimit, Math.min(0, f15(value))));
+    this._offset = f21(Math.max(this.offsetLimit, Math.min(0, f21(value))));
   }
   get collapsedFraction() {
-    return this.offsetLimit !== 0 ? f15(this.offset / this.offsetLimit) : 0;
+    return this.offsetLimit !== 0 ? f21(this.offset / this.offsetLimit) : 0;
   }
   postScroll(consumedY) {
-    consumedY = f15(consumedY);
-    this.contentOffset = f15(this.contentOffset + consumedY);
-    this.offset = f15(this.offset + consumedY);
+    consumedY = f21(consumedY);
+    this.contentOffset = f21(this.contentOffset + consumedY);
+    this.offset = f21(this.offset + consumedY);
     return { x: 0, y: 0 };
   }
   drag(delta, direction = "bottom", rtl = false) {
-    let amount = f15(delta);
-    if (rtl && (direction === "start" || direction === "end")) amount = f15(-amount);
-    this.offset = f15(this.offset + (direction === "start" || direction === "top" ? amount : f15(-amount)));
+    let amount = f21(delta);
+    if (rtl && (direction === "start" || direction === "end")) amount = f21(-amount);
+    this.offset = f21(this.offset + (direction === "start" || direction === "top" ? amount : f21(-amount)));
   }
-  updateLimit({ direction = "bottom", rtl = false, x, y, width, height, parentWidth, parentHeight }) {
-    const limit = direction === "start" ? rtl ? f15(parentWidth - f15(x)) : f15(width + f15(x)) : direction === "end" ? rtl ? f15(width + f15(x)) : f15(parentWidth - f15(x)) : direction === "top" ? f15(height + f15(y)) : f15(parentHeight - f15(y));
-    this.offsetLimit = f15(-f15(limit - this.offset));
+  updateLimit({ direction = "bottom", rtl = false, x, y: y2, width, height, parentWidth, parentHeight }) {
+    const limit = direction === "start" ? rtl ? f21(parentWidth - f21(x)) : f21(width + f21(x)) : direction === "end" ? rtl ? f21(width + f21(x)) : f21(parentWidth - f21(x)) : direction === "top" ? f21(height + f21(y2)) : f21(parentHeight - f21(y2));
+    this.offsetLimit = f21(-f21(limit - this.offset));
   }
   placement(direction = "bottom", rtl = false) {
-    const offset = rtl && (direction === "start" || direction === "end") ? f15(-this.offset) : this.offset, n = Math.round(offset) || 0;
+    const offset = rtl && (direction === "start" || direction === "end") ? f21(-this.offset) : this.offset, n = Math.round(offset) || 0;
     return { x: (direction === "start" ? n : direction === "end" ? -n : 0) || 0, y: (direction === "top" ? n : direction === "bottom" ? -n : 0) || 0 };
   }
 };
@@ -17922,17 +18990,17 @@ var ToolbarScrollExpansion = class {
   constructor({ expanded = false, reverseLayout = false, expandThreshold = 40, collapseThreshold = 40, density = 1, onExpand = () => {
   }, onCollapse = () => {
   } } = {}) {
-    Object.assign(this, { expanded, reverseLayout, expandThreshold: f15(expandThreshold), collapseThreshold: f15(collapseThreshold), density: f15(density), onExpand, onCollapse });
+    Object.assign(this, { expanded, reverseLayout, expandThreshold: f21(expandThreshold), collapseThreshold: f21(collapseThreshold), density: f21(density), onExpand, onCollapse });
     this.contentOffset = 0;
     this.updateThreshold();
   }
   updateThreshold() {
-    this.threshold = f15(this.contentOffset + (this.expanded ? f15(-f15(this.collapseThreshold * this.density)) : f15(this.expandThreshold * this.density)));
+    this.threshold = f21(this.contentOffset + (this.expanded ? f21(-f21(this.collapseThreshold * this.density)) : f21(this.expandThreshold * this.density)));
   }
   update({ expanded = this.expanded, reverseLayout = this.reverseLayout, expandThreshold = this.expandThreshold, collapseThreshold = this.collapseThreshold, onExpand = this.onExpand, onCollapse = this.onCollapse } = {}) {
-    if (this.expandThreshold !== f15(expandThreshold) || this.collapseThreshold !== f15(collapseThreshold)) {
-      this.expandThreshold = f15(expandThreshold);
-      this.collapseThreshold = f15(collapseThreshold);
+    if (this.expandThreshold !== f21(expandThreshold) || this.collapseThreshold !== f21(collapseThreshold)) {
+      this.expandThreshold = f21(expandThreshold);
+      this.collapseThreshold = f21(collapseThreshold);
       this.updateThreshold();
     }
     this.reverseLayout = reverseLayout;
@@ -17944,13 +19012,13 @@ var ToolbarScrollExpansion = class {
     }
   }
   postScroll(consumedY) {
-    const delta = f15(f15(consumedY) * (this.reverseLayout ? -1 : 1));
-    this.contentOffset = f15(this.contentOffset + delta);
+    const delta = f21(f21(consumedY) * (this.reverseLayout ? -1 : 1));
+    this.contentOffset = f21(this.contentOffset + delta);
     if (delta < 0 && this.contentOffset <= this.threshold) {
-      this.threshold = f15(this.contentOffset + f15(this.expandThreshold * this.density));
+      this.threshold = f21(this.contentOffset + f21(this.expandThreshold * this.density));
       this.onCollapse();
     } else if (delta > 0 && this.contentOffset >= this.threshold) {
-      this.threshold = f15(this.contentOffset - f15(this.collapseThreshold * this.density));
+      this.threshold = f21(this.contentOffset - f21(this.collapseThreshold * this.density));
       this.onExpand();
     }
     return { x: 0, y: 0 };
@@ -17977,7 +19045,7 @@ var FloatingToolbarScrollBehavior = class {
 var ToolbarSettling = class {
   constructor(state, velocity, { snapSpec = { stiffness: 1600, dampingRatio: 1 }, decay = new AndroidFlingDecay() } = {}) {
     this.state = state;
-    this.velocity = f15(velocity);
+    this.velocity = f21(velocity);
     this.remainingVelocity = this.velocity;
     this.snapSpec = snapSpec;
     this.decay = decay;
@@ -17985,7 +19053,7 @@ var ToolbarSettling = class {
     this.start = null;
     this.lastValue = 0;
     this.returnedVelocity = 0;
-    if (state.collapsedFraction < f15(0.01) || state.collapsedFraction === 1) return;
+    if (state.collapsedFraction < f21(0.01) || state.collapsedFraction === 1) return;
     this.phase = Math.abs(this.velocity) > 1 ? "decay" : "snap";
     this._chooseSnap();
   }
@@ -18019,12 +19087,12 @@ var ToolbarSettling = class {
     if (phase2 === "decay") {
       const duration = this.decay.info(this.velocity).duration, ended = time >= duration;
       sample = ended ? { position: this.decay.target(0, this.velocity), velocity: 0 } : this.decay.sample(time, 0, this.velocity);
-      const delta = f15(sample.position - this.lastValue), initialOffset = this.state.offset;
-      this.state.offset = f15(initialOffset + delta);
-      const consumed = Math.abs(f15(initialOffset - this.state.offset));
+      const delta = f21(sample.position - this.lastValue), initialOffset = this.state.offset;
+      this.state.offset = f21(initialOffset + delta);
+      const consumed = Math.abs(f21(initialOffset - this.state.offset));
       this.lastValue = sample.position;
       this.remainingVelocity = sample.velocity;
-      canceled = Math.abs(f15(delta - consumed)) > 0.5;
+      canceled = Math.abs(f21(delta - consumed)) > 0.5;
       if (canceled || ended) {
         this.phase = "snap";
         this.start = null;
@@ -18041,7 +19109,7 @@ var ToolbarSettling = class {
     if (this.done) return;
     if (this.phase === "decay") {
       const target = this.decay.target(0, this.velocity);
-      this.state.offset = f15(this.state.offset + f15(target - this.lastValue));
+      this.state.offset = f21(this.state.offset + f21(target - this.lastValue));
       this.remainingVelocity = 0;
       this.phase = "snap";
       this._chooseSnap();
@@ -18053,7 +19121,7 @@ var ToolbarSettling = class {
 };
 
 // src/components/md-fab-menu.js
-var defaultStyle32 = `
+var defaultStyle31 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -18227,7 +19295,7 @@ var defaultStyle32 = `
   }
   .fab .icon { font-size: 24px; width: 24px; height: 24px; line-height: 24px; }
 `;
-var fabMenuSheet = createComponentSheet(defaultStyle32);
+var fabMenuSheet = createComponentSheet(defaultStyle31);
 var MdFabMenu = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -18382,7 +19450,7 @@ var MdFabMenu = class extends HTMLElement {
     const iconName = this.open ? "close" : rawIcon;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle32}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle31}</style>`}
       <div class="scrim" part="scrim"></div>
       <div class="anchor">
         <button class="fab" type="button" aria-haspopup="true" aria-expanded="${this.open ? "true" : "false"}"
@@ -18870,9 +19938,9 @@ var MdSelect = class extends HTMLElement {
   }
   #updateSelectedOption() {
     if (!this.shadowRoot) return;
-    const box = this.shadowRoot.querySelector(".select-box");
+    const box3 = this.shadowRoot.querySelector(".select-box");
     const valDisplay = this.shadowRoot.querySelector(".value-display");
-    if (!box || !valDisplay) return;
+    if (!box3 || !valDisplay) return;
     const currentVal = this.value;
     const options = this.#getOptions();
     let displayTexts = [];
@@ -18904,7 +19972,7 @@ var MdSelect = class extends HTMLElement {
     valDisplay.textContent = text;
     const alwaysFloat = this.floatLabel === "always";
     const isFloating = !!text || alwaysFloat || this.open;
-    box.classList.toggle("floating", isFloating);
+    box3.classList.toggle("floating", isFloating);
     if (this.#internals) {
       this.#internals.setFormValue(currentVal);
       if (this.required && !currentVal) {
@@ -18954,8 +20022,8 @@ var MdSelect = class extends HTMLElement {
   }
   #setupEvents() {
     const { signal } = this.#abortController;
-    const box = this.shadowRoot.querySelector(".select-box");
-    box.addEventListener("click", (e) => {
+    const box3 = this.shadowRoot.querySelector(".select-box");
+    box3.addEventListener("click", (e) => {
       e.stopPropagation();
       this.open = !this.open;
     }, { signal });
@@ -18987,7 +20055,7 @@ if (!customElements.get("md-select")) {
 }
 
 // src/components/md-autocomplete.js
-var defaultStyle33 = `
+var defaultStyle32 = `
   :host {
     display: inline-block;
     width: 100%;
@@ -19152,7 +20220,7 @@ var defaultStyle33 = `
     font-style: italic;
   }
 `;
-var sheet4 = createComponentSheet(defaultStyle33);
+var sheet5 = createComponentSheet(defaultStyle32);
 var MdAutocomplete = class extends HTMLElement {
   static formAssociated = true;
   static get observedAttributes() {
@@ -19165,7 +20233,7 @@ var MdAutocomplete = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet4);
+    adoptSheet(this.shadowRoot, sheet5);
     if (this.attachInternals) {
       this.#internals = this.attachInternals();
     }
@@ -19268,12 +20336,12 @@ var MdAutocomplete = class extends HTMLElement {
   }
   #updateState() {
     const input = this.shadowRoot?.querySelector("input");
-    const box = this.shadowRoot?.querySelector(".field-box");
+    const box3 = this.shadowRoot?.querySelector(".field-box");
     const clearBtn = this.shadowRoot?.querySelector(".clear-btn");
-    if (!input || !box) return;
+    if (!input || !box3) return;
     const hasVal = !!input.value;
     clearBtn?.classList.toggle("visible", hasVal);
-    box.classList.toggle("floating", hasVal || this.open || !!this.getAttribute("placeholder"));
+    box3.classList.toggle("floating", hasVal || this.open || !!this.getAttribute("placeholder"));
     if (this.#internals) {
       this.#internals.setFormValue(this.value);
     }
@@ -19318,17 +20386,17 @@ var MdAutocomplete = class extends HTMLElement {
   #setupEvents() {
     const { signal } = this.#abortController;
     const input = this.shadowRoot.querySelector("input");
-    const box = this.shadowRoot.querySelector(".field-box");
+    const box3 = this.shadowRoot.querySelector(".field-box");
     const clearBtn = this.shadowRoot.querySelector(".clear-btn");
     const panel = this.shadowRoot.querySelector(".suggestions-panel");
     input.addEventListener("focus", () => {
-      box.classList.add("focused");
+      box3.classList.add("focused");
       this.open = true;
       this.#filterOptions();
       this.#updateState();
     }, { signal });
     input.addEventListener("blur", () => {
-      box.classList.remove("focused");
+      box3.classList.remove("focused");
       this.#updateState();
     }, { signal });
     input.addEventListener("input", () => {
@@ -19368,7 +20436,7 @@ if (!customElements.get("md-autocomplete")) {
 }
 
 // src/components/md-expansion-panel.js
-var defaultStyle34 = `
+var defaultStyle33 = `
   :host {
     display: block;
     width: 100%;
@@ -19470,7 +20538,7 @@ var defaultStyle34 = `
     pointer-events: none;
   }
 `;
-var sheet5 = createComponentSheet(defaultStyle34);
+var sheet6 = createComponentSheet(defaultStyle33);
 var MdExpansionPanel = class extends HTMLElement {
   static get observedAttributes() {
     return ["open", "headline", "supporting-text", "disabled"];
@@ -19480,7 +20548,7 @@ var MdExpansionPanel = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet5);
+    adoptSheet(this.shadowRoot, sheet6);
   }
   get open() {
     return this.hasAttribute("open");
@@ -19598,7 +20666,7 @@ if (!customElements.get("md-accordion")) {
 }
 
 // src/components/md-paginator.js
-var defaultStyle35 = `
+var defaultStyle34 = `
   :host {
     display: block;
     width: 100%;
@@ -19793,7 +20861,7 @@ var defaultStyle35 = `
     flex-shrink: 0;
   }
 `;
-var paginatorSheet = createComponentSheet(defaultStyle35);
+var paginatorSheet = createComponentSheet(defaultStyle34);
 var SVGS = {
   firstPage: `<svg viewBox="0 0 24 24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/></svg>`,
   prevPage: `<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>`,
@@ -19971,7 +21039,7 @@ var MdPaginator = class extends HTMLElement {
       </button>
     `).join("");
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle35}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle34}</style>`}
       <nav class="paginator-root" role="navigation" aria-label="Pagination">
         ${showSize ? `
           <div class="page-size-box">
@@ -20056,9 +21124,9 @@ var MdPaginator = class extends HTMLElement {
     this.#menuOpen = open;
     if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
     if (open) {
-      const rect2 = btn.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect2.bottom;
-      const spaceAbove = rect2.top;
+      const rect4 = btn.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect4.bottom;
+      const spaceAbove = rect4.top;
       const menuHeight = 220;
       const isUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
       if (isUp) {
@@ -20204,7 +21272,7 @@ var MATERIAL_SHAPE_NAMES = Object.keys(canonical);
 var MATERIAL_SHAPES_SVG_PATHS = { ...SHAPE_EXTENSIONS, ...canonical };
 
 // src/components/md-shape.js
-var defaultStyle36 = `
+var defaultStyle35 = `
   :host {
     display: inline-flex;
     align-items: center;
@@ -20251,7 +21319,7 @@ var defaultStyle36 = `
     object-fit: cover;
   }
 `;
-var sheet6 = createComponentSheet(defaultStyle36);
+var sheet7 = createComponentSheet(defaultStyle35);
 var MdShape = class extends HTMLElement {
   static get observedAttributes() {
     return ["name", "size", "color", "mask", "aria-label"];
@@ -20260,7 +21328,7 @@ var MdShape = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet6);
+    adoptSheet(this.shadowRoot, sheet7);
   }
   get name() {
     return this.getAttribute("name") || "sunny";
@@ -20320,7 +21388,7 @@ var MdShape = class extends HTMLElement {
     const size = /^\d+(\.\d+)?$/.test(rawSize) ? `${rawSize}px` : rawSize;
     const color = this.#resolveColor(sanitizeAttribute(this.color));
     const isMask = this.mask;
-    const fallbackStyle = this.shadowRoot.adoptedStyleSheets?.length ? "" : `<style>${defaultStyle36}</style>`;
+    const fallbackStyle = this.shadowRoot.adoptedStyleSheets?.length ? "" : `<style>${defaultStyle35}</style>`;
     if (size && CSS.supports("width", size)) {
       this.style.setProperty("--md-shape-size", size);
     } else {
@@ -20904,10 +21972,10 @@ function sanitizeDegreesDouble(degrees) {
   }
   return degrees;
 }
-function matrixMultiply(row, matrix) {
-  const a = row[0] * matrix[0][0] + row[1] * matrix[0][1] + row[2] * matrix[0][2];
-  const b = row[0] * matrix[1][0] + row[1] * matrix[1][1] + row[2] * matrix[1][2];
-  const c = row[0] * matrix[2][0] + row[1] * matrix[2][1] + row[2] * matrix[2][2];
+function matrixMultiply(row2, matrix) {
+  const a = row2[0] * matrix[0][0] + row2[1] * matrix[0][1] + row2[2] * matrix[0][2];
+  const b = row2[0] * matrix[1][0] + row2[1] * matrix[1][1] + row2[2] * matrix[1][2];
+  const c = row2[0] * matrix[2][0] + row2[1] * matrix[2][1] + row2[2] * matrix[2][2];
   return [a, b, c];
 }
 var SRGB_TO_XYZ = [
@@ -20951,11 +22019,11 @@ function greenFromArgb(argb) {
 function blueFromArgb(argb) {
   return argb & 255;
 }
-function argbFromXyz(x, y, z) {
+function argbFromXyz(x, y2, z) {
   const matrix = XYZ_TO_SRGB;
-  const linearR = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z;
-  const linearG = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z;
-  const linearB = matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z;
+  const linearR = matrix[0][0] * x + matrix[0][1] * y2 + matrix[0][2] * z;
+  const linearG = matrix[1][0] * x + matrix[1][1] * y2 + matrix[1][2] * z;
+  const linearB = matrix[2][0] * x + matrix[2][1] * y2 + matrix[2][2] * z;
   const r = delinearized(linearR);
   const g = delinearized(linearG);
   const b = delinearized(linearB);
@@ -20973,11 +22041,11 @@ function labFromArgb(argb) {
   const linearB = linearized(blueFromArgb(argb));
   const matrix = SRGB_TO_XYZ;
   const x = matrix[0][0] * linearR + matrix[0][1] * linearG + matrix[0][2] * linearB;
-  const y = matrix[1][0] * linearR + matrix[1][1] * linearG + matrix[1][2] * linearB;
+  const y2 = matrix[1][0] * linearR + matrix[1][1] * linearG + matrix[1][2] * linearB;
   const z = matrix[2][0] * linearR + matrix[2][1] * linearG + matrix[2][2] * linearB;
   const whitePoint = WHITE_POINT_D65;
   const xNormalized = x / whitePoint[0];
-  const yNormalized = y / whitePoint[1];
+  const yNormalized = y2 / whitePoint[1];
   const zNormalized = z / whitePoint[2];
   const fx = labF(xNormalized);
   const fy = labF(yNormalized);
@@ -20988,19 +22056,19 @@ function labFromArgb(argb) {
   return [l, a, b];
 }
 function argbFromLstar(lstar) {
-  const y = yFromLstar(lstar);
-  const component = delinearized(y);
+  const y2 = yFromLstar(lstar);
+  const component = delinearized(y2);
   return argbFromRgb(component, component, component);
 }
 function lstarFromArgb(argb) {
-  const y = xyzFromArgb(argb)[1];
-  return 116 * labF(y / 100) - 16;
+  const y2 = xyzFromArgb(argb)[1];
+  return 116 * labF(y2 / 100) - 16;
 }
 function yFromLstar(lstar) {
   return 100 * labInvf((lstar + 16) / 116);
 }
-function lstarFromY(y) {
-  return labF(y / 100) * 116 - 16;
+function lstarFromY(y2) {
+  return labF(y2 / 100) * 116 - 16;
 }
 function linearized(rgbComponent) {
   const normalized = rgbComponent / 255;
@@ -21070,11 +22138,11 @@ var ViewingConditions = class _ViewingConditions {
     const rW = xyz[0] * 0.401288 + xyz[1] * 0.650173 + xyz[2] * -0.051461;
     const gW = xyz[0] * -0.250268 + xyz[1] * 1.204414 + xyz[2] * 0.045854;
     const bW = xyz[0] * -2079e-6 + xyz[1] * 0.048952 + xyz[2] * 0.953127;
-    const f16 = 0.8 + surround / 10;
-    const c = f16 >= 0.9 ? lerp5(0.59, 0.69, (f16 - 0.9) * 10) : lerp5(0.525, 0.59, (f16 - 0.8) * 10);
-    let d = discountingIlluminant ? 1 : f16 * (1 - 1 / 3.6 * Math.exp((-adaptingLuminance - 42) / 92));
+    const f22 = 0.8 + surround / 10;
+    const c = f22 >= 0.9 ? lerp5(0.59, 0.69, (f22 - 0.9) * 10) : lerp5(0.525, 0.59, (f22 - 0.8) * 10);
+    let d = discountingIlluminant ? 1 : f22 * (1 - 1 / 3.6 * Math.exp((-adaptingLuminance - 42) / 92));
     d = d > 1 ? 1 : d < 0 ? 0 : d;
-    const nc = f16;
+    const nc = f22;
     const rgbD = [
       d * (100 / rW) + 1 - d,
       d * (100 / gW) + 1 - d,
@@ -21189,11 +22257,11 @@ var Cam16 = class _Cam16 {
     const greenL = linearized(green);
     const blueL = linearized(blue);
     const x = 0.41233895 * redL + 0.35762064 * greenL + 0.18051042 * blueL;
-    const y = 0.2126 * redL + 0.7152 * greenL + 0.0722 * blueL;
+    const y2 = 0.2126 * redL + 0.7152 * greenL + 0.0722 * blueL;
     const z = 0.01932141 * redL + 0.11916382 * greenL + 0.95034478 * blueL;
-    const rC = 0.401288 * x + 0.650173 * y - 0.051461 * z;
-    const gC = -0.250268 * x + 1.204414 * y + 0.045854 * z;
-    const bC = -2079e-6 * x + 0.048952 * y + 0.953127 * z;
+    const rC = 0.401288 * x + 0.650173 * y2 - 0.051461 * z;
+    const gC = -0.250268 * x + 1.204414 * y2 + 0.045854 * z;
+    const bC = -2079e-6 * x + 0.048952 * y2 + 0.953127 * z;
     const rD = viewingConditions.rgbD[0] * rC;
     const gD = viewingConditions.rgbD[1] * gC;
     const bD = viewingConditions.rgbD[2] * bC;
@@ -21326,17 +22394,17 @@ var Cam16 = class _Cam16 {
     const gF = gC / viewingConditions.rgbD[1];
     const bF = bC / viewingConditions.rgbD[2];
     const x = 1.86206786 * rF - 1.01125463 * gF + 0.14918677 * bF;
-    const y = 0.38752654 * rF + 0.62144744 * gF - 897398e-8 * bF;
+    const y2 = 0.38752654 * rF + 0.62144744 * gF - 897398e-8 * bF;
     const z = -0.0158415 * rF - 0.03412294 * gF + 1.04996444 * bF;
-    const argb = argbFromXyz(x, y, z);
+    const argb = argbFromXyz(x, y2, z);
     return argb;
   }
   /// Given color expressed in XYZ and viewed in [viewingConditions], convert to
   /// CAM16.
-  static fromXyzInViewingConditions(x, y, z, viewingConditions) {
-    const rC = 0.401288 * x + 0.650173 * y - 0.051461 * z;
-    const gC = -0.250268 * x + 1.204414 * y + 0.045854 * z;
-    const bC = -2079e-6 * x + 0.048952 * y + 0.953127 * z;
+  static fromXyzInViewingConditions(x, y2, z, viewingConditions) {
+    const rC = 0.401288 * x + 0.650173 * y2 - 0.051461 * z;
+    const gC = -0.250268 * x + 1.204414 * y2 + 0.045854 * z;
+    const bC = -2079e-6 * x + 0.048952 * y2 + 0.953127 * z;
     const rD = viewingConditions.rgbD[0] * rC;
     const gD = viewingConditions.rgbD[1] * gC;
     const bD = viewingConditions.rgbD[2] * bC;
@@ -21398,9 +22466,9 @@ var Cam16 = class _Cam16 {
     const gF = gC / viewingConditions.rgbD[1];
     const bF = bC / viewingConditions.rgbD[2];
     const x = 1.86206786 * rF - 1.01125463 * gF + 0.14918677 * bF;
-    const y = 0.38752654 * rF + 0.62144744 * gF - 897398e-8 * bF;
+    const y2 = 0.38752654 * rF + 0.62144744 * gF - 897398e-8 * bF;
     const z = -0.0158415 * rF - 0.03412294 * gF + 1.04996444 * bF;
-    return [x, y, z];
+    return [x, y2, z];
   }
 };
 var HctSolver = class _HctSolver {
@@ -21503,7 +22571,7 @@ var HctSolver = class _HctSolver {
    * it exists. If this possible vertex lies outside of the cube,
    * [-1.0, -1.0, -1.0] is returned.
    */
-  static nthVertex(y, n) {
+  static nthVertex(y2, n) {
     const kR = _HctSolver.Y_FROM_LINRGB[0];
     const kG = _HctSolver.Y_FROM_LINRGB[1];
     const kB = _HctSolver.Y_FROM_LINRGB[2];
@@ -21512,7 +22580,7 @@ var HctSolver = class _HctSolver {
     if (n < 4) {
       const g = coordA;
       const b = coordB;
-      const r = (y - g * kG - b * kB) / kR;
+      const r = (y2 - g * kG - b * kB) / kR;
       if (_HctSolver.isBounded(r)) {
         return [r, g, b];
       } else {
@@ -21521,7 +22589,7 @@ var HctSolver = class _HctSolver {
     } else if (n < 8) {
       const b = coordA;
       const r = coordB;
-      const g = (y - r * kR - b * kB) / kG;
+      const g = (y2 - r * kR - b * kB) / kG;
       if (_HctSolver.isBounded(g)) {
         return [r, g, b];
       } else {
@@ -21530,7 +22598,7 @@ var HctSolver = class _HctSolver {
     } else {
       const r = coordA;
       const g = coordB;
-      const b = (y - r * kR - g * kG) / kB;
+      const b = (y2 - r * kR - g * kG) / kB;
       if (_HctSolver.isBounded(b)) {
         return [r, g, b];
       } else {
@@ -21547,7 +22615,7 @@ var HctSolver = class _HctSolver {
    * corresponding to an endpoint of the segment containing the
    * desired color.
    */
-  static bisectToSegment(y, targetHue) {
+  static bisectToSegment(y2, targetHue) {
     let left = [-1, -1, -1];
     let right = left;
     let leftHue = 0;
@@ -21555,7 +22623,7 @@ var HctSolver = class _HctSolver {
     let initialized = false;
     let uncut = true;
     for (let n = 0; n < 12; n++) {
-      const mid = _HctSolver.nthVertex(y, n);
+      const mid = _HctSolver.nthVertex(y2, n);
       if (mid[0] < 0) {
         continue;
       }
@@ -21602,8 +22670,8 @@ var HctSolver = class _HctSolver {
    * @param targetHue The hue of the color.
    * @return The desired color, in linear RGB coordinates.
    */
-  static bisectToLimit(y, targetHue) {
-    const segment = _HctSolver.bisectToSegment(y, targetHue);
+  static bisectToLimit(y2, targetHue) {
+    const segment = _HctSolver.bisectToSegment(y2, targetHue);
     let left = segment[0];
     let leftHue = _HctSolver.hueOf(left);
     let right = segment[1];
@@ -21654,8 +22722,8 @@ var HctSolver = class _HctSolver {
    * @return The desired color as a hexadecimal integer, if found; 0
    * otherwise.
    */
-  static findResultByJ(hueRadians, chroma, y) {
-    let j = Math.sqrt(y) * 11;
+  static findResultByJ(hueRadians, chroma, y2) {
+    let j = Math.sqrt(y2) * 11;
     const viewingConditions = ViewingConditions.DEFAULT;
     const tInnerCoeff = 1 / Math.pow(1.64 - Math.pow(0.29, viewingConditions.n), 0.73);
     const eHue = 0.25 * (Math.cos(hueRadians + 2) + 3.8);
@@ -21688,13 +22756,13 @@ var HctSolver = class _HctSolver {
       if (fnj <= 0) {
         return 0;
       }
-      if (iterationRound === 4 || Math.abs(fnj - y) < 2e-3) {
+      if (iterationRound === 4 || Math.abs(fnj - y2) < 2e-3) {
         if (linrgb[0] > 100.01 || linrgb[1] > 100.01 || linrgb[2] > 100.01) {
           return 0;
         }
         return argbFromLinrgb(linrgb);
       }
-      j = j - (fnj - y) * j / (2 * fnj);
+      j = j - (fnj - y2) * j / (2 * fnj);
     }
     return 0;
   }
@@ -21716,12 +22784,12 @@ var HctSolver = class _HctSolver {
     }
     hueDegrees = sanitizeDegreesDouble(hueDegrees);
     const hueRadians = hueDegrees / 180 * Math.PI;
-    const y = yFromLstar(lstar);
-    const exactAnswer = _HctSolver.findResultByJ(hueRadians, chroma, y);
+    const y2 = yFromLstar(lstar);
+    const exactAnswer = _HctSolver.findResultByJ(hueRadians, chroma, y2);
     if (exactAnswer !== 0) {
       return exactAnswer;
     }
-    const linrgb = _HctSolver.bisectToLimit(y, hueRadians);
+    const linrgb = _HctSolver.bisectToLimit(y2, hueRadians);
     return argbFromLinrgb(linrgb);
   }
   /**
@@ -25661,9 +26729,9 @@ function parseIntHex(value) {
 
 // src/theme/hct-color-engine.js
 var DEFAULT_SEED = "#6750a4";
-var clamp7 = (value, min, max) => Math.min(max, Math.max(min, value));
+var clamp10 = (value, min, max) => Math.min(max, Math.max(min, value));
 var finite4 = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
-var channel = (value) => clamp7(Math.round(finite4(value, 0)), 0, 255);
+var channel = (value) => clamp10(Math.round(finite4(value, 0)), 0, 255);
 var unpack = (argb) => ({ r: redFromArgb(argb), g: greenFromArgb(argb), b: blueFromArgb(argb) });
 var describe = (hct) => ({ hue: hct.hue, chroma: hct.chroma, tone: hct.tone });
 function hexToRgb(hex) {
@@ -25682,7 +26750,7 @@ function sourceHct(source) {
     return Hct.from(
       finite4(source.hue, 0),
       Math.max(0, finite4(source.chroma ?? 48, 48)),
-      clamp7(finite4(source.tone ?? 40, 40), 0, 100)
+      clamp10(finite4(source.tone ?? 40, 40), 0, 100)
     );
   }
   const { r, g, b } = hexToRgb(source);
@@ -25705,12 +26773,12 @@ var TonalPalette2 = class {
       this._chroma = this.chroma;
       this._palette = TonalPalette.fromHueAndChroma(finite4(this.hue, 0), Math.max(0, finite4(this.chroma, 0)));
     }
-    return hexFromArgb(this._palette.tone(clamp7(finite4(tone, 0), 0, 100)));
+    return hexFromArgb(this._palette.tone(clamp10(finite4(tone, 0), 0, 100)));
   }
 };
 function dynamicScheme(source, isDark, schemeType, contrastLevel) {
   const Scheme = schemeType === "standard" ? SchemeTonalSpot : SchemeExpressive;
-  return new Scheme(sourceHct(source), isDark, clamp7(finite4(contrastLevel, 0), -1, 1), "2025", "phone");
+  return new Scheme(sourceHct(source), isDark, clamp10(finite4(contrastLevel, 0), -1, 1), "2025", "phone");
 }
 function createTonalPalettes(source, schemeType = "expressive", isDark = false, contrastLevel = 0) {
   const scheme = dynamicScheme(source, isDark, schemeType, contrastLevel);
@@ -26065,14 +27133,14 @@ function typographyOverrides(fontFamily) {
 }
 
 // src/components/md-theme.js
-var defaultStyle37 = `
+var defaultStyle36 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     display: contents;
   }
 `;
-var themeSheet = createComponentSheet(defaultStyle37);
+var themeSheet = createComponentSheet(defaultStyle36);
 var MdExpressiveTheme = class extends HTMLElement {
   static get observedAttributes() {
     return ["scheme", "color-mode", "contrast", "motion-scheme", "primary-seed", "custom-palette", "font-family", "global"];
@@ -26266,7 +27334,7 @@ var MdExpressiveTheme = class extends HTMLElement {
   render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle37}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle36}</style>`}
       <slot></slot>
     `;
   }
@@ -26287,6 +27355,9 @@ if (!customElements.get("md-theme")) {
 }
 export {
   AndroidFlingDecay,
+  BottomAppBarScrollBehavior,
+  BottomAppBarSettling,
+  BottomAppBarState,
   FloatingToolbarScrollBehavior,
   FloatingToolbarState,
   MD3_PRESETS,
@@ -26345,6 +27416,9 @@ export {
   TonalPalette2 as TonalPalette,
   ToolbarScrollExpansion,
   ToolbarSettling,
+  TopAppBarScrollBehavior,
+  TopAppBarSettling,
+  TopAppBarState,
   adoptSheet,
   applyDynamicTheme,
   createComponentSheet,

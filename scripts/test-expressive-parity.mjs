@@ -60,6 +60,14 @@ import '../test/unit/fab-surface.test.mjs';
 import {testFabSurface} from '../test/browser/fab-surface.mjs';
 import {testFabExpansion, testFabShowcase} from '../test/browser/fab-expansion.mjs';
 import {testAppBarParity,testAppBarShowcase,testIconMinimumParity} from '../test/browser/app-bar-parity.mjs';
+import '../test/unit/top-app-bar-layout.test.mjs';
+import '../test/unit/top-app-bar-scroll.test.mjs';
+import {testTopAppBarParity} from '../test/browser/top-app-bar-parity.mjs';
+import {testTopAppBarScroll} from '../test/browser/top-app-bar-scroll.mjs';
+import '../test/unit/bottom-app-bar-layout.test.mjs';
+import {testBottomAppBarLayout} from '../test/browser/bottom-app-bar-layout.mjs';
+import '../test/unit/bottom-app-bar-scroll.test.mjs';
+import {testBottomAppBarScroll} from '../test/browser/bottom-app-bar-scroll.mjs';
 
 const shapeOracle=JSON.parse(fs.readFileSync(new URL('../test/fixtures/androidx/material-shapes-cubics.json',import.meta.url)));
 assert.deepEqual(MATERIAL_SHAPE_NAMES,Object.keys(shapeOracle));
@@ -391,6 +399,10 @@ try {
   await testFabShowcase(browser, base);
   await testIconMinimumParity(browser, base);
   await testAppBarParity(browser, base);
+  await testTopAppBarParity(browser, base);
+  await testTopAppBarScroll(browser, base);
+  await testBottomAppBarLayout(browser, base);
+  await testBottomAppBarScroll(browser, base);
   await testAppBarShowcase(browser, base);
   await testListParity(browser, base);
   await testTabParity(browser, base);

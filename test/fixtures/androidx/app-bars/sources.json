@@ -25,6 +25,66 @@
       "file": "FabSecondaryContainerTokens.kt",
       "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FabSecondaryContainerTokens.kt",
       "sha256": "3b805c60f71691812674a01dab227259315bd0e7d7996dc830df3da0dd292242"
+    },
+    {
+      "file": "IconButton.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/IconButton.kt",
+      "sha256": "173bcb2f6097767b641b9dbcc447406c38f144d0ea649372ad395ca690f1292a"
+    },
+    {
+      "file": "IconButtonDefaults.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/IconButtonDefaults.kt",
+      "sha256": "20c97c9a25ddb071d30e5d1d877c4b14c3896fcc9c7e56d7a48b22a668babc30"
+    },
+    {
+      "file": "IconButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/IconButtonTokens.kt",
+      "sha256": "dd95472ffbbd321e72c6417ac31e6afa27ec1391efb79aacd96daeb137c7d05e"
+    },
+    {
+      "file": "FilledIconButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FilledIconButtonTokens.kt",
+      "sha256": "1ccee7f721e8414f5035ea023d563a21a730f339355b92f6e38bff6cb25a264b"
+    },
+    {
+      "file": "FilledTonalIconButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FilledTonalIconButtonTokens.kt",
+      "sha256": "ecced6e7cb57f0a47726585902db0768d7a927a78e51527ea0e97b237f854b94"
+    },
+    {
+      "file": "OutlinedIconButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/OutlinedIconButtonTokens.kt",
+      "sha256": "e30561f8543138086542bdec6b80c079f5451c5ddc3135cb6f78a66c573f0953"
+    },
+    {
+      "file": "AppBarSmallTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/AppBarSmallTokens.kt",
+      "sha256": "c27b71c51b688338bd800c10a49ee08bf5942a23fd9dbf04827ff6c6d51846a7"
+    },
+    {
+      "file": "AppBarMediumTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/AppBarMediumTokens.kt",
+      "sha256": "a502dc5c7f392b40527017a0d9ec7e14b92971ee840ec239ca3888539625f745"
+    },
+    {
+      "file": "AppBarLargeTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/AppBarLargeTokens.kt",
+      "sha256": "31a2e150d3d53250b757811df133cfcaf15d20fc3bb820cc4746871c405fc783"
+    },
+    {
+      "file": "AppBarMediumFlexibleTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/AppBarMediumFlexibleTokens.kt",
+      "sha256": "9219f27235d7f49c5cd777acff0d7c8ee51ae1a70445b5873d0848c1c9bb8fc9"
+    },
+    {
+      "file": "AppBarLargeFlexibleTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/AppBarLargeFlexibleTokens.kt",
+      "sha256": "cd6781646bc6c04e3641cb1974556fa7576996e756711479c8b01640c39e49fc"
+    },
+    {
+      "file": "Box.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt",
+      "sha256": "3990421e443b0130835f286f0d4b9d8f2127fa7b2b4efa8054b39896646b36c3"
     }
   ]
 }

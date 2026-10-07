@@ -1,0 +1,25 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Snackbar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Snackbar.kt",
+      "sha256": "8215a0e95333e392edc17d082ff6be259470dd4b5d9b36eae4056dd2d5ec0947"
+    },
+    {
+      "file": "SnackbarHost.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/SnackbarHost.kt",
+      "sha256": "aad16708d07386301856f633e8296092027c79ab59f350cb35680de869d8178f"
+    },
+    {
+      "file": "SnackbarTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SnackbarTokens.kt",
+      "sha256": "b2db9c11b3f3ec0069cfbae6a62afd7a949fcc8b90185c2a821fc0e023735a29"
+    },
+    {
+      "file": "ComposeMaterial3Flags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
+      "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    }
+  ]
+}

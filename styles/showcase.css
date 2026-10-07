@@ -2659,6 +2659,13 @@ body:not([data-active-tab="home"]) .ambient-stage-wrapper {
 #toolbars .toolbar-preview-docked md-toolbar { width:100%; }
 #toolbars .toolbar-scroll-preview { padding:0; align-items:stretch; }
 .toolbar-scroll-stage { position:relative; width:100%; height:320px; overflow:hidden; border-radius:var(--md-sys-shape-corner-large); background:var(--md-sys-color-surface-container-low); }
+.top-app-bar-scroll-stage { display:flex; flex-direction:column; width:100%; height:320px; overflow:hidden; background:var(--md-sys-color-surface); }
+.top-app-bar-scroll-content { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.top-app-bar-scroll-content:focus-visible { outline:3px solid var(--md-sys-color-secondary); outline-offset:-3px; }
+.bottom-app-bar-scroll-stage { display:flex; flex-direction:column; width:100%; height:320px; overflow:hidden; background:var(--md-sys-color-surface); }
+.bottom-app-bar-scroll-content { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.bottom-app-bar-scroll-content:focus-visible { outline:3px solid var(--md-sys-color-secondary); outline-offset:-3px; }
+.bottom-app-bar-scroll-stage md-bottom-app-bar { flex:none; }
 .toolbar-scroll-content { height:100%; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; padding:16px 16px 112px; box-sizing:border-box; }
 .toolbar-scroll-content:focus-visible { outline:2px solid var(--md-sys-color-primary); outline-offset:-2px; }
 .toolbar-scroll-stage md-toolbar { position:absolute; bottom:16px; right:16px; z-index:2; }

@@ -21,6 +21,8 @@ export { MdSnackbar } from './components/md-snackbar.js';
 export { MdTooltip } from './components/md-tooltip.js';
 export { MdBadge } from './components/md-badge.js';
 export { MdTopAppBar } from './components/md-top-app-bar.js';
+export { TopAppBarState, TopAppBarScrollBehavior, TopAppBarSettling } from './components/top-app-bar-scroll.js';
+export { BottomAppBarState, BottomAppBarScrollBehavior, BottomAppBarSettling } from './components/bottom-app-bar-scroll.js';
 export { MdBottomAppBar } from './components/md-bottom-app-bar.js';
 export { MdNavigationBar } from './components/md-navigation-bar.js';
 export { MdNavigationDrawer } from './components/md-navigation-drawer.js';

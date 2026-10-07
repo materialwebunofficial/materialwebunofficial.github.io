@@ -85,7 +85,7 @@ function crossPosition(input,size,item,vertical,rtl,before,line,defaultAlignment
  return round(f(f((size-item)/2)*f(1+(vertical&&rtl?-bias:bias))));
 }
 export function measureRowColumn(o,measure=(input,c,i)=>measureLayoutLeaf('c'+i,input,c,!!o.vertical)){
- const vertical=!!o.vertical,rtl=!!o.rtl,b=bounds(o),inputs=o.children||[],spacing=o.arrangement==='spaced'?7:0;
+ const vertical=!!o.vertical,rtl=!!o.rtl,b=bounds(o),inputs=o.children||[],spacing=o.arrangement==='spaced'?round(o.spacing??7):0;
  const nodes=inputs.map(()=>null),mainSizes=inputs.map(()=>0),crossSizes=inputs.map(()=>0);
  let totalWeight=0,fixed=0,cross=0,weightedCount=0,lastSpacing=0,relative=false;
  const measureChild=(i,minMain,maxMain)=>{

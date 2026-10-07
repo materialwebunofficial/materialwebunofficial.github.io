@@ -1,6 +1,6 @@
 {
   "name": "@materialwebunofficial/md3e-web",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Unofficial Web Adaptation of Material Design 3 Expressive (M3 Expressive) - Web Components, Design Tokens, Spring Physics, and HCT Dynamic Theme Engine",
   "type": "module",
   "main": "./dist/md3-expressive.esm.js",
@@ -48,9 +48,9 @@
     "build": "node scripts/build.js",
     "prepack": "npm run build",
     "start": "npx serve .",
-    "test": "node scripts/test-all-components.js && node scripts/test-audit-security-fixes.js && node test/unit/theme.test.js && node test/unit/typography-parity.test.mjs && node test/unit/selection-motion.test.mjs && node test/unit/navigation-rail-layout.test.mjs && node test/unit/color-motion.test.mjs && node test/unit/drawer-motion.test.mjs && node test/unit/list-parity.test.mjs && node test/unit/menu-parity.test.mjs && node test/unit/tab-parity.test.mjs && node test/unit/toolbar-parity.test.mjs && node test/unit/toolbar-scroll.test.mjs && node test/unit/toolbar-constraints.test.mjs && node test/unit/toolbar-row.test.mjs && node test/unit/toolbar-alignment.test.mjs && node test/unit/toolbar-size-motion.test.mjs && node test/unit/toolbar-inner-alignment.test.mjs && node test/unit/toolbar-padding.test.mjs && node test/unit/toolbar-fab-content.test.mjs && node test/unit/corner-shape.test.mjs && node test/unit/progress-parity.test.mjs && node test/unit/slider-parity.test.mjs && node test/unit/ripple-parity.test.mjs && node test/unit/fab-expansion.test.mjs && node test/unit/fab-surface.test.mjs",
+    "test": "node scripts/test-all-components.js && node scripts/test-audit-security-fixes.js && node test/unit/theme.test.js && node test/unit/typography-parity.test.mjs && node test/unit/selection-motion.test.mjs && node test/unit/navigation-rail-layout.test.mjs && node test/unit/color-motion.test.mjs && node test/unit/drawer-motion.test.mjs && node test/unit/list-parity.test.mjs && node test/unit/menu-parity.test.mjs && node test/unit/tab-parity.test.mjs && node test/unit/toolbar-parity.test.mjs && node test/unit/toolbar-scroll.test.mjs && node test/unit/toolbar-constraints.test.mjs && node test/unit/toolbar-row.test.mjs && node test/unit/toolbar-alignment.test.mjs && node test/unit/toolbar-size-motion.test.mjs && node test/unit/toolbar-inner-alignment.test.mjs && node test/unit/toolbar-padding.test.mjs && node test/unit/toolbar-fab-content.test.mjs && node test/unit/corner-shape.test.mjs && node test/unit/progress-parity.test.mjs && node test/unit/slider-parity.test.mjs && node test/unit/ripple-parity.test.mjs && node test/unit/fab-expansion.test.mjs && node test/unit/fab-surface.test.mjs && node test/unit/top-app-bar-layout.test.mjs && node test/unit/top-app-bar-scroll.test.mjs && node test/unit/bottom-app-bar-layout.test.mjs && node test/unit/bottom-app-bar-scroll.test.mjs",
     "test:fab": "node test/unit/fab-expansion.test.mjs && node test/unit/fab-surface.test.mjs",
-    "test:app-bars": "npm run build && node scripts/test-app-bars.mjs",
+    "test:app-bars": "node test/unit/top-app-bar-layout.test.mjs && node test/unit/top-app-bar-scroll.test.mjs && node test/unit/bottom-app-bar-layout.test.mjs && node test/unit/bottom-app-bar-scroll.test.mjs && npm run build && node scripts/test-app-bars.mjs",
     "test:parity": "npm run build && node scripts/test-expressive-parity.mjs"
   },
   "keywords": [

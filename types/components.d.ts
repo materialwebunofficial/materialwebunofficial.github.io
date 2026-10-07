@@ -200,11 +200,61 @@ export class MdBadge extends HTMLElement {
 }
 
 export class MdTopAppBar extends HTMLElement {
-  type: 'center-aligned' | 'small' | 'medium' | 'large';
-  headline?: string;
+  scrollBehavior: TopAppBarScrollBehavior | null;
+  scrollTarget: HTMLElement | Window | null;
+  readonly scrollState: TopAppBarState | null;
+  preScroll(available?: ToolbarScrollDelta): ToolbarScrollDelta;
+  postScroll(consumed?: ToolbarScrollDelta, available?: ToolbarScrollDelta): ToolbarScrollDelta;
+  postFling(consumed?: ToolbarScrollDelta, available?: ToolbarScrollDelta): Promise<ToolbarScrollDelta>;
+  get variant(): 'center-aligned' | 'small' | 'medium' | 'large' | 'medium-flexible' | 'large-flexible';
+  set variant(value: 'center-aligned' | 'small' | 'medium' | 'large' | 'medium-flexible' | 'large-flexible' | null | undefined);
+  get headline(): string;
+  set headline(value: string | null | undefined);
+  get subtitle(): string;
+  set subtitle(value: string | null | undefined);
+  scrolled: boolean;
+  readonly twoRows: boolean;
+  get expandedHeight(): number;
+  set expandedHeight(value: number | null | undefined);
+  get collapsedHeight(): number;
+  set collapsedHeight(value: number | null | undefined);
+  get heightOffset(): number;
+  set heightOffset(value: number | null | undefined);
+  readonly heightOffsetLimit: number;
+  readonly collapsedFraction: number;
+  get overlappedFraction(): number;
+  set overlappedFraction(value: number | null | undefined);
+  get titleHorizontalAlignment(): 'start' | 'center' | 'end';
+  set titleHorizontalAlignment(value: 'start' | 'center' | 'end' | null | undefined);
+  get contentPadding(): {start: number; top: number; end: number; bottom: number} | {left: number; top: number; right: number; bottom: number};
+  set contentPadding(value: number | string | {start?: number; top?: number; end?: number; bottom?: number} | {left?: number; top?: number; right?: number; bottom?: number} | null | undefined);
+  get containerColor(): string;
+  set containerColor(value: string | null | undefined);
+  get scrolledContainerColor(): string;
+  set scrolledContainerColor(value: string | null | undefined);
+  get contentColor(): string;
+  set contentColor(value: string | null | undefined);
+  get navigationIconContentColor(): string;
+  set navigationIconContentColor(value: string | null | undefined);
+  get titleContentColor(): string;
+  set titleContentColor(value: string | null | undefined);
+  get actionIconContentColor(): string;
+  set actionIconContentColor(value: string | null | undefined);
+  get subtitleContentColor(): string;
+  set subtitleContentColor(value: string | null | undefined);
 }
 
 export class MdBottomAppBar extends HTMLElement {
+  scrollBehavior: BottomAppBarScrollBehavior | null;
+  scrollTarget: HTMLElement | Window | null;
+  readonly scrollState: BottomAppBarState | null;
+  heightOffset: number;
+  readonly heightOffsetLimit: number; readonly collapsedFraction: number;
+  /** Host adapter for Android touch-exploration state; disables scrolling/drag. */
+  touchExplorationEnabled: boolean;
+  preScroll(available?: ToolbarScrollDelta): ToolbarScrollDelta;
+  postScroll(consumed?: ToolbarScrollDelta, available?: ToolbarScrollDelta): ToolbarScrollDelta;
+  postFling(consumed?: ToolbarScrollDelta, available?: ToolbarScrollDelta): Promise<ToolbarScrollDelta>;
   variant: 'standard' | 'flexible';
   containerColor: string;
   contentColor: string;
@@ -449,6 +499,86 @@ export class AndroidFlingDecay {
   info(velocity: number): {velocity: number; distance: number; duration: number};
   target(from: number, velocity: number): number;
   sample(time: number, from: number, velocity: number): {position: number; velocity: number};
+}
+export interface TopAppBarScrollOptions {
+  kind?: 'pinned' | 'enter-always' | 'exit-until-collapsed' | 'legacy-enter-always';
+  state?: TopAppBarState;
+  canScroll?: () => boolean;
+  isScrollingContentAtStart?: () => boolean;
+  reverseLayout?: boolean;
+  snapAnimationSpec?: ToolbarSpringSpec | null;
+  flingAnimationSpec?: AndroidFlingDecay | null;
+}
+export class TopAppBarState {
+  constructor(options?: {heightOffsetLimit?: number; heightOffset?: number; contentOffset?: number; isScrollingContentAtStart?: () => boolean});
+  heightOffsetLimit: number; heightOffset: number; contentOffset: number;
+  isScrollingContentAtStart: () => boolean;
+  readonly collapsedFraction: number; readonly overlappedFraction: number;
+  subscribe(listener: (state: TopAppBarState) => void): () => void;
+  updateHeightOffsetLimit(height: number): void;
+  save(): [number, number, number];
+  static restore(values: readonly [number, number, number]): TopAppBarState;
+}
+export class TopAppBarScrollBehavior {
+  constructor(options?: TopAppBarScrollOptions);
+  readonly state: TopAppBarState; readonly kind: NonNullable<TopAppBarScrollOptions['kind']>;
+  readonly isPinned: boolean; readonly nestedScrollConnection: TopAppBarScrollBehavior;
+  canScroll: () => boolean; reverseLayout: boolean;
+  snapAnimationSpec: ToolbarSpringSpec | null; flingAnimationSpec: AndroidFlingDecay | null;
+  static pinned(options?: TopAppBarScrollOptions): TopAppBarScrollBehavior;
+  static enterAlways(options?: TopAppBarScrollOptions): TopAppBarScrollBehavior;
+  static exitUntilCollapsed(options?: TopAppBarScrollOptions): TopAppBarScrollBehavior;
+  static legacyEnterAlways(options?: TopAppBarScrollOptions): TopAppBarScrollBehavior;
+  onPreScroll(available: ToolbarScrollDelta): ToolbarScrollDelta;
+  onPostScroll(consumed: ToolbarScrollDelta, available?: ToolbarScrollDelta): ToolbarScrollDelta;
+  onPostFling(consumed?: ToolbarScrollDelta, available?: ToolbarScrollDelta): TopAppBarSettling;
+  settle(velocity?: number): TopAppBarSettling;
+}
+export class TopAppBarSettling {
+  constructor(state: TopAppBarState, velocity: number, options?: Pick<TopAppBarScrollOptions, 'snapAnimationSpec' | 'flingAnimationSpec'>);
+  readonly done: boolean; readonly returnedVelocity: number;
+  static complete(state: TopAppBarState): TopAppBarSettling;
+  sampleFrame(now: number, afterOffsetWrite?: () => void): {phase: string; time: number; value: number; velocity: number; offset: number; canceled: boolean} | null;
+  finish(): void;
+}
+export interface BottomAppBarScrollOptions {
+  state?: BottomAppBarState; canScroll?: () => boolean; element?: Element | null;
+  snapAnimationSpec?: ToolbarSpringSpec | null;
+  flingAnimationSpec?: AndroidFlingDecay | null;
+}
+export class BottomAppBarState {
+  constructor(options?: {heightOffsetLimit?: number; heightOffset?: number; contentOffset?: number});
+  heightOffsetLimit: number; heightOffset: number; contentOffset: number;
+  readonly collapsedFraction: number;
+  subscribe(listener: (state: BottomAppBarState) => void): () => void;
+  updateHeightOffsetLimit(height: number): void;
+  save(): [number, number, number];
+  static restore(values: readonly [number, number, number]): BottomAppBarState;
+}
+export interface BottomAppBarNestedScrollConnection {
+  onPreScroll?(available: ToolbarScrollDelta): ToolbarScrollDelta;
+  onPostScroll(consumed: ToolbarScrollDelta, available?: ToolbarScrollDelta): ToolbarScrollDelta;
+  onPostFling(consumed?: ToolbarScrollDelta, available?: ToolbarScrollDelta): BottomAppBarSettling;
+}
+export class BottomAppBarScrollBehavior implements BottomAppBarNestedScrollConnection {
+  constructor(options?: BottomAppBarScrollOptions);
+  readonly state: BottomAppBarState; readonly isPinned: boolean;
+  nestedScrollConnection: BottomAppBarNestedScrollConnection;
+  canScroll: () => boolean;
+  snapAnimationSpec: ToolbarSpringSpec | null; flingAnimationSpec: AndroidFlingDecay | null;
+  setElement(element: Element): void;
+  static exitAlways(options?: BottomAppBarScrollOptions): BottomAppBarScrollBehavior;
+  onPreScroll(available?: ToolbarScrollDelta): ToolbarScrollDelta;
+  onPostScroll(consumed: ToolbarScrollDelta, available?: ToolbarScrollDelta): ToolbarScrollDelta;
+  onPostFling(consumed?: ToolbarScrollDelta, available?: ToolbarScrollDelta): BottomAppBarSettling;
+  settle(velocity?: number): BottomAppBarSettling;
+}
+export class BottomAppBarSettling {
+  constructor(state: BottomAppBarState, velocity: number, options?: Pick<BottomAppBarScrollOptions, 'snapAnimationSpec' | 'flingAnimationSpec' | 'element'>);
+  readonly done: boolean; readonly returnedVelocity: number;
+  static complete(state: BottomAppBarState): BottomAppBarSettling;
+  sampleFrame(now: number, afterOffsetWrite?: () => void): {phase: string; time: number; value: number; velocity: number; offset: number; canceled: boolean} | null;
+  finish(): void;
 }
 export class FloatingToolbarState {
   constructor(options?: {offsetLimit?: number; offset?: number; contentOffset?: number});

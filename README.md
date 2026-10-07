@@ -257,6 +257,71 @@ composition and ordered role collisions are independently verified; native
 wide-gamut packing and arbitrary incoming layout constraints remain open.
 The `expanded-change` event exposes `event.detail.expanded`.
 
+Top app bars accept explicit `slot="leading"` navigation and `slot="trailing"`
+actions. An empty bar has no generated controls. `variant="small"` defaults to
+Start alignment at 64px; `center-aligned` centers the title on the full bar.
+`medium`/`large` use separate 64px action and expanded-title rows, with total
+heights of 112/152px and HeadlineSmall/HeadlineMedium. Expressive
+`medium-flexible` uses 112px without a subtitle or 136px with one;
+`large-flexible` uses 120/152px. A supplied empty `subtitle=""` counts as a
+non-null subtitle, as in the native API. Legacy medium/large have no subtitle.
+Expanded title baseline padding is 24/28px, reduced when the row cannot fit it.
+Single-row/flexible titles support `titleHorizontalAlignment` (Start by default).
+`contentPadding` applies to the single-row variant; native two-row content padding
+is fixed at zero. Colors use Surface/SurfaceContainer, OnSurface for navigation
+and title, and OnSurfaceVariant for actions/subtitle; per-role color properties
+override those defaults. Top app bars have no elevation shadow in the source.
+
+String headlines/subtitles preserve their DOM across updates. For custom
+compositions use `slot="title"`/`slot="subtitle"`; a two-row bar accepts separate
+`collapsed-title`/`collapsed-subtitle` slots. Custom content inherits its text
+style/color, and `data-last-baseline` supplies a density-1 baseline when needed.
+Actions support `data-app-bar-weight` and `data-app-bar-fill="false"` through the
+native Row policy. `navigation-click` and `action.detail.action` are convenience
+events; controls retain their own click handlers. `scrolled`, `overlappedFraction`
+and `heightOffset` are explicit web state inputs. Single-row color uses
+DefaultEffects; two-row color/title alpha directly follow source easing curves.
+Height offset follows native measurement and is ignored in unbounded height;
+use an appropriate CSS `max-height` when supplying a bounded offset state.
+`scrollBehavior` accepts a `TopAppBarScrollBehavior` with a hoisted `TopAppBarState`.
+Factories `pinned`, `enterAlways` and `exitUntilCollapsed` follow the separate
+native nested-scroll policies; `legacyEnterAlways` exposes the deprecated reverse
+layout policy explicitly. The scrolling row measures its own offset limit,
+including custom title minimums. State limit writes alone do not clamp offsets.
+Drag uses vertical source touch slop and velocity tracking, followed by Android
+spline decay and the source DefaultEffects snap. Either animation spec may be
+null. `preScroll`, `postScroll` and async `postFling` expose a host nested-scroll
+pipeline and return its consumed delta or remaining velocity.
+
+`scrollTarget` connects an HTMLElement or window. Wheel events supply pre-scroll
+deltas; the adapter reports actual DOM consumption and any remainder. Native DOM
+touch/programmatic scrolling exposes only consumed movement, so that path cannot
+reproduce Android's pre-consumption ordering or provide its fling velocity.
+Browser `scrollend` settles with zero available velocity; hosts with velocity
+information should call `postFling` explicitly. Bounded state/layout feedback is
+compared against 360 original measure/settle clocks, including 5327 rendered
+frames. The host publishes the size callback before capturing the next snap
+target. Full Compose scheduling, these input boundaries, intrinsic/custom wrapped-content queries,
+font shaping, color packing and other engines still need further parity work.
+
+```html
+<md-top-app-bar variant="medium-flexible" headline="Library" subtitle="Your saved items">
+  <md-icon-button slot="leading" icon="menu" aria-label="Open navigation"></md-icon-button>
+  <md-icon-button slot="trailing" icon="search" aria-label="Search"></md-icon-button>
+</md-top-app-bar>
+```
+
+```js
+import {TopAppBarScrollBehavior} from '@materialwebunofficial/md3e-web';
+const bar = document.querySelector('md-top-app-bar');
+const content = document.querySelector('.scrollable-content');
+bar.style.maxHeight = '300px'; // Bounded parent-height adapter; choose for your layout.
+bar.scrollBehavior = TopAppBarScrollBehavior.enterAlways({
+  isScrollingContentAtStart: () => content.scrollTop === 0
+});
+bar.scrollTarget = content;
+```
+
 Bottom app bars accept caller-provided actions and an optional `slot="fab"`;
 an empty bar contains no generated buttons. The standard variant is 80px with
 source 4px start/top/end padding. `variant="flexible"` implements the Expressive
@@ -269,8 +334,38 @@ Standard `tonal-elevation` defaults to 0dp; flexible uses the source's fixed 0dp
 For an embedded FAB, use `color="secondary-container" elevation="bottom-app-bar"`
 to select the native helper defaults (zero elevation in every state).
 The `action` and `fab-click` events are web conveniences for supplied controls;
-their regular native click handlers also work. Scrolling/drag behavior and full
-native constrained Row measurement still require further parity work.
+their regular native click handlers also work. Standard bars measure the FAB's
+full-height Box first, then allocate the remaining width to the actions Row.
+Flexible bars use the source's integer arrangement positions. CSS height/min/max
+constraints participate in the original Size/Padding/Row/Placeable order; native
+icon and FAB bodies receive the measured constraints independently of their
+minimum interactive layout size. Caller elements and focus survive live resizing.
+For supplied element content, `data-app-bar-weight`, `data-app-bar-fill="false"`
+and `data-app-bar-align="start|center|end"` map supported RowScope parent data;
+`data-app-bar-align="line"` with `data-app-bar-alignment-line` supplies an explicit
+integer alignment line. DOM dimensions, these attributes and safe-area values
+are web adapters. Arbitrary wrapping/intrinsic/descendant alignment-line behavior,
+native system insets and platform input/focus/raster behavior remain open.
+
+`BottomAppBarScrollBehavior.exitAlways()` attaches a hoisted `BottomAppBarState`.
+The native behavior consumes no pre-scroll delta; post-scroll adds only consumed
+vertical movement. It measures the full Surface, sets the collapse limit to its
+negative height, then shrinks only the height reported to the parent. Place the
+bar at the bottom of a clipped stage or viewport to show its native downward exit.
+Direct downward drag subtracts the movement from the offset. Release uses Android
+spline decay and FastSpatial snap, with the local Expressive/Standard scheme.
+Explicit null snap/decay specs preserve intermediate positions. Browser
+`scrollTarget` observes actual consumed scroll; `scrollend` settles with zero
+available velocity. Hosts with native velocity can call `postFling` directly.
+`touchExplorationEnabled` / `touch-exploration` is an explicit host bridge for the
+Android touch-exploration service: it leaves the state intact while displaying
+the full bar and disabling scroll/drag. It is distinct from reduced motion.
+
+```js
+const bar = document.querySelector('md-bottom-app-bar');
+bar.scrollBehavior = BottomAppBarScrollBehavior.exitAlways({element: bar});
+bar.scrollTarget = document.querySelector('#documents');
+```
 
 ```html
 <md-bottom-app-bar variant="flexible" aria-label="Document actions">

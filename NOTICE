@@ -343,10 +343,62 @@ contained-background attributes and live theme delivery are web adapters.
 md-bottom-app-bar.js adapts BottomAppBar/FlexibleBottomAppBar public defaults,
 Surface color/tonal policy, content padding and caller-content slots from the
 same pinned AndroidX AppBar.kt and BottomAppBar/DockedToolbar/AppBar tokens.
-Five unchanged originals with URL/SHA/license manifest are cached under
+Seventeen unchanged originals with URL/SHA/license manifest are cached under
 test/fixtures/androidx/app-bars by tools/androidx-app-bars/fetch-sources.mjs.
 MdFab's bottom-app-bar elevation preset follows FloatingActionButtonDefaults.
 bottomAppBarFabElevation (all states 0dp), retained in the existing ripple
-FloatingActionButton source fixture. Native system insets, constrained Row
-measurement and optional nested-scroll/drag behavior remain platform/API
-boundaries; CSS safe-area insets, grouping and action events are web adapters.
+FloatingActionButton source fixture. bottom-app-bar-layout.js now composes the
+shared source Row/Placeable/minimum-interactive port with the original
+Fill/Size/Padding and Box measurement order. tools/androidx-app-bars/
+generate-bottom-layout.py executes those unchanged native bodies for 6720
+standard/flexible trees; BottomTree.kt supplies leaf sizes, bounds, parent data,
+safe-area values and the public composables' modifier tree. Complete Compose
+composition, intrinsic/custom modifiers and native system-insets runtime remain
+platform/API boundaries; DOM dimensions,
+CSS constraint probing/safe-area values, grouping and action events are web
+adapters. MdFab accepts the measured width/height constraints through private
+inherited variables while retaining its separate minimum-interactive layout.
+bottom-app-bar-scroll.js implements BottomAppBarStateImpl and ExitAlways from
+the same AppBar.kt. Its outer layout uses the complete native measurement order,
+including Placeable coercion of the reduced parent height. The original bottom
+and top settling bodies are identical after state/type naming is normalized;
+their shared web frame engine uses separate FastSpatial/DefaultEffects defaults.
+generate-bottom-scroll.py executes complete unchanged bottom state, scroll,
+settling and outer-layout bodies with original Android spline/FloatSpringSpec
+and hash-verified Expressive/Standard FastSpatial tokens. BottomScroll.kt and
+the adapter supply state storage, default trees, bounds/insets and explicit
+frame/measurement ordering; full Compose runtime scheduling is not executed.
+DOM consumed-scroll delivery, source pointer/slop/velocity adapters, reduced
+motion, touch-exploration host state and callback/event lifecycle are web bridges.
+IconButton's inherited disabled content replaces alpha using the source
+IconButtonDefaults/StandardIconButtonTokens policy. CSS relative colors are
+the web adapter; this does not establish native Color packing/raster equality.
+The same source manifest includes filled/tonal/outlined icon tokens for disabled
+color targets, the 0.1 container opacity and checked outline removal. Unused
+tokens are not substituted for the public factory's actual returned colors.
+
+md-top-app-bar.js and top-app-bar-layout.js adapt SingleRowTopAppBar,
+TwoRowsTopAppBar, TopAppBarMeasurePolicy and the default padded Box/Row/Column
+composition, using the AppBar small/medium/large/flexible tokens. The original
+BoxMeasurePolicy/placeInBox bodies are included with their original license.
+tools/androidx-app-bars/generate-top-layout.py executes these unchanged measure
+bodies, the shared original Row/Column/Padding/Size/minimum-interactive/Placeable
+policies, and original CubicBezierEasing/Bezier math. The harness supplies slots,
+parent constraints, body dimensions and baseline inputs. Tree fixtures leave
+the baseline host unspecified; explicit baseline placement is covered by the
+independent TopAppBarMeasurePolicy fixture. Visibility/sample/frame scheduling,
+DOM text/slot measurements, CSS color-space conversion/serialization, safe-area
+insets, focus/semantics and state inputs remain web adapters. Coupled native
+scroll composition/remeasurement, font shaping, Color packing/pixels, custom modifier
+semantics and other browser/platform implementations are not established by
+these fixtures. Source curve adapters are in src/motion/top-app-bar-motion.js;
+the single-row color spring reuses the shared native ColorMotion implementation.
+
+top-app-bar-scroll.js also adapts original TopAppBarState,
+PinnedScrollBehavior, EnterAlwaysScrollBehavior, LegacyEnterAlwaysScrollBehavior,
+ExitUntilCollapsedScrollBehavior and settleAppBar from the same AppBar.kt.
+generate-top-scroll.py executes those unchanged bodies with explicit host state
+storage, vectors and frames, using original Android spline and FloatSpringSpec.
+Nullable specs, Float state/overlap, source consumed/remaining deltas and settling
+are covered. DOM wheel/touch/scrollend ordering, native fling velocity and coupled
+native measure/settle scheduling remain platform-host boundaries.

@@ -805,47 +805,146 @@ document.querySelector('#my-element').animate(keyframes, {
         <div class="cards-grid">
           <div class="comp-card">
             <div class="comp-preview" style="width: 100%; padding: 0;">
-              <md-top-app-bar headline="Page Title" variant="small"></md-top-app-bar>
+              <md-top-app-bar headline="Page Title" variant="small">
+                <md-icon-button slot="leading" icon="menu" aria-label="Open navigation"></md-icon-button>
+                <md-icon-button slot="trailing" icon="search" aria-label="Search"></md-icon-button>
+                <md-icon-button slot="trailing" icon="more_vert" aria-label="More options"></md-icon-button>
+              </md-top-app-bar>
             </div>
             <div class="comp-info">
               <span class="comp-name">Top App Bar (Small 64dp)</span>
-              <span class="comp-desc">Prominent page headline with leading navigation icon and action items.</span>
+              <span class="comp-desc">Start-aligned Title Large with caller-provided navigation and screen actions.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-top-app-bar headline=&quot;Page Title&quot; variant=&quot;small&quot;&gt;&lt;/md-top-app-bar&gt;</code>
+              <code>&lt;md-top-app-bar headline='Page Title' variant='small'&gt;&lt;md-icon-button slot='leading' icon='menu' aria-label='Open navigation'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>
 
           <div class="comp-card">
             <div class="comp-preview" style="width: 100%; padding: 0;">
-              <md-top-app-bar headline="Medium Top Bar" variant="medium" subtitle="Expanded context subtitle"></md-top-app-bar>
+              <div class="top-app-bar-scroll-stage">
+              <md-top-app-bar id="scroll-top-app-bar" data-top-app-bar-scroll="top-app-bar-content" style="max-height: 300px;" headline="Medium Top Bar" variant="medium-flexible" subtitle="Expanded context subtitle">
+                <md-icon-button slot="leading" icon="arrow_back" aria-label="Back"></md-icon-button>
+                <md-icon-button slot="trailing" icon="more_vert" aria-label="More options"></md-icon-button>
+              </md-top-app-bar>
+              <div id="top-app-bar-content" class="top-app-bar-scroll-content" tabindex="0" role="region" aria-label="Scrollable library: collapse and expand the top app bar">
+                <md-list>
+                  <md-list-item headline="Recently added" supporting-text="New additions to your library"></md-list-item>
+                  <md-list-item headline="Your favourites" supporting-text="The things you return to"></md-list-item>
+                  <md-list-item headline="Reading list" supporting-text="Saved for later"></md-list-item>
+                  <md-list-item headline="Collections" supporting-text="Organised your way"></md-list-item>
+                  <md-list-item headline="Downloads" supporting-text="Available offline"></md-list-item>
+                  <md-list-item headline="Archive" supporting-text="Everything you have kept"></md-list-item>
+                </md-list>
+              </div>
+              </div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Top App Bar (Medium Flexible 136dp)</span>
+              <span class="comp-desc">Scroll the library or drag the bar to collapse and expand its title. A 64dp action row stays visible.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-top-app-bar id='scroll-top-app-bar' data-top-app-bar-scroll='top-app-bar-content' style='max-height: 300px;' headline='Medium Top Bar' variant='medium-flexible' subtitle='Expanded context subtitle'&gt;&lt;md-icon-button slot='leading' icon='arrow_back' aria-label='Back'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <md-top-app-bar headline="Library" variant="center-aligned">
+                <md-icon-button slot="leading" icon="arrow_back" aria-label="Back"></md-icon-button>
+                <md-icon-button slot="trailing" icon="more_vert" aria-label="More options"></md-icon-button>
+              </md-top-app-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Top App Bar (Center Aligned 64dp)</span>
+              <span class="comp-desc">Title Large centers on the full bar, with room reserved for navigation and actions.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-top-app-bar headline='Library' variant='center-aligned'&gt;&lt;md-icon-button slot='leading' icon='arrow_back' aria-label='Back'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <md-top-app-bar headline="Your library" variant="medium">
+                <md-icon-button slot="leading" icon="menu" aria-label="Open navigation"></md-icon-button>
+                <md-icon-button slot="trailing" icon="search" aria-label="Search"></md-icon-button>
+              </md-top-app-bar>
             </div>
             <div class="comp-info">
               <span class="comp-name">Top App Bar (Medium 112dp)</span>
-              <span class="comp-desc">Expanded headline area for rich screen typography and scroll collapse.</span>
+              <span class="comp-desc">Headline Small occupies the second row, with 24dp baseline padding when space permits.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-top-app-bar headline=&quot;Medium Top Bar&quot; variant=&quot;medium&quot; subtitle=&quot;Subtitle&quot;&gt;&lt;/md-top-app-bar&gt;</code>
+              <code>&lt;md-top-app-bar headline='Your library' variant='medium'&gt;&lt;md-icon-button slot='leading' icon='menu' aria-label='Open navigation'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>
 
           <div class="comp-card">
             <div class="comp-preview" style="width: 100%; padding: 0;">
-              <md-bottom-app-bar aria-label="Document actions">
+              <md-top-app-bar headline="Saved places" variant="large">
+                <md-icon-button slot="leading" icon="arrow_back" aria-label="Back"></md-icon-button>
+                <md-icon-button slot="trailing" icon="more_vert" aria-label="More options"></md-icon-button>
+              </md-top-app-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Top App Bar (Large 152dp)</span>
+              <span class="comp-desc">Headline Medium below the action row, with 28dp baseline padding when space permits.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-top-app-bar headline='Saved places' variant='large'&gt;&lt;md-icon-button slot='leading' icon='arrow_back' aria-label='Back'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <md-top-app-bar headline="Your space" variant="large-flexible" subtitle="Everything in one place">
+                <md-icon-button slot="leading" icon="menu" aria-label="Open navigation"></md-icon-button>
+                <md-icon-button slot="trailing" icon="search" aria-label="Search"></md-icon-button>
+              </md-top-app-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Top App Bar (Large Flexible 152dp)</span>
+              <span class="comp-desc">Display Small and Title Medium in the expanded row; 120dp when no subtitle is supplied.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-top-app-bar headline='Your space' variant='large-flexible' subtitle='Everything in one place'&gt;&lt;md-icon-button slot='leading' icon='menu' aria-label='Open navigation'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <div class="bottom-app-bar-scroll-stage">
+              <div id="bottom-app-bar-content" class="bottom-app-bar-scroll-content" role="region" tabindex="0" aria-label="Scrollable documents">
+                <md-list aria-label="Documents">
+                  <md-list-item headline="Project notes" supporting-text="Updated today" leading-icon="description"></md-list-item>
+                  <md-list-item headline="Design brief" supporting-text="Shared with you" leading-icon="article"></md-list-item>
+                  <md-list-item headline="Meeting notes" supporting-text="Updated yesterday" leading-icon="description"></md-list-item>
+                  <md-list-item headline="Reading list" supporting-text="Saved for later" leading-icon="bookmark"></md-list-item>
+                  <md-list-item headline="Weekly plan" supporting-text="Ready to review" leading-icon="event_note"></md-list-item>
+                  <md-list-item headline="Reference" supporting-text="Saved for later" leading-icon="folder"></md-list-item>
+                </md-list>
+              </div>
+              <md-bottom-app-bar id="scroll-bottom-app-bar" data-bottom-app-bar-scroll="bottom-app-bar-content" aria-label="Document actions">
                 <md-icon-button icon="menu" aria-label="Menu"></md-icon-button>
                 <md-icon-button icon="search" aria-label="Search"></md-icon-button>
                 <md-icon-button icon="edit" aria-label="Edit"></md-icon-button>
                 <md-fab slot="fab" icon="add" aria-label="Add document" color="secondary-container" elevation="bottom-app-bar"></md-fab>
               </md-bottom-app-bar>
+              </div>
             </div>
             <div class="comp-info">
               <span class="comp-name">Bottom App Bar (80dp)</span>
-              <span class="comp-desc">Standard 80dp surface with start-aligned actions and an optional secondary-container FAB.</span>
+              <span class="comp-desc">Scroll the documents to hide and reveal the action bar, or drag the bar itself.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-bottom-app-bar aria-label='Document actions'&gt;&lt;md-icon-button icon='menu' aria-label='Menu'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='edit' aria-label='Edit'&gt;&lt;/md-icon-button&gt;&lt;md-fab slot='fab' icon='add' aria-label='Add document' color='secondary-container' elevation='bottom-app-bar'&gt;&lt;/md-fab&gt;&lt;/md-bottom-app-bar&gt;</code>
+              <code>&lt;md-bottom-app-bar id='scroll-bottom-app-bar' data-bottom-app-bar-scroll='bottom-app-bar-content' aria-label='Document actions'&gt;&lt;md-icon-button icon='menu' aria-label='Menu'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button icon='edit' aria-label='Edit'&gt;&lt;/md-icon-button&gt;&lt;md-fab slot='fab' icon='add' aria-label='Add document' color='secondary-container' elevation='bottom-app-bar'&gt;&lt;/md-fab&gt;&lt;/md-bottom-app-bar&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>
