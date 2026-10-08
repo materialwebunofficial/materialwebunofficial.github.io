@@ -25,7 +25,7 @@ for(const [records,select]of [[interactions.elevations,elevationSpec],[interacti
  for(const [time,expected]of c.frames){assert.equal(interactionTween(c.from,c.to,time,spec),expected,`native interaction tween ${c.fromKind}/${c.toKind}/${time}`);frames++;}
 }
 for(const history of interactions.orders){const order=new InteractionOrder();for(const c of history){
- const kind=c.event.slice(0,-1);order.set(kind,c.event.endsWith('+'));
+ const owner=c.event.slice(0,-1);order.set(owner.replace(/\d+$/,''),c.event.endsWith('+'),owner);
  assert.equal(order.latest()??'null',c.fab,'unchanged FAB recent interaction');
  assert.equal(order.latest(false)??'null',c.layer,'unchanged state-layer recent interaction excludes presses');
  assert.equal(order.latest()==='hover'?8:6,c.target,'unchanged FAB target calculation');

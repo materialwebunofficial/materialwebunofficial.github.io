@@ -1,0 +1,65 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Tooltip.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Tooltip.kt",
+      "sha256": "b1047314137da575357cc56742f6dc4b264bd50d0838b09655cb897fe635ad86"
+    },
+    {
+      "file": "BasicTooltip.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/BasicTooltip.kt",
+      "sha256": "898dad495ed119453d974c320abd939f350cb996f3efcbe0201135f38bc296cf"
+    },
+    {
+      "file": "MutatorMutex.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/MutatorMutex.kt",
+      "sha256": "2f92acb2f25e56d6c126aa054c97c97434b4006b1ba333a0e1efd28f185a1655"
+    },
+    {
+      "file": "Transition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Transition.kt",
+      "sha256": "5ade64fe6a15ac29a0cc5946f4cb16587a6606a1d74acc97f1412c6d66ab5787"
+    },
+    {
+      "file": "AndroidPopup.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/window/AndroidPopup.android.kt",
+      "sha256": "74666d6ab7f8388a1ca276c5948f15f47dceebf4a3a3c0c7d857fd83ed88d64a"
+    },
+    {
+      "file": "AccessibilityServiceStateProvider.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/androidMain/kotlin/androidx/compose/material3/internal/AccessibilityServiceStateProvider.android.kt",
+      "sha256": "f8347d9dd9a8f22d9d7e1118377b7fe8bce55f87dff8cbab876b4d76103aff97"
+    },
+    {
+      "file": "Surface.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Surface.kt",
+      "sha256": "b82221978167354d62462943bade5838beb4724a71155209d75debc6003bd9e2"
+    },
+    {
+      "file": "Box.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt",
+      "sha256": "3990421e443b0130835f286f0d4b9d8f2127fa7b2b4efa8054b39896646b36c3"
+    },
+    {
+      "file": "PlainTooltipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/PlainTooltipTokens.kt",
+      "sha256": "e8bd62f82c4be1a560aa6508877b66b74629b0d1ab57a6eb6bbd82fd16600754"
+    },
+    {
+      "file": "RichTooltipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/RichTooltipTokens.kt",
+      "sha256": "1684bc6056f48ca294dde6234ae4b9d4dbbf83cef3d2d0208e71fc48b3052dfe"
+    },
+    {
+      "file": "strings.xml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/androidMain/res/values/strings.xml",
+      "sha256": "a308bd47d25df7f7d52f96c43fd5050c3eaa535868d3068dd4b63f0c3d3212eb"
+    },
+    {
+      "file": "strings-tr.xml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/androidMain/res/values-tr/strings.xml",
+      "sha256": "3c597aba40c0c7d01a29a58af776ab0946d8b69a94107bd90552a3ef5887cdcc"
+    }
+  ]
+}

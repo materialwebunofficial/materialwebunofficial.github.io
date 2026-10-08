@@ -1,0 +1,25 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Card.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Card.kt",
+      "sha256": "597f556dc1f74902e3960473f5ba55f4ceebe9b1d07ef062fb4c74d22e3e248c"
+    },
+    {
+      "file": "FilledCardTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FilledCardTokens.kt",
+      "sha256": "554b4a7bd95dcb7636b1795a403099725d89847215ef8363920f9ec08d8b0c39"
+    },
+    {
+      "file": "ElevatedCardTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ElevatedCardTokens.kt",
+      "sha256": "d5640de0fc99b0c9bd883c3282c30a15cac66af5b6d3877ef7ee2dc3a8289e3d"
+    },
+    {
+      "file": "OutlinedCardTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/OutlinedCardTokens.kt",
+      "sha256": "c2855b47d4cb38648542400f2d13d77c8e6ddd45ff2fdb7a2b1e1ed319840fee"
+    }
+  ]
+}

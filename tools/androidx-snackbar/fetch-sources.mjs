@@ -9,6 +9,7 @@ const locations = {
   'SnackbarHost.kt': prefix + 'SnackbarHost.kt',
   'SnackbarTokens.kt': prefix + 'tokens/SnackbarTokens.kt',
   'ComposeMaterial3Flags.kt': prefix + 'ComposeMaterial3Flags.kt',
+  'AlignmentLine.kt': 'compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/AlignmentLine.kt',
 };
 
 fs.mkdirSync(directory, {recursive: true});

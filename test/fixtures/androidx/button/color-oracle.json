@@ -1,0 +1,144 @@
+{
+  "roles": {
+    "0": "Background",
+    "1": "Error",
+    "2": "ErrorContainer",
+    "3": "InverseOnSurface",
+    "4": "InversePrimary",
+    "5": "InverseSurface",
+    "6": "OnBackground",
+    "7": "OnError",
+    "8": "OnErrorContainer",
+    "9": "OnPrimary",
+    "10": "OnPrimaryContainer",
+    "11": "OnPrimaryFixed",
+    "12": "OnPrimaryFixedVariant",
+    "13": "OnSecondary",
+    "14": "OnSecondaryContainer",
+    "15": "OnSecondaryFixed",
+    "16": "OnSecondaryFixedVariant",
+    "17": "OnSurface",
+    "18": "OnSurfaceVariant",
+    "19": "OnTertiary",
+    "20": "OnTertiaryContainer",
+    "21": "OnTertiaryFixed",
+    "22": "OnTertiaryFixedVariant",
+    "23": "Outline",
+    "24": "OutlineVariant",
+    "25": "Primary",
+    "26": "PrimaryContainer",
+    "27": "PrimaryFixed",
+    "28": "PrimaryFixedDim",
+    "29": "Scrim",
+    "30": "Secondary",
+    "31": "SecondaryContainer",
+    "32": "SecondaryFixed",
+    "33": "SecondaryFixedDim",
+    "34": "Surface",
+    "35": "SurfaceBright",
+    "36": "SurfaceContainer",
+    "37": "SurfaceContainerHigh",
+    "38": "SurfaceContainerHighest",
+    "39": "SurfaceContainerLow",
+    "40": "SurfaceContainerLowest",
+    "41": "SurfaceDim",
+    "42": "SurfaceTint",
+    "43": "SurfaceVariant",
+    "44": "Tertiary",
+    "45": "TertiaryContainer",
+    "46": "TertiaryFixed",
+    "47": "TertiaryFixedDim"
+  },
+  "variants": {
+    "filled": {
+      "container": {
+        "role": 25,
+        "alpha": 1.0
+      },
+      "content": {
+        "role": 9,
+        "alpha": 1.0
+      },
+      "disabledContainer": {
+        "role": 17,
+        "alpha": 0.1
+      },
+      "disabledContent": {
+        "role": 18,
+        "alpha": 0.38
+      }
+    },
+    "elevated": {
+      "container": {
+        "role": 39,
+        "alpha": 1.0
+      },
+      "content": {
+        "role": 25,
+        "alpha": 1.0
+      },
+      "disabledContainer": {
+        "role": 17,
+        "alpha": 0.1
+      },
+      "disabledContent": {
+        "role": 18,
+        "alpha": 0.38
+      }
+    },
+    "tonal": {
+      "container": {
+        "role": 31,
+        "alpha": 1.0
+      },
+      "content": {
+        "role": 14,
+        "alpha": 1.0
+      },
+      "disabledContainer": {
+        "role": 17,
+        "alpha": 0.12
+      },
+      "disabledContent": {
+        "role": 17,
+        "alpha": 0.38
+      }
+    },
+    "outlined": {
+      "container": {
+        "role": -1,
+        "alpha": 0.0
+      },
+      "content": {
+        "role": 18,
+        "alpha": 1.0
+      },
+      "disabledContainer": {
+        "role": -1,
+        "alpha": 0.0
+      },
+      "disabledContent": {
+        "role": 18,
+        "alpha": 0.38
+      }
+    },
+    "text": {
+      "container": {
+        "role": -1,
+        "alpha": 0.0
+      },
+      "content": {
+        "role": 25,
+        "alpha": 1.0
+      },
+      "disabledContainer": {
+        "role": -1,
+        "alpha": 0.0
+      },
+      "disabledContent": {
+        "role": 18,
+        "alpha": 0.38
+      }
+    }
+  }
+}

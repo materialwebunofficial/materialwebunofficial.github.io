@@ -15,11 +15,11 @@ export async function testSelectionParity(page) {
   });
   try {
     const check=page.locator('#check .chk-root'),radio=page.locator('#radio-a .radio-root');
-    assert.equal(await page.locator('#check .box').evaluate(el=>el.getBoundingClientRect().width),20);
-    assert.equal(await page.locator('#check svg').evaluate(el=>el.getBoundingClientRect().width),20);
+    assert.equal(await page.locator('#check .box').evaluate(el=>el.getBoundingClientRect().width),18);
+    assert.equal(await page.locator('#check svg').evaluate(el=>el.getBoundingClientRect().width),18);
     assert.equal(await check.getAttribute('aria-checked'),'mixed');
     assert.equal(await page.locator('#check .mark-check').evaluate(el=>getComputedStyle(el).opacity),'1');
-    assert.equal(await page.locator('#check .mark-check').getAttribute('d'),'M 4 10 L 10 10 L 16 10');
+    assert.equal(await page.locator('#check .mark-check').getAttribute('d'),'M 4.5 9 L 9 9 L 13.5 9');
     assert.equal(await page.locator('#check svg path').count(),1);
     await check.press('Space');
     assert.equal(await check.getAttribute('aria-checked'),'true');
@@ -66,19 +66,23 @@ export async function testSelectionParity(page) {
     const after=await page.locator('#switch .handle').boundingBox();
     assert.ok(after.x<before.x,'RTL switch must move to inline end');
     await page.locator('#switch .switch-root').press('Enter');
-    assert.equal(await page.locator('#switch').evaluate(el=>el.checked),true,'Enter is not switch activation');
-    const disabledColors = await page.evaluate(() => {
-      const sw=document.getElementById('switch');sw.disabled=true;
+    assert.equal(await page.locator('#switch').evaluate(el=>el.checked),false,'inherited ClickableNode Enter key-up toggles the switch');
+    await page.locator('#switch').evaluate(sw=>{sw.checked=true;sw.disabled=true;});
+    await page.waitForTimeout(700);
+    const disabledColors = await page.evaluate(async() => {
+      const {resolveColorAlpha}=await import('/src/theme/color-alpha.js');
+      const {resolveSurfaceColor}=await import('/src/theme/surface-color.js');
+      const sw=document.getElementById('switch');
       const checkbox=document.getElementById('check');
       const probe=document.createElement('span');sw.parentElement.append(probe);
-      const resolve = value => { probe.style.color=value;return getComputedStyle(probe).color; };
+      const resolve = value => resolveSurfaceColor(probe,value).key;
       const surface=resolve('var(--md-sys-color-surface)');
-      const switchTrack=resolve('color-mix(in srgb, var(--md-sys-color-on-surface) 12%, var(--md-sys-color-surface))');
-      const checkboxBox=resolve('color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent)');
-      const result = {switchTrack:[getComputedStyle(sw.shadowRoot.querySelector('.track')).backgroundColor,switchTrack],
-        switchThumb:getComputedStyle(sw.shadowRoot.querySelector('.handle')).backgroundColor===surface,
-        checkboxBox:getComputedStyle(checkbox.shadowRoot.querySelector('.box')).backgroundColor===checkboxBox,
-        checkboxMark:getComputedStyle(checkbox.shadowRoot.querySelector('.mark-check')).stroke===resolve('var(--md-sys-color-on-primary)')};
+      const switchTrack=resolve(resolveColorAlpha(probe,{color:'var(--md-sys-color-on-surface)',alpha:.12,over:'var(--md-sys-color-surface)'}));
+      const checkboxBox=resolve(resolveColorAlpha(probe,{color:'var(--md-sys-color-on-surface)',alpha:.38}));
+      const result = {switchTrack:[resolve(getComputedStyle(sw.shadowRoot.querySelector('.track')).backgroundColor),switchTrack],
+        switchThumb:resolve(getComputedStyle(sw.shadowRoot.querySelector('.handle')).backgroundColor)===surface,
+        checkboxBox:resolve(getComputedStyle(checkbox.shadowRoot.querySelector('.box-fill')).fill)===checkboxBox,
+        checkboxMark:resolve(getComputedStyle(checkbox.shadowRoot.querySelector('.mark-check')).stroke)===surface};
       probe.remove();return result;
     });
     for (const [role,matches] of Object.entries(disabledColors)) {

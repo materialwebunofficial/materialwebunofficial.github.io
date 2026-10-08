@@ -1,3 +1,5 @@
+import {bindFocusIndication} from './focus-indication.js';
+import {bindPointerHover} from './pointer-routing.js';
 import {InteractionOrder, elevationSpec, stateLayerSpec, interactionTween} from './interaction-tween.js';
 import {interpolateShadow} from './shadow-tween.js';
 import {observeThemeContext} from '../theme/theme-context.js';
@@ -16,7 +18,7 @@ class Channel {
   running(time) { return this.spec.duration > 0 && time - this.start < this.spec.duration; }
 }
 
-export function bindFabInteractions(button, {configuration, disabled, signal}) {
+export function bindFabInteractions(button, {configuration, disabled, hitTest=()=>true, signal}) {
   const order = new InteractionOrder();
   const media = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
   const now = () => performance.now();
@@ -78,12 +80,11 @@ export function bindFabInteractions(button, {configuration, disabled, signal}) {
     }
     paint(time); schedule();
   }
-  function set(kind, active) {
+  function set(kind, active, identity = kind) {
     if (disposed) return;
     if (active && disabled()) return;
-    if (order.set(kind, active)) update();
+    if (order.set(kind, active, identity)) update();
   }
-  function focus() { set('focus', button.matches(':focus-visible')); }
   function refresh() {
     if (disposed) return;
     const next = configuration(), changed = next.rest !== config.rest || next.hover !== config.hover;
@@ -93,11 +94,8 @@ export function bindFabInteractions(button, {configuration, disabled, signal}) {
     if (changed) elevation.retarget(disabled() ? 0 : order.latest() === 'hover' ? config.hover : config.rest, now(), {duration: 0}, true);
     update();
   }
-  const options = {signal};
-  button.addEventListener('pointerenter', event => { if (event.pointerType !== 'touch') set('hover', true); }, options);
-  button.addEventListener('pointerleave', () => set('hover', false), options);
-  button.addEventListener('focus', focus, options);
-  button.addEventListener('blur', () => set('focus', false), options);
+  const hoverBinding=bindPointerHover(button,{hitTest,onHover:active=>set('hover',active),signal});
+  const focusBinding=bindFocusIndication(button,{onFocus:active=>set('focus',active),signal});
   const motionChange = () => {
     if (media?.matches) {
       if (raf !== null) cancelAnimationFrame(raf); raf = null;
@@ -109,6 +107,8 @@ export function bindFabInteractions(button, {configuration, disabled, signal}) {
   media?.addEventListener('change', motionChange);
   const stopTheme = observeThemeContext(button.getRootNode().host, refresh);
   function dispose() {
+    focusBinding.dispose();
+    hoverBinding.dispose();
     if (disposed) return; disposed = true;
     if (raf !== null) cancelAnimationFrame(raf); raf = null;
     media?.removeEventListener('change', motionChange); stopTheme();
@@ -119,5 +119,5 @@ export function bindFabInteractions(button, {configuration, disabled, signal}) {
   }
   signal.addEventListener('abort', dispose, {once: true});
   paint(now());
-  return {press(active) { focus(); set('press', active); }, refresh, dispose};
+  return {press(active, identity = 'press') { set('press', active, identity); }, refresh, dispose};
 }

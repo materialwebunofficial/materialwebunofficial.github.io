@@ -79,6 +79,7 @@ export class SelectionMotion {
     if (this.raf !== null) cancelAnimationFrame(this.raf);
     this.raf = null;
     this.render(now);
+    if (this.disposed) return;
     if (Object.values(this.channels).some(channel => channel.animation)) {
       this.raf = requestAnimationFrame(time => this.tick(time));
     }
@@ -101,13 +102,21 @@ export class SelectionMotion {
 // Compose drawCheck builds one polyline, then takes its length-limited segment.
 // SVG dash patterns would repeat when the spatial spring overshoots; explicit
 // segmentation also avoids square-cap artifacts at a zero-length path.
-export function checkboxPath(fraction, gravitation) {
-  const points = [[4, 10], [8 + 2 * gravitation, 14 - 4 * gravitation], [16, 6 + 4 * gravitation]];
-  const lengths = [Math.hypot(points[1][0] - 4, points[1][1] - 10),
+export function checkboxPoints(gravitation, size = 18) {
+  const f=Math.fround,g=f(gravitation),width=f(size);
+  const lerp=(start,stop)=>f(f(f(1-g)*f(start))+f(g*f(stop)));
+  return [[f(width*f(.25)),f(width*lerp(.5,.5))],
+    [f(width*lerp(.4,.5)),f(width*lerp(.65,.5))],
+    [f(width*f(.75)),f(width*lerp(.3,.5))]];
+}
+
+export function checkboxPath(fraction, gravitation, size = 18) {
+  const points = checkboxPoints(gravitation,size);
+  const lengths = [Math.hypot(points[1][0] - points[0][0], points[1][1] - points[0][1]),
     Math.hypot(points[2][0] - points[1][0], points[2][1] - points[1][1])];
   let remaining = Math.max(0, Math.min(1, fraction)) * (lengths[0] + lengths[1]);
   if (remaining <= 0) return '';
-  let path = 'M 4 10';
+  let path = `M ${points[0][0]} ${points[0][1]}`;
   for (let i = 0; i < 2; i++) {
     const portion = Math.min(1, remaining / lengths[i]);
     path += ` L ${points[i][0] + (points[i + 1][0] - points[i][0]) * portion} ${points[i][1] + (points[i + 1][1] - points[i][1]) * portion}`;
@@ -115,4 +124,12 @@ export function checkboxPath(fraction, gravitation) {
     if (remaining <= 0) break;
   }
   return path;
+}
+
+// Original Checkbox.drawBox geometry; SVG supplies the drawing backend.
+export function checkboxBox(size,stroke,radius=2,filled=false){
+  const f=Math.fround,w=f(size),s=f(stroke),r=f(radius),half=f(s/2);
+  if(filled)return {fill:{x:0,y:0,width:w,height:w,radius:r},outline:null};
+  return {fill:{x:s,y:s,width:f(w-f(s*2)),height:f(w-f(s*2)),radius:Math.max(0,f(r-s))},
+    outline:{x:half,y:half,width:f(w-s),height:f(w-s),radius:f(r-half),stroke:s}};
 }

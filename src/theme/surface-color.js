@@ -20,13 +20,19 @@ export function packSrgb([red,green,blue,alpha=1]) {
 export function unpackSrgb(color) {
  return[(color>>>16)&255,(color>>>8)&255,color&255,color>>>24].map(value=>f(value/255));
 }
+export function copySrgbAlpha(color,alpha) {
+ return packSrgb([...unpackSrgb(color).slice(0,3),alpha]);
+}
+export function compositeSrgb(foreground,background) {
+ const fg=unpackSrgb(foreground),bg=unpackSrgb(background),remainder=f(1-fg[3]);
+ const alpha=f(fg[3]+f(bg[3]*remainder));
+ return packSrgb([...fg.slice(0,3).map((channel,i)=>alpha===0?0:
+  f(f(f(channel*fg[3])+f(f(bg[i]*bg[3])*remainder))/alpha)),alpha]);
+}
 export function tonalSurfaceColor(surface,tint,elevation) {
  elevation=f(elevation);if(elevation===0)return surface;
  const alpha=f(f(f(4.5*f(Math.log(f(elevation+1))))+2)/100);
- const fg=unpackSrgb(packSrgb([...unpackSrgb(tint).slice(0,3),alpha])),bg=unpackSrgb(surface);
- const remainder=f(1-fg[3]),a=f(fg[3]+f(bg[3]*remainder));
- const components=fg.slice(0,3).map((channel,i)=>a===0?0:f(f(f(channel*fg[3])+f(f(bg[i]*bg[3])*remainder))/a));
- return packSrgb([...components,a]);
+ return compositeSrgb(copySrgbAlpha(tint,alpha),surface);
 }
 export function matchingContentColor(background,scheme) {
  for(const[container,content]of CONTENT_COLOR_ROLES)if(scheme[container]!==undefined&&background===scheme[container])return scheme[content];

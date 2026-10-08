@@ -418,11 +418,32 @@ export function initShowcase() {
     openSideSheetBtn.addEventListener('click', () => sampleSideSheet.show());
   }
 
-  const showSnackbarBtn = document.getElementById('show-snackbar-btn');
-  const sampleSnackbar = document.getElementById('sample-snackbar');
-  if (showSnackbarBtn && sampleSnackbar) {
-    showSnackbarBtn.addEventListener('click', () => sampleSnackbar.show('Item archived to your cloud storage.'));
-  }
+  const snackbarExamples = [...document.querySelectorAll('#snackbars md-snackbar')];
+  const snackbarMain = document.querySelector('main.main'), snackbarBottomNav = document.querySelector('md-navigation-bar.mobile-bottom-nav');
+  const positionSnackbarExamples = () => {
+    const rect = snackbarMain.getBoundingClientRect();
+    const left = Math.max(0, rect.left) + 16, right = Math.max(0, window.innerWidth - rect.right) + 16;
+    const bottom = (getComputedStyle(snackbarBottomNav).display === 'none' ? 0 : snackbarBottomNav.getBoundingClientRect().height) + 16;
+    snackbarExamples.forEach(snackbar => {
+      const rtl = getComputedStyle(snackbar).direction === 'rtl';
+      snackbar.style.setProperty('--md-snackbar-inline-start', (rtl ? right : left) + 'px');
+      snackbar.style.setProperty('--md-snackbar-inline-end', (rtl ? left : right) + 'px');
+      snackbar.style.setProperty('--md-snackbar-bottom', bottom + 'px');
+    });
+  };
+  const snackbarLayout = new ResizeObserver(positionSnackbarExamples); snackbarLayout.observe(snackbarMain); snackbarLayout.observe(snackbarBottomNav);
+  const snackbarDirection = new MutationObserver(positionSnackbarExamples);
+  snackbarDirection.observe(document.documentElement, {attributes: true, attributeFilter: ['dir']});
+  snackbarDirection.observe(document.body, {attributes: true, attributeFilter: ['dir']});
+  positionSnackbarExamples();
+  document.querySelectorAll('[data-snackbar-target]').forEach(button => {
+    const snackbar = document.getElementById(button.dataset.snackbarTarget);
+    if (snackbar) button.addEventListener('click', () => {
+      document.querySelectorAll('#snackbars md-snackbar[open]').forEach(other => { if (other !== snackbar) other.close(); });
+      positionSnackbarExamples();
+      snackbar.show();
+    });
+  });
 
   const openDatePickerBtn = document.getElementById('open-date-picker-btn');
   const sampleDatePicker = document.getElementById('sample-date-picker');
@@ -1492,6 +1513,18 @@ export function initShowcase() {
       toolbar.scrollExpansion=new ToolbarScrollExpansion({expanded:toolbar.expanded,onExpand:()=>toolbar.expand(),onCollapse:()=>toolbar.collapse()});
     }else toolbar.scrollBehavior=new FloatingToolbarScrollBehavior({exitDirection:'bottom'});
   });
+  document.querySelectorAll('[data-toolbar-fab-toggle]').forEach(fab=>{
+    const toolbar=document.getElementById(fab.dataset.toolbarFabToggle);if(!toolbar)return;
+    // AndroidX HorizontalFloatingToolbarWithFabSample owns this callback.
+    const update=()=>{
+      const expanded=String(toolbar.expanded);
+      fab.setAttribute('aria-label',toolbar.expanded?'Collapse actions':'Expand actions');
+      for(const node of [fab,fab.shadowRoot?.querySelector('button')].filter(Boolean)){
+        node.setAttribute('aria-controls',toolbar.id);node.setAttribute('aria-expanded',expanded);
+      }
+    };
+    fab.addEventListener('click',()=>toolbar.toggle());toolbar.addEventListener('expanded-change',update);update();
+  });
   document.querySelectorAll('[data-top-app-bar-scroll]').forEach(bar=>{
     const content=document.getElementById(bar.dataset.topAppBarScroll);
     if(!content)return;
@@ -1502,6 +1535,18 @@ export function initShowcase() {
     const content=document.getElementById(bar.dataset.bottomAppBarScroll);if(!content)return;
     bar.scrollBehavior=BottomAppBarScrollBehavior.exitAlways({element:bar});bar.scrollTarget=content;
   });
+
+  const paginator = document.getElementById('demo-paginator');
+  const pagePreview = document.querySelector('#paginator-content-preview .md-title-medium');
+  if (paginator && pagePreview) {
+    const updatePage = () => {
+      const start = paginator.length ? paginator.pageIndex * paginator.pageSize + 1 : 0;
+      const end = Math.min((paginator.pageIndex + 1) * paginator.pageSize, paginator.length);
+      pagePreview.textContent = `Active Page Records ${start}–${end} (Page ${paginator.pageIndex + 1})`;
+    };
+    paginator.addEventListener('page', updatePage);
+    updatePage();
+  }
 
   // Stepper Interactive Wizard Wiring
   const stepper = document.getElementById('demo-stepper');

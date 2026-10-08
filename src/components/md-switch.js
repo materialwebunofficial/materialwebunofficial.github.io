@@ -8,21 +8,29 @@
  *
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md & docs/SECURITY-AND-A11Y-SPEC.md
  *   - Form-Associated Custom Element (FACE) support
- *   - Hover = CSS state layer. Press changes the thumb size.
+ *   - Native opacity hover/focus and unbounded ripple over the moving thumb.
  *   - Single release via setPointerCapture; keyboard Space/Enter parity; focus-visible.
  *   - Memory safety via AbortSignal.
  */
 
-import { bindPress } from '../motion/interactions.js';
+import { bindPress, createRipple } from '../motion/interactions.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 import { escapeHtml } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { setSelectionValidity } from '../utils/selection-validity.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
+import { bindSelectionColors } from '../motion/selection-color.js';
+import { SelectionDOMLayout } from './selection-dom-layout.js';
 
 const defaultStyle = `
   :host {
-    display: inline-flex;
-    align-items: center;
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    width: var(--_md-selection-width, max(52px, var(--md-minimum-interactive-component-size, 48px)));
+    height: var(--_md-selection-height, max(32px, var(--md-minimum-interactive-component-size, 48px)));
+    max-width: 100%;
+    max-height: 100%;
     outline: none;
     vertical-align: middle;
   }
@@ -33,8 +41,7 @@ const defaultStyle = `
     align-items: center;
     justify-content: center;
     width: 52px;
-    min-width: 52px;
-    height: max(32px, var(--md-minimum-interactive-component-size, 48px));
+    height: 32px;
     box-sizing: border-box;
     cursor: pointer;
     user-select: none;
@@ -42,9 +49,9 @@ const defaultStyle = `
     outline: none;
   }
   .switch-root:focus { outline: none; }
-  .switch-root:focus-visible .track {
-    outline: 3px solid var(--md-sys-color-secondary, #625B71);
-    outline-offset: 2px;
+  .switch-root::after {
+    content: ''; position: absolute; width: max(100%, 48px); height: max(100%, 48px);
+    left: 50%; top: 50%; transform: translate(-50%, -50%);
   }
 
   /* 52x32dp Track */
@@ -54,14 +61,16 @@ const defaultStyle = `
     height: 32px;
     border-radius: 9999px;
     box-sizing: border-box;
-    border: 2px solid var(--md-sys-color-outline, #79747E);
-    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    --_md-switch-border: var(--md-sys-color-outline);
+    --_md-switch-track: var(--md-sys-color-surface-container-highest);
+    border: 2px solid var(--_md-switch-border);
+    background-color: var(--_md-switch-track);
     outline: none;
   }
 
   .track.checked {
-    background-color: var(--md-sys-color-primary, #6750A4);
-    border-color: transparent;
+    --_md-switch-track: var(--md-sys-color-primary);
+    --_md-switch-border: transparent;
   }
 
   /* Handle: 16x16dp unselected -> 24x24dp selected -> 28x28dp pressed */
@@ -83,7 +92,10 @@ const defaultStyle = `
     width: 100%;
     height: 100%;
     border-radius: 9999px;
-    background-color: var(--md-sys-color-outline, #79747E);
+    --_md-switch-handle: var(--md-sys-color-outline);
+    --_md-switch-icon: var(--md-switch-icon-color, var(--md-sys-color-surface-container-highest));
+    background-color: var(--_md-switch-handle);
+    color: var(--_md-switch-icon);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -91,7 +103,17 @@ const defaultStyle = `
   }
 
   .track.checked .handle {
-    background-color: var(--md-sys-color-on-primary, #FFFFFF);
+    --_md-switch-handle: var(--md-switch-selected-handle-color, var(--md-sys-color-on-primary));
+    /* ColorSpec2025 can make OnPrimary and OnPrimaryContainer equally dark.
+       An OnPrimary thumb uses its paired Primary content in the resting state. */
+    --_md-switch-icon: var(--md-switch-selected-icon-color, var(--md-sys-color-primary));
+  }
+  .switch-root:is(.interacting, .pressed):not(.disabled) .handle {
+    --_md-switch-handle: var(--md-sys-color-on-surface-variant);
+  }
+  .switch-root:is(.interacting, .pressed):not(.disabled) .track.checked .handle {
+    --_md-switch-handle: var(--md-switch-selected-interactive-handle-color, var(--md-sys-color-primary-container));
+    --_md-switch-icon: var(--md-switch-selected-interactive-icon-color, var(--md-sys-color-on-primary-container));
   }
   .switch-root.has-icon .icon { opacity: 1; }
 
@@ -100,12 +122,11 @@ const defaultStyle = `
     font-family: 'Material Symbols Rounded', 'Material Symbols Outlined';
     font-size: 16px;
     line-height: 1;
-    color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    color: inherit;
     opacity: 0;
     font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
   }
   .track.checked .icon {
-    color: var(--md-sys-color-on-primary-container);
     opacity: 1;
   }
 
@@ -115,43 +136,32 @@ const defaultStyle = `
     width: 40px;
     height: 40px;
     border-radius: 9999px;
-    background: currentColor;
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    opacity: 0;
+    background: rgb(from var(--md-ripple-color, currentColor) r g b / 1);
+    opacity: var(--md-selection-state-alpha, 0);
     pointer-events: none;
-    transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-  }
-  .track.checked .state-layer {
-    color: var(--md-sys-color-primary, #6750A4);
-  }
-  .switch-root:hover:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-  }
-  .switch-root:focus-visible:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-focus-opacity, 0.1);
-  }
-  .switch-root.pressed:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-pressed-opacity, 0.1);
+    transition: none;
   }
 
-  .switch-root.disabled .icon { color: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 38%, var(--md-sys-color-surface)); }
-  .switch-root.disabled .track.checked .icon { color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, var(--md-sys-color-surface)); }
   /* Disabled */
   .switch-root.disabled {
     cursor: not-allowed;
   }
   .switch-root.disabled .track {
-    border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, var(--md-sys-color-surface));
-    background-color: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 12%, var(--md-sys-color-surface));
+    --_md-switch-border: color-mix(in srgb, rgb(from var(--md-sys-color-on-surface) r g b / 1) 12%, var(--md-sys-color-surface));
+    --_md-switch-track: color-mix(in srgb, rgb(from var(--md-sys-color-surface-container-highest) r g b / 1) 12%, var(--md-sys-color-surface));
   }
   .switch-root.disabled .track.checked {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, var(--md-sys-color-surface));
-    border-color: transparent;
+    --_md-switch-track: color-mix(in srgb, rgb(from var(--md-sys-color-on-surface) r g b / 1) 12%, var(--md-sys-color-surface));
+    --_md-switch-border: transparent;
   }
   .switch-root.disabled .handle {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, var(--md-sys-color-surface));
+    --_md-switch-handle: color-mix(in srgb, rgb(from var(--md-sys-color-on-surface) r g b / 1) 38%, var(--md-sys-color-surface));
+    --_md-switch-icon: color-mix(in srgb, rgb(from var(--md-sys-color-surface-container-highest) r g b / 1) 38%, var(--md-sys-color-surface));
   }
-  .switch-root.disabled .track.checked .handle { background-color: var(--md-sys-color-surface); }
+  .switch-root.disabled .track.checked .handle {
+    --_md-switch-handle: rgb(from var(--md-sys-color-surface) r g b / 1);
+    --_md-switch-icon: color-mix(in srgb, rgb(from var(--md-sys-color-on-surface) r g b / 1) 38%, var(--md-sys-color-surface));
+  }
 `;
 
 const switchSheet = createComponentSheet(defaultStyle);
@@ -272,6 +282,10 @@ export class MdSwitch extends HTMLElement {
 
     if (isChecked) track.classList.add('checked');
     else track.classList.remove('checked');
+    this._layout?.measure();
+    this._pressBinding?.refresh();
+    this._stateLayer?.refresh();
+    this._colorBinding?.refresh();
     this._syncThumb();
 
     if (this._internals && this._internals.setFormValue) {
@@ -283,6 +297,7 @@ export class MdSwitch extends HTMLElement {
     if (!this.isConnected) return;
     const root = this.shadowRoot.querySelector('.switch-root');
     if (!root) return;
+
     const pressed = root.classList.contains('pressed') && !this.disabled;
     const size = pressed ? 28 : this.checked || this.icon ? 24 : 16;
     // AndroidX ThumbNode measures size and places the thumb independently.
@@ -311,18 +326,38 @@ export class MdSwitch extends HTMLElement {
     const root = this.shadowRoot.querySelector('.switch-root');
     if (!root) return;
 
+    const track=root.querySelector('.track'),handle=root.querySelector('.handle');
+    this._layout=new SelectionDOMLayout(this,{kind:'switch',control:root,canvas:track,signal});
+    const over=(role,alpha)=>({color:`var(--md-sys-color-${role})`,alpha,over:'var(--md-sys-color-surface)'});
+    // SwitchImpl reads its colors directly; unlike Radio/Checkbox there is no
+    // animateColorAsState. Disabled getters copy alpha before compositeOver.
+    this._colorBinding=bindSelectionColors(this,[
+      {key:'track',scope:track,node:track,property:'background-color',token:'--_md-switch-track',snapAlways:true,
+        disabledColor:disabled=>disabled?over(this.checked?'on-surface':'surface-container-highest',.12):null},
+      {key:'border',scope:track,node:track,property:'border-color',token:'--_md-switch-border',snapAlways:true,
+        disabledColor:disabled=>disabled&&!this.checked?over('on-surface',.12):null},
+      {key:'handle',scope:handle,node:handle,property:'background-color',token:'--_md-switch-handle',snapAlways:true,
+        disabledColor:disabled=>disabled?over(this.checked?'surface':'on-surface',this.checked?1:.38):null},
+      {key:'icon',scope:handle,node:handle,property:'color',token:'--_md-switch-icon',snapAlways:true,
+        disabledColor:disabled=>disabled?over(this.checked?'on-surface':'surface-container-highest',.38):null}
+    ],{disabled:()=>this.disabled,signal});
     this.addEventListener('click', event => {
       if (event.composedPath()[0] === this && !this.disabled) root.click();
     }, { signal });
 
-    const press = () => {
+    this._stateLayer=bindStateLayer(root,{disabled:()=>this.disabled,hitTest:event=>this._layout.hoverHitTest(event),property:'--md-selection-state-alpha',onChange:kind=>{root.classList.toggle('interacting',kind!==null);this._colorBinding.refresh();},signal});
+    const press = event => {
       if (this.disabled) return;
       root.classList.add('pressed');
+      this._colorBinding.refresh();
       this._syncThumb();
+      const thumb=root.querySelector('.handle-container');
+      createRipple(event,thumb,{bounded:false,radius:20,before:thumb.querySelector('.state-layer')});
     };
 
     const release = () => {
       root.classList.remove('pressed');
+      this._colorBinding.refresh();
       this._syncThumb();
     };
 
@@ -337,9 +372,10 @@ export class MdSwitch extends HTMLElement {
       }));
     };
 
-    bindPress(root, {
+    this._pressBinding=bindPress(root, {
       disabled: () => this.disabled,
-      ignoreEvent: event => event.type.startsWith('key') && event.key === 'Enter',
+      pointerPolicy:{input:event=>({...this._layout.pointerInput(event),clipping:false}),hitTest:event=>this._layout.hitTest(event),outOfBounds:event=>this._layout.outOfBounds(event)},
+      keyboardActivation: true,
       onPress: press,
       onRelease: release,
       onActivate: activate,
@@ -354,10 +390,10 @@ export class MdSwitch extends HTMLElement {
       <div class="switch-root" role="switch" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute('aria-label') || this.getAttribute('label') || this._internals?.labels?.[0]?.textContent.trim() || 'Switch')}">
         <div class="track">
           <div class="handle-container">
-            <div class="state-layer"></div>
             <div class="handle">
               <span class="icon" aria-hidden="true">${escapeHtml(this.icon)}</span>
             </div>
+            <div class="state-layer" aria-hidden="true"></div>
           </div>
         </div>
       </div>

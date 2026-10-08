@@ -7,7 +7,7 @@
  *
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md & docs/SECURITY-AND-A11Y-SPEC.md
  *   - Form-Associated Custom Element (FACE) support
- *   - Hover = CSS state layer only. Press uses the component state layer and ripple.
+ *   - Native opacity hover/focus and a separate unbounded press ripple.
  *   - Single release via setPointerCapture; keyboard Space/Enter parity; focus-visible.
  *   - Memory safety via AbortSignal.
  */
@@ -17,15 +17,22 @@ import { escapeHtml } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
 import { setSelectionValidity } from '../utils/selection-validity.js';
+import { bindStateLayer } from '../motion/state-layer.js';
+import { bindSelectionColors } from '../motion/selection-color.js';
+import { SelectionDOMLayout } from './selection-dom-layout.js';
 
 const defaultStyle = `
-  .ripple { position: absolute; width: 40px; height: 40px; border-radius: 50%; pointer-events: none; color: var(--md-sys-color-on-surface); }
-  .md-ripple-effect { position: absolute; background: currentColor; border-radius: 50%; opacity: .1; transform: scale(0); animation: selection-ripple 450ms ease-out forwards; }
-  @keyframes selection-ripple { to { transform: scale(1); opacity: 0; } }
+  /* Default Compose canvas plus its 2dp padding, inside the minimum target. */
+  .ripple { position: absolute; width: 24px; height: 24px; pointer-events: none; }
 
   :host {
-    display: inline-flex;
-    align-items: center;
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    width: var(--_md-selection-width, max(24px, var(--md-minimum-interactive-component-size, 48px)));
+    height: var(--_md-selection-height, max(24px, var(--md-minimum-interactive-component-size, 48px)));
+    max-width: 100%;
+    max-height: 100%;
     outline: none;
     vertical-align: middle;
   }
@@ -35,8 +42,8 @@ const defaultStyle = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: max(24px, var(--md-minimum-interactive-component-size, 48px));
-    height: max(24px, var(--md-minimum-interactive-component-size, 48px));
+    width: 24px;
+    height: 24px;
     box-sizing: border-box;
     border-radius: 9999px;
     cursor: pointer;
@@ -49,32 +56,17 @@ const defaultStyle = `
     left: 50%; top: 50%; transform: translate(-50%, -50%);
   }
   .radio-root:focus { outline: none; }
-  .radio-root:focus-visible .ring {
-    outline: 3px solid var(--md-sys-color-secondary, #625B71);
-    outline-offset: 3px;
-  }
 
   /* 40x40 State layer */
-  .radio-root::before {
-    content: '';
+  .state-layer {
     position: absolute;
     width: 40px;
     height: 40px;
     border-radius: 9999px;
-    background: currentColor;
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    opacity: 0;
+    background: rgb(from var(--md-ripple-color, currentColor) r g b / 1);
+    opacity: var(--md-selection-state-alpha, 0);
     pointer-events: none;
-    transition: opacity var(--md-sys-motion-effect-medium-duration) var(--md-sys-motion-effect-medium-easing);
-  }
-  .radio-root:hover:not(.disabled)::before {
-    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-  }
-  .radio-root:focus-visible:not(.disabled)::before {
-    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.10);
-  }
-  .radio-root.pressed:not(.disabled)::before {
-    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.10);
+    transition: none;
   }
 
   /* 20x20 Outer Ring */
@@ -84,18 +76,19 @@ const defaultStyle = `
     height: 20px;
     box-sizing: border-box;
     border-radius: 9999px;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
+    --_md-radio-color: var(--md-sys-color-on-surface-variant);
+    color: var(--_md-radio-color);
     border: 2px solid currentColor;
     background-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color var(--md-sys-motion-effect-medium-duration) var(--md-sys-motion-effect-medium-easing);
+    transition: none;
     outline: none;
   }
 
   .ring.checked {
-    color: var(--md-sys-color-primary, #6750A4);
+    --_md-radio-color: var(--md-sys-color-primary);
   }
 
   /* Radius animates 0..6dp, then half the 2dp stroke is subtracted. */
@@ -111,7 +104,7 @@ const defaultStyle = `
     cursor: not-allowed;
   }
   .radio-root.disabled .ring {
-    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+    --_md-radio-color: rgb(from var(--md-sys-color-on-surface) r g b / .38);
     transition: none;
   }
 `;
@@ -238,6 +231,10 @@ export class MdRadioButton extends HTMLElement {
 
     if (isChecked) ring.classList.add('checked');
     else ring.classList.remove('checked');
+    this._layout?.measure();
+    this._pressBinding?.refresh();
+    this._stateLayer?.refresh();
+    this._colorBinding?.refresh();
 
     if (this.isConnected) {
       const radius = isChecked ? 6 : 0;
@@ -262,11 +259,19 @@ export class MdRadioButton extends HTMLElement {
     const root = this.shadowRoot.querySelector('.radio-root');
     if (!root) return;
 
+    const ring=root.querySelector('.ring');
+    this._layout=new SelectionDOMLayout(this,{kind:'radio',control:root,canvas:ring,ripple:root.querySelector('.ripple'),signal});
+    this._colorBinding=bindSelectionColors(this,[{
+      key:'ring',scope:ring,node:ring,property:'color',token:'--_md-radio-color',snapDisabled:true,
+      disabledColor:disabled=>disabled?{color:'var(--md-sys-color-on-surface)',alpha:.38}:null
+    }],{disabled:()=>this.disabled,signal});
+
     this.addEventListener('click', event => {
       if (event.composedPath()[0] === this && !this.disabled) root.click();
     }, { signal });
 
-    const press = event => { root.classList.add('pressed'); createRipple(event, root.querySelector('.ripple')); };
+    this._stateLayer=bindStateLayer(root,{disabled:()=>this.disabled,hitTest:event=>this._layout.hoverHitTest(event),property:'--md-selection-state-alpha',signal});
+    const press = event => { root.classList.add('pressed'); createRipple(event, root.querySelector('.ripple'),{bounded:false,radius:20}); };
     const release = () => root.classList.remove('pressed');
 
     const activate = () => {
@@ -293,9 +298,10 @@ export class MdRadioButton extends HTMLElement {
       next.shadowRoot.querySelector('.radio-root').click();
     }, { signal });
 
-    bindPress(root, {
+    this._pressBinding=bindPress(root, {
       disabled: () => this.disabled,
-      ignoreEvent: event => event.type.startsWith('key') && event.key === 'Enter',
+      pointerPolicy:{input:event=>({...this._layout.pointerInput(event),clipping:false}),hitTest:event=>this._layout.hitTest(event),outOfBounds:event=>this._layout.outOfBounds(event)},
+      keyboardActivation: true,
       onPress: press,
       onRelease: release,
       onActivate: activate,
@@ -346,10 +352,11 @@ export class MdRadioButton extends HTMLElement {
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="radio-root" role="radio" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute('aria-label') || this.getAttribute('label') || this._internals?.labels?.[0]?.textContent.trim() || this.getAttribute('value') || 'Radio button')}">
-        <span class="ripple" aria-hidden="true"></span>
         <div class="ring">
           <div class="dot"></div>
         </div>
+        <span class="ripple" aria-hidden="true"></span>
+        <span class="state-layer" aria-hidden="true"></span>
       </div>
     `;
   }

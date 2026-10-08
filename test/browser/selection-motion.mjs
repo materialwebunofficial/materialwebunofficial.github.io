@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const oracle = JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/motion/spring-oracle.json', import.meta.url)));
+const md3=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/selection/md3-checkbox-drawing-oracle.json',import.meta.url)),(_,v)=>typeof v==='number'?Math.fround(v):v).marks;
+const checkPoints=gravity=>md3.find(c=>c.md3&&c.width===18&&c.fraction===1&&c.gravity===gravity).points;
+const onPoints=checkPoints(0),mixedPoints=checkPoints(1);
+const checkLength=Math.hypot(onPoints[1][0]-onPoints[0][0],onPoints[1][1]-onPoints[0][1])+Math.hypot(onPoints[2][0]-onPoints[1][0],onPoints[2][1]-onPoints[1][1]);
 
 export async function testSelectionMotion(browser, base) {
   const page = await browser.newPage();
@@ -32,12 +36,12 @@ export async function testSelectionMotion(browser, base) {
       });
       const radius=sourceRadio.samples.find(s=>s.time===time).position;
       assert.ok(Math.abs(result.dot-2*Math.max(0,radius-1))<.002, `radio dot at ${time}ms: ${result.dot}`);
-      // Source path lengths are sqrt(32) then sqrt(128). Check its visible length.
+      // The modern18dp points are independently recorded from native drawCheck.
       const numbers=result.path.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g)?.map(Number)||[];
       let length=0;
       for(let i=2;i<numbers.length;i+=2) length+=Math.hypot(numbers[i]-numbers[i-2],numbers[i+1]-numbers[i-1]);
       const fraction=sourceCheck.samples.find(s=>s.time===time).position;
-      assert.ok(Math.abs(length-Math.min(1,fraction)*(Math.sqrt(32)+Math.sqrt(128)))<.00001, `check at ${time}ms: ${JSON.stringify(result)}, length ${length}, fraction ${fraction}`);
+      assert.ok(Math.abs(length-Math.min(1,fraction)*checkLength)<.00001, `check at ${time}ms: ${JSON.stringify(result)}, length ${length}, fraction ${fraction}`);
     }
     await page.clock.runFor(512);
     await page.locator('#motion-check').evaluate(el=>{el.indeterminate=true;});
@@ -45,12 +49,12 @@ export async function testSelectionMotion(browser, base) {
     const morph=await page.locator('#motion-check .mark-check').getAttribute('d');
     const gravity=sourceCheck.samples.find(s=>s.time===80).position;
     const coords=morph.match(/-?\d+(?:\.\d+)?/g).map(Number);
-    const expected=[4,10,8+2*gravity,14-4*gravity,16,6+4*gravity];
+    const expected=onPoints.flat().map((value,i)=>value+(mixedPoints.flat()[i]-value)*gravity);
     coords.forEach((value,index)=>assert.ok(Math.abs(value-expected[index])<.00001,'continuous check/dash morph'));
     await page.clock.runFor(512);
     await page.locator('#motion-check').evaluate(el=>{el.indeterminate=false;el.checked=false;});
     await page.clock.runFor(80);
-    assert.equal(await page.locator('#motion-check .mark-check').getAttribute('d'),'M 4 10 L 10 10 L 16 10','hold glyph during fade out');
+    assert.equal(await page.locator('#motion-check .mark-check').getAttribute('d'),'M 4.5 9 L 9 9 L 13.5 9','hold glyph during fade out');
     await page.clock.runFor(32);
     assert.equal(await page.locator('#motion-check .mark-check').getAttribute('d'),'','snap after100ms');
 
@@ -71,12 +75,12 @@ export async function testSelectionMotion(browser, base) {
     await page.clock.runFor(16);
     assert.equal(await page.locator('#motion-radio .dot').evaluate(el=>el.getBoundingClientRect().width),10);
     await page.locator('#motion-check').evaluate(el=>{el.indeterminate=true;});
-    assert.equal(await page.locator('#motion-check .mark-check').getAttribute('d'),'M 4 10 L 10 10 L 16 10');
+    assert.equal(await page.locator('#motion-check .mark-check').getAttribute('d'),'M 4.5 9 L 9 9 L 13.5 9');
     const lifecycle=await page.locator('#motion-check').evaluate(el=>{
       const old=el._markMotion,parent=el.parentElement;el.remove();parent.append(el);
       return {disposed:old.raf===null,fresh:old!==el._markMotion,path:el.shadowRoot.querySelector('.mark-check').getAttribute('d')};
     });
-    assert.deepEqual(lifecycle,{disposed:true,fresh:true,path:'M 4 10 L 10 10 L 16 10'});
+    assert.deepEqual(lifecycle,{disposed:true,fresh:true,path:'M 4.5 9 L 9 9 L 13.5 9'});
     await page.emulateMedia({reducedMotion:'no-preference'});
     const standard=await page.evaluate(() => {
       document.getElementById('motion-selection').setAttribute('data-motion-scheme','standard');

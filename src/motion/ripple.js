@@ -7,7 +7,7 @@ export function collectPressRipples(event,group,callback){
  try{return callback();}finally{pressGroups.delete(event);}
 }
 
-export function createRipple(event,container){
+export function createRipple(event,container,{bounded=true,radius,before=null}={}){
  if(!event||!container)return;
  let ripples=surfaces.get(container);
  if(!ripples){ripples=new Set();surfaces.set(container,ripples);}
@@ -16,9 +16,12 @@ export function createRipple(event,container){
  const pointer=event.type?.startsWith('pointer');
  const originX=pointer&&rect.width?(event.clientX-rect.left)*width/rect.width:width/2;
  const originY=pointer&&rect.height?(event.clientY-rect.top)*height/rect.height:height/2;
- const geometry={width,height,originX,originY};
+ const geometry={width,height,originX,originY,bounded,radius};
  let ink=container.querySelector(':scope > .md-ink');
- if(!ink){ink=document.createElement('span');ink.className='md-ink';ink.style.cssText='position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none';container.append(ink);}
+ if(!ink){ink=document.createElement('span');ink.className='md-ink';ink.style.cssText='position:absolute;inset:0;border-radius:inherit;pointer-events:none';container.insertBefore(ink,before);}
+ // Unbounded indication may extend beyond its layout, including fixed-radius
+ // selection controls. Keep the default clipping used by existing surfaces.
+ ink.style.overflow=bounded?'hidden':'visible';
  const circle=document.createElement('span');circle.className='md-ripple-effect';
  // Inline geometry supersedes old per-component scale keyframes. Relative
  // color strips content alpha, matching source Color.copy(alpha=pressedAlpha).

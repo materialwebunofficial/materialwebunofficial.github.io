@@ -12,6 +12,7 @@ import { minimumInteractiveLayout } from './row-column-layout.js';
 import { BottomAppBarSettling } from './bottom-app-bar-scroll.js';
 import { HorizontalTouchSlop, pointerSlop } from '../motion/touch-slop.js';
 import { PointerVelocityTracker } from '../motion/velocity-tracker.js';
+import {ScrollPosition} from '../motion/scroll-position.js';
 
 const defaultStyle = `
   :host { display: block; position: relative; width: 100%; min-width: 0; height: var(--_bottom-app-bar-height, 80px); touch-action:var(--_bottom-app-bar-touch-action,auto); -webkit-tap-highlight-color: transparent; }
@@ -112,8 +113,12 @@ export class MdBottomAppBar extends HTMLElement {
     this._sizes=document.createElement('style');this._sizes.textContent=':host{}';this.shadowRoot.append(this._sizes);
     this._rendered = true;
   }
-  _queue(){if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{this._queued=false;if(this.isConnected)this._sync();});}
+  _queue(){if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{if(!this._queued)return;this._queued=false;if(this.isConnected)this._sync();});}
   _sync() {
+    // A synchronous pre/post-scroll render already consumes queued state work.
+    this._queued=false;
+    const position=this._scrollPosition,before=position?.captureLayout();
+    try{
     const bar = this.shadowRoot.querySelector('.bar'), row = this.shadowRoot.querySelector('.content');
     const flexible = this.variant === 'flexible', rtl = getComputedStyle(this).direction === 'rtl';
     const padding = resolveToolbarPadding(this.contentPadding, rtl);
@@ -133,6 +138,7 @@ export class MdBottomAppBar extends HTMLElement {
     bar.style.setProperty('--md-icon-button-disabled-content-color', `rgb(from ${colors.content} r g b / .38)`);
     bar.style.setProperty('--md-absolute-tonal-elevation', String(colors.total));
     bar.setAttribute('aria-label', this.getAttribute('aria-label') || 'Bottom app bar');
+    }finally{if(position===this._scrollPosition)position?.restoreLayout(before);}
   }
   _leaf(node,id){
     const css=getComputedStyle(node),r=node.getBoundingClientRect();
@@ -167,11 +173,11 @@ export class MdBottomAppBar extends HTMLElement {
   _bindScrollState(){this._stopState?.();this._stopState=this.isConnected&&this._scrollBehavior?this._scrollBehavior.state.subscribe(()=>this._queue()):null;}
   _configureScroll(){
     this._scrollAbort?.abort();if(!this.isConnected||!this._rendered)return;this._scrollAbort=new AbortController();const{signal}=this._scrollAbort,target=this._scrollTarget;
-    const scrolling=()=>target===window?document.scrollingElement:target;let last=scrolling()?.scrollTop||0;
+    const position=this._scrollPosition=new ScrollPosition(target);
     // Bottom ExitAlways observes consumed movement only. Browser scroll events
     // provide that movement directly; no synthetic pre-consumption is needed.
-    target?.addEventListener('scroll',()=>{const current=scrolling()?.scrollTop||0,delta=Math.fround(last-current);last=current;if(delta)this.postScroll({x:0,y:delta});},{signal,passive:true});
-    target?.addEventListener('scrollend',()=>this.postFling(),{signal,passive:true});
+    target?.addEventListener('scroll',()=>{const delta=position.consume();if(delta)this.postScroll({x:0,y:delta});},{signal,passive:true});
+    target?.addEventListener('scrollend',()=>{if(position.end())this.postFling();},{signal,passive:true});
     this.addEventListener('pointerdown',event=>this._barDragStart(event),{signal});this.addEventListener('pointermove',event=>this._barDragMove(event),{signal});
     const stop=event=>this._barDragStop(event);for(const type of ['pointerup','pointercancel','lostpointercapture'])this.addEventListener(type,stop,{signal});
     this.addEventListener('click',event=>{if(this._suppressDragClick&&event.detail!==0){this._suppressDragClick=false;event.preventDefault();event.stopImmediatePropagation();}},{signal,capture:true});

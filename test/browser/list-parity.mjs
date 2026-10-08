@@ -5,6 +5,7 @@ const spring=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/motion/spr
 const colors=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/lists/color-role-oracle.json',import.meta.url)));
 const colorSpring=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/motion/color-vector-oracle.json',import.meta.url)));
 const shapeStates=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/lists/shape-state-oracle.json',import.meta.url)));
+const checkboxSpec=JSON.parse(fs.readFileSync(new URL('../fixtures/material-web/checkbox/current-spec-decisions.json',import.meta.url)));
 const near=(actual,expected,label,tolerance=.00003)=>assert.ok(Math.abs(actual-expected)<tolerance,`${label}: ${actual} vs ${expected}`);
 const motionCase=(from,to,stiffness=800,velocity=0)=>spring.find(c=>c.stiffness===stiffness&&Math.abs(c.from-from)<.00003&&c.to===to&&Math.abs(c.velocity-velocity)<.00003);
 
@@ -54,11 +55,13 @@ export async function testListParity(browser,base){
   assert.equal((await geometry('plain')).leading,null);assert.equal((await geometry('plain')).trailing,null);
   assert.equal(await page.locator('#one .leading-slot .ico').evaluate(n=>n.getBoundingClientRect().width),24,'public sample Icon default size');
   // LocalMinimumInteractiveComponentSize is reduced by the leading/trailing decorator.
-  for(const[id,selector,size]of[['nested-check','.chk-root',24],['nested-radio','.radio-root',24],['nested-switch','.switch-root',32],['standalone-check','.chk-root',48],['standalone-radio','.radio-root',48],['standalone-switch','.switch-root',48]])
-   assert.equal(await page.locator('#'+id+' '+selector).evaluate(n=>n.getBoundingClientRect().height),size,id+' local minimum');
-  assert.equal(await page.locator('#nested-check .box').evaluate(n=>n.getBoundingClientRect().width),20);
+  for(const[id,selector,reservation,input]of[['nested-check','.chk-root',Math.max(20,checkboxSpec.measurements.container),checkboxSpec.measurements.container],['nested-radio','.radio-root',24,24],['nested-switch','.switch-root',32,32],['standalone-check','.chk-root',48,checkboxSpec.measurements.container],['standalone-radio','.radio-root',48,24],['standalone-switch','.switch-root',48,32]]){
+   assert.equal(await page.locator('#'+id).evaluate(n=>n.getBoundingClientRect().height),reservation,id+' local layout reservation');
+   assert.equal(await page.locator('#'+id+' '+selector).evaluate(n=>n.getBoundingClientRect().height),input,id+' native inner input');
+  }
+  assert.equal(await page.locator('#nested-check .box').evaluate(n=>n.getBoundingClientRect().width),checkboxSpec.measurements.container);
   assert.equal(await page.locator('#nested-check .chk-root').evaluate(n=>getComputedStyle(n,'::after').width),'48px','expanded pointer target');
-  assert.equal((await geometry('nested')).headline.x,52);
+  assert.equal((await geometry('nested')).headline.x,16+Math.max(20,checkboxSpec.measurements.container)+12,'modern Checkbox slot width plus original List leading padding');
   // The same logical placement reverses exactly under RTL.
   await el('layout-list').evaluate(n=>n.dir='rtl');await page.clock.runFor(32);
   assert.equal((await geometry('one')).leading.x,348);assert.equal((await geometry('one')).trailing.x,16);

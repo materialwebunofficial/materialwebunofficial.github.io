@@ -256,7 +256,7 @@ export class MdListItem extends HTMLElement {
  }
  _setup(){
    this._abortController?.abort();this._abortController=new AbortController();const {signal}=this._abortController;
-   bindPress(this._item,{signal,disabled:()=>!this.interactive||!this.enabled,ignoreEvent:event=>this._nested(event),
+   bindPress(this._item,{signal,pointerNode:()=>this.interactive,disabled:()=>!this.interactive||!this.enabled,ignoreEvent:event=>this._nested(event),
      onPress:event=>{this._suppressActivation=false;this._states.pressed=true;this._syncVisuals();createRipple(event,this._item.querySelector('.ripple'));},
      onRelease:()=>{this._states.pressed=false;if(this.isConnected)this._syncVisuals();},onActivate:event=>this._activate(event)});
    for(const[event,state,value]of[['pointerenter','hovered',true],['pointerleave','hovered',false],['focusin','focused',true],['focusout','focused',false]])

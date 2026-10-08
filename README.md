@@ -231,6 +231,29 @@ while held, expands toward the center and fades after release. Rapid presses
 retain the previous exit. Ordinary FAB bodies stay stationary. Reduced motion
 keeps static press feedback. FAB color, label and size updates preserve the inner
 button and focus; use `icon=""` for a text-only extended FAB.
+FAB pointer input follows its fitted rounded surface. Mouse and pen miss clipped
+corners and the expanded touch area; Touch keeps its independent 48px target.
+Leaving captured bounds cancels immediately, and returning cannot reactivate
+that gesture. Hover follows the same direct shape membership. An atomic
+disable/re-enable retires held FAB keys and pointers synchronously.
+Buttons, FABs, switches, checkboxes and radio buttons activate Enter, numpad Enter and Space on key-up, with one
+activation per owned press. Repeats retain that press. Concurrent keys and a
+pointer retain independent ripple and elevation ownership; releasing one does
+not release the others. Focus loss cancels keys, and disabling/disconnecting
+cancels the held inputs.
+Selection controls synchronously cancel on each enabled-state update, including
+disable/re-enable within one task. Updating a Checkbox's value preserves another
+held input's press feedback. Radio arrows keep the existing roving-focus behavior.
+Checkbox, RadioButton and Switch keep the minimum layout reservation separate
+from their inner input/drawing area. At the default 48px reservation, those inner
+areas are 18×18px, 24×24px (including Radio padding) and 52×32px respectively.
+`--md-minimum-interactive-component-size` accepts a scoped CSS length;
+`0px` or `none` removes that reservation. Touch still expands toward a 48px
+target. Mouse and pen must hit the actual inner input area. Moving a captured
+pointer outside its permitted bounds cancels immediately; returning before
+release cannot activate that canceled press. Live parent constraints and RTL
+placement use the native modifier measurement order. Complete native sibling
+arbitration, arbitrary transforms and input trees remain separate boundaries.
 FAB shadows follow the native 120ms incoming and 120/150ms outgoing tweens,
 retaining the most recent active hover/focus/press interaction. Independent
 hover/focus opacity enters in 15/45ms and leaves in 15ms. The source default
@@ -374,6 +397,134 @@ bar.scrollTarget = document.querySelector('#documents');
   <md-icon-button icon="more_vert" aria-label="More options"></md-icon-button>
 </md-bottom-app-bar>
 ```
+
+Snackbars use InverseSurface/InverseOnSurface, an InversePrimary text action,
+an optional InverseOnSurface dismiss icon and the source 6dp shadow. Color
+attributes accept CSS colors or token expressions and update existing controls.
+Surface-colored overrides preserve inherited tonal elevation; the snackbar adds
+zero tonal elevation itself. Entry/exit uses independent FastSpatial .8↔1 scale
+and FastEffects alpha. Outgoing content retires when alpha completes.
+
+```html
+<md-snackbar id="saved" message="Document archived."
+  action-label="Undo" with-dismiss-action></md-snackbar>
+```
+
+`document.querySelector('#saved').show()` opens the attribute-driven convenience
+example. Repeated `show()` updates that message and its timer. An action defaults
+to indefinite duration; without one the default is Short (4000ms). `duration`
+accepts `short`, `long` (10000ms) or `indefinite`. An explicit nonnegative
+`timeout` overrides that duration; zero means indefinite and removing the
+attribute restores the source default. `action-on-new-line` moves a longer action
+below the message. `container-color`, `content-color`, `action-color`,
+`action-content-color` and `dismiss-action-content-color` have camel-case
+properties. The data presenter's TextButton uses `actionColor`; the generic
+action wrapper's `actionContentColor` remains a separate local content color.
+`shape` accepts the rounded/cut/rectangle corner descriptors used by toolbars.
+The data presenter includes 12dp padding outside its visual Surface. Dismiss
+has a plain above-anchor tooltip and a localized accessible label. English and
+Turkish strings follow the pinned AndroidX resources; `dismissLabel` /
+`dismiss-label` supplies other application translations.
+
+For queued messages, use the separate source-shaped host API:
+
+```js
+import {SnackbarHostState} from '@materialwebunofficial/md3e-web';
+const host = document.querySelector('#saved');
+host.hostState = new SnackbarHostState();
+const result = await host.showSnackbar({
+  message: 'Document archived.', actionLabel: 'Undo', withDismissAction: true
+});
+if (result === 'action-performed') restoreDocument();
+```
+
+`showSnackbar` serializes requests and resolves `action-performed` or `dismissed`.
+Queued visuals retain their message/action/duration when component attributes
+change. Attributes supply defaults for the `show()` convenience path; layout,
+color and explicit timeout overrides still update the active queued message.
+Its string overload takes message, nullable action label, dismiss boolean and
+optional duration. The final options argument accepts an AbortSignal; object
+visuals accept those options as the second argument. Cancellation rejects the
+request and retires it from the queue. `recommendedTimeoutMillis(original,
+flags)` supplies a host accessibility timeout recommendation. The viewport host
+uses a manual HTML popover to escape ancestor clipping. Set
+`--md-snackbar-inline-start`, `--md-snackbar-inline-end` and
+`--md-snackbar-bottom` to reserve navigation or other application chrome; the
+showcase derives those values from its actual content pane and bottom navigation.
+Placement, events, AbortSignal and inert outgoing content are web adapters.
+The default legacy layout uses measured first/last text baselines: a one-line
+action aligns to the message baseline, multi-line text starts at baseline 30dp,
+and a separate-line action follows baseline padding of 30dp/12dp plus 2dp bottom
+padding. The one-row policy caps its inner width at 600dp before outer 16dp/8dp
+padding (16dp/0dp with dismiss); the separate-line layout caps its whole width at
+600dp. Text and controls remain stable through live fonts, width and direction
+changes. Browser font shaping and measured controls are explicit host inputs;
+arbitrary Compose content/modifiers, intrinsic queries and host scheduling remain
+under audit. `two-line` is a web minimum-height adapter; automatic classification
+uses the actual first and last baselines.
+
+Tooltips use a manual HTML popover, so ancestor clipping does not hide them.
+`placement` supports `top`, `bottom`, `left`, `right`, logical `start`/`end`
+and `above`/`below` aliases. The native position provider flips at window edges,
+clamps coordinates and uses 4dp anchor spacing. Optional carets are 16×8dp.
+Plain tooltips use InverseSurface/InverseOnSurface, BodySmall, ExtraSmall shape,
+40×24dp minimum, 200dp maximum width, 8dp/4dp content padding and no shadow.
+Rich tooltips use SurfaceContainer, OnSurfaceVariant title/body, Primary action,
+TitleSmall/BodyMedium/LabelLarge, Medium shape, 320dp maximum width and Level2
+shadow. Their title/body baselines follow the native 28dp/24dp spacing rules.
+Plain and rich placement run the native Box/Column measurement rules within
+the current window bounds. Multiple direct slot children share a Box and
+overlap at logical start; wrap controls in a row container to arrange a row.
+Rich actions retain the 36dp minimum box and 8dp bottom padding; an ordinary
+text button has a 48dp interactive leaf around its 40dp visual surface.
+Text, typography, direction and window changes keep the existing controls and
+focus. Temporary slotted geometry restores author styles when the popup
+retires, a child leaves its slot or the host disconnects.
+
+```html
+<md-button id="save-hint" label="Save document"></md-button>
+<md-tooltip for="save-hint" text="Save changes to this document" caret></md-tooltip>
+```
+
+Mouse hover holds the tooltip until exit; keyboard focus holds it until focus
+loss. Touch/pen long press suppresses the corresponding click and keeps the
+tooltip visible for at least 1500ms after opening. `longPressTimeoutMillis`
+supplies the web platform threshold (default 500ms). Set `enableUserInput=false`
+to disable automatic triggers. Rich action slots can use `has-action`
+  and `is-persistent`; Tab from the anchor enters the popup and visits enabled
+  actions in rendered order, including nested slots and open shadow roots.
+  `focusable=true` takes focus when the popup opens. Tab/Shift+Tab stay within
+  that popup; retirement or removal restores the prior focus. Its outside
+  pointer press dismisses and consumes that gesture. A nonfocusable popup lets
+  that outside press reach the underlying control. `onDismissRequest` can own
+  outside/popup-Escape dismissal instead of the default state dismissal.
+  Popup Escape is tracked on keydown and dismissed on keyup; the anchor's
+  automatic Escape path dismisses on keydown. Unfocused nonfocusable tooltips
+  do not consume unrelated keyboard events. A later modal dialog owns focus
+  until it closes. Changing `enableUserInput` or `target` preserves a manually
+  shown state; removing automatic input cancels its bound hover/focus request.
+  The web host can set
+  `forceFocusableForA11y=true` (`force-focusable-for-a11y`) for its touch
+  exploration/switch access integration; as in the source, this also requires
+  `hasAction`. Browser code does not infer Android service state.
+  `maxWidth`, the four color properties and `shape` update
+the existing popup without recreating its controls. `target` accepts an explicit
+anchor; the default anchor is the previous element when `for` is absent.
+  Visible popups poll anchor bounds once per animation frame, including CSS or
+  WAAPI transforms on ancestors. Unchanged bounds skip layout/outline work;
+  polling stops after retirement or removal.
+
+Exported `TooltipState` and `TooltipMutatorMutex` provide shared priority rules.
+`show('default')` times out after 1500ms; `show('user-input')` stays suspended;
+`show('prevent-user-input')` times out without dismissing (focus/long-press input
+owns dismissal). Persistent requests stay suspended until canceled/dismissed.
+Same or higher priorities cancel an earlier request; lower priorities reject.
+Promises reject with TimeoutError or AbortError on timeout/cancellation, so
+programmatic callers should catch those expected results. `show` also accepts
+an AbortSignal. Renderer transitions use independent FastSpatial .8↔1 scale
+and FastEffects alpha, and retire the popup after both channels finish.
+DOM gesture/focus/popover behavior, font shaping, native composition scheduling,
+other localizations and Android path/shadow rasterization remain under audit.
 
 ```html
 <md-slider steps="9" value="40" aria-label="Volume"></md-slider>
@@ -666,6 +817,137 @@ fraction of available wave height**, rather than the previous pixel override;
 omit it to use the native progress-dependent amplitude. Path adapter and source
 verification boundaries are documented in `tools/androidx-progress/README.md`.
 
+### Button sizing and press motion
+
+`md-button` uses the Expressive size scale: `xs`, `s`, `m`, `l`, `xl` have
+minimum visual heights of 32, 40, 56, 96 and 136px. The default is `s`.
+Content can increase the visual height; the minimum width is 58px and the
+interaction area reserves at least 48px in height. An outlined surface draws
+its border inside the shape, without increasing measured dimensions.
+
+Presses animate 0–1 shape progress with AndroidX DefaultEffects springs.
+Reversals preserve the source progress/velocity transformation. Replacing the
+resting/pressed shape pair or the spring recreates the animation at its current
+target, as in the public Button's remembered composition. Equal shape/spec
+values retain the animation, including XS-to-S changes and the two default
+motion schemes' equal DefaultEffects springs. Round corners resolve from the
+actual measured width/height, including resized or multiline content.
+Square/pressed corners use the size-specific live Small/Medium/Large/ExtraLarge
+theme roles. Uniform pixel/percentage corners and CSS length expressions are
+supported; percentage corners resolve against the smaller measured dimension.
+Labels and slotted controls remain stable through property changes. `focus()`
+and `click()` forward to the native button, and a disabled form fieldset also
+disables the component.
+
+Configure `variant`, `size`, `shape`, `label`, `icon`, `trailing-icon`, `toggle`
+and `type` through attributes. Their corresponding runtime getters are read-only;
+the label getter is `labelText`. `disabled` and `selected` are writable boolean
+properties. Invalid size/variant/shape/type values use safe defaults. Both
+declaration entries describe this API; no `label`, `name` or `value` property
+behavior is supplied by this component.
+
+Default colors use live theme roles. Text buttons use `Primary`, including the
+source public default getter's override of its raw token table. Docked toolbar
+and snackbar action bindings retain their scoped colors. Ordinary enabled/theme
+color changes resolve directly, as in the source ButtonColors. Independent source
+comparisons and remaining boundaries are described in
+[tools/androidx-button/README.md](tools/androidx-button/README.md).
+
+Button content clips to its current animated surface shape. The outside shadow,
+focus indication and interaction reservation remain separate from this content clip.
+When the resolved container matches the live `Surface` role, its tonal overlay
+uses the inherited `--md-absolute-tonal-elevation` number. Buttons add zero tonal
+elevation themselves; hovering changes their shadow elevation independently.
+
+The minimum 48px interaction target expands for touch input. Mouse and pen
+start inside the visible rounded shape. Moving a held pointer out of its
+capture bounds cancels that press; returning requires a new press. Touch
+capture includes the minimum target padding. Programmatic activation remains
+available after a canceled gesture. Hover and focus use the shared Material3
+opacity indication with source 15ms hover and 45ms focus-entry transitions.
+The default focus indication uses the content color and opacity; it does not
+add an outside outline. The latest hover/focus interaction controls the layer,
+while the separate elevation channel also responds to presses.
+
+Enter, numpad Enter and Space activate on key release. Held-key repeats retain
+one press. Multiple keys and a pointer keep their own pressed indication;
+releasing one preserves the remaining press. Focus loss cancels keyboard
+presses, and disabling or disconnecting cancels the owned interactions.
+Editable or interactive slotted controls keep their own input and do not
+activate the enclosing button.
+`--md-tonal-elevation-enabled: false` disables the inherited overlay. Theme roles
+and external container overrides are resolved again on the retained control.
+
+In `toggle` mode, the native control exposes Checkbox semantics with
+`aria-checked`. It uses FastSpatial and a three-shape composition: pressed wins
+over selected, selected uses the size-specific square role, and resting uses
+the round shape. `shape="square"` swaps the resting and selected shapes as a
+web configuration of the native three-shape API. The public small ToggleButton
+pressed default is 6px; other sizes resolve their source pressed theme roles.
+Changing the shape triple or spring replaces its remembered state. Selected
+changes animate within that state, including selection changes during a press.
+
+Toggle content has no 58px width minimum; its interaction area reserves 48px
+in both dimensions, within the caller's constraints. The visual body and that
+interaction reservation are measured separately. The optional leading icon
+uses a fixed-size Box with propagated minimum constraints, followed by a
+separately measured Spacer; narrow bounds can reduce both instead of preserving
+a CSS flex gap. Host CSS sizes/minimums/maximums supply the browser constraints.
+Custom leading icons can use `slot="icon"` in toggle mode. Every assigned icon
+is centered in the same Box; the slot takes precedence over the `icon` attribute.
+Icons inherit the button's live content color. Font/content updates, mode changes
+and reconnection retain the actual control and slots, and release owned icon
+styles on removal. Arbitrary native RowScope modifiers/intrinsics and Android
+font/raster behavior remain outside this adapter's verified scope.
+Filled, elevated, tonal and outlined toggles use their
+native selected/disabled color factories, resolving live theme roles directly.
+Outlined toggles use the public 1px border default at every size and remove the
+default border when selected. Text toggle is a web extension that retains the
+docked toolbar's scoped theme overlay. Border width uses FastSpatial and its
+brush color uses DefaultEffects, preserving velocity on reversal and live theme
+changes. Paint width rounds up to physical pixels, observes display-density
+changes and stays inside the shape. Reduced motion finishes both channels.
+Elevation follows source interaction arrival order and 120ms incoming /
+120ms hover-exit / 150ms other-exit tweens, without a second CSS transition.
+The public `elevation` property accepts all five numeric targets
+(`defaultElevation`, `pressedElevation`, `focusedElevation`, `hoveredElevation`,
+`disabledElevation`); null removes elevation and undefined restores variant
+defaults. Shadow drawing uses live web tokens. Complete native shadow/border
+raster remains separate work. Source tests and adapter boundaries are
+recorded in [tools/androidx-toggle-button/README.md](tools/androidx-toggle-button/README.md).
+
+### Switch colors with the 2025 palette
+
+The switch binds its icon to the thumb's paired content role. A resting checked
+thumb uses `OnPrimary / Primary`; hover, focus and press use the source state
+tokens `PrimaryContainer / OnPrimaryContainer`. This is a ColorSpec2025 web
+profile override of the legacy native resting icon default: two unrelated
+`On…` colors can have almost identical tones in a dark 2025 palette.
+The color engine and global roles are preserved. Icons inherit from the thumb,
+so every instance responds to live themes and local CSS role changes. Disabled
+states retain the source opacity/composite-over-Surface bindings.
+
+Component overrides are `--md-switch-icon-color`,
+`--md-switch-selected-handle-color`, `--md-switch-selected-icon-color`,
+`--md-switch-selected-interactive-handle-color` and
+`--md-switch-selected-interactive-icon-color`. They accept CSS colors/role variables.
+The browser gate checks 960 live thumb/icon pairs across six seeds, both schemes,
+light/dark, four contrast levels and rest/hover/focus/press/disabled states;
+enabled icon contrast stays above 3:1 in those cases.
+
+Switch, Checkbox and RadioButton share the native opacity indication controller:
+15ms hover/exit and45ms focus entry, with the latest hover/focus interaction
+owning the layer. Press creates a separate unbounded ripple with20dp radius.
+The moving Switch thumb now draws that ripple too. Default focus uses opacity
+without an additional outside outline. Ripple/state colors inherit the enclosing
+content color; `--md-ripple-color` supplies a live scoped override, and source
+alpha replaces content alpha. The Switch icon retains its own paired thumb role.
+The source and package checks cover held presses, keyboard, disable, reduced
+motion and disposal/reconnect. Full native layout coordinators, optional inset
+focus rings, platform rendering and other engines remain outside this verified
+adapter scope. Run `node scripts/test-selection.mjs --source --indication` or
+`npm run test:selection`.
+
 ## 🧪 Testing
 
 Run the full automated test suite:
@@ -673,6 +955,8 @@ Run the full automated test suite:
 ```bash
 npm test
 npm run test:parity
+npm run test:buttons
+npm run test:selection
 ```
 
 ---

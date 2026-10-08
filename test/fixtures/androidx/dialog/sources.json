@@ -1,0 +1,112 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "mdcRevision": "60ff09436d5d477a4b9d02940f31eb01e1250620",
+  "aospRevision": "android-15.0.0_r1",
+  "sources": [
+    {
+      "file": "AlertDialog.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/AlertDialog.kt",
+      "sha256": "4b5d670bc94af8f80ea9886d571437d5226ff99661ee251b8135274a6e78ff13"
+    },
+    {
+      "file": "DialogTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/DialogTokens.kt",
+      "sha256": "40a1599a7d774d801c8e244eb665382f43e3204fc07a4dc3faf4e2c6044ee30b"
+    },
+    {
+      "file": "AndroidDialog.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/window/AndroidDialog.android.kt",
+      "sha256": "069178264c9f8b6fb4759bafaa84afea76dd12a44ba33720f2528e00c30dfc8f"
+    },
+    {
+      "file": "compose-styles.xml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/androidMain/res/values/styles.xml",
+      "sha256": "129d91d44888ed3608449075ec045ea391e500003e8f753f0ae6cd875aff42f6"
+    },
+    {
+      "file": "DatePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/DatePicker.kt",
+      "sha256": "6d80d7ba27b052beaac1628458dc41621e02093d36c5d2691234d0931ca3ea22"
+    },
+    {
+      "file": "TimePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TimePicker.kt",
+      "sha256": "787e55e79a94b58775567110b2b27c74834529b643960cb0ff86589930e3f221"
+    },
+    {
+      "file": "DatePickerDialog.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/androidMain/kotlin/androidx/compose/material3/DatePickerDialog.android.kt",
+      "sha256": "10408a50bf9f1fa6bbbe3180ec65dbfaee6e95268e836658081c5ba57b1c408a"
+    },
+    {
+      "file": "TimePickerDialog.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TimePickerDialog.kt",
+      "sha256": "2574c42e5666327e64f1014117063ae1f8b35d0f63affacc38f03169848d3e5d"
+    },
+    {
+      "file": "aosp-styles-material.xml",
+      "url": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-15.0.0_r1/core/res/res/values/styles_material.xml",
+      "sha256": "d07e6c31901e8f95260e9d45f651cd9c5db25cac9bc37d60912db62fd95dfe80"
+    },
+    {
+      "file": "popup_enter_material.xml",
+      "url": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-15.0.0_r1/core/res/res/anim/popup_enter_material.xml",
+      "sha256": "33d85196ed936409ab31aeb1339e3ff01750f17dfa0efb8552e386e1dea05654"
+    },
+    {
+      "file": "popup_exit_material.xml",
+      "url": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-15.0.0_r1/core/res/res/anim/popup_exit_material.xml",
+      "sha256": "e286dc6a01834a5631f0290da7ca517905a077ad7b98449ee334e6ebda187bbd"
+    },
+    {
+      "file": "mdc-dialog-themes.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/dialog/res/values/themes_overlay.xml",
+      "sha256": "a8c62da4ef59781b00dcceb5e4779e2ae63818c35de310deac3f558c374a8784"
+    },
+    {
+      "file": "mdc-dialog-styles.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/dialog/res/values/styles.xml",
+      "sha256": "30a44d4ce3f2c326cf733cbe19473cb79ca75d273836372b458bec696f92ecf4"
+    },
+    {
+      "file": "m3_motion_fade_enter.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/motion/res/anim/m3_motion_fade_enter.xml",
+      "sha256": "a1dffb796810c437c38264af81d22d626e7fb301049cf5cce1f34ad625133406"
+    },
+    {
+      "file": "m3_motion_fade_exit.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/motion/res/anim/m3_motion_fade_exit.xml",
+      "sha256": "2f60b52144f12a635149d9d2b5aad2b9cab2110aeae8d03e538ed8e3b74522a8"
+    },
+    {
+      "file": "m3_sys_motion_easing_emphasized_decelerate.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/motion/res/interpolator/m3_sys_motion_easing_emphasized_decelerate.xml",
+      "sha256": "df05468b3bc3e9a24f7e81ce6f3d3efd8974c2722303174a0cfa4543fe3a1f58"
+    },
+    {
+      "file": "m3_sys_motion_easing_emphasized_accelerate.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/motion/res/interpolator/m3_sys_motion_easing_emphasized_accelerate.xml",
+      "sha256": "c3100941cd365609c875adc104f3448b3a72c0be4cf56d0bebb1fe40f88c513c"
+    },
+    {
+      "file": "mdc-motion-tokens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/motion/res/values/tokens.xml",
+      "sha256": "1e07de2a44b15a0de8d3c7280416f8de918dad89822ef7b55c74d2cce202e110"
+    },
+    {
+      "file": "mdc-resource-tokens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/resources/res/values/tokens.xml",
+      "sha256": "ecf40ced8796b3c07e86f593f13372e15734ea13287367699e0c9093dbfb615b"
+    },
+    {
+      "file": "mdc-color-tokens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/color/res/values/tokens.xml",
+      "sha256": "f1fe1da3895559ac232ea697805f365705d6ddc6ecbe9cd25e13d69b1693f6c8"
+    },
+    {
+      "file": "mdc-dialog-tokens.xml",
+      "url": "https://raw.githubusercontent.com/material-components/material-components-android/60ff09436d5d477a4b9d02940f31eb01e1250620/lib/java/com/google/android/material/dialog/res/values/tokens.xml",
+      "sha256": "6b7204efbb9fcf4a501083160016dfa9b1ba58a083cdf66707511cded097d634"
+    }
+  ]
+}

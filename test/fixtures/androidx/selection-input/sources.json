@@ -1,0 +1,15 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Toggleable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/selection/Toggleable.kt",
+      "sha256": "94909e2d6705481ec7e093b3d7c65dc47c876116876ce06fabf389c69d3e0e9e"
+    },
+    {
+      "file": "Selectable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/selection/Selectable.kt",
+      "sha256": "448dff41ae5548fc1ef88edb09b2958bbc041b10487f65955eb869844f2c1dbd"
+    }
+  ]
+}

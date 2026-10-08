@@ -6,6 +6,7 @@ import {chromium} from 'playwright';
 import {testAppBarParity,testAppBarShowcase,testIconMinimumParity} from '../test/browser/app-bar-parity.mjs';
 import {testTopAppBarParity} from '../test/browser/top-app-bar-parity.mjs';
 import {testTopAppBarScroll} from '../test/browser/top-app-bar-scroll.mjs';
+import {testAppBarScrollBoundary} from '../test/browser/app-bar-scroll-boundary.mjs';
 import {testBottomAppBarLayout} from '../test/browser/bottom-app-bar-layout.mjs';
 import {testBottomAppBarScroll} from '../test/browser/bottom-app-bar-scroll.mjs';
 import {testFabSurface} from '../test/browser/fab-surface.mjs';
@@ -32,13 +33,14 @@ const source={newPage:async options=>{
 }};
 try{
  const target=process.argv.includes('--source')?source:browser;
- if(process.argv.includes('--bottom-scroll-only')){await testBottomAppBarScroll(target,base);}
+ if(process.argv.includes('--boundary-only')){await testAppBarScrollBoundary(target,base);}
+ else if(process.argv.includes('--bottom-scroll-only')){await testBottomAppBarScroll(target,base);}
  else if(process.argv.includes('--bottom-only')){await testBottomAppBarLayout(target,base);await testBottomAppBarScroll(target,base);await testAppBarParity(target,base);}
  else if(process.argv.includes('--showcase-only')){await testAppBarShowcase(target,base);}
  else if(process.argv.includes('--scroll-only')){await testTopAppBarScroll(target,base);}
  else if(process.argv.includes('--top-only')){await testTopAppBarParity(target,base);await testTopAppBarScroll(target,base);}
- else{await testIconMinimumParity(target,base);await testAppBarParity(target,base);await testBottomAppBarLayout(target,base);await testBottomAppBarScroll(target,base);await testTopAppBarParity(target,base);await testTopAppBarScroll(target,base);await testAppBarShowcase(target,base);}
- if(!process.argv.includes('--app-bars-only')&&!process.argv.includes('--top-only')&&!process.argv.includes('--scroll-only')&&!process.argv.includes('--showcase-only')&&!process.argv.includes('--bottom-only')&&!process.argv.includes('--bottom-scroll-only')){
+ else{await testAppBarScrollBoundary(target,base);await testIconMinimumParity(target,base);await testAppBarParity(target,base);await testBottomAppBarLayout(target,base);await testBottomAppBarScroll(target,base);await testTopAppBarParity(target,base);await testTopAppBarScroll(target,base);await testAppBarShowcase(target,base);}
+ if(!process.argv.includes('--boundary-only')&&!process.argv.includes('--app-bars-only')&&!process.argv.includes('--top-only')&&!process.argv.includes('--scroll-only')&&!process.argv.includes('--showcase-only')&&!process.argv.includes('--bottom-only')&&!process.argv.includes('--bottom-scroll-only')){
   await testFabSurface(target,base);await testFabInteractions(target,base);await testFabExpansion(target,base);await testRippleParity(target,base);await testToolbarParity(target,base);
  }
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

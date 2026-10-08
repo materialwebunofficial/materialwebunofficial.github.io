@@ -763,7 +763,7 @@ document.querySelector('#my-element').animate(keyframes, {
       <section class="components-hero-banner" id="overview">
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
           <div class="components-hero-icon-box">
-            <span class="mat-sym" style="font-size: 28px; color: var(--md-sys-color-primary);">dashboard_customize</span>
+            <span class="mat-sym" aria-hidden="true">dashboard_customize</span>
           </div>
           <div style="min-width: 0; flex: 1;">
             <h1 class="md-display-medium" style="margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -1410,7 +1410,7 @@ document.querySelector('#my-element').animate(keyframes, {
               <span class="comp-desc">Click to trigger modal calendar dialog with headline and month view.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-date-picker headline=&quot;Select Date&quot;&gt;&lt;/md-date-picker&gt;</code>
+              <code>&lt;md-date-picker id="date" variant="modal"&gt;&lt;/md-date-picker&gt; document.querySelector('#date').show();</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div></div>
 
@@ -1423,7 +1423,7 @@ document.querySelector('#my-element').animate(keyframes, {
               <span class="comp-desc">Continuous range track selection with start/end anchor pills.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-date-picker range headline=&quot;Select Range&quot;&gt;&lt;/md-date-picker&gt;</code>
+              <code>&lt;md-date-picker variant="range" inline&gt;&lt;/md-date-picker&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div></div>
         </div>
@@ -1443,7 +1443,7 @@ document.querySelector('#my-element').animate(keyframes, {
               <span class="comp-desc">Click to open circular interactive clock dial with selector arm.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-time-picker format=&quot;12h&quot;&gt;&lt;/md-time-picker&gt;</code>
+              <code>&lt;md-time-picker id="time" mode="dial"&gt;&lt;/md-time-picker&gt; document.querySelector('#time').show();</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div></div>
 
@@ -1492,7 +1492,7 @@ document.querySelector('#my-element').animate(keyframes, {
               <span class="comp-desc">Click button to open centered modal dialog with scrim and focus trap.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-button variant=&quot;filled&quot;&gt;Dialogs&lt;/md-button&gt;</code>
+              <code>&lt;md-dialog id="dialog" headline="Delete album?" supporting-text="Delete this album permanently?" confirm-label="Delete"&gt;&lt;/md-dialog&gt; document.querySelector('#dialog').show();</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div></div>
         </div>
@@ -1869,7 +1869,7 @@ document.getElementById('mail-drawer').show();</code>
                 <md-checkbox disabled aria-label="Disabled"></md-checkbox>
               </div></div>
             <div class="comp-info">
-              <span class="comp-name">Checkboxes (20&times;20dp / 2dp stroke)</span>
+              <span class="comp-name">Checkboxes (18&times;18dp / 2dp stroke)</span>
               <span class="comp-desc">Includes standard, checked, indeterminate dash, error, and disabled states.</span>
             </div>
             <div class="comp-code-box">
@@ -2086,15 +2086,43 @@ document.getElementById('mail-drawer').show();</code>
         <div class="cards-grid">
           <div class="comp-card">
             <div class="comp-preview">
-              <md-button variant="tonal" label="Trigger Snackbar" id="show-snackbar-btn"></md-button>
-              <md-snackbar id="sample-snackbar" message="Item archived to your cloud storage." action-label="Undo" timeout="5000"></md-snackbar>
+              <md-button variant="tonal" label="Archive document" data-snackbar-target="sample-snackbar"></md-button>
+              <md-snackbar id="sample-snackbar" message="Document archived." action-label="Undo" with-dismiss-action></md-snackbar>
             </div>
             <div class="comp-info">
-              <span class="comp-name">Snackbar</span>
-              <span class="comp-desc">Transient feedback bar fixed at the bottom of the viewport.</span>
+              <span class="comp-name">Snackbar with action</span>
+              <span class="comp-desc">Undo stays available until you choose an action or dismiss the message.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-snackbar message=&quot;Item added to wishlist&quot; action-label=&quot;Undo&quot;&gt;&lt;/md-snackbar&gt;</code>
+              <code>&lt;md-snackbar id='sample-snackbar' message='Document archived.' action-label='Undo' with-dismiss-action&gt;&lt;/md-snackbar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-button variant="tonal" label="Save document" data-snackbar-target="saved-snackbar"></md-button>
+              <md-snackbar id="saved-snackbar" message="Changes saved."></md-snackbar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Message</span>
+              <span class="comp-desc">A short confirmation with no action closes automatically.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-snackbar id='saved-snackbar' message='Changes saved.'&gt;&lt;/md-snackbar&gt;</code>
+              <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
+            </div>
+          </div>
+          <div class="comp-card">
+            <div class="comp-preview">
+              <md-button variant="tonal" label="Check connection" data-snackbar-target="connection-snackbar"></md-button>
+              <md-snackbar id="connection-snackbar" message="You are offline. Your changes will sync when you reconnect." action-label="View saved documents" with-dismiss-action action-on-new-line></md-snackbar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Action on a separate line</span>
+              <span class="comp-desc">Keep a longer action label on its own line.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-snackbar id='connection-snackbar' message='You are offline. Your changes will sync when you reconnect.' action-label='View saved documents' with-dismiss-action action-on-new-line&gt;&lt;/md-snackbar&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>
@@ -2284,12 +2312,14 @@ document.getElementById('mail-drawer').show();</code>
                 <md-icon-button icon="edit" aria-label="Edit document"></md-icon-button>
                 <md-icon-button icon="share" aria-label="Share document"></md-icon-button>
                 <md-icon-button icon="more_vert" aria-label="More document actions"></md-icon-button>
-                <md-fab slot="fab" icon="add" aria-label="Create document"></md-fab>
+                <md-fab slot="fab" icon="add" data-toolbar-fab-toggle="create-toolbar" aria-label="Collapse actions" aria-controls="create-toolbar" aria-expanded="true"></md-fab>
               </md-toolbar>
               <md-button variant="text" data-toolbar-toggle="create-toolbar" label="Collapse actions" aria-controls="create-toolbar" aria-expanded="true"></md-button>
             </div>
-            <div class="comp-info"><span class="comp-name">Floating toolbar with FAB</span><span class="comp-desc">Create takes the lead. Supporting actions fold away while the create button grows.</span></div>
-            <div class="comp-code-box"><code>&lt;md-toolbar variant=&quot;floating&quot; color=&quot;vibrant&quot; expanded&gt;&lt;md-icon-button icon=&quot;edit&quot; aria-label=&quot;Edit&quot;&gt;&lt;/md-icon-button&gt;&lt;md-fab slot=&quot;fab&quot; icon=&quot;add&quot; aria-label=&quot;Create&quot;&gt;&lt;/md-fab&gt;&lt;/md-toolbar&gt;</code><button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size:15px">content_copy</span></button></div>
+            <div class="comp-info"><span class="comp-name">Floating toolbar with FAB</span><span class="comp-desc">Use the plus button to fold supporting actions away and bring them back.</span></div>
+            <div class="comp-code-box"><code>&lt;md-toolbar id=&quot;actions&quot; variant=&quot;floating&quot; color=&quot;vibrant&quot; expanded&gt;&lt;md-icon-button icon=&quot;edit&quot; aria-label=&quot;Edit&quot;&gt;&lt;/md-icon-button&gt;&lt;md-fab slot=&quot;fab&quot; icon=&quot;add&quot; aria-label=&quot;Toggle actions&quot;&gt;&lt;/md-fab&gt;&lt;/md-toolbar&gt;
+const toolbar = document.querySelector('#actions');
+toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar.toggle());</code><button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size:15px">content_copy</span></button></div>
           </div>
           <div class="comp-card">
             <div class="comp-preview toolbar-preview toolbar-preview-vertical">
@@ -2399,18 +2429,19 @@ document.getElementById('mail-drawer').show();</code>
         <div class="cards-grid">
           <div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
-                <md-button id="btn-tip-1" variant="outlined" label="Hover Plain Tooltip" icon="info"></md-button>
-                <md-tooltip for="btn-tip-1" caret text="Helpful descriptive hint for users"></md-tooltip>
+                <md-button id="btn-tip-1" variant="outlined" label="Save document" icon="save"></md-button>
+                <md-tooltip for="btn-tip-1" caret text="Save changes to this document"></md-tooltip>
 
-                <md-button id="btn-tip-2" variant="tonal" label="Hover Rich Tooltip" icon="help"></md-button>
-                <md-tooltip for="btn-tip-2" variant="rich" caret headline="Contextual Help" text="Rich tooltips provide extended context and multiple lines of instructions."></md-tooltip>
+                <md-button id="btn-tip-2" variant="tonal" label="Sharing info" icon="help"></md-button>
+                <md-tooltip for="btn-tip-2" variant="rich" caret headline="Shared document" text="People with access can view this document."></md-tooltip>
               </div></div>
             <div class="comp-info">
               <span class="comp-name">Plain &amp; Rich Tooltips</span>
-              <span class="comp-desc">Hover over buttons to inspect plain and rich tooltips with pointer carets.</span>
+              <span class="comp-desc">Hover, focus or long press to show plain and rich tooltips. Carets follow the anchor when placement changes.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-tooltip text=&quot;Helpful tooltip&quot;&gt;&lt;button&gt;Hover&lt;/button&gt;&lt;/md-tooltip&gt;</code>
+              <code>&lt;md-button id=&quot;save-tooltip-anchor&quot; label=&quot;Save document&quot;&gt;&lt;/md-button&gt;
+&lt;md-tooltip for=&quot;save-tooltip-anchor&quot; caret text=&quot;Save changes to this document&quot;&gt;&lt;/md-tooltip&gt;</code>
               <button class="comp-code-copy-btn" title="Copy snippet" type="button"><span class="mat-sym" style="font-size: 15px;">content_copy</span></button>
             </div>
           </div>
@@ -2689,7 +2720,7 @@ document.getElementById('mail-drawer').show();</code>
       <section class="category-section" id="paginator">
         <div class="category-header">
           <h2 class="category-title"><span class="mat-sym">first_page</span> Paginator <button type="button" class="copy-anchor-btn" data-anchor="paginator" aria-label="Copy link to section"><span class="mat-sym">link</span><span class="copy-anchor-tooltip">Copy link</span></button></h2>
-          <p class="category-desc">Data pagination control where all navigation buttons and selects are 100% MD3E compliant.</p>
+          <p class="category-desc">Navigate data pages with Material icon buttons and a dropdown menu for the number of items shown.</p>
         </div>
         <div class="cards-grid">
           <div class="comp-card" style="grid-column: 1 / -1; overflow: visible;">
@@ -2700,7 +2731,7 @@ document.getElementById('mail-drawer').show();</code>
               <md-paginator id="demo-paginator" length="125" page-size="10" page-index="0" show-first-last-buttons></md-paginator>
             </div>
             <div class="comp-info">
-              <span class="comp-name">MD3E Compliant Paginator</span>
+              <span class="comp-name">Pagination</span>
               <span class="comp-desc">Touch-target MD3E icon buttons, page size selector, and item range calculations.</span>
             </div>
             <div class="comp-code-box">

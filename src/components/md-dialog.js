@@ -1,397 +1,156 @@
 /**
- * Material Design 3 Expressive (M3 Expressive) Web Component: <md-dialog>
- *
- * Spec: M3 Dialog (spec §12) — STANDART M3 (DialogTokens)
- * surface-container-high, elevation Level3, CornerExtraLarge (28dp),
- * headline HeadlineSmall(24), supporting BodyMedium(14), action LabelLarge(14) primary, icon secondary.
- * role=dialog + aria-modal + aria-labelledby/aria-describedby, scrim, Escape closes, focus trap.
- *
- * Features:
- *  - Tactile MD3E spring physics opening (scale + translateY + spring overshoot)
- *  - Graceful exit animation on dismiss/confirm before unmounting
- *  - Seamless focus trap for light DOM and slotted actions
+ * AndroidX AlertDialogContent on a browser modal window.
+ * Reference: test/fixtures/androidx/dialog. Surface has no border/shadow;
+ * window motion uses the MDC Material3 Dialog theme, separately from Compose.
  */
+import './md-button.js';
+import {createComponentSheet,adoptSheet} from '../utils/styles.js';
+import {ModalController,MODAL_STYLE} from './modal-controller.js';
+import {resolveSurfaceColors} from '../theme/surface-color.js';
+import {observeThemeContext} from '../theme/theme-context.js';
 
-import { SpringPhysics } from '../motion/spring-physics.js';
-import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
-import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
-import { createComponentSheet, adoptSheet } from '../utils/styles.js';
-
-const defaultStyle = `
-  :host {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    outline: none;
-    display: contents;
-  }
-  :host(:not([open])) .scrim,
-  :host(:not([open])) .dialog-container {
-    display: none !important;
-  }
-  :host([open]) .scrim,
-  :host([open]) .dialog-container {
-    display: flex !important;
-  }
-
-  .scrim {
-    position: fixed;
-    inset: 0;
-    background-color: var(--md-sys-color-scrim, #000);
-    opacity: 0.4;
-    z-index: 2000;
-    cursor: pointer;
-    touch-action: none;
-  }
-
-  .dialog-container {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2001;
-    pointer-events: none;
-    padding: 24px;
-    box-sizing: border-box;
-  }
-
-  .dialog {
-    box-sizing: border-box;
-    position: relative;
-    pointer-events: auto;
-    transform-origin: center center;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    min-width: 280px;
-    max-width: 560px;
-    width: 100%;
-    max-height: 80vh;
-    padding: 24px;
-    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
-    background-color: var(--md-sys-color-surface-container-high, #211F26);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.25));
-    border: 1px solid var(--md-sys-color-outline-variant, rgba(255, 255, 255, 0.12));
-    overflow-y: auto;
-    will-change: transform, opacity;
-  }
-
-  .icon {
-    align-self: center;
-    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-    font-weight: normal;
-    font-style: normal;
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    display: inline-block;
-    color: var(--md-sys-color-secondary, #CCC2DC);
-    text-transform: none !important;
-  }
-  .icon:empty { display: none; }
-
-  .headline {
-    font: var(--md-sys-typescale-headline-small, 400 24px/32px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    margin: 0;
-  }
-  .headline:empty { display: none; }
-
-  .supporting {
-    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-  }
-  .supporting:empty { display: none; }
-
-  .content { color: var(--md-sys-color-on-surface-variant, #CAC4D0); }
-
-  .actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding-top: 8px;
-  }
-
-  .action {
-    min-width: 48px;
-    min-height: 40px;
-    padding: 0 16px;
-    border: none;
-    background-color: transparent;
-    color: var(--md-sys-color-primary, #D0BCFF);
-    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-    cursor: pointer;
-    outline: none;
-    border-radius: var(--md-sys-shape-corner-full, 9999px);
-    transition: background-color var(--md-sys-motion-duration-short2, 100ms) ease,
-                color var(--md-sys-motion-duration-short2, 100ms) ease,
-                transform 120ms cubic-bezier(0.2, 0, 0, 1.2);
-  }
-  .action:hover {
-    background-color: color-mix(in srgb, var(--md-sys-color-primary, #D0BCFF) 10%, transparent);
-  }
-  .action:active {
-    background-color: color-mix(in srgb, var(--md-sys-color-primary, #D0BCFF) 16%, transparent);
-    transform: scale(0.94);
-  }
-  .action:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #D0BCFF);
-    outline-offset: 2px;
-  }
+const defaultStyle=MODAL_STYLE+`
+  :host { display: contents; outline: none; -webkit-tap-highlight-color: transparent; }
+  .dialog-container { position:absolute; inset:0; display:flex; align-items:center;
+    justify-content:center; padding:24px; box-sizing:border-box; pointer-events:none; }
+  .dialog { box-sizing:border-box; position:relative; pointer-events:auto;
+    display:flex; flex-direction:column; min-width:min(280px,100%); max-width:560px;
+    width:100%; max-height:100%; padding:24px;
+    border-radius:var(--md-sys-shape-corner-extra-large,28px);
+    border:0; box-shadow:none; overflow:hidden;
+    background:var(--_md-dialog-container,var(--md-sys-color-surface-container-high));
+    color:var(--md-sys-color-on-surface); transform-origin:center; }
+  .icon { align-self:center; flex:none; margin-bottom:16px;
+    font-family:'Material Symbols Rounded','Material Symbols Outlined',sans-serif;
+    font-weight:normal; font-style:normal; font-size:24px; width:24px; height:24px;
+    line-height:24px; color:var(--_md-dialog-icon,var(--md-sys-color-secondary)); }
+  .headline { flex:none; margin:0 0 16px; align-self:flex-start;
+    font:var(--md-sys-typescale-headline-small,400 24px/32px Roboto,sans-serif);
+    color:var(--_md-dialog-title,var(--md-sys-color-on-surface)); }
+  .dialog.has-icon .headline { align-self:center; text-align:center; }
+  .body { min-height:0; overflow:auto; margin-bottom:24px;
+    font:var(--md-sys-typescale-body-medium,400 14px/20px Roboto,sans-serif);
+    color:var(--_md-dialog-text,var(--md-sys-color-on-surface-variant)); }
+  .supporting { margin:0; }
+  .content { color:inherit; }
+  [hidden] { display:none !important; }
+  .actions { flex:none; align-self:flex-end; max-width:100%; }
+  .action-flow { display:flex; flex-direction:row-reverse; flex-wrap:wrap;
+    justify-content:flex-start; column-gap:8px; row-gap:0; }
+  .action-flow > md-button { min-width:0; }
+  .color-probe { display:none; }
 `;
-
-const dialogSheet = createComponentSheet(defaultStyle);
-
+const dialogSheet=createComponentSheet(defaultStyle);
 export class MdDialog extends HTMLElement {
   static get observedAttributes() {
-    return [
-      'open', 'headline', 'supporting-text', 'icon', 'confirm-label', 'cancel-label',
-      'container-color', 'icon-content-color', 'title-content-color', 'text-content-color'
-    ];
+    return ['open','headline','supporting-text','icon','confirm-label','cancel-label',
+      'container-color','icon-content-color','title-content-color','text-content-color','tonal-elevation'];
   }
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    adoptSheet(this.shadowRoot, dialogSheet);
-    this._rendered = false;
-    this._onKeydown = this._onKeydown.bind(this);
-    this._abortController = null;
+  constructor(){
+    super();this.attachShadow({mode:'open'});adoptSheet(this.shadowRoot,dialogSheet);
+    this._rendered=false;this._abortController=null;this._stopTheme=null;this._closeReason=null;
+    this._modal=new ModalController(this,{surface:'.dialog',onDismiss:reason=>this.close(reason),onClosed:()=>{
+      if(this._closeReason!==null){const reason=this._closeReason;this._closeReason=null;
+        this.dispatchEvent(new CustomEvent('close',{detail:{reason},bubbles:true,composed:true}));}
+    }});
   }
-
-  get open() { return this.hasAttribute('open'); }
-  set open(v) { v ? this.setAttribute('open', '') : this.removeAttribute('open'); }
-
-  get headline() { return this.getAttribute('headline') || ''; }
-  set headline(v) { this.setAttribute('headline', v); }
-
-  get supportingText() { return this.getAttribute('supporting-text') || ''; }
-  set supportingText(v) { this.setAttribute('supporting-text', v); }
-
-  get icon() { return this.getAttribute('icon') || ''; }
-  set icon(v) { this.setAttribute('icon', v); }
-
-  get confirmLabel() { return this.getAttribute('confirm-label') || 'OK'; }
-  set confirmLabel(v) { this.setAttribute('confirm-label', v); }
-
-  get cancelLabel() { return this.getAttribute('cancel-label') || 'Cancel'; }
-  set cancelLabel(v) { this.setAttribute('cancel-label', v); }
-
-  get containerColor() { return this.getAttribute('container-color') || ''; }
-  set containerColor(v) { this.setAttribute('container-color', v); }
-
-  get iconContentColor() { return this.getAttribute('icon-content-color') || ''; }
-  set iconContentColor(v) { this.setAttribute('icon-content-color', v); }
-
-  get titleContentColor() { return this.getAttribute('title-content-color') || ''; }
-  set titleContentColor(v) { this.setAttribute('title-content-color', v); }
-
-  get textContentColor() { return this.getAttribute('text-content-color') || ''; }
-  set textContentColor(v) { this.setAttribute('text-content-color', v); }
-
-  connectedCallback() {
-    if (!this._rendered) {
-      this.render();
-      this._rendered = true;
-      this.setupInteractions();
-    }
-    if (this.open) this._activate();
+  get open(){return this.hasAttribute('open');}
+  set open(value){this.toggleAttribute('open',!!value);}
+  get headline(){return this.getAttribute('headline')||'';}
+  set headline(value){this.setAttribute('headline',value);}
+  get supportingText(){return this.getAttribute('supporting-text')||'';}
+  set supportingText(value){this.setAttribute('supporting-text',value);}
+  get icon(){return this.getAttribute('icon')||'';}
+  set icon(value){this.setAttribute('icon',value);}
+  get confirmLabel(){return this.getAttribute('confirm-label')||'OK';}
+  set confirmLabel(value){this.setAttribute('confirm-label',value);}
+  get cancelLabel(){return this.getAttribute('cancel-label')||'Cancel';}
+  set cancelLabel(value){this.setAttribute('cancel-label',value);}
+  get containerColor(){return this.getAttribute('container-color')||'';}
+  set containerColor(value){this.setAttribute('container-color',value);}
+  get iconContentColor(){return this.getAttribute('icon-content-color')||'';}
+  set iconContentColor(value){this.setAttribute('icon-content-color',value);}
+  get titleContentColor(){return this.getAttribute('title-content-color')||'';}
+  set titleContentColor(value){this.setAttribute('title-content-color',value);}
+  get textContentColor(){return this.getAttribute('text-content-color')||'';}
+  set textContentColor(value){this.setAttribute('text-content-color',value);}
+  get tonalElevation(){const value=Number(this.getAttribute('tonal-elevation'));return Number.isFinite(value)?value:0;}
+  set tonalElevation(value){if(!Number.isFinite(value))throw new TypeError('Dialog tonalElevation must be finite.');this.setAttribute('tonal-elevation',value);}
+  connectedCallback(){
+    if(!this._rendered){this.render();this._rendered=true;}
+    this.setupInteractions();this._sync();
+    this._stopTheme?.();this._stopTheme=observeThemeContext(this,()=>this._syncColors());
+    this._modal.sync(this.open);
   }
-
-  disconnectedCallback() {
-    this._abortController?.abort();
-    this._abortController = null;
-    this._deactivate();
+  disconnectedCallback(){this._abortController?.abort();this._abortController=null;
+    this._stopTheme?.();this._stopTheme=null;this._closeReason=null;this._modal.detach();}
+  attributeChangedCallback(name,oldValue,newValue){
+    if(!this._rendered||oldValue===newValue)return;
+    if(name==='open'){if(this.open)this._closeReason=null;this._modal.sync(this.open);}
+    else this._sync();
   }
-
-  attributeChangedCallback(name, oldV, newV) {
-    if (!this._rendered || oldV === newV) return;
-    if (name === 'open') {
-      this.open ? this._activate() : this._deactivate();
-    } else {
-      this.render();
-      this.setupInteractions();
-    }
+  show(){this._closeReason=null;this.open=true;this._modal.sync(true);}
+  close(reason='dismiss'){
+    if(!this.open||this._modal.closing)return;this._closeReason=reason;this.open=false;
   }
-
-  show() { this.open = true; }
-
-  close(reason = 'dismiss') {
-    if (!this.open) return;
-    const dialog = this.shadowRoot.querySelector('.dialog');
-    const scrim = this.shadowRoot.querySelector('.scrim');
-
-    if (dialog && scrim) {
-      dialog.style.transition = 'transform 200ms cubic-bezier(0.2, 0, 0, 1), opacity 200ms linear';
-      dialog.style.transform = 'scale(0.88, 0.84) translateY(16px)';
-      dialog.style.opacity = '0';
-
-      scrim.style.transition = 'opacity 200ms linear';
-      scrim.style.opacity = '0';
-
-      setTimeout(() => {
-        this.open = false;
-        dialog.style.transform = '';
-        dialog.style.transition = '';
-        dialog.style.opacity = '';
-        scrim.style.opacity = '';
-        scrim.style.transition = '';
-        this._deactivate();
-        this.dispatchEvent(new CustomEvent('close', { detail: { reason }, bubbles: true, composed: true }));
-      }, 200);
-    } else {
-      this.open = false;
-      this._deactivate();
-      this.dispatchEvent(new CustomEvent('close', { detail: { reason }, bubbles: true, composed: true }));
-    }
-  }
-
-  render() {
-    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    const containerColor = this.containerColor;
-    const iconColor = this.iconContentColor;
-    const titleColor = this.titleContentColor;
-    const textColor = this.textContentColor;
-
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="scrim" part="scrim"></div>
-      <div class="dialog-container" part="dialog-container">
-        <div class="dialog" role="dialog" aria-modal="true"
-          aria-labelledby="dlg-headline" aria-describedby="dlg-supporting"
-          style="${containerColor ? `background-color: ${sanitizeAttribute(containerColor)};` : ''}${textColor ? `color: ${sanitizeAttribute(textColor)};` : ''}"
-          part="dialog">
-          <span class="icon material-symbols-rounded" style="${iconColor ? `color: ${sanitizeAttribute(iconColor)};` : ''}">${escapeHtml(this.getAttribute('icon'))}</span>
-          <h2 class="headline" id="dlg-headline" style="${titleColor ? `color: ${sanitizeAttribute(titleColor)};` : ''}">${escapeHtml(this.getAttribute('headline'))}</h2>
-          <div class="supporting" id="dlg-supporting">${escapeHtml(this.getAttribute('supporting-text'))}</div>
-          <div class="content"><slot></slot></div>
-          <div class="actions" part="actions">
-            <slot name="actions">
-              <button class="action" type="button" data-action="cancel">${escapeHtml(this.getAttribute('cancel-label') || 'Cancel')}</button>
-              <button class="action" type="button" data-action="confirm">${escapeHtml(this.getAttribute('confirm-label') || 'OK')}</button>
-            </slot>
+  render(){
+    const hasAdopted=this.shadowRoot.adoptedStyleSheets?.length;
+    this.shadowRoot.innerHTML=(hasAdopted?'':'<style>'+defaultStyle+'</style>')+`
+      <dialog class="modal-window" aria-modal="true">
+        <div class="modal-scrim" part="scrim"></div>
+        <div class="dialog-container" part="dialog-container">
+          <div class="dialog" part="dialog">
+            <span class="icon" aria-hidden="true"></span>
+            <h2 class="headline" id="dlg-headline"></h2>
+            <div class="body">
+              <div class="supporting" id="dlg-supporting"></div>
+              <div class="content"><slot></slot></div>
+            </div>
+            <div class="actions" part="actions"><slot name="actions">
+              <div class="action-flow">
+                <md-button class="action" variant="text" size="s" data-action="confirm" autofocus></md-button>
+                <md-button class="action" variant="text" size="s" data-action="cancel"></md-button>
+              </div>
+            </slot></div>
+            <span class="color-probe" hidden aria-hidden="true"></span>
           </div>
         </div>
-      </div>
-    `;
+      </dialog>`;
   }
-
-  _focusable() {
-    const d = this.shadowRoot.querySelector('.dialog');
-    if (!d) return [];
-
-    const shadowFocusable = [...d.querySelectorAll(
-      'button:not([disabled]), [tabindex]:not([tabindex="-1"]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
-    )];
-
-    const slots = this.shadowRoot.querySelectorAll('slot');
-    const slottedFocusable = [];
-    slots.forEach(slot => {
-      slot.assignedElements({ flatten: true }).forEach(el => {
-        if (el.matches && el.matches('button, input, select, textarea, a[href], [tabindex]')) {
-          slottedFocusable.push(el);
-        }
-        if (el.querySelectorAll) {
-          slottedFocusable.push(...el.querySelectorAll('button:not([disabled]), [tabindex]:not([tabindex="-1"]), input:not([disabled]), a[href]'));
-        }
-      });
-    });
-
-    return [...shadowFocusable, ...slottedFocusable];
+  _sync(){
+    if(!this.isConnected)return;
+    const root=this.shadowRoot,dialog=root.querySelector('.dialog'),window=root.querySelector('.modal-window');
+    dialog.classList.toggle('has-icon',!!this.icon);
+    for(const[selector,text]of[['.icon',this.icon],['.headline',this.headline],['.supporting',this.supportingText]]){
+      const element=root.querySelector(selector);element.textContent=text;element.hidden=!text;
+    }
+    const assigned=root.querySelector('slot:not([name])').assignedNodes({flatten:true});
+    root.querySelector('.body').hidden=!this.supportingText&&!assigned.some(node=>node.nodeType===1||node.textContent.trim());
+    if(this.headline)window.setAttribute('aria-labelledby','dlg-headline');else window.removeAttribute('aria-labelledby');
+    if(this.supportingText)window.setAttribute('aria-describedby','dlg-supporting');else window.removeAttribute('aria-describedby');
+    root.querySelector('[data-action="confirm"]').setAttribute('label',this.confirmLabel);
+    root.querySelector('[data-action="cancel"]').setAttribute('label',this.cancelLabel);
+    this._syncColors();
   }
-
-  _activate() {
-    document.removeEventListener('keydown', this._onKeydown);
-    document.addEventListener('keydown', this._onKeydown);
-    document.body.style.overflow = 'hidden';
-
-    const dialog = this.shadowRoot.querySelector('.dialog');
-    const scrim = this.shadowRoot.querySelector('.scrim');
-
-    if (scrim) {
-      scrim.style.opacity = '0';
-      scrim.style.transition = 'opacity 240ms ease';
-    }
-
-    if (dialog) {
-      dialog.style.transform = 'scale(0.82, 0.78) translateY(24px)';
-      dialog.style.opacity = '0';
-      dialog.style.transition = 'none';
-      void dialog.offsetHeight; // Force reflow
-
-      requestAnimationFrame(() => {
-        dialog.style.transition = 'transform 320ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.35, 0.64, 1)), opacity 220ms ease';
-        dialog.style.transform = 'scale(1, 1) translateY(0)';
-        dialog.style.opacity = '1';
-        if (scrim) scrim.style.opacity = '0.4';
-      });
-
-      setTimeout(() => {
-        dialog.style.transition = '';
-        if (scrim) scrim.style.transition = '';
-      }, 320);
-    }
-
-    const f = this._focusable();
-    if (f.length) {
-      setTimeout(() => f[f.length - 1]?.focus({ preventScroll: true }), 50);
+  _syncColors(){
+    if(!this.isConnected)return;
+    const dialog=this.shadowRoot.querySelector('.dialog'),probe=this.shadowRoot.querySelector('.color-probe');
+    if(!dialog||!probe)return;
+    const color=resolveSurfaceColors(this,probe,{container:this.containerColor||'var(--md-sys-color-surface-container-high)',
+      content:'var(--md-sys-color-on-surface)',elevation:this.tonalElevation});
+    dialog.style.setProperty('--_md-dialog-container',color.container);
+    dialog.style.setProperty('--md-absolute-tonal-elevation',String(color.total));
+    for(const[name,value]of[['icon',this.iconContentColor],['title',this.titleContentColor],['text',this.textContentColor]]){
+      if(value)dialog.style.setProperty('--_md-dialog-'+name,value);else dialog.style.removeProperty('--_md-dialog-'+name);
     }
   }
-
-  _deactivate() {
-    document.removeEventListener('keydown', this._onKeydown);
-    document.body.style.overflow = '';
-  }
-
-  _onKeydown(e) {
-    if (!this.open) return;
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      this.close('escape');
-      return;
-    }
-    if (e.key === 'Tab') {
-      const f = this._focusable();
-      if (!f.length) return;
-      const first = f[0], last = f[f.length - 1];
-      const active = this.shadowRoot.activeElement || document.activeElement;
-      if (e.shiftKey && (active === first || active === this)) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  }
-
-  setupInteractions() {
-    this._abortController?.abort();
-    this._abortController = new AbortController();
-    const { signal } = this._abortController;
-
-    const scrim = this.shadowRoot.querySelector('.scrim');
-    if (scrim) {
-      const onScrimDismiss = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.close('scrim');
-      };
-      scrim.addEventListener('click', onScrimDismiss, { signal });
-    }
-
-    this.shadowRoot.querySelectorAll('.action').forEach((el) => {
-      el.addEventListener('click', () => {
-        const action = el.getAttribute('data-action') || 'action';
-        this.dispatchEvent(new CustomEvent(action, { bubbles: true, composed: true }));
-        this.close(action);
-      }, { signal });
-    });
+  setupInteractions(){
+    this._abortController?.abort();this._abortController=new AbortController();const{signal}=this._abortController;
+    this.shadowRoot.querySelectorAll('slot').forEach(slot=>slot.addEventListener('slotchange',()=>this._sync(),{signal}));
+    this.shadowRoot.querySelectorAll('.action').forEach(element=>element.addEventListener('click',()=>{
+      if(!this.open||this._modal.closing)return;const action=element.dataset.action;
+      this.dispatchEvent(new CustomEvent(action,{bubbles:true,composed:true}));this.close(action);
+    },{signal}));
   }
 }
-
-if (!customElements.get('md-dialog')) {
-  customElements.define('md-dialog', MdDialog);
-}
+if(!customElements.get('md-dialog'))customElements.define('md-dialog',MdDialog);

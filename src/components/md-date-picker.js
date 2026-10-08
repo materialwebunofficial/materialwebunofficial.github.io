@@ -12,10 +12,10 @@
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md
  */
 
-import { SpringPhysics } from '../motion/spring-physics.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+import {ModalController,MODAL_STYLE,renderModalContent} from './modal-controller.js';
 
-const defaultStyle = `
+const defaultStyle = MODAL_STYLE+`
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -33,12 +33,10 @@ const defaultStyle = `
   .scrim {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
     padding: 24px 16px;
     box-sizing: border-box;
   }
@@ -149,12 +147,13 @@ const defaultStyle = `
     padding: 24px;
     width: 328px;
     max-width: calc(100vw - 32px);
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     gap: 16px;
     box-sizing: border-box;
-    will-change: transform;
+    max-height: 100%;
+    overflow-y: auto;
     margin: auto;
   }
 
@@ -486,28 +485,29 @@ export class MdDatePicker extends HTMLElement {
     };
     this._rendered = false;
     this._abortController = null;
+    this._modal=new ModalController(this,{surface:'.picker-dialog',onDismiss:reason=>this.close(reason)});
   }
 
   connectedCallback() {
     if (!this._rendered) {
       this._parseInitialAttributes();
       this.render();
-      this._setup();
       this._rendered = true;
     }
+    this._setup();
     this._sync();
   }
 
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._modal.detach();
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     if (name === 'open') {
       this._sync();
-      if (this.open && !this.inline) this._animateOpen();
     }
     if (name === 'value' && this.value) {
       const parsed = parseDateMMDDYYYY(this.value);
@@ -591,25 +591,19 @@ export class MdDatePicker extends HTMLElement {
 
   show() {
     this.open = true;
-    if (!this.inline) document.body.style.overflow = 'hidden';
+    this._sync();
   }
   close() {
     this.open = false;
-    if (!this.inline) document.body.style.overflow = '';
-  }
-
-  _animateOpen() {
-    const dialog = this.shadowRoot.querySelector('.picker-dialog');
-    if (dialog) {
-      SpringPhysics.animateProperty(dialog, 'scale', 0.9, 1.0, 'expressiveSpatialFast');
-    }
   }
 
   _sync() {
     if (this.inline) {
       this.style.display = 'inline-block';
+      this._modal.detach();
     } else {
-      this.style.display = this.open ? 'block' : 'none';
+      this.style.display = 'contents';
+      this._modal.sync(this.open);
     }
   }
 
@@ -617,25 +611,6 @@ export class MdDatePicker extends HTMLElement {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-
-    const scrim = this.shadowRoot.querySelector('.scrim');
-    if (scrim) {
-      const onScrimDismiss = (e) => {
-        if (e.target === scrim) {
-          e.preventDefault();
-          this.close();
-        }
-      };
-      scrim.addEventListener('click', onScrimDismiss, { signal });
-      scrim.addEventListener('pointerdown', onScrimDismiss, { signal });
-      scrim.addEventListener('touchstart', onScrimDismiss, { signal, passive: false });
-    }
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.open && !this.inline) {
-        this.close();
-      }
-    }, { signal });
 
     const prevBtn = this.shadowRoot.querySelector('#prev-month');
     const nextBtn = this.shadowRoot.querySelector('#next-month');
@@ -664,6 +639,7 @@ export class MdDatePicker extends HTMLElement {
         this.state.displayMode = this.state.displayMode === 'picker' ? 'input' : 'picker';
         this.render();
         this._setup();
+        this._sync();
       }, { signal });
     }
 
@@ -698,7 +674,7 @@ export class MdDatePicker extends HTMLElement {
           this.value = formatDateMMDDYYYY(parsed);
           this._updateCalendarGrid();
         }
-      });
+      }, { signal });
     }
 
     // Range input listeners
@@ -712,7 +688,7 @@ export class MdDatePicker extends HTMLElement {
           this.startDate = formatDateMMDDYYYY(s);
           this._updateHeader();
         }
-      });
+      }, { signal });
       rangeEndInput.addEventListener('input', (e) => {
         const endD = parseDateMMDDYYYY(e.target.value);
         if (endD) {
@@ -720,7 +696,7 @@ export class MdDatePicker extends HTMLElement {
           this.endDate = formatDateMMDDYYYY(endD);
           this._updateHeader();
         }
-      });
+      }, { signal });
     }
 
     this._updateUI();
@@ -1011,10 +987,10 @@ export class MdDatePicker extends HTMLElement {
 
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      ${this.inline ? cardContentHtml : `<div class="scrim" role="dialog" aria-modal="true">${cardContentHtml}</div>`}
-    `;
+    if(!hasAdopted&&!this.shadowRoot.querySelector('style')){
+      const style=document.createElement('style');style.textContent=defaultStyle;this.shadowRoot.prepend(style);
+    }
+    renderModalContent(this,this.inline?cardContentHtml:`<div class="scrim">${cardContentHtml}</div>`,{inline:this.inline,label:this.range?'Select date range':'Select date'});
   }
 }
 

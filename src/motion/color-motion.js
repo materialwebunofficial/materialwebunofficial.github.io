@@ -38,7 +38,11 @@ export class ColorSpringVector {
     if(target.every((component,index)=>component===this.target[index]))return;
     const current=this.sample(now);this.target=target;
     if(snap){this.finish();return;}
-    const channels=target.map((to,index)=>({from:current.value[index],to,velocity:current.velocity[index],
+    // AnimateAsState retargets from Animatable.value: the original Color vector
+    // converter clamps that converted color, while preserving raw velocity.
+    // This matters when a caller supplies an underdamped effects spring.
+    const converted=current.value.map((value,index)=>clamp(value,index<2?0:-.5,index<2?1:.5));
+    const channels=target.map((to,index)=>({from:converted[index],to,velocity:current.velocity[index],
       stiffness:Math.fround(spec.stiffness),dampingRatio:Math.fround(spec.dampingRatio)}));
     this.animation={channels,start:now,duration:Math.max(...channels.map(channel=>springDuration(channel)))};
   }

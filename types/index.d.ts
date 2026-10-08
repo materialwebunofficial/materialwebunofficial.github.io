@@ -52,17 +52,33 @@ export class MdBaseComponent extends HTMLElement {
 // ---------------------------------------------------------------------------
 // Components
 // ---------------------------------------------------------------------------
-export class MdButton extends MdBaseComponent {
-  variant: 'filled' | 'elevated' | 'tonal' | 'outlined' | 'text';
+export interface ButtonElevationDefinition {
+  readonly defaultElevation: number;
+  readonly pressedElevation: number;
+  readonly focusedElevation: number;
+  readonly hoveredElevation: number;
+  readonly disabledElevation: number;
+}
+
+export class MdButton extends HTMLElement {
+  static formAssociated: boolean;
+  readonly variant: 'filled' | 'elevated' | 'tonal' | 'outlined' | 'text';
   readonly size: 'xs' | 's' | 'm' | 'l' | 'xl';
-  shape: 'round' | 'square';
-  label: string;
-  icon: string;
-  trailingIcon: string;
+  readonly shape: 'round' | 'square';
+  readonly labelText: string;
+  readonly icon: string;
+  readonly trailingIcon: string;
+  readonly toggle: boolean;
+  selected: boolean;
   disabled: boolean;
-  type: 'button' | 'submit' | 'reset';
-  name: string;
-  value: string;
+  readonly type: 'button' | 'submit' | 'reset';
+  readonly form: HTMLFormElement | null | undefined;
+  /** Five numeric dp/CSS-pixel targets; null removes elevation, undefined restores variant defaults. */
+  elevation: ButtonElevationDefinition | null | undefined;
+  connectedCallback(): void;
+  disconnectedCallback(): void;
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
+  formDisabledCallback(disabled: boolean): void;
 }
 
 export class MdSplitButton extends MdBaseComponent {
@@ -98,10 +114,30 @@ export class MdFab extends MdBaseComponent {
   elevation: 'default' | 'bottom-app-bar';
 }
 
+export interface CardElevation {
+  defaultElevation?: number;
+  pressedElevation?: number;
+  focusedElevation?: number;
+  hoveredElevation?: number;
+  disabledElevation?: number;
+  draggedElevation?: number;
+}
+/** Four explicit AndroidX CardColors constructor colors; CSS colors may use theme variables. */
+export interface CardColors {
+  containerColor: string;
+  contentColor: string;
+  disabledContainerColor: string;
+  disabledContentColor: string;
+}
 export class MdCard extends MdBaseComponent {
   variant: 'elevated' | 'filled' | 'outlined';
   interactive: boolean;
+  /** Applies to the clickable overload; static Cards use enabled colors. */
   disabled: boolean;
+  href: string;
+  /** Partial default-factory overrides; undefined restores variant defaults. */
+  elevation: Readonly<CardElevation> | undefined;
+  colors: Readonly<CardColors> | undefined;
 }
 
 export class MdChip extends MdBaseComponent {
@@ -254,24 +290,113 @@ export class MdBottomSheet extends MdBaseComponent {
   close(): void;
 }
 
-export class MdSnackbar extends MdBaseComponent {
+export type SnackbarDuration = 'short' | 'long' | 'indefinite';
+export type SnackbarResult = 'action-performed' | 'dismissed';
+export interface SnackbarVisuals {
+  readonly message: string;
+  readonly actionLabel?: string | null;
+  readonly withDismissAction?: boolean;
+  readonly duration?: SnackbarDuration;
+}
+export interface SnackbarData {
+  readonly visuals: Readonly<SnackbarVisuals>;
+  performAction(): void;
+  dismiss(): void;
+}
+export interface SnackbarRequestOptions { signal?: AbortSignal; }
+export class SnackbarHostState {
+  readonly currentSnackbarData: SnackbarData | null;
+  subscribe(listener: (data: SnackbarData | null) => void): () => void;
+  showSnackbar(visuals: SnackbarVisuals, options?: SnackbarRequestOptions): Promise<SnackbarResult>;
+  showSnackbar(message: string, actionLabel?: string | null, withDismissAction?: boolean, duration?: SnackbarDuration, options?: SnackbarRequestOptions): Promise<SnackbarResult>;
+}
+export class MdSnackbar extends HTMLElement {
   open: boolean;
-  message: string;
-  actionLabel: string;
-  actionUrl: string;
-  closeable: boolean;
-  duration: number;
-  show(message?: string, actionLabel?: string, duration?: number): void;
-  close(): void;
+  get message(): string;
+  set message(value: string | null | undefined);
+  get actionLabel(): string | null;
+  set actionLabel(value: string | null | undefined);
+  get duration(): SnackbarDuration;
+  set duration(value: SnackbarDuration | null | undefined);
+  /** HTML timeout override; zero means indefinite. Null removes the override. */
+  get timeout(): number;
+  set timeout(value: number | null | undefined);
+  withDismissAction: boolean;
+  actionOnNewLine: boolean;
+  twoLine: boolean;
+  get containerColor(): string;
+  set containerColor(value: string | null | undefined);
+  get contentColor(): string;
+  set contentColor(value: string | null | undefined);
+  get actionContentColor(): string;
+  set actionContentColor(value: string | null | undefined);
+  get actionColor(): string;
+  set actionColor(value: string | null | undefined);
+  get dismissLabel(): string;
+  set dismissLabel(value: string | null | undefined);
+  get shape(): ToolbarShape | null;
+  set shape(value: ToolbarShape | string | null | undefined);
+  get dismissActionContentColor(): string;
+  set dismissActionContentColor(value: string | null | undefined);
+  get hostState(): SnackbarHostState;
+  set hostState(value: SnackbarHostState | null | undefined);
+  recommendedTimeoutMillis?: (original: number, flags: {containsIcons: true; containsText: true; containsControls: boolean}) => number;
+  show(message?: string, actionLabel?: string | null, duration?: SnackbarDuration | number): void;
+  showSnackbar(visuals: SnackbarVisuals, options?: SnackbarRequestOptions): Promise<SnackbarResult>;
+  showSnackbar(message: string, actionLabel?: string | null, withDismissAction?: boolean, duration?: SnackbarDuration, options?: SnackbarRequestOptions): Promise<SnackbarResult>;
+  close(reason?: string): void;
 }
 
-export class MdTooltip extends MdBaseComponent {
+export class MdTooltip extends HTMLElement {
   variant: 'plain' | 'rich';
-  text: string;
-  placement: 'top' | 'bottom' | 'left' | 'right';
+  get text(): string;
+  set text(value: string | null | undefined);
+  get headline(): string | null;
+  set headline(value: string | null | undefined);
+  placement: TooltipPlacement;
+  position: TooltipPlacement;
   open: boolean;
-  headline: string;
   caret: boolean;
+  focusable: boolean;
+  /** Web host supplies touch exploration / switch access state; requires hasAction. */
+  forceFocusableForA11y: boolean;
+  onDismissRequest?: (() => void) | null;
+  enableUserInput: boolean;
+  hasAction: boolean;
+  isPersistent: boolean;
+  get maxWidth(): string;
+  set maxWidth(value: number | string | null | undefined);
+  get containerColor(): string;
+  set containerColor(value: string | null | undefined);
+  get contentColor(): string;
+  set contentColor(value: string | null | undefined);
+  get titleContentColor(): string;
+  set titleContentColor(value: string | null | undefined);
+  get actionContentColor(): string;
+  set actionContentColor(value: string | null | undefined);
+  get shape(): ToolbarShape | null;
+  set shape(value: ToolbarShape | string | null | undefined);
+  get target(): HTMLElement | null;
+  set target(value: HTMLElement | null | undefined);
+  get state(): TooltipState;
+  set state(value: TooltipState | null | undefined);
+  longPressTimeoutMillis?: number;
+  show(priority?: TooltipPriority, options?: {signal?: AbortSignal}): Promise<void>;
+  dismiss(): void;
+}
+export type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right' | 'start' | 'end' | 'above' | 'below';
+export type TooltipPriority = 'default' | 'user-input' | 'prevent-user-input';
+export class TooltipMutatorMutex { constructor(); }
+export class TooltipState {
+  constructor(options?: {initialIsVisible?: boolean; isPersistent?: boolean; mutatorMutex?: TooltipMutatorMutex});
+  readonly isPersistent: boolean;
+  readonly isVisible: boolean;
+  readonly transition: {readonly currentState: boolean; targetState: boolean; readonly isIdle: boolean};
+  subscribe(listener: (state: TooltipState) => void): () => void;
+  completeTransition(value?: boolean): void;
+  show(priority?: TooltipPriority, options?: {signal?: AbortSignal}): Promise<void>;
+  dismiss(): void;
+  onDispose(): void;
 }
 
 export class MdBadge extends MdBaseComponent {
@@ -432,9 +557,39 @@ export class MdSegmentedButton extends MdBaseComponent {
 export class MdDialog extends MdBaseComponent {
   open: boolean;
   headline: string;
+  supportingText: string;
   icon: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  containerColor: string;
+  iconContentColor: string;
+  titleContentColor: string;
+  textContentColor: string;
+  tonalElevation: number;
   show(): void;
-  close(): void;
+  close(reason?: string): void;
+}
+
+/** Web pagination composed from shared Material buttons and dropdown menu. */
+export class MdPaginator extends MdBaseComponent {
+  length: number;
+  pageIndex: number;
+  pageSize: number;
+  pageSizeOptions: number[];
+  hidePageSize: boolean;
+  showFirstLastButtons: boolean;
+  readonly totalPages: number;
+  nextPage(): void;
+  previousPage(): void;
+  firstPage(): void;
+  lastPage(): void;
+}
+
+export interface PaginatorPageDetail {
+  pageIndex: number;
+  previousPageIndex: number;
+  pageSize: number;
+  length: number;
 }
 
 export class MdDivider extends MdBaseComponent {
@@ -451,15 +606,30 @@ export class MdCarousel extends MdBaseComponent {
 
 export class MdDatePicker extends MdBaseComponent {
   value: string;
-  min: string;
-  max: string;
   open: boolean;
+  inline: boolean;
+  variant: 'docked' | 'modal' | 'range' | 'modal-input';
+  range: boolean;
+  startDate: string;
+  endDate: string;
+  showModeToggle: boolean;
+  dateFormatter: string;
+  show(): void;
+  close(): void;
 }
 
 export class MdTimePicker extends MdBaseComponent {
   value: string;
   open: boolean;
-  format24h: boolean;
+  inline: boolean;
+  hour: number;
+  minute: number;
+  is24Hour: boolean;
+  richColors: boolean;
+  layoutType: 'vertical' | 'horizontal';
+  mode: 'dial' | 'input';
+  show(): void;
+  close(): void;
 }
 
 export interface ListItemColorsOptions {
@@ -865,6 +1035,7 @@ declare global {
     'md-navigation-rail': MdNavigationRail;
     'md-segmented-button': MdSegmentedButton;
     'md-dialog': MdDialog;
+    'md-paginator': MdPaginator;
     'md-divider': MdDivider;
     'md-carousel': MdCarousel;
     'md-date-picker': MdDatePicker;

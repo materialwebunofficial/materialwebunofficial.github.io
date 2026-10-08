@@ -1,0 +1,12 @@
+{
+  "source": "https://m3.material.io/components/checkbox/specs",
+  "observedAt": "2026-10-08",
+  "authority": "Current visible Material specification, Tokens & specs table expanded in a browser. Semantic role names are corroborated by the separately pinned Google Material Web token mapping. These decisions intentionally supersede the AndroidX flag-on Transparent unchecked ripple input and inherited-content adapter; they are not native composable execution.",
+  "measurements": {"container":18,"corner":2,"target":48,"stateLayer":40},
+  "states": {
+    "unselected": {"outline":"OnSurfaceVariant","interactionOutline":"OnSurface","stateLayer":"OnSurface","press":"Primary"},
+    "selected": {"outline":"Primary","interactionOutline":"Primary","stateLayer":"Primary","press":"OnSurface"},
+    "error": {"outline":"Error","interactionOutline":"Error","stateLayer":"Error","press":"Error"}
+  },
+  "opacity": {"hover":0.08,"focus":0.1,"press":0.1}
+}

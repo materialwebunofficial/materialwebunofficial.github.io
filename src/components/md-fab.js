@@ -10,12 +10,13 @@
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md & docs/SECURITY-AND-A11Y-SPEC.md
  *   - Hover elevation and content-color state layer; press ripple without whole-button scaling.
  *   - Single release via setPointerCapture (bindPress). NO pointerleave release.
- *   - Default focus opacity layer. Keyboard Enter/Space via native <button>.
+ *   - Default focus opacity layer. Enter/numpad Enter/Space activate on key-up.
  *   - XSS sanitization and AbortSignal memory safety.
  */
 
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { bindFabInteractions } from '../motion/fab-interactions.js';
+import {domPointerInput,domPointerHit,domPointerHoverHit,domPointerOutOfBounds} from '../motion/dom-pointer-geometry.js';
 import { FabExpansion, fabWidth } from '../motion/fab-expansion.js';
 import { minimumInteractiveLayout } from './row-column-layout.js';
 import { observeThemeContext } from '../theme/theme-context.js';
@@ -257,6 +258,7 @@ export class MdFab extends HTMLElement {
     const fabAriaLabel = this.getAttribute('aria-label') || this.label || this.icon || 'Floating action button';
     fab.setAttribute('aria-label', fabAriaLabel);
     fab.disabled = this.disabled;
+    this._pressBinding?.refresh();
     this._syncColors();
     fab.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
     // A parent toolbar can temporarily remove its controls from keyboard
@@ -386,6 +388,7 @@ export class MdFab extends HTMLElement {
 
     this._interactions = bindFabInteractions(fab, {
       disabled: () => this.disabled,
+      hitTest: event => domPointerHoverHit(fab,event),
       configuration: () => {
         const style = getComputedStyle(fab);
         // FloatingActionButtonDefaults.bottomAppBarFabElevation: all states 0dp.
@@ -400,10 +403,12 @@ export class MdFab extends HTMLElement {
         };
       }, signal
     });
-    bindPress(fab, {
+    this._pressBinding = bindPress(fab, {
       disabled: () => this.disabled,
-      onPress: event => { this._interactions.press(true); createRipple(event, fab); },
-      onRelease: () => this._interactions.press(false),
+      keyboardActivation: true,
+      pointerPolicy:{input:event=>domPointerInput(fab,event),hitTest:event=>domPointerHit(fab,event),outOfBounds:event=>domPointerOutOfBounds(fab,event)},
+      onInteraction: ({type,press}) => this._interactions.press(type==='press',press),
+      onPress: event => createRipple(event, fab),
       signal
     });
     this._expansionMedia = matchMedia('(prefers-reduced-motion: reduce)');

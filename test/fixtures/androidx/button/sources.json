@@ -1,0 +1,105 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Button.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Button.kt",
+      "sha256": "9095ad12e5b26a20bf0cdc53ba01f54b7c8ca41ba4ece933d578ef28a2d97240"
+    },
+    {
+      "file": "AnimatedShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/AnimatedShape.kt",
+      "sha256": "246f81812dfae94e6532848370b38b9b118ba07b38d95b0ebc5df24ceee5ebe1"
+    },
+    {
+      "file": "ButtonXSmallTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ButtonXSmallTokens.kt",
+      "sha256": "52faa424719f9a840a250ff3da189aaf5c1b8f3907f3bcf068752246e1bd685c"
+    },
+    {
+      "file": "ButtonSmallTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ButtonSmallTokens.kt",
+      "sha256": "b69bac18f0d6cb6682e8b84f551105cd0d2d485170ff7b47334c78440977976a"
+    },
+    {
+      "file": "ButtonMediumTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ButtonMediumTokens.kt",
+      "sha256": "1d16feacb9799c8aba53d58a8f4f6f2f5559223ac019aeb0c321dfcd62150f5d"
+    },
+    {
+      "file": "ButtonLargeTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ButtonLargeTokens.kt",
+      "sha256": "2f7a093a4d05c0156f85319ea3cb1d3937b467fad2f542c9f03819bbdd9a7226"
+    },
+    {
+      "file": "ButtonXLargeTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ButtonXLargeTokens.kt",
+      "sha256": "2cfbb3ec68847070815bc7614c3d6e6d9bccf38805625718da9a1c50a22090a9"
+    },
+    {
+      "file": "FilledButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FilledButtonTokens.kt",
+      "sha256": "7612e40587f9fa987a817ddd9a89c424da4e5b91edbe850bd3812156c6ee9e33"
+    },
+    {
+      "file": "ElevatedButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ElevatedButtonTokens.kt",
+      "sha256": "4cff9fca4f66e2627d8845873b74b2bcf14eadc50d50fae918869cdbb7db6545"
+    },
+    {
+      "file": "FilledTonalButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FilledTonalButtonTokens.kt",
+      "sha256": "9887aa0fa5ee457e33c1bb428a5ef27fd7e0ab6319186f42f2c103d15e36e2a7"
+    },
+    {
+      "file": "OutlinedButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/OutlinedButtonTokens.kt",
+      "sha256": "cecb8a34196396158d4e62f394fc1f1f95852f4cfe8e5b29d902b1c179d74401"
+    },
+    {
+      "file": "TextButtonTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TextButtonTokens.kt",
+      "sha256": "19a99527114c7844bacab8fba885738f1a662274565dc043d3de2841c4b393b8"
+    },
+    {
+      "file": "ColorSchemeKeyTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ColorSchemeKeyTokens.kt",
+      "sha256": "3b28b50df102ebd8382c7e6b55e43ac5ee2ab29b3958fc7e73561763a7fd71f4"
+    },
+    {
+      "file": "ShapeKeyTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ShapeKeyTokens.kt",
+      "sha256": "161fcd13e9ca20dc802ce492ff4a3373fb9c69ef61b09e1a45a41732510e4b28"
+    },
+    {
+      "file": "ShapeTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ShapeTokens.kt",
+      "sha256": "02178111f81c7f03135cc7157040fa903180e212fd52b8f686b4304080efb5a3"
+    },
+    {
+      "file": "CornerSize.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CornerSize.kt",
+      "sha256": "841638470f1b0d55960d14f9dd84bd8d4f7bfb8aed6ba1ad3595d48c40050268"
+    },
+    {
+      "file": "CornerBasedShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CornerBasedShape.kt",
+      "sha256": "7a333ffcc12a168d35160227b315531e721c6ecd8db6b3b9bec1f0570b38fcdb"
+    },
+    {
+      "file": "Interpolatable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Interpolatable.kt",
+      "sha256": "4a1d9a2d4cdcda57106cbbaf7929b4df81e150fc24c2a146a55ca472ad0bf51b"
+    },
+    {
+      "file": "RoundedCornerShape.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/RoundedCornerShape.kt",
+      "sha256": "4d11b16cc55106431762f18e98516925003e1d8776e757879043b71ea5323d43"
+    },
+    {
+      "file": "MathHelpers.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt",
+      "sha256": "ce262ffce1cdc0ab8231e03bcd1cbf7eef0c015da84fb223552e4097057e13fa"
+    }
+  ]
+}

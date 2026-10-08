@@ -33,3 +33,11 @@ Thumbs.db
 !scripts/generate-motion-tokens.js
 !scripts/test-expressive-parity.mjs
 !scripts/test-app-bars.mjs
+!scripts/test-snackbar.mjs
+!scripts/test-tooltip.mjs
+!scripts/test-buttons.mjs
+!scripts/test-cards.mjs
+!scripts/test-dialogs.mjs
+!scripts/test-paginator.mjs
+!scripts/test-selection.mjs
+!scripts/browser-test-server.mjs

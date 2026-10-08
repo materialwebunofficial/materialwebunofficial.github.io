@@ -10,10 +10,10 @@
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md
  */
 
-import { SpringPhysics } from '../motion/spring-physics.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+import {ModalController,MODAL_STYLE,renderModalContent} from './modal-controller.js';
 
-const defaultStyle = `
+const defaultStyle = MODAL_STYLE+`
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -31,12 +31,10 @@ const defaultStyle = `
   .scrim {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
     padding: 24px 16px;
     box-sizing: border-box;
   }
@@ -46,12 +44,13 @@ const defaultStyle = `
     color: var(--md-sys-color-on-surface, #1D1B20);
     border-radius: var(--md-sys-shape-corner-extra-large, 28px);
     padding: 24px;
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     gap: 20px;
     box-sizing: border-box;
-    will-change: transform;
+    max-height: 100%;
+    overflow-y: auto;
     width: 328px;
     max-width: calc(100vw - 32px);
     margin: auto;
@@ -459,28 +458,30 @@ export class MdTimePicker extends HTMLElement {
     this._rendered = false;
     this._abortController = null;
     this._currentArmAngle = (this.state.hours % 12) * 30;
+    this._modal=new ModalController(this,{surface:'.picker-dialog',onDismiss:reason=>this.close(reason)});
   }
 
   connectedCallback() {
     if (!this._rendered) {
       this._parseInitialAttributes();
       this.render();
-      this._setup();
       this._rendered = true;
     }
+    this._setup();
     this._sync();
   }
 
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._isDragging=false;
+    this._modal.detach();
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     if (name === 'open') {
       this._sync();
-      if (this.open && !this.inline) this._animateOpen();
     }
     if (name === 'value' && this.value) {
       this._parseValue(this.value);
@@ -576,11 +577,11 @@ export class MdTimePicker extends HTMLElement {
 
   show() {
     this.open = true;
-    if (!this.inline) document.body.style.overflow = 'hidden';
+    this._sync();
   }
   close() {
+    clearTimeout(this._unitChangeTimer);
     this.open = false;
-    if (!this.inline) document.body.style.overflow = '';
   }
 
   _parseValue(valStr) {
@@ -594,18 +595,13 @@ export class MdTimePicker extends HTMLElement {
     }
   }
 
-  _animateOpen() {
-    const dialog = this.shadowRoot.querySelector('.picker-dialog');
-    if (dialog) {
-      SpringPhysics.animateProperty(dialog, 'scale', 0.9, 1.0, 'expressiveSpatialFast');
-    }
-  }
-
   _sync() {
     if (this.inline) {
       this.style.display = 'inline-block';
+      this._modal.detach();
     } else {
-      this.style.display = this.open ? 'block' : 'none';
+      this.style.display = 'contents';
+      this._modal.sync(this.open);
     }
   }
 
@@ -613,25 +609,7 @@ export class MdTimePicker extends HTMLElement {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-
-    const scrim = this.shadowRoot.querySelector('.scrim');
-    if (scrim) {
-      const onScrimDismiss = (e) => {
-        if (e.target === scrim) {
-          e.preventDefault();
-          this.close();
-        }
-      };
-      scrim.addEventListener('click', onScrimDismiss, { signal });
-      scrim.addEventListener('pointerdown', onScrimDismiss, { signal });
-      scrim.addEventListener('touchstart', onScrimDismiss, { signal, passive: false });
-    }
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.open && !this.inline) {
-        this.close();
-      }
-    }, { signal });
+    signal.addEventListener('abort',()=>{clearTimeout(this._unitChangeTimer);this._isDragging=false;},{once:true});
 
     const hourCard = this.shadowRoot.querySelector('#hour-card');
     const minCard = this.shadowRoot.querySelector('#min-card');
@@ -657,7 +635,7 @@ export class MdTimePicker extends HTMLElement {
           this.state.hours = val;
           this._emitChange();
         }
-      });
+      }, { signal });
       minInput.addEventListener('input', (e) => {
         let val = parseInt(e.target.value, 10);
         if (!isNaN(val)) {
@@ -665,7 +643,7 @@ export class MdTimePicker extends HTMLElement {
           this.state.minutes = val;
           this._emitChange();
         }
-      });
+      }, { signal });
     }
 
     const amBtn = this.shadowRoot.querySelector('#am-btn');
@@ -676,13 +654,13 @@ export class MdTimePicker extends HTMLElement {
         amBtn.classList.add('active');
         pmBtn.classList.remove('active');
         this._emitChange();
-      });
+      }, { signal });
       pmBtn.addEventListener('click', () => {
         this.state.period = 'PM';
         pmBtn.classList.add('active');
         amBtn.classList.remove('active');
         this._emitChange();
-      });
+      }, { signal });
     }
 
     const modeToggle = this.shadowRoot.querySelector('#mode-toggle-btn');
@@ -691,12 +669,13 @@ export class MdTimePicker extends HTMLElement {
         this.state.mode = this.state.mode === 'dial' ? 'input' : 'dial';
         this.render();
         this._setup();
-      });
+        this._sync();
+      }, { signal });
     }
 
     const cancelBtn = this.shadowRoot.querySelector('#cancel-btn');
     const okBtn = this.shadowRoot.querySelector('#ok-btn');
-    if (cancelBtn) cancelBtn.addEventListener('click', () => this.close());
+    if (cancelBtn) cancelBtn.addEventListener('click', () => this.close(), { signal });
     if (okBtn) {
       okBtn.addEventListener('click', () => {
         this.dispatchEvent(new CustomEvent('confirm', {
@@ -710,7 +689,7 @@ export class MdTimePicker extends HTMLElement {
           composed: true
         }));
         if (!this.inline) this.close();
-      });
+      }, { signal });
     }
 
     const clockFace = this.shadowRoot.querySelector('.clock-face');
@@ -743,26 +722,28 @@ export class MdTimePicker extends HTMLElement {
         this._isDragging = true;
         clockFace.setPointerCapture?.(e.pointerId);
         updateFromAngle(e);
-      });
+      }, { signal });
 
       clockFace.addEventListener('pointermove', (e) => {
         if (this._isDragging) updateFromAngle(e);
-      });
+      }, { signal });
 
       const onEnd = () => {
         if (!this._isDragging) return;
         this._isDragging = false;
         this._emitChange();
         if (this.state.activeUnit === 'hours') {
-          setTimeout(() => {
+          clearTimeout(this._unitChangeTimer);
+          this._unitChangeTimer=setTimeout(() => {
+            if(signal.aborted||!this.isConnected||(!this.inline&&!this.open))return;
             this.state.activeUnit = 'minutes';
             this._updateDisplay(true);
           }, 200);
         }
       };
 
-      clockFace.addEventListener('pointerup', onEnd);
-      clockFace.addEventListener('pointercancel', onEnd);
+      clockFace.addEventListener('pointerup', onEnd, { signal });
+      clockFace.addEventListener('pointercancel', onEnd, { signal });
     }
 
     this._updateDisplay(true);
@@ -978,10 +959,10 @@ export class MdTimePicker extends HTMLElement {
 
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      ${this.inline ? dialogContent : `<div class="scrim" role="dialog" aria-modal="true">${dialogContent}</div>`}
-    `;
+    if(!hasAdopted&&!this.shadowRoot.querySelector('style')){
+      const style=document.createElement('style');style.textContent=defaultStyle;this.shadowRoot.prepend(style);
+    }
+    renderModalContent(this,this.inline?dialogContent:`<div class="scrim">${dialogContent}</div>`,{inline:this.inline,label:'Select time'});
   }
 }
 

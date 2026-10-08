@@ -22,9 +22,9 @@ export async function testFabInteractions(browser, base) {
     const frame = time => page.evaluate(t => window.__fabFrame(t), time);
     const elevation = () => button.evaluate(node => Number(node.dataset.elevation));
     const alpha = () => button.evaluate(node => Number(getComputedStyle(node, '::before').opacity));
-    const pointer = {pointerId: 83, pointerType: 'mouse', button: 0, isPrimary: true};
+    const pointer=async(target,type)=>target.evaluate((b,type)=>{const r=b.getBoundingClientRect();b.dispatchEvent(new PointerEvent(type,{pointerId:83,pointerType:'mouse',button:0,isPrimary:true,bubbles:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));},type);
     assert.equal(await elevation(), 6);
-    await button.dispatchEvent('pointerenter', pointer);
+    await pointer(button,'pointerenter');
     const entry = nativeElevation(null, 'hover', 6, 8);
     for (const [time, expected] of entry.frames) {
       await frame(time); assert.equal(await elevation(), expected, 'native incoming FAB elevation');
@@ -34,7 +34,7 @@ export async function testFabInteractions(browser, base) {
     }
     near(await alpha(), .08, 'hover opacity');
     assert.equal(await page.evaluate(() => window.__fabJobs.size), 0, 'settled hover has no perpetual frame loop');
-    await button.dispatchEvent('pointerleave', pointer);
+    await pointer(button,'pointerleave');
     const exit = nativeElevation('hover', null, 8, 6);
     for (const [time, expected] of exit.frames) { await frame(200 + time); assert.equal(await elevation(), expected, 'native outgoing FAB elevation'); }
     near(await alpha(), 0, 'hover exit');
@@ -43,22 +43,22 @@ export async function testFabInteractions(browser, base) {
     // Kotlin start values. Releasing to the same target must not restart it.
     for (const [index, history] of oracle.interrupted.entries()) {
       const start = 1000 + index * 700;
-      await frame(start); await button.dispatchEvent('pointerenter', pointer); await frame(start + history.cut);
+      await frame(start); await pointer(button,'pointerenter'); await frame(start + history.cut);
       assert.equal(await elevation(), history.from);
-      await button.dispatchEvent('pointerdown', pointer);
+      await pointer(button,'pointerdown');
       for (const [time, expected] of history.frames) { await frame(start + history.cut + time); assert.equal(await elevation(), expected, 'native interrupted hover-to-press'); }
-      await button.dispatchEvent('pointercancel', pointer); await button.dispatchEvent('pointerleave', pointer); await frame(start + 600);
+      await pointer(button,'pointercancel'); await pointer(button,'pointerleave'); await frame(start + 600);
     }
 
     // Most recent active interaction wins for elevation. Press does not enter
     // the separate hover/focus state-layer ordering.
-    await frame(4000); await button.dispatchEvent('pointerdown', pointer);
-    await button.dispatchEvent('pointerenter', pointer); await frame(4120);
+    await frame(4000); await pointer(button,'pointerdown');
+    await pointer(button,'pointerenter'); await frame(4120);
     assert.equal(await elevation(), 8, 'hover starting after press controls elevation');
     near(await alpha(), .08, 'press leaves hover state-layer ordering intact');
-    await button.dispatchEvent('pointerleave', pointer); await frame(4240);
+    await pointer(button,'pointerleave'); await frame(4240);
     assert.equal(await elevation(), 6, 'removing hover reveals the still-active press');
-    await button.dispatchEvent('pointercancel', pointer); await frame(4500);
+    await pointer(button,'pointercancel'); await frame(4500);
 
     await page.keyboard.press('Tab'); assert.equal(await button.evaluate(node => node.matches(':focus-visible')), true);
     const focused = nativeAlpha(null, 'focus', 0, .1);
@@ -68,31 +68,31 @@ export async function testFabInteractions(browser, base) {
     assert.equal(await host.evaluate(node => node.shadowRoot.querySelector('button') === node._button), true);
     const opaque = await button.evaluate(node => { const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1; const ctx = canvas.getContext('2d'); ctx.fillStyle = getComputedStyle(node, '::before').backgroundColor; ctx.fillRect(0, 0, 1, 1); return Array.from(ctx.getImageData(0, 0, 1, 1).data); });
     assert.deepEqual(opaque, [10, 20, 30, 255], 'state-layer color replaces content alpha');
-    await button.dispatchEvent('pointerenter', pointer); await frame(4701);
+    await pointer(button,'pointerenter'); await frame(4701);
     near(await alpha(), nativeAlpha('focus', 'hover', .1, .08).frames.find(record => record[0] === 1)[1], 'new hover supersedes older focus opacity');
-    await button.dispatchEvent('pointerleave', pointer); await frame(4750);
+    await pointer(button,'pointerleave'); await frame(4750);
     near(await alpha(), .1, 'removing hover restores the still-active focus'); await frame(4800);
     await button.evaluate(node => node.blur());
     const unfocused = nativeAlpha('focus', null, .1, 0);
     for (const [time, expected] of unfocused.frames) { await frame(4800 + time); near(await alpha(), expected, 'native 15ms focus exit'); }
 
-    await frame(5000); await button.dispatchEvent('pointerenter', pointer); await frame(5016);
+    await frame(5000); await pointer(button,'pointerenter'); await frame(5016);
     await host.evaluate(node => node.lowered = true);
     assert.equal(await elevation(), 3, 'new lowered elevation snaps the current hover target');
     assert.equal(await page.evaluate(() => window.__fabJobs.size), 0, 'configuration snap retires the previous frame immediately');
-    await button.dispatchEvent('pointerleave', pointer); await frame(5240); assert.equal(await elevation(), 1);
+    await pointer(button,'pointerleave'); await frame(5240); assert.equal(await elevation(), 1);
     await host.evaluate(node => node.disabled = true); assert.equal(await elevation(), 0);
     await host.evaluate(node => node.disabled = false); assert.equal(await elevation(), 1, 'enabling restores default elevation immediately');
 
-    await page.emulateMedia({reducedMotion: 'reduce'}); await button.dispatchEvent('pointerenter', pointer);
+    await page.emulateMedia({reducedMotion: 'reduce'}); await pointer(button,'pointerenter');
     assert.equal(await elevation(), 3); near(await alpha(), .08, 'reduced motion retains static hover indication');
-    await button.dispatchEvent('pointerleave', pointer); assert.equal(await elevation(), 1);
+    await pointer(button,'pointerleave'); assert.equal(await elevation(), 1);
     await page.emulateMedia({reducedMotion: 'no-preference'});
-    await button.dispatchEvent('pointerenter', pointer); await frame(5272);
+    await pointer(button,'pointerenter'); await frame(5272);
     await page.emulateMedia({reducedMotion: 'reduce'});
     await page.waitForFunction(() => document.querySelector('#fab').shadowRoot.querySelector('button').dataset.elevation === '3', null, {polling: 10});
     assert.equal(await elevation(), 3, 'midflight reduced motion settles');
-    await button.dispatchEvent('pointerleave', pointer);
+    await pointer(button,'pointerleave');
     await page.emulateMedia({reducedMotion: 'no-preference'});
 
     // Live token values are resolved through the actual inherited scope.
@@ -100,14 +100,14 @@ export async function testFabInteractions(browser, base) {
     assert.match(await button.evaluate(node => getComputedStyle(node).boxShadow), /11px/);
     await host.evaluate(node => { const parent = node.parentElement; node.remove(); parent.append(node); });
     assert.equal(await elevation(), 1); assert.equal(await button.locator('span[aria-hidden="true"][style*="display: none"]').count(), 2, 'reconnect has one pair of shadow probes');
-    await button.dispatchEvent('pointerenter', pointer); await frame(5400); assert.equal(await elevation(), 3);
+    await pointer(button,'pointerenter'); await frame(5400); assert.equal(await elevation(), 3);
     await host.evaluate(node => node.remove()); await frame(5700);
     assert.equal(await page.evaluate(() => window.__fabJobs.size), 0, 'detach cancels all interaction frames');
 
     await page.locator('#fixture').evaluate(node => node.innerHTML = '<md-toolbar id="toolbar" variant="floating" expanded><md-fab id="toolbar-fab" slot="fab" size="baseline" aria-label="Create"></md-fab></md-toolbar>');
     const toolbarFab = page.locator('#toolbar-fab').locator('button');
     await page.waitForFunction(() => document.querySelector('#toolbar-fab').shadowRoot.querySelector('button').dataset.elevation === '3');
-    await toolbarFab.dispatchEvent('pointerenter', pointer); await frame(5820);
+    await pointer(toolbarFab,'pointerenter'); await frame(5820);
     assert.equal(await toolbarFab.evaluate(node => Number(node.dataset.elevation)), 6, 'native toolbar helper uses Level2/Level3');
     await page.locator('#toolbar').evaluate(node => node.remove()); await frame(6000);
     assert.deepEqual(errors, []);

@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const revision='a095da93f8e98dea8748ceed79ea8427aade245f',prefix='compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/';
+const directory=new URL('../../test/fixtures/androidx/button/',import.meta.url);
+const names=['Button.kt','internal/AnimatedShape.kt','tokens/ButtonXSmallTokens.kt','tokens/ButtonSmallTokens.kt','tokens/ButtonMediumTokens.kt','tokens/ButtonLargeTokens.kt','tokens/ButtonXLargeTokens.kt','tokens/FilledButtonTokens.kt','tokens/ElevatedButtonTokens.kt','tokens/FilledTonalButtonTokens.kt','tokens/OutlinedButtonTokens.kt','tokens/TextButtonTokens.kt','tokens/ColorSchemeKeyTokens.kt','tokens/ShapeKeyTokens.kt','tokens/ShapeTokens.kt'];
+const locations=names.map(name=>prefix+name);
+locations.push('compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CornerSize.kt','compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CornerBasedShape.kt','compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Interpolatable.kt');
+locations.push('compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/RoundedCornerShape.kt');
+locations.push('compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt');
+fs.mkdirSync(directory,{recursive:true});
+const sources=await Promise.all(locations.map(async name=>{const file=name.split('/').at(-1),url=`https://raw.githubusercontent.com/androidx/androidx/${revision}/${name}`,response=await fetch(url);if(!response.ok)throw new Error(`${file}: ${response.status}`);const bytes=Buffer.from(await response.arrayBuffer());fs.writeFileSync(new URL(file,directory),bytes);return{file,url,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};}));
+fs.writeFileSync(new URL('sources.json',directory),JSON.stringify({revision,sources},null,2)+'\n');
+console.log(`Cached ${sources.length} unchanged licensed Button defaults/token references.`);

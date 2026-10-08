@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import {SnackbarHostState, snackbarVisuals, snackbarTimeoutMillis} from '../../src/components/snackbar-host-state.js';
+import {SpringValue} from '../../src/motion/selection-motion.js';
+const fixture = new URL('../fixtures/androidx/snackbar/', import.meta.url);
+const manifest = JSON.parse(fs.readFileSync(new URL('sources.json', fixture)));
+for (const {file, sha256} of manifest.sources) assert.equal(crypto.createHash('sha256').update(fs.readFileSync(new URL(file, fixture))).digest('hex'), sha256);
+assert.equal(snackbarVisuals('Saved').duration, 'short');
+assert.equal(snackbarVisuals('Saved', '').duration, 'indefinite', 'non-null empty action retains source default');
+assert.equal(snackbarVisuals('Saved', 'Undo').duration, 'indefinite');
+assert.deepEqual(['short', 'long', 'indefinite'].map(snackbarTimeoutMillis), [4000, 10000, Infinity]);
+assert.throws(() => snackbarVisuals({duration: 'medium'}), RangeError);
+const state = new SnackbarHostState(), history = [];
+const unsubscribe = state.subscribe(data => history.push(data?.visuals.message ?? null));
+const first = state.showSnackbar('First', 'Undo'), one = state.currentSnackbarData;
+const second = state.showSnackbar({message: 'Second', withDismissAction: true, duration: 'long'});
+const queuedAbort = new AbortController(), removed = state.showSnackbar({message: 'Removed'}, {signal: queuedAbort.signal});
+const rejected = assert.rejects(removed, {name: 'AbortError'}); queuedAbort.abort(); await rejected;
+assert.equal(state.currentSnackbarData, one, 'queued cancellation never dismisses current');
+assert.ok(Object.isFrozen(one.visuals)); one.performAction(); one.dismiss();
+assert.equal(await first, 'action-performed', 'completion is once-only');
+assert.equal(state.currentSnackbarData.visuals.message, 'Second');
+state.currentSnackbarData.dismiss(); assert.equal(await second, 'dismissed');
+assert.deepEqual(history, ['First', null, 'Second', null]);
+const activeAbort = new AbortController();
+const active = state.showSnackbar('Active', null, false, undefined, {signal: activeAbort.signal});
+const activeRejected = assert.rejects(active, {name: 'AbortError'}), next = state.showSnackbar('Next');
+activeAbort.abort(); await activeRejected; assert.equal(state.currentSnackbarData.visuals.message, 'Next');
+state.currentSnackbarData.dismiss(); await next;
+const before = history.length; unsubscribe(); const last = state.showSnackbar('Detached subscriber');
+assert.equal(history.length, before); state.currentSnackbarData.dismiss(); await last;
+const alreadyAborted = new AbortController(); alreadyAborted.abort();
+await assert.rejects(state.showSnackbar({message: 'Never visible'}, {signal: alreadyAborted.signal}), {name: 'AbortError'});
+assert.equal(state.currentSnackbarData, null);
+const histories = JSON.parse(fs.readFileSync(new URL('motion-oracle.json', fixture)), (_, value) => typeof value === 'number' ? Math.fround(value) : value);
+let frames = 0;
+for (const history of histories) for (const key of ['scale', 'alpha']) {
+  const native = history[key], spec = key === 'alpha' ? {stiffness: 3800, dampingRatio: 1} : history.scheme === 'standard' ? {stiffness: 1400, dampingRatio: .9} : {stiffness: 800, dampingRatio: .6};
+  const channel = new SpringValue(native.from); channel.to(native.to, spec, {now: 0, velocity: native.velocity});
+  assert.equal(channel.animation?.duration ?? 0, native.duration);
+  for (const frame of native.frames) { const actual = channel.sample(frame.time); for (const field of ['position', 'velocity']) assert.ok(Math.abs(actual[field] - frame[field]) < 2e-5); frames++; }
+}
+console.log(`Snackbar host: pinned source hashes, ${histories.length} native interrupted histories/${frames} Float channel frames, action-sensitive durations, FIFO/once-only results, active/queued/pre-start cancellation, immutable visuals and unsubscribe passed.`);

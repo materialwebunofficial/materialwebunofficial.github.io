@@ -9,6 +9,12 @@ const attributes = (node, values) => {
   }
 };
 
+/** CSSOM sRGB shadow layers used by the browser outline adapter. */
+export const parseBoxShadow = text => [...text.matchAll(/(rgba?\([^)]*\))\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px\s+(-?[\d.]+)px/g)].map(match => {
+  const color = match[1].match(/[\d.]+/g).map(Number);
+  return [...match.slice(2).map(Number), ...color.slice(0, 3), color[3] ?? 1];
+});
+
 export class OutlineShadow {
   constructor(parent) {
     this.layer = element('svg');
@@ -35,8 +41,8 @@ export class OutlineShadow {
     this.layer.style.left = box.x + 'px';
     this.layer.style.top = box.y + 'px';
     attributes(this.layer, { width: box.width, height: box.height, viewBox: `0 0 ${box.width} ${box.height}` });
-    attributes(this.path, { d: `M${outline.points.map(p => p.join(' ')).join('L')}Z` });
-    const margin = Math.ceil(Math.max(...shadows.map(s => s[2] + Math.abs(s[3]) + Math.max(Math.abs(s[0]), Math.abs(s[1])))) + 2);
+    attributes(this.path, { d: outline.path ?? `M${outline.points.map(p => p.join(' ')).join('L')}Z` });
+    const margin = Math.ceil(Math.max(...shadows.map(s => s[2] + Math.abs(s[3]) + Math.max(Math.abs(s[0]), Math.abs(s[1])))) + 2 + (outline.extension ?? 0));
     attributes(this.filter, { x: -margin, y: -margin, width: box.width + 2 * margin, height: box.height + 2 * margin });
     if (this.parts?.length !== shadows.length) {
       this.filter.replaceChildren();

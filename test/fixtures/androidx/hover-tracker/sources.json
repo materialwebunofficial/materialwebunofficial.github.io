@@ -1,0 +1,20 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "HitPathTracker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/pointer/HitPathTracker.kt",
+      "sha256": "c74474b411dfb704dec4fba4e7308fd69c89f715e764a50b2c3e5cd44f42f83d"
+    },
+    {
+      "file": "PointerIdArray.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/pointer/util/PointerIdArray.kt",
+      "sha256": "4ff3285f1f209bc6ef135aeef9230e9493b60191588e610834d17098ed49651f"
+    },
+    {
+      "file": "InternalPointerEvent.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/input/pointer/InternalPointerEvent.android.kt",
+      "sha256": "dce6292dc49c5d3ef958f9f7de7719d5a4ede8050f20bcaf462a3ff5c1e93ef5"
+    }
+  ]
+}

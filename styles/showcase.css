@@ -1150,6 +1150,11 @@ md-fab-menu[open] {
   flex-shrink: 0;
 }
 
+.components-hero-icon-box > .mat-sym {
+  font-size: 28px;
+  color: inherit;
+}
+
 .components-hero-banner h1,
 .hero-text-card h1 {
   font: var(--md-sys-typescale-display-medium);

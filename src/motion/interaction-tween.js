@@ -48,16 +48,16 @@ export function interactionTween(from, to, elapsed, spec) {
 // InteractionSource has independent objects. Browser enter/focus/bindPress
 // each have one active interaction; repeated activation retains its order.
 export class InteractionOrder {
-  constructor() { this.active = []; }
-  set(kind, active) {
-    const index = this.active.indexOf(kind);
-    if (active && index < 0) this.active.push(kind);
-    else if (!active && index >= 0) this.active.splice(index, 1);
+  constructor() { this.active = []; this.identities = []; }
+  set(kind, active, identity = kind) {
+    const index = this.identities.indexOf(identity);
+    if (active && index < 0) { this.active.push(kind); this.identities.push(identity); }
+    else if (!active && index >= 0) { this.active.splice(index, 1); this.identities.splice(index, 1); }
     else return false;
     return true;
   }
   latest(includePress = true) {
     return this.active.filter(kind => includePress || kind !== 'press').at(-1) ?? null;
   }
-  clear() { this.active.length = 0; }
+  clear() { this.active.length = 0; this.identities.length = 0; }
 }

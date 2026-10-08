@@ -1,0 +1,3486 @@
+[
+  {
+    "index": 0,
+    "viewport": 960,
+    "config": {
+      "message": "Saved."
+    },
+    "rtl": false,
+    "input": {
+      "width": 624,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 592,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": null,
+      "dismiss": null,
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 0,
+      "size": {
+        "width": 648,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 648,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 624,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 592,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 1,
+    "viewport": 960,
+    "config": {
+      "message": "Saved.",
+      "action": ""
+    },
+    "rtl": false,
+    "input": {
+      "width": 624,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 534,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 1,
+      "size": {
+        "width": 648,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 648,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 624,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 534,
+          "height": 32
+        },
+        "action": {
+          "x": 570,
+          "y": 12,
+          "width": 58,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 2,
+    "viewport": 960,
+    "config": {
+      "message": "Document archived.",
+      "action": "Undo"
+    },
+    "rtl": false,
+    "input": {
+      "width": 624,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 529,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 2,
+      "size": {
+        "width": 648,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 648,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 624,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 529,
+          "height": 32
+        },
+        "action": {
+          "x": 565,
+          "y": 12,
+          "width": 63,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 3,
+    "viewport": 960,
+    "config": {
+      "message": "Document archived.",
+      "action": "Undo",
+      "dismiss": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 616,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 489,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 3,
+      "size": {
+        "width": 640,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 616,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 489,
+          "height": 32
+        },
+        "action": {
+          "x": 517,
+          "y": 12,
+          "width": 63,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 580,
+          "y": 12,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 4,
+    "viewport": 960,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns. The document is available offline. Changes will be synchronized when the connection returns. The document is available offline. Changes will be synchronized when the connection returns. ",
+      "action": "Retry",
+      "dismiss": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 616,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 481,
+        "height": 112,
+        "first": 20,
+        "last": 100
+      },
+      "action": {
+        "width": 71,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 4,
+      "size": {
+        "width": 640,
+        "height": 146
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 146
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 616,
+          "height": 122
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 600,
+          "height": 122
+        },
+        "text": {
+          "x": 28,
+          "y": 22,
+          "width": 481,
+          "height": 112
+        },
+        "action": {
+          "x": 509,
+          "y": 49,
+          "width": 71,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 580,
+          "y": 49,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 5,
+    "viewport": 960,
+    "config": {
+      "message": "First line\nSecond line\n",
+      "action": "Undo",
+      "dismiss": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 616,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 489,
+        "height": 72,
+        "first": 20,
+        "last": 60
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 5,
+      "size": {
+        "width": 640,
+        "height": 106
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 106
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 616,
+          "height": 82
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 600,
+          "height": 82
+        },
+        "text": {
+          "x": 28,
+          "y": 22,
+          "width": 489,
+          "height": 72
+        },
+        "action": {
+          "x": 517,
+          "y": 29,
+          "width": 63,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 580,
+          "y": 29,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 6,
+    "viewport": 960,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns.",
+      "action": "View saved documents",
+      "newLine": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 600,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 576,
+        "height": 40,
+        "first": 14,
+        "last": 34
+      },
+      "action": {
+        "width": 186,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": true,
+      "rtl": false
+    },
+    "expected": {
+      "index": 6,
+      "size": {
+        "width": 624,
+        "height": 136
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 624,
+          "height": 136
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "column": {
+          "x": 28,
+          "y": 12,
+          "width": 584,
+          "height": 110
+        },
+        "first-padding": {
+          "x": 28,
+          "y": 12,
+          "width": 584,
+          "height": 62
+        },
+        "last-padding": {
+          "x": 28,
+          "y": 28,
+          "width": 584,
+          "height": 46
+        },
+        "text-end": {
+          "x": 28,
+          "y": 28,
+          "width": 584,
+          "height": 40
+        },
+        "text": {
+          "x": 28,
+          "y": 28,
+          "width": 576,
+          "height": 40
+        },
+        "action-end": {
+          "x": 418,
+          "y": 74,
+          "width": 194,
+          "height": 48
+        },
+        "action-row": {
+          "x": 418,
+          "y": 74,
+          "width": 186,
+          "height": 48
+        },
+        "action": {
+          "x": 418,
+          "y": 74,
+          "width": 186,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 7,
+    "viewport": 960,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns.",
+      "action": "View saved documents",
+      "newLine": true,
+      "dismiss": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 600,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 576,
+        "height": 40,
+        "first": 14,
+        "last": 34
+      },
+      "action": {
+        "width": 186,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": true,
+      "rtl": false
+    },
+    "expected": {
+      "index": 7,
+      "size": {
+        "width": 624,
+        "height": 136
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 624,
+          "height": 136
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "column": {
+          "x": 28,
+          "y": 12,
+          "width": 584,
+          "height": 110
+        },
+        "first-padding": {
+          "x": 28,
+          "y": 12,
+          "width": 584,
+          "height": 62
+        },
+        "last-padding": {
+          "x": 28,
+          "y": 28,
+          "width": 584,
+          "height": 46
+        },
+        "text-end": {
+          "x": 28,
+          "y": 28,
+          "width": 584,
+          "height": 40
+        },
+        "text": {
+          "x": 28,
+          "y": 28,
+          "width": 576,
+          "height": 40
+        },
+        "action-end": {
+          "x": 378,
+          "y": 74,
+          "width": 234,
+          "height": 48
+        },
+        "action-row": {
+          "x": 378,
+          "y": 74,
+          "width": 234,
+          "height": 48
+        },
+        "action": {
+          "x": 378,
+          "y": 74,
+          "width": 186,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 564,
+          "y": 74,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 8,
+    "viewport": 960,
+    "config": {
+      "message": "Different body and action typography.",
+      "action": "Undo",
+      "bodyFont": "400 18px/28px monospace",
+      "actionFont": "500 12px/16px monospace"
+    },
+    "rtl": false,
+    "input": {
+      "width": 624,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 534,
+        "height": 40,
+        "first": 26,
+        "last": 26
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 8,
+      "size": {
+        "width": 648,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 648,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 624,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 16,
+          "width": 534,
+          "height": 40
+        },
+        "action": {
+          "x": 570,
+          "y": 14,
+          "width": 58,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 9,
+    "viewport": 960,
+    "config": {
+      "message": "Different body and action typography.\nSecond line.",
+      "action": "Undo",
+      "newLine": true,
+      "dismiss": true,
+      "bodyFont": "400 18px/28px monospace",
+      "actionFont": "500 12px/16px monospace"
+    },
+    "rtl": false,
+    "input": {
+      "width": 600,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 576,
+        "height": 56,
+        "first": 20,
+        "last": 48
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": true,
+      "rtl": false
+    },
+    "expected": {
+      "index": 9,
+      "size": {
+        "width": 624,
+        "height": 144
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 624,
+          "height": 144
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 120
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 120
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 120
+        },
+        "column": {
+          "x": 28,
+          "y": 12,
+          "width": 584,
+          "height": 118
+        },
+        "first-padding": {
+          "x": 28,
+          "y": 12,
+          "width": 584,
+          "height": 70
+        },
+        "last-padding": {
+          "x": 28,
+          "y": 22,
+          "width": 584,
+          "height": 60
+        },
+        "text-end": {
+          "x": 28,
+          "y": 22,
+          "width": 584,
+          "height": 56
+        },
+        "text": {
+          "x": 28,
+          "y": 22,
+          "width": 576,
+          "height": 56
+        },
+        "action-end": {
+          "x": 506,
+          "y": 82,
+          "width": 106,
+          "height": 48
+        },
+        "action-row": {
+          "x": 506,
+          "y": 82,
+          "width": 106,
+          "height": 48
+        },
+        "action": {
+          "x": 506,
+          "y": 82,
+          "width": 58,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 564,
+          "y": 82,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 10,
+    "viewport": 960,
+    "config": {
+      "message": "Saved."
+    },
+    "rtl": true,
+    "input": {
+      "width": 624,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 592,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": null,
+      "dismiss": null,
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 10,
+      "size": {
+        "width": 648,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 648,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 624,
+          "height": 48
+        },
+        "row": {
+          "x": 20,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 592,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 11,
+    "viewport": 960,
+    "config": {
+      "message": "Saved.",
+      "action": ""
+    },
+    "rtl": true,
+    "input": {
+      "width": 624,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 534,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 11,
+      "size": {
+        "width": 648,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 648,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 624,
+          "height": 48
+        },
+        "row": {
+          "x": 20,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 86,
+          "y": 20,
+          "width": 534,
+          "height": 32
+        },
+        "action": {
+          "x": 20,
+          "y": 12,
+          "width": 58,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 12,
+    "viewport": 960,
+    "config": {
+      "message": "Document archived.",
+      "action": "Undo"
+    },
+    "rtl": true,
+    "input": {
+      "width": 624,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 529,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 12,
+      "size": {
+        "width": 648,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 648,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 624,
+          "height": 48
+        },
+        "row": {
+          "x": 20,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 91,
+          "y": 20,
+          "width": 529,
+          "height": 32
+        },
+        "action": {
+          "x": 20,
+          "y": 12,
+          "width": 63,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 13,
+    "viewport": 960,
+    "config": {
+      "message": "Document archived.",
+      "action": "Undo",
+      "dismiss": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 616,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 489,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 13,
+      "size": {
+        "width": 640,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 616,
+          "height": 48
+        },
+        "row": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 123,
+          "y": 20,
+          "width": 489,
+          "height": 32
+        },
+        "action": {
+          "x": 60,
+          "y": 12,
+          "width": 63,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 12,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 14,
+    "viewport": 960,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns. The document is available offline. Changes will be synchronized when the connection returns. The document is available offline. Changes will be synchronized when the connection returns. ",
+      "action": "Retry",
+      "dismiss": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 616,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 481,
+        "height": 112,
+        "first": 20,
+        "last": 100
+      },
+      "action": {
+        "width": 71,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 14,
+      "size": {
+        "width": 640,
+        "height": 146
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 146
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 616,
+          "height": 122
+        },
+        "row": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 122
+        },
+        "text": {
+          "x": 131,
+          "y": 22,
+          "width": 481,
+          "height": 112
+        },
+        "action": {
+          "x": 60,
+          "y": 49,
+          "width": 71,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 49,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 15,
+    "viewport": 960,
+    "config": {
+      "message": "First line\nSecond line\n",
+      "action": "Undo",
+      "dismiss": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 616,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 489,
+        "height": 72,
+        "first": 20,
+        "last": 60
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 15,
+      "size": {
+        "width": 640,
+        "height": 106
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 106
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 616,
+          "height": 82
+        },
+        "row": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 82
+        },
+        "text": {
+          "x": 123,
+          "y": 22,
+          "width": 489,
+          "height": 72
+        },
+        "action": {
+          "x": 60,
+          "y": 29,
+          "width": 63,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 29,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 16,
+    "viewport": 960,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns.",
+      "action": "View saved documents",
+      "newLine": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 600,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 576,
+        "height": 40,
+        "first": 14,
+        "last": 34
+      },
+      "action": {
+        "width": 186,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": true,
+      "rtl": true
+    },
+    "expected": {
+      "index": 16,
+      "size": {
+        "width": 624,
+        "height": 136
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 624,
+          "height": 136
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "column": {
+          "x": 12,
+          "y": 12,
+          "width": 584,
+          "height": 110
+        },
+        "first-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 584,
+          "height": 62
+        },
+        "last-padding": {
+          "x": 12,
+          "y": 28,
+          "width": 584,
+          "height": 46
+        },
+        "text-end": {
+          "x": 12,
+          "y": 28,
+          "width": 584,
+          "height": 40
+        },
+        "text": {
+          "x": 20,
+          "y": 28,
+          "width": 576,
+          "height": 40
+        },
+        "action-end": {
+          "x": 12,
+          "y": 74,
+          "width": 194,
+          "height": 48
+        },
+        "action-row": {
+          "x": 20,
+          "y": 74,
+          "width": 186,
+          "height": 48
+        },
+        "action": {
+          "x": 20,
+          "y": 74,
+          "width": 186,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 17,
+    "viewport": 960,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns.",
+      "action": "View saved documents",
+      "newLine": true,
+      "dismiss": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 600,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 576,
+        "height": 40,
+        "first": 14,
+        "last": 34
+      },
+      "action": {
+        "width": 186,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": true,
+      "rtl": true
+    },
+    "expected": {
+      "index": 17,
+      "size": {
+        "width": 624,
+        "height": 136
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 624,
+          "height": 136
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 112
+        },
+        "column": {
+          "x": 12,
+          "y": 12,
+          "width": 584,
+          "height": 110
+        },
+        "first-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 584,
+          "height": 62
+        },
+        "last-padding": {
+          "x": 12,
+          "y": 28,
+          "width": 584,
+          "height": 46
+        },
+        "text-end": {
+          "x": 12,
+          "y": 28,
+          "width": 584,
+          "height": 40
+        },
+        "text": {
+          "x": 20,
+          "y": 28,
+          "width": 576,
+          "height": 40
+        },
+        "action-end": {
+          "x": 12,
+          "y": 74,
+          "width": 234,
+          "height": 48
+        },
+        "action-row": {
+          "x": 12,
+          "y": 74,
+          "width": 234,
+          "height": 48
+        },
+        "action": {
+          "x": 60,
+          "y": 74,
+          "width": 186,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 74,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 18,
+    "viewport": 960,
+    "config": {
+      "message": "Different body and action typography.",
+      "action": "Undo",
+      "bodyFont": "400 18px/28px monospace",
+      "actionFont": "500 12px/16px monospace"
+    },
+    "rtl": true,
+    "input": {
+      "width": 624,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 534,
+        "height": 40,
+        "first": 26,
+        "last": 26
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 18,
+      "size": {
+        "width": 648,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 648,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 624,
+          "height": 48
+        },
+        "row": {
+          "x": 20,
+          "y": 12,
+          "width": 600,
+          "height": 48
+        },
+        "text": {
+          "x": 86,
+          "y": 16,
+          "width": 534,
+          "height": 40
+        },
+        "action": {
+          "x": 20,
+          "y": 14,
+          "width": 58,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 19,
+    "viewport": 960,
+    "config": {
+      "message": "Different body and action typography.\nSecond line.",
+      "action": "Undo",
+      "newLine": true,
+      "dismiss": true,
+      "bodyFont": "400 18px/28px monospace",
+      "actionFont": "500 12px/16px monospace"
+    },
+    "rtl": true,
+    "input": {
+      "width": 600,
+      "availableWidth": 648,
+      "constraints": {
+        "maxWidth": 648
+      },
+      "text": {
+        "width": 576,
+        "height": 56,
+        "first": 20,
+        "last": 48
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": true,
+      "rtl": true
+    },
+    "expected": {
+      "index": 19,
+      "size": {
+        "width": 624,
+        "height": 144
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 624,
+          "height": 144
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 120
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 120
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 600,
+          "height": 120
+        },
+        "column": {
+          "x": 12,
+          "y": 12,
+          "width": 584,
+          "height": 118
+        },
+        "first-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 584,
+          "height": 70
+        },
+        "last-padding": {
+          "x": 12,
+          "y": 22,
+          "width": 584,
+          "height": 60
+        },
+        "text-end": {
+          "x": 12,
+          "y": 22,
+          "width": 584,
+          "height": 56
+        },
+        "text": {
+          "x": 20,
+          "y": 22,
+          "width": 576,
+          "height": 56
+        },
+        "action-end": {
+          "x": 12,
+          "y": 82,
+          "width": 106,
+          "height": 48
+        },
+        "action-row": {
+          "x": 12,
+          "y": 82,
+          "width": 106,
+          "height": 48
+        },
+        "action": {
+          "x": 60,
+          "y": 82,
+          "width": 58,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 82,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 20,
+    "viewport": 390,
+    "config": {
+      "message": "Saved."
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 302,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": null,
+      "dismiss": null,
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 20,
+      "size": {
+        "width": 358,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 310,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 302,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 21,
+    "viewport": 390,
+    "config": {
+      "message": "Saved.",
+      "action": ""
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 244,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 21,
+      "size": {
+        "width": 358,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 310,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 244,
+          "height": 32
+        },
+        "action": {
+          "x": 280,
+          "y": 12,
+          "width": 58,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 22,
+    "viewport": 390,
+    "config": {
+      "message": "Document archived.",
+      "action": "Undo"
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 239,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 22,
+      "size": {
+        "width": 358,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 310,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 239,
+          "height": 32
+        },
+        "action": {
+          "x": 275,
+          "y": 12,
+          "width": 63,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 23,
+    "viewport": 390,
+    "config": {
+      "message": "Document archived.",
+      "action": "Undo",
+      "dismiss": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 207,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 23,
+      "size": {
+        "width": 358,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 48
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 207,
+          "height": 32
+        },
+        "action": {
+          "x": 235,
+          "y": 12,
+          "width": 63,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 298,
+          "y": 12,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 24,
+    "viewport": 390,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns. The document is available offline. Changes will be synchronized when the connection returns. The document is available offline. Changes will be synchronized when the connection returns. ",
+      "action": "Retry",
+      "dismiss": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 199,
+        "height": 252,
+        "first": 20,
+        "last": 240
+      },
+      "action": {
+        "width": 71,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 24,
+      "size": {
+        "width": 358,
+        "height": 286
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 286
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 262
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 262
+        },
+        "text": {
+          "x": 28,
+          "y": 22,
+          "width": 199,
+          "height": 252
+        },
+        "action": {
+          "x": 227,
+          "y": 119,
+          "width": 71,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 298,
+          "y": 119,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 25,
+    "viewport": 390,
+    "config": {
+      "message": "First line\nSecond line\n",
+      "action": "Undo",
+      "dismiss": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 207,
+        "height": 72,
+        "first": 20,
+        "last": 60
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 25,
+      "size": {
+        "width": 358,
+        "height": 106
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 106
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 82
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 82
+        },
+        "text": {
+          "x": 28,
+          "y": 22,
+          "width": 207,
+          "height": 72
+        },
+        "action": {
+          "x": 235,
+          "y": 29,
+          "width": 63,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 298,
+          "y": 29,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 26,
+    "viewport": 390,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns.",
+      "action": "View saved documents",
+      "newLine": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 310,
+        "height": 60,
+        "first": 14,
+        "last": 54
+      },
+      "action": {
+        "width": 186,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": true,
+      "rtl": false
+    },
+    "expected": {
+      "index": 26,
+      "size": {
+        "width": 358,
+        "height": 156
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 156
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "column": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 130
+        },
+        "first-padding": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 82
+        },
+        "last-padding": {
+          "x": 28,
+          "y": 28,
+          "width": 318,
+          "height": 66
+        },
+        "text-end": {
+          "x": 28,
+          "y": 28,
+          "width": 318,
+          "height": 60
+        },
+        "text": {
+          "x": 28,
+          "y": 28,
+          "width": 310,
+          "height": 60
+        },
+        "action-end": {
+          "x": 152,
+          "y": 94,
+          "width": 194,
+          "height": 48
+        },
+        "action-row": {
+          "x": 152,
+          "y": 94,
+          "width": 186,
+          "height": 48
+        },
+        "action": {
+          "x": 152,
+          "y": 94,
+          "width": 186,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 27,
+    "viewport": 390,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns.",
+      "action": "View saved documents",
+      "newLine": true,
+      "dismiss": true
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 310,
+        "height": 60,
+        "first": 14,
+        "last": 54
+      },
+      "action": {
+        "width": 186,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": true,
+      "rtl": false
+    },
+    "expected": {
+      "index": 27,
+      "size": {
+        "width": 358,
+        "height": 156
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 156
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "column": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 130
+        },
+        "first-padding": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 82
+        },
+        "last-padding": {
+          "x": 28,
+          "y": 28,
+          "width": 318,
+          "height": 66
+        },
+        "text-end": {
+          "x": 28,
+          "y": 28,
+          "width": 318,
+          "height": 60
+        },
+        "text": {
+          "x": 28,
+          "y": 28,
+          "width": 310,
+          "height": 60
+        },
+        "action-end": {
+          "x": 112,
+          "y": 94,
+          "width": 234,
+          "height": 48
+        },
+        "action-row": {
+          "x": 112,
+          "y": 94,
+          "width": 234,
+          "height": 48
+        },
+        "action": {
+          "x": 112,
+          "y": 94,
+          "width": 186,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 298,
+          "y": 94,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 28,
+    "viewport": 390,
+    "config": {
+      "message": "Different body and action typography.",
+      "action": "Undo",
+      "bodyFont": "400 18px/28px monospace",
+      "actionFont": "500 12px/16px monospace"
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 244,
+        "height": 68,
+        "first": 26,
+        "last": 54
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": false
+    },
+    "expected": {
+      "index": 28,
+      "size": {
+        "width": 358,
+        "height": 96
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 96
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 72
+        },
+        "row": {
+          "x": 28,
+          "y": 12,
+          "width": 310,
+          "height": 72
+        },
+        "text": {
+          "x": 28,
+          "y": 16,
+          "width": 244,
+          "height": 68
+        },
+        "action": {
+          "x": 280,
+          "y": 24,
+          "width": 58,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 29,
+    "viewport": 390,
+    "config": {
+      "message": "Different body and action typography.\nSecond line.",
+      "action": "Undo",
+      "newLine": true,
+      "dismiss": true,
+      "bodyFont": "400 18px/28px monospace",
+      "actionFont": "500 12px/16px monospace"
+    },
+    "rtl": false,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 310,
+        "height": 84,
+        "first": 20,
+        "last": 76
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": true,
+      "rtl": false
+    },
+    "expected": {
+      "index": 29,
+      "size": {
+        "width": 358,
+        "height": 172
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 172
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 148
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 148
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 148
+        },
+        "column": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 146
+        },
+        "first-padding": {
+          "x": 28,
+          "y": 12,
+          "width": 318,
+          "height": 98
+        },
+        "last-padding": {
+          "x": 28,
+          "y": 22,
+          "width": 318,
+          "height": 88
+        },
+        "text-end": {
+          "x": 28,
+          "y": 22,
+          "width": 318,
+          "height": 84
+        },
+        "text": {
+          "x": 28,
+          "y": 22,
+          "width": 310,
+          "height": 84
+        },
+        "action-end": {
+          "x": 240,
+          "y": 110,
+          "width": 106,
+          "height": 48
+        },
+        "action-row": {
+          "x": 240,
+          "y": 110,
+          "width": 106,
+          "height": 48
+        },
+        "action": {
+          "x": 240,
+          "y": 110,
+          "width": 58,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 298,
+          "y": 110,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 30,
+    "viewport": 390,
+    "config": {
+      "message": "Saved."
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 302,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": null,
+      "dismiss": null,
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 30,
+      "size": {
+        "width": 358,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 48
+        },
+        "row": {
+          "x": 20,
+          "y": 12,
+          "width": 310,
+          "height": 48
+        },
+        "text": {
+          "x": 28,
+          "y": 20,
+          "width": 302,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 31,
+    "viewport": 390,
+    "config": {
+      "message": "Saved.",
+      "action": ""
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 244,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 31,
+      "size": {
+        "width": 358,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 48
+        },
+        "row": {
+          "x": 20,
+          "y": 12,
+          "width": 310,
+          "height": 48
+        },
+        "text": {
+          "x": 86,
+          "y": 20,
+          "width": 244,
+          "height": 32
+        },
+        "action": {
+          "x": 20,
+          "y": 12,
+          "width": 58,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 32,
+    "viewport": 390,
+    "config": {
+      "message": "Document archived.",
+      "action": "Undo"
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 239,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 32,
+      "size": {
+        "width": 358,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 48
+        },
+        "row": {
+          "x": 20,
+          "y": 12,
+          "width": 310,
+          "height": 48
+        },
+        "text": {
+          "x": 91,
+          "y": 20,
+          "width": 239,
+          "height": 32
+        },
+        "action": {
+          "x": 20,
+          "y": 12,
+          "width": 63,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 33,
+    "viewport": 390,
+    "config": {
+      "message": "Document archived.",
+      "action": "Undo",
+      "dismiss": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 207,
+        "height": 32,
+        "first": 20,
+        "last": 20
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 33,
+      "size": {
+        "width": 358,
+        "height": 72
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 72
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 48
+        },
+        "row": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 48
+        },
+        "text": {
+          "x": 123,
+          "y": 20,
+          "width": 207,
+          "height": 32
+        },
+        "action": {
+          "x": 60,
+          "y": 12,
+          "width": 63,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 12,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 34,
+    "viewport": 390,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns. The document is available offline. Changes will be synchronized when the connection returns. The document is available offline. Changes will be synchronized when the connection returns. ",
+      "action": "Retry",
+      "dismiss": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 199,
+        "height": 252,
+        "first": 20,
+        "last": 240
+      },
+      "action": {
+        "width": 71,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 34,
+      "size": {
+        "width": 358,
+        "height": 286
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 286
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 262
+        },
+        "row": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 262
+        },
+        "text": {
+          "x": 131,
+          "y": 22,
+          "width": 199,
+          "height": 252
+        },
+        "action": {
+          "x": 60,
+          "y": 119,
+          "width": 71,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 119,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 35,
+    "viewport": 390,
+    "config": {
+      "message": "First line\nSecond line\n",
+      "action": "Undo",
+      "dismiss": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 207,
+        "height": 72,
+        "first": 20,
+        "last": 60
+      },
+      "action": {
+        "width": 63,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 35,
+      "size": {
+        "width": 358,
+        "height": 106
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 106
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 82
+        },
+        "row": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 82
+        },
+        "text": {
+          "x": 123,
+          "y": 22,
+          "width": 207,
+          "height": 72
+        },
+        "action": {
+          "x": 60,
+          "y": 29,
+          "width": 63,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 29,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 36,
+    "viewport": 390,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns.",
+      "action": "View saved documents",
+      "newLine": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 310,
+        "height": 60,
+        "first": 14,
+        "last": 54
+      },
+      "action": {
+        "width": 186,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": true,
+      "rtl": true
+    },
+    "expected": {
+      "index": 36,
+      "size": {
+        "width": 358,
+        "height": 156
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 156
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "column": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 130
+        },
+        "first-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 82
+        },
+        "last-padding": {
+          "x": 12,
+          "y": 28,
+          "width": 318,
+          "height": 66
+        },
+        "text-end": {
+          "x": 12,
+          "y": 28,
+          "width": 318,
+          "height": 60
+        },
+        "text": {
+          "x": 20,
+          "y": 28,
+          "width": 310,
+          "height": 60
+        },
+        "action-end": {
+          "x": 12,
+          "y": 94,
+          "width": 194,
+          "height": 48
+        },
+        "action-row": {
+          "x": 20,
+          "y": 94,
+          "width": 186,
+          "height": 48
+        },
+        "action": {
+          "x": 20,
+          "y": 94,
+          "width": 186,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 37,
+    "viewport": 390,
+    "config": {
+      "message": "The document is available offline. Changes will be synchronized when the connection returns.",
+      "action": "View saved documents",
+      "newLine": true,
+      "dismiss": true
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 310,
+        "height": 60,
+        "first": 14,
+        "last": 54
+      },
+      "action": {
+        "width": 186,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": true,
+      "rtl": true
+    },
+    "expected": {
+      "index": 37,
+      "size": {
+        "width": 358,
+        "height": 156
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 156
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 132
+        },
+        "column": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 130
+        },
+        "first-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 82
+        },
+        "last-padding": {
+          "x": 12,
+          "y": 28,
+          "width": 318,
+          "height": 66
+        },
+        "text-end": {
+          "x": 12,
+          "y": 28,
+          "width": 318,
+          "height": 60
+        },
+        "text": {
+          "x": 20,
+          "y": 28,
+          "width": 310,
+          "height": 60
+        },
+        "action-end": {
+          "x": 12,
+          "y": 94,
+          "width": 234,
+          "height": 48
+        },
+        "action-row": {
+          "x": 12,
+          "y": 94,
+          "width": 234,
+          "height": 48
+        },
+        "action": {
+          "x": 60,
+          "y": 94,
+          "width": 186,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 94,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 38,
+    "viewport": 390,
+    "config": {
+      "message": "Different body and action typography.",
+      "action": "Undo",
+      "bodyFont": "400 18px/28px monospace",
+      "actionFont": "500 12px/16px monospace"
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 244,
+        "height": 68,
+        "first": 26,
+        "last": 54
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": null,
+      "newLine": false,
+      "rtl": true
+    },
+    "expected": {
+      "index": 38,
+      "size": {
+        "width": 358,
+        "height": 96
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 96
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 72
+        },
+        "row": {
+          "x": 20,
+          "y": 12,
+          "width": 310,
+          "height": 72
+        },
+        "text": {
+          "x": 86,
+          "y": 16,
+          "width": 244,
+          "height": 68
+        },
+        "action": {
+          "x": 20,
+          "y": 24,
+          "width": 58,
+          "height": 48
+        }
+      }
+    }
+  },
+  {
+    "index": 39,
+    "viewport": 390,
+    "config": {
+      "message": "Different body and action typography.\nSecond line.",
+      "action": "Undo",
+      "newLine": true,
+      "dismiss": true,
+      "bodyFont": "400 18px/28px monospace",
+      "actionFont": "500 12px/16px monospace"
+    },
+    "rtl": true,
+    "input": {
+      "width": 334,
+      "availableWidth": 358,
+      "constraints": {
+        "maxWidth": 358
+      },
+      "text": {
+        "width": 310,
+        "height": 84,
+        "first": 20,
+        "last": 76
+      },
+      "action": {
+        "width": 58,
+        "height": 48,
+        "first": 28,
+        "last": 28
+      },
+      "dismiss": {
+        "width": 48,
+        "height": 48
+      },
+      "newLine": true,
+      "rtl": true
+    },
+    "expected": {
+      "index": 39,
+      "size": {
+        "width": 358,
+        "height": 172
+      },
+      "placements": {
+        "presentation": {
+          "x": 0,
+          "y": 0,
+          "width": 358,
+          "height": 172
+        },
+        "snackbar": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 148
+        },
+        "fill": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 148
+        },
+        "outer-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 334,
+          "height": 148
+        },
+        "column": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 146
+        },
+        "first-padding": {
+          "x": 12,
+          "y": 12,
+          "width": 318,
+          "height": 98
+        },
+        "last-padding": {
+          "x": 12,
+          "y": 22,
+          "width": 318,
+          "height": 88
+        },
+        "text-end": {
+          "x": 12,
+          "y": 22,
+          "width": 318,
+          "height": 84
+        },
+        "text": {
+          "x": 20,
+          "y": 22,
+          "width": 310,
+          "height": 84
+        },
+        "action-end": {
+          "x": 12,
+          "y": 110,
+          "width": 106,
+          "height": 48
+        },
+        "action-row": {
+          "x": 12,
+          "y": 110,
+          "width": 106,
+          "height": 48
+        },
+        "action": {
+          "x": 60,
+          "y": 110,
+          "width": 58,
+          "height": 48
+        },
+        "dismiss": {
+          "x": 12,
+          "y": 110,
+          "width": 48,
+          "height": 48
+        }
+      }
+    }
+  }
+]

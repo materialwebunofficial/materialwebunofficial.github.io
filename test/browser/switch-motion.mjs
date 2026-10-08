@@ -37,8 +37,9 @@ export async function testSwitchMotion(browser, base) {
       },`source size/placement ${id} at ${time}ms`);
     }
     await page.clock.runFor(512);
-    const pointer=async(id,type)=>page.locator('#'+id+' .switch-root').evaluate((root,type)=>
-      root.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:91,pointerType:'mouse',button:0,isPrimary:true})),type);
+    const pointer=async(id,type)=>page.locator('#'+id+' .switch-root').evaluate((root,type)=>{
+      const r=root.getBoundingClientRect();root.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:91,pointerType:'mouse',button:0,isPrimary:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));
+    },type);
     for(const id of ['sw-ltr','sw-rtl']) {
       await pointer(id,'pointerdown');
       assert.deepEqual(await geometry(id),{size:28,offset:22,centerY:16,stateCenter:0},'checked press snaps immediately');

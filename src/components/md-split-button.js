@@ -188,6 +188,8 @@ export class MdSplitButton extends HTMLElement {
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this.shadowRoot.querySelector('.dropdown-menu')?._springAnim?.cancel();
+    this._closing = false;
     document.removeEventListener('click', this._docClick);
   }
 
@@ -238,6 +240,7 @@ export class MdSplitButton extends HTMLElement {
 
   openMenu() {
     if (this.disabled) return;
+    if(this.open&&!this._closing){this._sync();return;}
     this._closing = false;
     this.shadowRoot.querySelector('.dropdown-menu')?._springAnim?.cancel();
     document.querySelectorAll('md-split-button[open]').forEach(sb => {
@@ -255,10 +258,15 @@ export class MdSplitButton extends HTMLElement {
     if (!this.open || this._closing) return;
     this._closing = true;
     const menu = this.shadowRoot.querySelector('.dropdown-menu');
+    // checked changes on activation. The exiting popup has its own lifetime;
+    // keeping checked until exit made pressed -> checked -> default replay.
+    const current=menu?getComputedStyle(menu):null;
+    const from=current?{transform:current.transform,opacity:current.opacity}:{transform:'none',opacity:1};
+    this.removeAttribute('open');
     if (menu && this.isConnected) {
       menu._springAnim?.cancel?.();
       const anim = menu.animate([
-        { transform: 'scale(1, 1) translateY(0)', opacity: 1 },
+        from,
         { transform: 'scale(0.9, 0.82) translateY(-8px)', opacity: 0 }
       ], {
         duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150,
@@ -267,8 +275,8 @@ export class MdSplitButton extends HTMLElement {
       });
       menu._springAnim = anim;
       anim.onfinish = () => {
+        if(menu._springAnim!==anim)return;
         this._closing = false;
-        this.removeAttribute('open');
         menu.style.visibility = 'hidden';
         menu.style.pointerEvents = 'none';
         menu._springAnim = null;
@@ -276,7 +284,6 @@ export class MdSplitButton extends HTMLElement {
       };
     } else {
       this._closing = false;
-      this.removeAttribute('open');
     }
   }
 
@@ -308,8 +315,13 @@ export class MdSplitButton extends HTMLElement {
     if (menu) {
       menu.inert = !this.open || this.disabled;
       if (this.open) {
+        this._closing=false;
         menu.style.visibility = 'visible';
-        menu.style.pointerEvents = 'auto';
+        menu.style.pointerEvents = this.disabled?'none':'auto';
+
+        // Attribute/configuration refreshes must not restart an opening job.
+        if(menu.dataset.open==='true')return;
+        menu.dataset.open='true';
 
         const { keyframes, duration } = SpringPhysics.generateKeyframes({
           from: 0.62,
@@ -335,8 +347,8 @@ export class MdSplitButton extends HTMLElement {
         });
         menu._springAnim = anim;
       } else {
-        menu._springAnim?.cancel();
-        menu.style.visibility = 'hidden';
+        menu.dataset.open='false';
+        if(!this._closing){menu._springAnim?.cancel();menu._springAnim=null;menu.style.visibility = 'hidden';}
         menu.style.pointerEvents = 'none';
       }
     }

@@ -9,8 +9,13 @@
  *   - Full keyboard accessibility and ripple effect
  */
 
-import { createRipple, bindPress } from '../motion/interactions.js';
-import { sanitizeAttribute } from '../utils/security.js';
+import { createRipple, bindPress, nestedInteractiveEvent } from '../motion/interactions.js';
+import { bindStateLayer } from '../motion/state-layer.js';
+import { bindFocusIndication } from '../motion/focus-indication.js';
+import { bindButtonElevation } from '../motion/button-elevation.js';
+import { CardElevationMotion, cardElevationDefinition, cardElevationValues } from '../motion/card-elevation.js';
+import { domPointerInput, domPointerHit, domPointerHoverHit, domPointerOutOfBounds } from '../motion/dom-pointer-geometry.js';
+import { bindCardColors, cardColorDefinition } from '../theme/card-color.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
 const defaultStyle = `
@@ -30,20 +35,17 @@ const defaultStyle = `
     padding: var(--md-card-padding, var(--md-sys-spacing-4, 16px));
     gap: var(--md-card-gap, 16px);
     height: 100%;
-    color: var(--md-sys-color-on-surface, #1d1b20);
+    color: var(--_md-card-content-color, var(--md-sys-color-on-surface));
+    background-color: var(--_md-card-container-color, var(--md-sys-color-surface-container-highest));
     font-family: var(--md-sys-typescale-font-family, 'Roboto', system-ui, sans-serif);
     overflow: hidden;
-    will-change: transform, box-shadow;
-    transition:
-      box-shadow var(--md-sys-motion-duration-medium-2, 300ms) var(--md-sys-motion-easing-emphasized, ease),
-      background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      border-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease);
+    transition: none;
     outline: none;
   }
 
   /* Focus Ring (§5.3) */
-  .card:focus-visible {
-    outline: 3px solid var(--md-sys-color-secondary, #625b71);
+  .card.focus-indicated {
+    outline: 3px solid var(--md-sys-color-secondary);
     outline-offset: 2px;
   }
 
@@ -58,85 +60,20 @@ const defaultStyle = `
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background-color: var(--md-sys-color-on-surface, #1d1b20);
-    opacity: 0;
-    transition: opacity var(--md-sys-motion-duration-short-2, 100ms) ease;
+    background-color: rgb(from currentColor r g b / 1);
+    opacity: var(--md-card-state-alpha, 0);
   }
-
-  .card.interactive:hover:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-hover-opacity, 0.08);
-  }
-  .card.interactive:focus-visible:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-focus-opacity, 0.10);
-  }
-  .card.interactive:active:not(.disabled) .state-layer,
-  .card.interactive.pressed:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-pressed-opacity, 0.10);
-  }
-
-  /* Ripple Effect */
-  .md-ripple-effect {
-    position: absolute;
-    border-radius: 50%;
-    background-color: currentColor;
-    opacity: 0.10;
-    transform: scale(0);
-    animation: ripple-anim 450ms var(--md-sys-motion-easing-emphasized-decelerate, cubic-bezier(0.05, 0.7, 0.1, 1)) forwards;
-    pointer-events: none;
-  }
-
-  @keyframes ripple-anim {
-    to {
-      transform: scale(2.5);
-      opacity: 0;
-    }
-  }
-
-  /* Elevated Card (§8.2) */
-  .card.elevated {
-    background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-    box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
-    border: none;
-  }
-  .card.elevated.interactive:hover:not(.disabled) {
-    box-shadow: var(--md-sys-elevation-level2, 0px 1px 2px rgba(0,0,0,0.3));
-  }
-  .card.elevated.interactive:active:not(.disabled) {
-    box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
-  }
-
-  /* Filled Card (§8.2) */
-  .card.filled {
-    background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
-    box-shadow: var(--md-sys-elevation-level0, none);
-    border: none;
-  }
-  .card.filled.interactive:hover:not(.disabled) {
-    box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
-  }
-  .card.filled.interactive.pressed:not(.disabled), .card.outlined.interactive.pressed:not(.disabled) { box-shadow: none; }
-  .card.elevated.interactive.pressed:not(.disabled) { box-shadow: var(--md-sys-elevation-level-1); }
-
-  /* Outlined Card (§8.2) */
+  /* Elevation is driven by CardElevation's source scalar, not CSS selectors. */
+  .card.filled, .card.elevated { border: none; }
   .card.outlined {
-    background-color: var(--md-sys-color-surface, #fef7ff);
-    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-    box-shadow: var(--md-sys-elevation-level0, none);
-  }
-  .card.outlined.interactive:hover:not(.disabled) {
-    box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
+    border: 1px solid var(--_md-card-outline-color, var(--md-sys-color-outline-variant));
   }
 
   /* Disabled State */
   .card.disabled {
     opacity: 1;
-    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
     cursor: not-allowed;
-    box-shadow: none;
   }
-  .card.filled.disabled { background: color-mix(in srgb, var(--md-sys-color-surface-variant) 38%, var(--md-sys-color-surface-container-highest)); }
-  .card.elevated.disabled { background: var(--md-sys-color-surface); box-shadow: var(--md-sys-elevation-level-1); }
-  .card.outlined.disabled { border-color: color-mix(in srgb, var(--md-sys-color-outline) 12%, var(--md-sys-color-surface-container-low)); }
 
   /* Slot Layouts (§8.1) */
   ::slotted([slot="header"]) {
@@ -170,6 +107,8 @@ export class MdCard extends HTMLElement {
     adoptSheet(this.shadowRoot, cardSheet);
     this._rendered = false;
     this._abortController = null;
+    this._elevation = undefined;
+    this._colors = undefined;
   }
 
   connectedCallback() {
@@ -184,6 +123,7 @@ export class MdCard extends HTMLElement {
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._pressBinding = this._stateLayer = this._elevationMotion = this._focusBinding = this._colorsBinding = null;
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
@@ -191,21 +131,28 @@ export class MdCard extends HTMLElement {
     this._sync();
   }
 
-  get variant() { return sanitizeAttribute(this.getAttribute('variant') || 'filled'); }
+  get variant() { const value=this.getAttribute('variant'); return ['filled','elevated','outlined'].includes(value)?value:'filled'; }
+  set variant(value) { this.setAttribute('variant',value); }
   get interactive() { return this.hasAttribute('interactive') || Boolean(this.href); }
+  set interactive(value) { this.toggleAttribute('interactive',Boolean(value)); }
   get disabled() { return this.hasAttribute('disabled'); }
   set disabled(val) {
     if (val) this.setAttribute('disabled', '');
     else this.removeAttribute('disabled');
   }
   get href() { return this.getAttribute('href') || ''; }
+  set href(value) { if(value)this.setAttribute('href',value);else this.removeAttribute('href'); }
+  get elevation() { return this._elevation; }
+  set elevation(value) { this._elevation=cardElevationDefinition(value); if(this._rendered)this._sync(); }
+  get colors() { return this._colors; }
+  set colors(value) { this._colors=cardColorDefinition(value); if(this._rendered)this._sync(); }
 
   _render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
       <div class="card" role="region" part="card">
-        <span class="state-layer"></span>
+        <span class="state-layer" aria-hidden="true"></span>
         <slot name="media"></slot>
         <slot name="header"></slot>
         <slot></slot>
@@ -221,6 +168,20 @@ export class MdCard extends HTMLElement {
 
     const card = this.shadowRoot.querySelector('.card');
     if (!card) return;
+
+    this._elevationMotion=bindButtonElevation(card,{
+      configuration:()=>cardElevationValues(this.variant,this.elevation),
+      disabled:()=>this.disabled,
+      MotionClass:CardElevationMotion,
+      interactionSource:()=>this.interactive,
+      compositionKey:()=>this.interactive?true:this.variant,
+      hitTest:event=>domPointerHoverHit(card,event),signal
+    });
+    this._stateLayer=bindStateLayer(card,{disabled:()=>!this.interactive||this.disabled,
+      property:'--md-card-state-alpha',hitTest:event=>domPointerHoverHit(card,event),signal});
+    this._focusBinding=bindFocusIndication(card,{onFocus:active=>card.classList.toggle('focus-indicated',active&&this.interactive&&!this.disabled),signal});
+    // The non-clickable native overload always reads enabled colors/border.
+    this._colorsBinding=bindCardColors(this,card,{variant:()=>this.variant,disabled:()=>this.interactive&&this.disabled,definition:()=>this.colors,signal});
 
     const press = (e) => {
       if (!this.interactive || this.disabled) return;
@@ -239,19 +200,34 @@ export class MdCard extends HTMLElement {
       }));
     };
 
-    bindPress(card, {
+    this._pressBinding=bindPress(card, {
+      pointerNode:()=>this.interactive,
       disabled: () => !this.interactive || this.disabled,
-      ignoreEvent: e => {
-        for (const node of e.composedPath()) {
-          if (node === card) break;
-          if (node.matches?.('button,a[href],input,select,textarea,[role="button"],[role="checkbox"],[tabindex="0"]')) return true;
-        }
-        return false;
+      keyboardActivation:true,
+      pointerPolicy:{
+        input:event=>({...domPointerInput(card,event),clipping:true}),
+        hitTest:event=>domPointerHit(card,event),
+        outOfBounds:event=>domPointerOutOfBounds(card,event)
       },
+      ignoreEvent:event=>nestedInteractiveEvent(event,card),
+      onInteraction:({type,press})=>this._elevationMotion.press(type==='press',press),
       onPress: press,
       onActivate: activate,
       signal
     });
+
+    // HTML owns drag recognition; this Card owns only its own drag source.
+    let drag=null;
+    const finishDrag=()=>{if(!drag)return;this._elevationMotion.drag(false,drag);this._stateLayer.drag(false,drag);drag=null;};
+    card.addEventListener('dragstart',event=>{
+      if(!this.interactive||this.disabled)return;
+      const owner=event.composedPath().find(node=>node.matches?.('[draggable="true"]'));
+      if(owner!==card&&owner!==this)return;
+      finishDrag();drag={};this._elevationMotion.drag(true,drag);this._stateLayer.drag(true,drag);
+    },{signal});
+    card.addEventListener('dragend',finishDrag,{signal});
+    signal.addEventListener('abort',finishDrag,{once:true});
+    this._finishDrag=finishDrag;
   }
 
   _sync() {
@@ -259,16 +235,20 @@ export class MdCard extends HTMLElement {
     if (!card) return;
 
     const isInteractive = this.interactive && !this.disabled;
-    card.className = `card ${this.variant}${isInteractive ? ' interactive' : ''}${this.disabled ? ' disabled' : ''}`;
+    card.classList.remove('filled','elevated','outlined');card.classList.add(this.variant);
+    card.classList.toggle('interactive',this.interactive);card.classList.toggle('disabled',this.interactive&&this.disabled);
     
-    if (isInteractive) {
+    if (this.interactive) {
       card.setAttribute('role', this.href ? 'link' : 'button');
-      card.setAttribute('tabindex', '0');
     } else {
       card.setAttribute('role', 'region');
       card.removeAttribute('tabindex');
     }
-    card.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
+    if(isInteractive)card.setAttribute('tabindex','0');else card.removeAttribute('tabindex');
+    card.setAttribute('aria-disabled', this.interactive&&this.disabled ? 'true' : 'false');
+    this._pressBinding?.refresh();
+    if(!isInteractive)this._finishDrag?.();
+    this._elevationMotion?.refresh();this._stateLayer?.refresh();this._focusBinding?.refresh();this._colorsBinding?.refresh();
   }
 }
 

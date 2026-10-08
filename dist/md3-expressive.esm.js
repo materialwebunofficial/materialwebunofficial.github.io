@@ -10,7 +10,7 @@ function themeSetting(element2, name, fallback = null) {
 }
 function observeThemeContext(element2, callback, { includeSelf = true } = {}) {
   let disposed = false, queued = false;
-  let ancestors = [];
+  let ancestors2 = [];
   const schedule = () => {
     if (queued || disposed) return;
     queued = true;
@@ -26,13 +26,13 @@ function observeThemeContext(element2, callback, { includeSelf = true } = {}) {
   };
   const watchAncestors = () => {
     observer.disconnect();
-    for (const node of ancestors) node.removeEventListener("slotchange", onSlotChange);
-    ancestors = [];
-    for (let node = includeSelf ? element2 : themeParent(element2); node; node = themeParent(node)) ancestors.push(node);
-    for (const node of ancestors) {
+    for (const node of ancestors2) node.removeEventListener("slotchange", onSlotChange);
+    ancestors2 = [];
+    for (let node = includeSelf ? element2 : themeParent(element2); node; node = themeParent(node)) ancestors2.push(node);
+    for (const node of ancestors2) {
       observer.observe(node, {
         attributes: true,
-        attributeFilter: ["style", "class", "dir", "data-theme", "data-theme-scheme", "data-contrast", "data-motion-scheme", "data-seed-color"]
+        attributeFilter: ["style", "class", "dir", "lang", "data-theme", "data-theme-scheme", "data-contrast", "data-motion-scheme", "data-seed-color"]
       });
       if (node.localName === "slot") node.addEventListener("slotchange", onSlotChange);
     }
@@ -40,14 +40,14 @@ function observeThemeContext(element2, callback, { includeSelf = true } = {}) {
   watchAncestors();
   const onTheme = (event) => {
     const origin = event.detail?.target || event.composedPath()[0];
-    if (origin === window || ancestors.includes(origin)) schedule();
+    if (origin === window || ancestors2.includes(origin)) schedule();
   };
   window.addEventListener("theme-color-change", onTheme);
   window.addEventListener("theme-change", onTheme);
   return () => {
     disposed = true;
     observer.disconnect();
-    for (const node of ancestors) node.removeEventListener("slotchange", onSlotChange);
+    for (const node of ancestors2) node.removeEventListener("slotchange", onSlotChange);
     window.removeEventListener("theme-color-change", onTheme);
     window.removeEventListener("theme-change", onTheme);
   };
@@ -215,13 +215,13 @@ var SpringPhysics = class {
       velocity = current.velocity;
       previous.anim.cancel();
     }
-    const write5 = (value) => {
+    const write7 = (value) => {
       if (property === "scale") element2.style.scale = value === 1 ? "" : String(value);
       else if (property === "border-radius") element2.style.borderRadius = `${Math.max(0, value)}px`;
       else element2.style[property] = ["opacity", "zIndex", "flexGrow", "flexShrink"].includes(property) ? String(value) : `${value}px`;
     };
     if (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      write5(to);
+      write7(to);
       states.delete(property);
       return;
     }
@@ -249,7 +249,7 @@ var SpringPhysics = class {
     };
     anim.onfinish = () => {
       if (states.get(property)?.anim !== anim) return;
-      write5(to);
+      write7(to);
       states.delete(property);
       if (element2._activeSpringAnim === anim) element2._activeSpringAnim = null;
     };
@@ -266,10 +266,10 @@ function springDuration({
   dampingRatio = 0.8,
   visibilityThreshold = 0.01
 }) {
-  const f22 = Math.fround;
-  const displacement = f22(f22(f22(from) - f22(to)) / f22(visibilityThreshold));
-  const initialVelocity = f22(f22(velocity) / f22(visibilityThreshold));
-  const damping = f22(dampingRatio), k = f22(stiffness);
+  const f30 = Math.fround;
+  const displacement = f30(f30(f30(from) - f30(to)) / f30(visibilityThreshold));
+  const initialVelocity = f30(f30(velocity) / f30(visibilityThreshold));
+  const damping = f30(dampingRatio), k = f30(stiffness);
   if (damping === 0) return 9223372036854;
   if (displacement === 0 && initialVelocity === 0) return 0;
   const b = 2 * damping * Math.sqrt(k);
@@ -424,6 +424,7 @@ var SelectionMotion = class {
     if (this.raf !== null) cancelAnimationFrame(this.raf);
     this.raf = null;
     this.render(now);
+    if (this.disposed) return;
     if (Object.values(this.channels).some((channel2) => channel2.animation)) {
       this.raf = requestAnimationFrame((time) => this.tick(time));
     }
@@ -440,15 +441,24 @@ var SelectionMotion = class {
     this.media?.removeEventListener("change", this.onPreference);
   }
 };
-function checkboxPath(fraction, gravitation) {
-  const points = [[4, 10], [8 + 2 * gravitation, 14 - 4 * gravitation], [16, 6 + 4 * gravitation]];
+function checkboxPoints(gravitation, size = 18) {
+  const f30 = Math.fround, g = f30(gravitation), width = f30(size);
+  const lerp7 = (start, stop) => f30(f30(f30(1 - g) * f30(start)) + f30(g * f30(stop)));
+  return [
+    [f30(width * f30(0.25)), f30(width * lerp7(0.5, 0.5))],
+    [f30(width * lerp7(0.4, 0.5)), f30(width * lerp7(0.65, 0.5))],
+    [f30(width * f30(0.75)), f30(width * lerp7(0.3, 0.5))]
+  ];
+}
+function checkboxPath(fraction, gravitation, size = 18) {
+  const points = checkboxPoints(gravitation, size);
   const lengths = [
-    Math.hypot(points[1][0] - 4, points[1][1] - 10),
+    Math.hypot(points[1][0] - points[0][0], points[1][1] - points[0][1]),
     Math.hypot(points[2][0] - points[1][0], points[2][1] - points[1][1])
   ];
   let remaining = Math.max(0, Math.min(1, fraction)) * (lengths[0] + lengths[1]);
   if (remaining <= 0) return "";
-  let path = "M 4 10";
+  let path = `M ${points[0][0]} ${points[0][1]}`;
   for (let i = 0; i < 2; i++) {
     const portion = Math.min(1, remaining / lengths[i]);
     path += ` L ${points[i][0] + (points[i + 1][0] - points[i][0]) * portion} ${points[i][1] + (points[i + 1][1] - points[i][1]) * portion}`;
@@ -456,6 +466,14 @@ function checkboxPath(fraction, gravitation) {
     if (remaining <= 0) break;
   }
   return path;
+}
+function checkboxBox(size, stroke, radius2 = 2, filled = false) {
+  const f30 = Math.fround, w = f30(size), s = f30(stroke), r = f30(radius2), half3 = f30(s / 2);
+  if (filled) return { fill: { x: 0, y: 0, width: w, height: w, radius: r }, outline: null };
+  return {
+    fill: { x: s, y: s, width: f30(w - f30(s * 2)), height: f30(w - f30(s * 2)), radius: Math.max(0, f30(r - s)) },
+    outline: { x: half3, y: half3, width: f30(w - s), height: f30(w - s), radius: f30(r - half3), stroke: s }
+  };
 }
 
 // src/motion/drawer-motion.js
@@ -485,12 +503,12 @@ function drawerEasing(fraction) {
   const value = f(f(3 * f(f(f(f(f(f(1 / 3) - 1) * t) + 1) * t))) * t);
   return Math.max(0, Math.min(1, value));
 }
-function drawerTarget(offset, width, velocity) {
-  if (offset >= 0) return 0;
-  if (offset <= -width) return -width;
+function drawerTarget(offset2, width, velocity) {
+  if (offset2 >= 0) return 0;
+  if (offset2 <= -width) return -width;
   if (Math.abs(velocity) >= 400) return velocity > 0 ? 0 : -width;
-  if (offset === -width * 0.5) return velocity > 0 ? 0 : -width;
-  return offset > -width * 0.5 ? 0 : -width;
+  if (offset2 === -width * 0.5) return velocity > 0 ? 0 : -width;
+  return offset2 > -width * 0.5 ? 0 : -width;
 }
 function drawerDecayTarget(from, velocity) {
   from = f(from);
@@ -596,7 +614,7 @@ function collectPressRipples(event, group, callback) {
     pressGroups.delete(event);
   }
 }
-function createRipple(event, container) {
+function createRipple(event, container, { bounded = true, radius: radius2, before = null } = {}) {
   if (!event || !container) return;
   let ripples = surfaces.get(container);
   if (!ripples) {
@@ -604,18 +622,19 @@ function createRipple(event, container) {
     surfaces.set(container, ripples);
   }
   for (const ripple of ripples) ripple.finish();
-  const rect4 = container.getBoundingClientRect(), width = container.clientWidth, height = container.clientHeight;
+  const rect6 = container.getBoundingClientRect(), width = container.clientWidth, height = container.clientHeight;
   const pointer = event.type?.startsWith("pointer");
-  const originX = pointer && rect4.width ? (event.clientX - rect4.left) * width / rect4.width : width / 2;
-  const originY = pointer && rect4.height ? (event.clientY - rect4.top) * height / rect4.height : height / 2;
-  const geometry = { width, height, originX, originY };
+  const originX = pointer && rect6.width ? (event.clientX - rect6.left) * width / rect6.width : width / 2;
+  const originY = pointer && rect6.height ? (event.clientY - rect6.top) * height / rect6.height : height / 2;
+  const geometry = { width, height, originX, originY, bounded, radius: radius2 };
   let ink = container.querySelector(":scope > .md-ink");
   if (!ink) {
     ink = document.createElement("span");
     ink.className = "md-ink";
-    ink.style.cssText = "position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none";
-    container.append(ink);
+    ink.style.cssText = "position:absolute;inset:0;border-radius:inherit;pointer-events:none";
+    container.insertBefore(ink, before);
   }
+  ink.style.overflow = bounded ? "hidden" : "visible";
   const circle = document.createElement("span");
   circle.className = "md-ripple-effect";
   circle.style.cssText = "position:absolute;border-radius:50%;pointer-events:none;animation:none;transform:none;background:rgb(from var(--md-ripple-color, currentColor) r g b / 1);";
@@ -686,7 +705,693 @@ function createRipple(event, container) {
   return controller;
 }
 
+// src/motion/clickable-keys.js
+var enterKeys = /* @__PURE__ */ new Set(["DirectionCenter", "Enter", "NumPadEnter", "Spacebar"]);
+function keyboardActivationKey(event) {
+  if (event.key === "Enter") return event.code === "NumpadEnter" ? "NumPadEnter" : "Enter";
+  return event.key === " " || event.key === "Spacebar" ? "Spacebar" : null;
+}
+var ClickableKeys = class {
+  constructor({ enabled = true, onPress, onRelease, onCancel, onClick } = {}) {
+    this.enabled = enabled;
+    this.presses = /* @__PURE__ */ new Map();
+    this.onPress = onPress;
+    this.onRelease = onRelease;
+    this.onCancel = onCancel;
+    this.onClick = onClick;
+  }
+  handle(key, type, event) {
+    if (!this.enabled || !enterKeys.has(key)) return false;
+    if (type === "KeyDown") {
+      if (this.presses.has(key)) return false;
+      const press = { key };
+      this.presses.set(key, press);
+      this.onPress?.(press, event);
+      return true;
+    }
+    if (type === "KeyUp") {
+      const press = this.presses.get(key);
+      this.presses.delete(key);
+      if (!press) return false;
+      this.onRelease?.(press, event);
+      this.onClick?.(event);
+      return true;
+    }
+    return false;
+  }
+  cancel() {
+    for (const press of this.presses.values()) this.onCancel?.(press);
+    this.presses.clear();
+  }
+  update(enabled) {
+    if (this.enabled === enabled) return;
+    if (!enabled) this.cancel();
+    this.enabled = enabled;
+  }
+  get pending() {
+    return [...this.presses.keys()];
+  }
+};
+
+// src/motion/focus-indication.js
+var documents = /* @__PURE__ */ new WeakMap();
+function focusDocument(document2) {
+  let registry = documents.get(document2);
+  if (registry) return registry;
+  const bindings = /* @__PURE__ */ new Set(), controller = new AbortController();
+  const window2 = document2.defaultView;
+  let frame = null;
+  const refresh = () => {
+    for (const binding of bindings) binding.refresh();
+  };
+  const deferred = () => {
+    if (frame !== null) return;
+    frame = window2.requestAnimationFrame(() => {
+      frame = null;
+      refresh();
+    });
+  };
+  document2.addEventListener("keydown", (event) => {
+    if (!event.isTrusted || ["Shift", "Control", "Alt", "Meta"].includes(event.key)) return;
+    for (const binding of bindings) binding.keyboard();
+    deferred();
+  }, { capture: true, signal: controller.signal });
+  document2.addEventListener("pointerdown", (event) => {
+    if (!event.isTrusted) return;
+    const path = new Set(event.composedPath());
+    for (const binding of bindings) {
+      if (path.has(binding.element)) binding.pointer();
+    }
+    deferred();
+  }, { capture: true, signal: controller.signal });
+  registry = { bindings, pointer(element2) {
+    for (const binding of bindings) if (binding.element === element2) binding.pointer();
+  }, retire() {
+    if (bindings.size) return;
+    controller.abort();
+    if (frame !== null) window2.cancelAnimationFrame(frame);
+    documents.delete(document2);
+  } };
+  documents.set(document2, registry);
+  return registry;
+}
+function bindFocusIndication(element2, { onFocus, signal } = {}) {
+  if (signal?.aborted) return { dispose() {
+  } };
+  const registry = focusDocument(element2.ownerDocument);
+  let pointerHidden = false, disposed = false;
+  const set = (value) => {
+    if (!disposed) onFocus(value);
+  };
+  const refresh = () => set(!pointerHidden && element2.matches(":focus-visible"));
+  const focus = (event) => {
+    if (event.isTrusted) refresh();
+    else set(true);
+  };
+  const blur = () => {
+    pointerHidden = false;
+    set(false);
+  };
+  const binding = {
+    element: element2,
+    refresh,
+    pointer() {
+      pointerHidden = true;
+      set(false);
+    },
+    keyboard() {
+      pointerHidden = false;
+      refresh();
+    }
+  };
+  registry.bindings.add(binding);
+  element2.addEventListener("focus", focus);
+  element2.addEventListener("blur", blur);
+  function dispose() {
+    if (disposed) return;
+    set(false);
+    disposed = true;
+    element2.removeEventListener("focus", focus);
+    element2.removeEventListener("blur", blur);
+    signal?.removeEventListener("abort", dispose);
+    registry.bindings.delete(binding);
+    registry.retire();
+  }
+  signal?.addEventListener("abort", dispose, { once: true });
+  refresh();
+  return { dispose, refresh };
+}
+function focusPointerTarget(element2, options = { preventScroll: true }) {
+  documents.get(element2.ownerDocument)?.pointer(element2);
+  element2.focus(options);
+}
+
+// src/motion/pointer-geometry.js
+var f3 = Math.fround;
+function roundedPointerContains({ width, height, radius: radius2 }, x, y2) {
+  width = f3(width);
+  height = f3(height);
+  radius2 = f3(radius2);
+  x = f3(x);
+  y2 = f3(y2);
+  if (x < 0 || x >= width || y2 < 0 || y2 >= height) return false;
+  const right = f3(width - radius2), bottom = f3(height - radius2);
+  let cx, cy;
+  if (x < radius2 && y2 < radius2) {
+    cx = cy = radius2;
+  } else if (x < radius2 && y2 > bottom) {
+    cx = radius2;
+    cy = bottom;
+  } else if (x > right && y2 < radius2) {
+    cx = right;
+    cy = radius2;
+  } else if (x > right && y2 > bottom) {
+    cx = right;
+    cy = bottom;
+  } else return true;
+  const px2 = f3(x - cx), py = f3(y2 - cy), square = f3(radius2 * radius2);
+  return f3(f3(f3(px2 * px2) / square) + f3(f3(py * py) / square)) <= 1;
+}
+function minimumPointerPadding({ width, height, density = 1, target = 48 }) {
+  const minimum = f3(f3(target) * f3(density));
+  return { x: f3(Math.max(0, f3(minimum - f3(width))) / 2), y: f3(Math.max(0, f3(minimum - f3(height))) / 2), minimum };
+}
+function roundedPointerHit(input) {
+  const x = f3(input.x), y2 = f3(input.y), width = f3(input.width), height = f3(input.height);
+  if (!Number.isFinite(x) || !Number.isFinite(y2)) return null;
+  if (roundedPointerContains(input, x, y2)) return { selected: true, direct: true, inLayer: true, distance: -1 };
+  if (input.type !== "Touch") return null;
+  const padding2 = minimumPointerPadding(input);
+  if (width >= padding2.minimum && height >= padding2.minimum) return null;
+  const dx = Math.max(0, x < 0 ? f3(-x) : f3(x - width)), dy = Math.max(0, y2 < 0 ? f3(-y2) : f3(y2 - height));
+  if (!(padding2.x > 0 || padding2.y > 0) || dx > padding2.x || dy > padding2.y) return null;
+  return { selected: true, direct: false, inLayer: false, distance: f3(f3(dx * dx) + f3(dy * dy)) };
+}
+function capturedPointerOutOfBounds(input) {
+  const p = input.type === "Touch" ? minimumPointerPadding(input) : { x: 0, y: 0 }, x = f3(input.x), y2 = f3(input.y);
+  return x < -p.x || x > f3(f3(input.width) + p.x) || y2 < -p.y || y2 > f3(f3(input.height) + p.y);
+}
+
+// src/motion/pointer-tree.js
+var f4 = Math.fround;
+var better = (a, b) => a.inLayer !== b.inLayer ? a.inLayer : a.distance < b.distance;
+function hitPointerTree(tree, point) {
+  const hits = [];
+  let depth = -1;
+  function best() {
+    let value = { distance: Infinity, inLayer: false };
+    for (let i = depth + 1; i < hits.length; i++) {
+      if (better(hits[i], value)) value = hits[i];
+      if (value.distance < 0 && value.inLayer) return value;
+    }
+    return value;
+  }
+  function hasHit() {
+    const value = best();
+    return value.distance < 0 && value.inLayer;
+  }
+  function isBetter(distance, inLayer) {
+    return depth === hits.length - 1 || better({ distance, inLayer }, best());
+  }
+  function hit(node, distance, inLayer, children) {
+    const saved = depth;
+    hits.splice(depth + 1);
+    hits.push({ id: node.id, distance, inLayer });
+    depth++;
+    children();
+    depth = saved;
+  }
+  function minimum(input) {
+    if (point.type !== "Touch") return Infinity;
+    const p = minimumPointerPadding(input), { width, height, x, y: y2 } = input;
+    if (width >= p.minimum && height >= p.minimum) return Infinity;
+    const dx = Math.max(0, x < 0 ? f4(-x) : f4(x - width)), dy = Math.max(0, y2 < 0 ? f4(-y2) : f4(y2 - height));
+    return (p.x > 0 || p.y > 0) && dx <= p.x && dy <= p.y ? f4(f4(dx * dx) + f4(dy * dy)) : Infinity;
+  }
+  function walk(node, px2, py, inLayer) {
+    const input = node.input ?? { ...node, x: f4(px2), y: f4(py) }, x = f4(input.x), y2 = f4(input.y), width = f4(input.width), height = f4(input.height);
+    if (!Number.isFinite(x) || !Number.isFinite(y2)) return;
+    const inClip = node.clipping === false || roundedPointerContains(input, x, y2), distance = minimum({ ...input, x, y: y2, width, height });
+    function children(childInLayer) {
+      if (node.wrapped) {
+        walk(node.wrapped, f4(x - (node.wrapped.x ?? 0)), f4(y2 - (node.wrapped.y ?? 0)), childInLayer);
+        return;
+      }
+      if (!node.inner) return;
+      if (!inClip) {
+        if (point.type !== "Touch" || !Number.isFinite(distance)) return;
+        childInLayer = false;
+      }
+      const saved = depth;
+      for (let i = (node.children?.length ?? 0) - 1; i >= 0; i--) {
+        const child = node.children[i];
+        if (child.placed === false) continue;
+        walk(child, f4(x - (child.x ?? 0)), f4(y2 - (child.y ?? 0)), childInLayer);
+        if (hasHit()) {
+          if (child.share) depth = hits.length - 1;
+          else break;
+        }
+      }
+      depth = saved;
+    }
+    if (!inClip) {
+      if (Number.isFinite(distance) && isBetter(distance, false)) {
+        if (node.pointer !== false) hit(node, distance, false, () => children(false));
+        else children(false);
+      }
+    } else if (node.pointer === false) {
+      children(inLayer);
+    } else if (x >= 0 && x < width && y2 >= 0 && y2 < height) {
+      hit(node, -1, inLayer, () => children(inLayer));
+    } else if (Number.isFinite(distance) && isBetter(distance, inLayer)) {
+      hit(node, distance, inLayer, () => children(inLayer));
+    } else children(inLayer);
+  }
+  walk(tree, point.x, point.y, true);
+  return { path: hits.map((hit2) => hit2.id), direct: hasHit() };
+}
+
+// src/motion/dom-pointer-geometry.js
+function domPointerInput(node, event) {
+  const type = { mouse: "Mouse", touch: "Touch", pen: "Stylus" }[event.pointerType];
+  if (!type) return null;
+  const rect6 = node.getBoundingClientRect(), css2 = getComputedStyle(node);
+  const width = parseFloat(css2.width) || 0, height = parseFloat(css2.height) || 0;
+  const scaleX = rect6.width / width || 1, scaleY = rect6.height / height || 1;
+  return {
+    width,
+    height,
+    radius: Math.min(parseFloat(css2.borderTopLeftRadius) || 0, width / 2, height / 2),
+    x: (event.clientX - rect6.left) / scaleX,
+    y: (event.clientY - rect6.top) / scaleY,
+    type
+  };
+}
+function domPointerHit(node, event) {
+  const input = domPointerInput(node, event);
+  return input === null || roundedPointerHit(input) !== null;
+}
+function domPointerHoverHit(node, event) {
+  const input = domPointerInput(node, event);
+  return input === null || roundedPointerHit(input)?.direct === true;
+}
+function domPointerOutOfBounds(node, event) {
+  const input = domPointerInput(node, event);
+  return input !== null && capturedPointerOutOfBounds(input);
+}
+
+// src/motion/pointer-routing.js
+var routers = /* @__PURE__ */ new WeakMap();
+var events = /* @__PURE__ */ new WeakMap();
+var clicks = /* @__PURE__ */ new WeakMap();
+var parent = (node) => node.assignedSlot || node.parentElement || node.getRootNode?.().host || null;
+function ancestors(node) {
+  const path = [];
+  for (; node; node = parent(node)) path.push(node);
+  return path;
+}
+function deepHit(root, event) {
+  let hit = root.elementFromPoint?.(event.clientX, event.clientY);
+  while (hit?.shadowRoot) {
+    const inner = hit.shadowRoot.elementFromPoint?.(event.clientX, event.clientY);
+    if (!inner || inner === hit) break;
+    hit = inner;
+  }
+  return hit;
+}
+function renderedTopLayer(node, style3) {
+  return style3.overlay === "auto" || !("overlay" in style3) && node.matches(":popover-open,:modal,:fullscreen");
+}
+function paintAncestors(node, style3) {
+  const path = [];
+  for (; node; node = parent(node)) {
+    path.push(node);
+    if (renderedTopLayer(node, style3(node))) break;
+  }
+  return path;
+}
+function visible(entry, event, path, style3) {
+  if (!entry.el.isConnected || !entry.el.getClientRects().length) return false;
+  const css2 = style3(entry.el);
+  if (css2.visibility === "hidden" || css2.visibility === "collapse" || css2.pointerEvents === "none" && !(entry.precise && entry.disabled())) return false;
+  for (const node of path.slice(1)) {
+    const css3 = style3(node);
+    if (css3.display === "contents") continue;
+    const r = node.getBoundingClientRect(), clipX = css3.overflowX !== "visible", clipY = css3.overflowY !== "visible";
+    if (clipX && (event.clientX < r.left || event.clientX >= r.right) || clipY && (event.clientY < r.top || event.clientY >= r.bottom)) return false;
+  }
+  return true;
+}
+function domOrder(a, b) {
+  const ap = ancestors(a).reverse(), bp = ancestors(b).reverse();
+  let i = 0;
+  while (i < ap.length && i < bp.length && ap[i] === bp[i]) i++;
+  if (!i || i === ap.length || i === bp.length) return 0;
+  const owner = ap[i - 1], children = owner.assignedElements?.({ flatten: true }) ?? [...(owner.shadowRoot ?? owner).children];
+  return children.indexOf(ap[i]) - children.indexOf(bp[i]);
+}
+var PointerRouter = class {
+  constructor(document2) {
+    this.document = document2;
+    this.entries = /* @__PURE__ */ new Set();
+    this.byElement = /* @__PURE__ */ new WeakMap();
+    this.pointers = /* @__PURE__ */ new Map();
+    this.hoverObservers = /* @__PURE__ */ new Map();
+    this.hoverPaths = /* @__PURE__ */ new Map();
+    this.abort = new AbortController();
+    const options = { capture: true, signal: this.abort.signal };
+    for (const type of ["pointerdown", "pointermove", "pointerup", "pointercancel", "lostpointercapture"]) {
+      document2.addEventListener(type, (event) => this.pointer(event), options);
+      document2.addEventListener(type, (event) => this.handle(event), { signal: this.abort.signal });
+    }
+    document2.addEventListener("click", (event) => this.click(event), options);
+    for (const type of ["pointerover", "pointermove"]) document2.addEventListener(type, (event) => this.hover(event), options);
+    document2.addEventListener("pointerout", (event) => {
+      if (event.isTrusted && event.pointerType !== "touch" && !event.buttons) {
+        if (event.relatedTarget === null) this.clearHover(event.pointerId, event);
+        else this.hover(event);
+      }
+    }, options);
+    document2.addEventListener("pointercancel", (event) => {
+      if (event.isTrusted) this.clearHover(event.pointerId, event);
+    }, options);
+    document2.defaultView.addEventListener("blur", (event) => {
+      if (event.target !== document2.defaultView) return;
+      for (const id of [...this.hoverPaths.keys()]) this.clearHover(id, event);
+      for (const [id, record] of this.pointers) {
+        record.hoverCanceled = true;
+        record.blocked = true;
+        record.owner?.handlers.pointercancel?.({ pointerId: id });
+      }
+    }, options);
+  }
+  geometry(entry, event) {
+    return entry.input?.(event) ?? { ...domPointerInput(entry.el, event), radius: 0, clipping: false, target: 0 };
+  }
+  tree(event, { painted = false } = {}) {
+    const styles = /* @__PURE__ */ new Map(), style3 = (node) => {
+      let css2 = styles.get(node);
+      if (!css2) {
+        css2 = getComputedStyle(node);
+        styles.set(node, css2);
+      }
+      return css2;
+    };
+    const paths = new Map([...this.entries].map((entry) => [entry, paintAncestors(entry.el, style3)]));
+    const layer = (path) => {
+      const root2 = path.at(-1);
+      return root2 && renderedTopLayer(root2, style3(root2)) ? root2 : null;
+    };
+    const hitLayer = layer(paintAncestors(deepHit(this.document, event), style3));
+    let entries = [...this.entries].filter((entry) => layer(paths.get(entry)) === hitLayer && visible(entry, event, paths.get(entry), style3));
+    const nodes = /* @__PURE__ */ new Map(), stacks = /* @__PURE__ */ new Map(), rendered = /* @__PURE__ */ new Map();
+    const rank = (entry) => {
+      const ranks2 = [];
+      let present = true;
+      for (let node = entry.el; node; ) {
+        const root2 = node.getRootNode();
+        let stack = stacks.get(root2);
+        if (!stack) {
+          stack = root2.elementsFromPoint?.(event.clientX, event.clientY) ?? [];
+          stacks.set(root2, stack);
+        }
+        let index = stack.findIndex((hit) => hit === node || node.contains(hit));
+        if (root2.elementsFromPoint && index < 0 && !(node === entry.el && root2.host && entry.precise && entry.disabled() && style3(node).pointerEvents === "none")) present = false;
+        ranks2.unshift(index < 0 ? stack.length : index);
+        node = root2.host;
+      }
+      rendered.set(entry, present);
+      return ranks2;
+    };
+    const ranks = new Map(entries.map((entry) => [entry, rank(entry)]));
+    if (painted) entries = entries.filter((entry) => !entry.precise || rendered.get(entry));
+    entries.sort((a, b) => {
+      const ar = ranks.get(a), br = ranks.get(b);
+      for (let i = 0; i < Math.min(ar.length, br.length); i++) if (ar[i] !== br[i]) return br[i] - ar[i];
+      return domOrder(a.el, b.el);
+    });
+    const root = { id: null, width: 0, height: 0, radius: 0, pointer: false, clipping: false, inner: true, children: [] };
+    for (const entry of entries) {
+      const input = this.geometry(entry, event);
+      if (input) nodes.set(entry, { id: entry, input, pointer: entry.pointerNode(), clipping: input.clipping ?? true, inner: true, children: [] });
+    }
+    for (const entry of entries) {
+      const node = nodes.get(entry);
+      if (!node) continue;
+      let owner = null;
+      for (const p of paths.get(entry).slice(1)) {
+        const candidate = this.byElement.get(p);
+        if (nodes.has(candidate)) {
+          owner = nodes.get(candidate);
+          break;
+        }
+      }
+      (owner ?? root).children.push(node);
+    }
+    const type = { mouse: "Mouse", touch: "Touch", pen: "Stylus" }[event.pointerType];
+    return hitPointerTree(root, { x: event.clientX, y: event.clientY, type }).path;
+  }
+  hover(event) {
+    if (!this.hoverObservers.size || !event.isTrusted || event.pointerType === "touch") return;
+    this.retireUnpressedHover(event.pointerId);
+    if (event.buttons) {
+      this.capturedHover(event);
+      return;
+    }
+    const hit = deepHit(this.document, event), physical = ancestors(hit).map((node) => this.byElement.get(node)).find(Boolean);
+    let path = this.tree(event, { painted: true });
+    const owner = path.at(-1);
+    if (owner && !physical && !ancestors(owner.el).includes(hit) && !ancestors(hit).includes(owner.el)) path = [];
+    this.hoverPaths.set(event.pointerId, new Set(path));
+    this.paintHover(event);
+  }
+  retireUnpressedHover(pointerId) {
+    for (const id of this.hoverPaths.keys()) if (id !== pointerId) {
+      const record = this.pointers.get(id);
+      if (!record?.pressed || record.hoverCanceled) this.hoverPaths.delete(id);
+    }
+  }
+  capturedHover(event) {
+    const record = this.pointers.get(event.pointerId);
+    if (!record) return;
+    const root = this.document.documentElement;
+    const inWindow = event.clientX >= 0 && event.clientY >= 0 && event.clientX <= root.clientWidth && event.clientY <= root.clientHeight;
+    const path = record.hoverCanceled || !inWindow ? [] : record.path.filter((entry) => {
+      if (!this.entries.has(entry) || !entry.el.isConnected || !entry.el.getClientRects().length) return false;
+      const input = this.geometry(entry, event);
+      return input && input.x >= 0 && input.y >= 0 && input.x <= input.width && input.y <= input.height;
+    });
+    this.hoverPaths.set(event.pointerId, new Set(path));
+    this.paintHover(event);
+  }
+  clearHover(id, event) {
+    this.hoverPaths.delete(id);
+    this.paintHover(event);
+  }
+  paintHover(event) {
+    for (const [el, observers] of this.hoverObservers) {
+      const entry = this.byElement.get(el), active = !!entry && [...this.hoverPaths.values()].some((path) => path.has(entry));
+      if (entry && entry.hoverActive === active) continue;
+      if (entry) entry.hoverActive = active;
+      for (const observer of observers) observer(active, event, true);
+    }
+  }
+  pointer(event) {
+    if (!event.isTrusted) return;
+    let record = this.pointers.get(event.pointerId);
+    if (event.type === "pointerdown") {
+      if (event.isPrimary === false || event.pointerType === "mouse" && event.button !== 0) return;
+      const registered = event.composedPath().map((node) => this.byElement.get(node)).filter(Boolean), domOrigin = registered[0], origin = registered.find((entry) => entry.precise);
+      if (origin?.ignoreEvent(event) || !origin && domOrigin?.ignoreEvent(event) || !origin && !domOrigin && event.pointerType !== "touch") return;
+      if (record) clearTimeout(record.timer);
+      const path = this.tree(event), owner = path.at(-1) ?? null;
+      if (!origin) {
+        const hit = deepHit(this.document, event);
+        if (!owner?.precise || !ancestors(owner.el).includes(hit)) return;
+        if (hit.matches?.('button,input,select,textarea,a[href],summary,[contenteditable="true"],[role="button"],[role="checkbox"],[role="radio"],[role="switch"]') && !this.byElement.has(hit)) return;
+      }
+      const receivers = new Set(registered);
+      for (const node of ancestors(owner?.el)) {
+        const entry = this.byElement.get(node);
+        if (entry) receivers.add(entry);
+      }
+      record = { owner, receivers, path, pressed: true, hoverCanceled: false, blocked: true, released: false, mismatch: owner !== (domOrigin ?? origin), timer: null };
+      this.pointers.set(event.pointerId, record);
+      if (record.mismatch) event.preventDefault();
+    }
+    if (!record) return;
+    events.set(event, { record, handled: false });
+    if (event.type === "pointercancel") {
+      record.pressed = false;
+      record.hoverCanceled = true;
+      record.blocked = true;
+      this.expire(event.pointerId, record);
+    }
+    if (event.type === "pointerup") {
+      record.pressed = false;
+      this.expire(event.pointerId, record);
+    }
+  }
+  expire(id, record) {
+    clearTimeout(record.timer);
+    record.timer = setTimeout(() => {
+      if (this.pointers.get(id) === record) this.pointers.delete(id);
+      this.retire();
+    }, 1e3);
+  }
+  handle(event) {
+    const routed = events.get(event);
+    if (!routed) return false;
+    if (routed.handled) return true;
+    routed.handled = true;
+    const { record } = routed, owner = record.owner;
+    if (!owner || !this.entries.has(owner)) return true;
+    const accepted = owner.handlers[event.type]?.(event);
+    if (event.type === "pointerdown") {
+      record.blocked = accepted !== true || record.owner !== owner || !owner.el.isConnected;
+      if (!record.blocked && record.mismatch) focusPointerTarget(owner.el);
+    } else if (event.type === "pointerup") {
+      record.released = accepted === true;
+      record.blocked ||= !record.released;
+    }
+    return true;
+  }
+  ownsAt(entry, event) {
+    const record = this.pointers.get(event.pointerId);
+    if (record?.owner !== entry) return null;
+    const hit = deepHit(this.document, event), physical = ancestors(hit).map((node) => this.byElement.get(node)).find(Boolean);
+    const containing = ancestors(entry.el).includes(hit) && (!hit.matches?.('button,input,select,textarea,a[href],summary,[contenteditable="true"],[role="button"],[role="checkbox"],[role="radio"],[role="switch"]') || this.byElement.has(hit));
+    return containing || !!physical && (record.receivers.has(physical) || ancestors(physical.el).includes(entry.el));
+  }
+  click(event) {
+    if (!event.isTrusted || event.detail === 0) return;
+    const record = this.pointers.get(event.pointerId);
+    if (!record) return;
+    this.pointers.delete(event.pointerId);
+    clearTimeout(record.timer);
+    const owner = record.owner;
+    if (record.blocked || !record.released || !owner || !this.entries.has(owner) || !owner.canActivate()) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      this.retire();
+      return;
+    }
+    clicks.set(event, owner);
+    if (!event.composedPath().includes(owner.el)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const EventClass = this.document.defaultView.PointerEvent ?? this.document.defaultView.MouseEvent;
+      const init = { bubbles: true, cancelable: true, composed: true };
+      for (const key of ["detail", "clientX", "clientY", "screenX", "screenY", "button", "buttons", "ctrlKey", "shiftKey", "altKey", "metaKey", "pointerId", "pointerType", "isPrimary", "width", "height", "pressure"]) init[key] = event[key];
+      const click = new EventClass("click", init);
+      clicks.set(click, owner);
+      owner.el.dispatchEvent(click);
+    }
+    this.retire();
+  }
+  remove(entry) {
+    this.entries.delete(entry);
+    this.byElement.delete(entry.el);
+    for (const path of this.hoverPaths.values()) path.delete(entry);
+    for (const observer of this.hoverObservers.get(entry.el) ?? []) observer(false);
+    for (const record of this.pointers.values()) {
+      record.receivers.delete(entry);
+      if (record.owner === entry) {
+        record.owner = null;
+        record.blocked = true;
+      }
+    }
+    this.retire();
+  }
+  retire() {
+    if (!this.entries.size && !this.pointers.size && !this.hoverObservers.size) {
+      this.abort.abort();
+      routers.delete(this.document);
+    }
+  }
+};
+function registerPointerBinding(el, { input, precise = false, disabled = () => false, pointerNode = () => true, ignoreEvent = () => false, handlers, canActivate, signal } = {}) {
+  const document2 = el.ownerDocument;
+  if (!document2?.defaultView || signal?.aborted) return { handle: () => false, cancel() {
+  }, ownsAt: () => null, acceptClick: () => true };
+  let router = routers.get(document2);
+  if (!router) {
+    router = new PointerRouter(document2);
+    routers.set(document2, router);
+  }
+  const entry = { el, input, precise, disabled, enabled: !disabled(), pointerNode, ignoreEvent, handlers, canActivate };
+  router.entries.add(entry);
+  router.byElement.set(el, entry);
+  signal?.addEventListener("abort", () => router.remove(entry), { once: true });
+  return {
+    refresh() {
+      const enabled = !disabled();
+      if (enabled === entry.enabled) return;
+      entry.enabled = enabled;
+      if (!enabled && entry.hoverActive) for (const observer of router.hoverObservers.get(el) ?? []) observer(false, void 0, true);
+    },
+    handle: (event) => router.handle(event),
+    ownsAt: (event) => router.ownsAt(entry, event),
+    acceptClick: (event) => !clicks.has(event) || clicks.get(event) === entry,
+    cancel() {
+      for (const record of router.pointers.values()) if (record.owner === entry) record.blocked = true;
+    }
+  };
+}
+function bindPointerHover(el, { hitTest = () => true, onHover, signal } = {}) {
+  if (signal?.aborted) return { dispose() {
+  } };
+  const document2 = el.ownerDocument;
+  let router = null, disposed = false;
+  const update2 = (active, event, routed = false) => {
+    if (!disposed) onHover(active && (routed || hitTest(event)), event);
+  };
+  if (document2?.defaultView) {
+    router = routers.get(document2);
+    if (!router) {
+      router = new PointerRouter(document2);
+      routers.set(document2, router);
+    }
+    let observers = router.hoverObservers.get(el);
+    if (!observers) {
+      observers = /* @__PURE__ */ new Set();
+      router.hoverObservers.set(el, observers);
+    }
+    observers.add(update2);
+  }
+  const direct = (event) => !event.isTrusted || !router?.byElement.has(el);
+  const move = (event) => {
+    if (event.pointerType !== "touch" && direct(event)) update2(true, event);
+  };
+  const leave = (event) => {
+    if (direct(event)) update2(false, event);
+  };
+  el.addEventListener("pointerenter", move, { signal });
+  el.addEventListener("pointermove", move, { signal });
+  el.addEventListener("pointerleave", leave, { signal });
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    el.removeEventListener("pointerenter", move);
+    el.removeEventListener("pointermove", move);
+    el.removeEventListener("pointerleave", leave);
+    const observers = router?.hoverObservers.get(el);
+    observers?.delete(update2);
+    if (!observers?.size) router?.hoverObservers.delete(el);
+    router?.retire();
+  }
+  signal?.addEventListener("abort", dispose, { once: true });
+  return { dispose };
+}
+
 // src/motion/interactions.js
+function nestedInteractiveEvent(event, element2) {
+  for (const node of event.composedPath()) {
+    if (node === element2) return false;
+    if (node.matches?.('button,input,select,textarea,a[href],summary,[contenteditable="true"],[role="button"],[role="checkbox"],[role="radio"],[role="switch"]')) return true;
+  }
+  return false;
+}
 function pressScale(el, scale2 = 0.95, preset = "expressiveSpatialFast") {
   if (!el) return;
   SpringPhysics.animateProperty(el, "scale", 1, scale2, preset);
@@ -704,20 +1409,99 @@ function bindPress(el, {
   onPress,
   onRelease,
   onActivate,
+  onInteraction,
   ignoreEvent = () => false,
+  pointerPolicy,
+  pointerNode = () => true,
+  keyboardActivation = false,
   signal
 } = {}) {
   if (!el) return;
   let isPressed = false;
+  let pointerPressed = false;
   let pointerId = null;
+  let pointerPress = null;
   let canceledClick = false;
-  const pressRipples = /* @__PURE__ */ new Set();
+  let disposed = false;
+  let nestedKeyDefault = false, nestedKeyTimer = null;
+  let routing = null;
+  const allRipples = /* @__PURE__ */ new Set();
+  const rippleGroup = () => {
+    const group = /* @__PURE__ */ new Set();
+    return { add(ripple) {
+      group.add(ripple);
+      allRipples.add(ripple);
+    }, delete(ripple) {
+      group.delete(ripple);
+      allRipples.delete(ripple);
+    }, [Symbol.iterator]() {
+      return group.values();
+    } };
+  };
+  const pressRipples = rippleGroup(), keyRipples = /* @__PURE__ */ new Map();
   const native = el.matches("button, input, a[href]");
-  const start = (e) => {
-    if (ignoreEvent(e) || disabled() || isPressed) return;
-    if (e && e.pointerType === "mouse" && e.button !== 0) return;
-    if (e?.isPrimary === false) return;
+  function beginVisual(event, group) {
     isPressed = true;
+    el.classList.add("pressed");
+    collectPressRipples(event, group, () => onPress?.(event));
+  }
+  function endVisual() {
+    if (pointerPressed || keys?.presses.size || !isPressed) return;
+    isPressed = false;
+    el.classList.remove("pressed");
+    onRelease?.();
+  }
+  function finishKey(press) {
+    for (const ripple of keyRipples.get(press) ?? []) ripple.finish();
+    keyRipples.delete(press);
+  }
+  const keys = keyboardActivation ? new ClickableKeys({
+    enabled: !disabled(),
+    onPress(press, event) {
+      const group = rippleGroup();
+      keyRipples.set(press, group);
+      onInteraction?.({ type: "press", press });
+      beginVisual(event, group);
+    },
+    onRelease(press) {
+      onInteraction?.({ type: "release", press });
+      finishKey(press);
+      endVisual();
+    },
+    onCancel(press) {
+      onInteraction?.({ type: "cancel", press });
+      finishKey(press);
+    },
+    onClick() {
+      el.click();
+    }
+  }) : null;
+  function ignoredKey(event) {
+    if (!ignoreEvent(event)) return false;
+    if (keys && keyboardActivationKey(event) !== null) {
+      nestedKeyDefault = true;
+      clearTimeout(nestedKeyTimer);
+      nestedKeyTimer = setTimeout(() => {
+        nestedKeyDefault = false;
+        nestedKeyTimer = null;
+      }, 0);
+    }
+    return true;
+  }
+  const start = (e, routed = false) => {
+    if (!routed && ignoreEvent(e) || disabled() || (keys ? pointerPressed : isPressed)) return;
+    if (e && e.pointerType === "mouse" && e.button !== 0) {
+      if (pointerPolicy) canceledClick = true;
+      return;
+    }
+    if (e?.isPrimary === false) return;
+    if (pointerPolicy && !pointerPolicy.hitTest(e)) {
+      canceledClick = true;
+      e.preventDefault();
+      return;
+    }
+    pointerPressed = true;
+    pointerPress = {};
     canceledClick = false;
     if (typeof e?.pointerId === "number") pointerId = e.pointerId;
     try {
@@ -726,46 +1510,88 @@ function bindPress(el, {
       }
     } catch (_) {
     }
-    el.classList.add("pressed");
-    collectPressRipples(e, pressRipples, () => onPress?.(e));
+    onInteraction?.({ type: "press", press: pointerPress });
+    beginVisual(e, pressRipples);
+    return true;
   };
-  const end = () => {
-    if (!isPressed) return;
-    isPressed = false;
-    el.classList.remove("pressed");
-    onRelease?.();
+  const end = (type = "release") => {
+    if (!(keys ? pointerPressed : isPressed)) return;
+    pointerPressed = false;
+    if (type === "cancel") routing?.cancel();
+    const press = pointerPress;
+    pointerPress = null;
+    onInteraction?.({ type, press });
     for (const ripple of pressRipples) ripple.finish();
     if (pointerId !== null) {
+      const id = pointerId;
+      pointerId = null;
       try {
-        el.releasePointerCapture(pointerId);
+        el.releasePointerCapture(id);
       } catch (_) {
       }
-      pointerId = null;
     }
+    endVisual();
   };
   const listenerOptions = signal ? { signal } : {};
-  el.addEventListener("pointerdown", start, listenerOptions);
-  el.addEventListener("pointerup", (e) => {
+  function pointerMove(e) {
+    if (!pointerPolicy || !isPressed || pointerId === null || e.pointerId !== pointerId) return;
+    if (pointerPolicy.outOfBounds(e)) {
+      canceledClick = true;
+      end("cancel");
+    }
+  }
+  function pointerUp(e) {
     if (pointerId !== null && e.pointerId !== pointerId) return;
+    if ((pointerPolicy || keys) && !pointerPressed) return;
     const r = el.getBoundingClientRect();
-    const hit = el.getRootNode().elementFromPoint?.(e.clientX, e.clientY);
-    canceledClick = hit ? !el.contains(hit) : e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+    const root = el.getRootNode();
+    const hit = root.elementsFromPoint?.(e.clientX, e.clientY)[0] ?? root.elementFromPoint?.(e.clientX, e.clientY);
+    let renderedHit = hit;
+    while (renderedHit && renderedHit !== el) {
+      renderedHit = renderedHit.assignedSlot || renderedHit.parentElement || renderedHit.getRootNode?.().host;
+    }
+    if (pointerPolicy) {
+      const routedHit = routing?.ownsAt(e);
+      canceledClick = !pointerPolicy.outOfBounds(e) && (routedHit === null ? !!hit && renderedHit !== el : !routedHit);
+    } else {
+      canceledClick = hit ? renderedHit !== el : e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+    }
     end();
-  }, listenerOptions);
-  el.addEventListener("pointercancel", (e) => {
+    return !canceledClick;
+  }
+  function pointerCancel(e) {
     if (pointerId !== null && e.pointerId !== pointerId) return;
     canceledClick = true;
-    end();
-  }, listenerOptions);
-  el.addEventListener("lostpointercapture", (e) => {
+    end("cancel");
+  }
+  function lostCapture(e) {
     if (pointerId !== null && e.pointerId !== pointerId) return;
-    if (isPressed) canceledClick = true;
-    end();
+    if (keys ? pointerPressed : isPressed) canceledClick = true;
+    end("cancel");
+  }
+  const pointerHandlers = { pointerdown: (e) => start(e, true), pointermove: pointerMove, pointerup: pointerUp, pointercancel: pointerCancel, lostpointercapture: lostCapture };
+  routing = registerPointerBinding(el, { input: pointerPolicy?.input, precise: typeof pointerPolicy?.input === "function", disabled, pointerNode, ignoreEvent, handlers: pointerHandlers, canActivate: () => !disposed && !disabled() && !canceledClick, signal });
+  for (const [type, handler] of Object.entries(pointerHandlers)) el.addEventListener(type, (e) => {
+    if (!routing.handle(e)) {
+      if (type === "pointerdown") start(e);
+      else handler(e);
+    }
   }, listenerOptions);
-  el.addEventListener("blur", end, listenerOptions);
+  el.addEventListener("blur", () => {
+    if (keys) {
+      keys.cancel();
+      endVisual();
+    } else end("cancel");
+  }, listenerOptions);
   el.addEventListener("click", (e) => {
+    if (!routing.acceptClick(e)) return;
     if (ignoreEvent(e)) return;
-    if (disabled() || canceledClick) {
+    if (keys && nestedKeyDefault && e.isTrusted && e.detail === 0) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    if (disabled() || canceledClick && (!pointerPolicy && !keys || e.detail > 0)) {
       e.preventDefault();
       e.stopImmediatePropagation();
       canceledClick = false;
@@ -774,22 +1600,43 @@ function bindPress(el, {
     onActivate?.(e);
   }, { ...listenerOptions, capture: true });
   const clearRipples = () => {
-    for (const ripple of [...pressRipples]) ripple.dispose();
+    for (const ripple of [...allRipples]) ripple.dispose();
   };
-  const disabledObserver = globalThis.MutationObserver ? new MutationObserver(() => {
+  function refreshDisabled() {
+    if (disposed) return;
+    routing?.refresh?.();
+    keys?.update(!disabled());
     if (disabled()) {
       canceledClick = true;
-      end();
+      end("cancel");
+      endVisual();
     }
-  }) : null;
+  }
+  const disabledObserver = globalThis.MutationObserver ? new MutationObserver(refreshDisabled) : null;
   disabledObserver?.observe(el, { attributes: true, attributeFilter: ["disabled", "aria-disabled"] });
   signal?.addEventListener("abort", () => {
-    end();
+    disposed = true;
+    keys?.cancel();
+    end("cancel");
+    endVisual();
     clearRipples();
+    keyRipples.clear();
+    clearTimeout(nestedKeyTimer);
+    nestedKeyTimer = null;
+    nestedKeyDefault = false;
     disabledObserver?.disconnect();
   }, { once: true });
   el.addEventListener("keydown", (e) => {
-    if (ignoreEvent(e)) return;
+    if (ignoredKey(e)) return;
+    if (keys) {
+      keys.update(!disabled());
+      endVisual();
+      const key = keyboardActivationKey(e);
+      if (key === null || disabled() || e.defaultPrevented) return;
+      e.preventDefault();
+      keys.handle(key, "KeyDown", e);
+      return;
+    }
     if (disabled()) return;
     if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
       if (e.repeat) return;
@@ -800,7 +1647,16 @@ function bindPress(el, {
     }
   }, listenerOptions);
   el.addEventListener("keyup", (e) => {
-    if (ignoreEvent(e)) return;
+    if (ignoredKey(e)) return;
+    if (keys) {
+      keys.update(!disabled());
+      endVisual();
+      const key = keyboardActivationKey(e);
+      if (key === null || disabled() || e.defaultPrevented) return;
+      e.preventDefault();
+      keys.handle(key, "KeyUp", e);
+      return;
+    }
     if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
       if (!native && (e.key === " " || e.key === "Spacebar")) {
         e.preventDefault();
@@ -810,6 +1666,7 @@ function bindPress(el, {
       if (!native && activate) el.click();
     }
   }, listenerOptions);
+  return { refresh: refreshDisabled };
 }
 
 // src/utils/security.js
@@ -844,8 +1701,8 @@ function safeJsonParse(raw, fallback = null) {
 function createComponentSheet(cssText) {
   if (typeof CSSStyleSheet !== "undefined" && typeof CSSStyleSheet.prototype.replaceSync === "function") {
     try {
-      const sheet8 = new CSSStyleSheet();
-      sheet8.replaceSync(cssText + `
+      const sheet10 = new CSSStyleSheet();
+      sheet10.replaceSync(cssText + `
         @media (prefers-reduced-motion: reduce) {
           :host, *, *::before, *::after {
             transition-duration: 0s !important;
@@ -855,29 +1712,1292 @@ function createComponentSheet(cssText) {
           }
         }
       `);
-      return sheet8;
+      return sheet10;
     } catch (_) {
       return null;
     }
   }
   return null;
 }
-function adoptSheet(shadowRoot, sheet8) {
-  if (sheet8 && shadowRoot && "adoptedStyleSheets" in shadowRoot) {
+function adoptSheet(shadowRoot, sheet10) {
+  if (sheet10 && shadowRoot && "adoptedStyleSheets" in shadowRoot) {
     try {
-      shadowRoot.adoptedStyleSheets = [sheet8];
+      shadowRoot.adoptedStyleSheets = [sheet10];
     } catch (_) {
     }
   }
+}
+
+// src/motion/color-motion.js
+var clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+var ColorSpringVector = class {
+  constructor(value) {
+    this.value = this.target = value.map(Math.fround);
+    this.animation = null;
+  }
+  sample(now) {
+    const animation = this.animation;
+    if (!animation) return { value: [...this.value], velocity: [0, 0, 0, 0] };
+    const elapsed = Math.max(0, now - animation.start);
+    if (elapsed >= animation.duration) {
+      this.finish();
+      return this.sample(now);
+    }
+    const states = animation.channels.map((channel2) => SpringPhysics.solve({
+      ...channel2,
+      from: Math.fround(channel2.from - channel2.to),
+      to: 0,
+      time: Math.floor(elapsed) / 1e3
+    }));
+    return {
+      value: states.map((state, index) => Math.fround(state.position + animation.channels[index].to)),
+      velocity: states.map((state) => Math.fround(state.velocity))
+    };
+  }
+  to(value, spec, { now = performance.now(), snap = false } = {}) {
+    const target = value.map(Math.fround);
+    if (target.every((component, index) => component === this.target[index])) return;
+    const current = this.sample(now);
+    this.target = target;
+    if (snap) {
+      this.finish();
+      return;
+    }
+    const converted = current.value.map((value2, index) => clamp(value2, index < 2 ? 0 : -0.5, index < 2 ? 1 : 0.5));
+    const channels = target.map((to, index) => ({
+      from: converted[index],
+      to,
+      velocity: current.velocity[index],
+      stiffness: Math.fround(spec.stiffness),
+      dampingRatio: Math.fround(spec.dampingRatio)
+    }));
+    this.animation = { channels, start: now, duration: Math.max(...channels.map((channel2) => springDuration(channel2))) };
+  }
+  finish() {
+    this.value = [...this.target];
+    this.animation = null;
+  }
+};
+function colorVector(probe, color) {
+  probe.style.color = `oklab(from ${color} l a b / alpha)`;
+  const resolved = getComputedStyle(probe).color;
+  const match = /^oklab\(\s*([\d.e+-]+)%?\s+([\d.e+-]+)\s+([\d.e+-]+)(?:\s*\/\s*([\d.e+-]+)%?)?\s*\)$/.exec(resolved);
+  if (!match) throw new TypeError(`Cannot resolve an Oklab color: ${resolved}`);
+  const components = match.slice(1).map(Number);
+  return [match[4] === void 0 ? 1 : components[3], components[0], components[1], components[2]].map(Math.fround);
+}
+function vectorColor([alpha, l, a, b]) {
+  return `oklab(${clamp(l, 0, 1)} ${clamp(a, -0.5, 0.5)} ${clamp(b, -0.5, 0.5)} / ${clamp(alpha, 0, 1)})`;
+}
+var ColorMotion = class {
+  constructor(element2, probe, color, draw, { role = "expressiveEffectMedium" } = {}) {
+    this.element = element2;
+    this.probe = probe;
+    this.color = color;
+    this.draw = draw;
+    this.role = role;
+    this.vector = new ColorSpringVector(colorVector(probe, color));
+    this.raf = null;
+    this.disposed = false;
+    this.media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+    this.onPreference = () => {
+      if (this.media.matches) this.finish();
+    };
+    this.media?.addEventListener("change", this.onPreference);
+    this.render(performance.now());
+  }
+  set(color, { snap = false } = {}) {
+    if (this.disposed) return;
+    if (color === this.color) return;
+    this.color = color;
+    this.vector.to(
+      colorVector(this.probe, color),
+      SpringPhysics.getPreset(this.role, this.element),
+      { snap: snap || this.media?.matches }
+    );
+    this.tick(performance.now());
+  }
+  render(now) {
+    if (this.disposed) return;
+    const state = this.vector.sample(now);
+    this.draw(this.vector.animation ? vectorColor(state.value) : this.color);
+  }
+  tick(now) {
+    if (this.disposed) return;
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.render(now);
+    if (this.vector.animation) this.raf = requestAnimationFrame((time) => this.tick(time));
+  }
+  finish() {
+    if (this.disposed) return;
+    this.vector.finish();
+    this.tick(performance.now());
+  }
+  dispose() {
+    this.disposed = true;
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.media?.removeEventListener("change", this.onPreference);
+  }
+};
+
+// src/components/button-shape.js
+var f5 = Math.fround;
+var same = (a, b) => a === b || a?.unit !== void 0 && a.unit === b?.unit && Object.is(f5(a.value), f5(b.value));
+var lerp2 = (a, b, t) => same(a, b) ? a : { start: a, end: b, fraction: f5(t) };
+function buttonCornerRadius(shape2, width, height) {
+  if (shape2.unit === "percent") return f5(f5(Math.min(width, height)) * f5(f5(shape2.value) / 100));
+  if (shape2.unit === "px") return f5(shape2.value);
+  const t = shape2.fraction;
+  const a = buttonCornerRadius(shape2.start, width, height);
+  const b = buttonCornerRadius(shape2.end, width, height);
+  return f5(f5(f5(1 - t) * a) + f5(t * b));
+}
+var ButtonShapeState = class {
+  constructor(initial) {
+    this.startShape = this.targetShape = initial;
+    this.progress = new SpringValue(1);
+    this.cachedProgress = -1;
+    this.cachedShape = null;
+  }
+  getMorphedShape(now, frameProgress) {
+    const p = frameProgress ?? this.progress.sample(now).position;
+    if (p === this.cachedProgress && this.cachedShape) return this.cachedShape;
+    this.cachedProgress = p;
+    return this.cachedShape = lerp2(this.startShape, this.targetShape, p);
+  }
+  animateToShape(target, spec, now) {
+    if (same(this.targetShape, target)) return false;
+    const current = this.progress.sample(now);
+    let p, velocity;
+    if (same(target, this.startShape)) {
+      this.startShape = this.targetShape;
+      this.targetShape = target;
+      p = f5(1 - current.position);
+      velocity = f5(-current.velocity);
+    } else {
+      this.startShape = current.position === 1 ? this.targetShape : current.position === 0 ? this.startShape : lerp2(this.startShape, this.targetShape, current.position);
+      this.targetShape = target;
+      p = 0;
+      velocity = 0;
+    }
+    this.cachedShape = null;
+    this.progress.value = this.progress.target = p;
+    this.progress.animation = null;
+    this.progress.to(1, spec, { now, velocity });
+    return true;
+  }
+};
+var copyShape = (shape2) => ({ unit: shape2.unit, value: f5(shape2.value) });
+var copySpec = (spec) => ({
+  stiffness: f5(spec.stiffness),
+  dampingRatio: f5(spec.dampingRatio),
+  visibilityThreshold: spec.visibilityThreshold == null ? null : f5(spec.visibilityThreshold)
+});
+var sameSpec = (a, b) => a.stiffness === b.stiffness && a.dampingRatio === b.dampingRatio && Object.is(a.visibilityThreshold, b.visibilityThreshold);
+var ButtonShapeComposition = class {
+  update(shapes, pressed, animationSpec, now, checked = false) {
+    const spec = copySpec(animationSpec);
+    const target = pressed ? shapes.pressedShape : checked && shapes.checkedShape ? shapes.checkedShape : shapes.shape;
+    if (!this.state || !same(this.shapes.shape, shapes.shape) || !same(this.shapes.pressedShape, shapes.pressedShape) || !same(this.shapes.checkedShape, shapes.checkedShape) || !sameSpec(this.spec, spec)) {
+      this.shapes = { shape: copyShape(shapes.shape), pressedShape: copyShape(shapes.pressedShape) };
+      if (shapes.checkedShape) this.shapes.checkedShape = copyShape(shapes.checkedShape);
+      this.spec = spec;
+      this.state = new ButtonShapeState(copyShape(target));
+    } else {
+      this.state.animateToShape(copyShape(target), this.spec, now);
+    }
+    return this.state;
+  }
+};
+
+// src/components/button-border.js
+var f6 = Math.fround;
+function buttonBorderStroke(width, measuredWidth, measuredHeight, density = 1) {
+  density = Number.isFinite(density) && density > 0 ? f6(density) : 1;
+  const minimum = f6(f6(Math.min(measuredWidth, measuredHeight)) * density);
+  if (!(width > 0) || !(minimum > 0)) return 0;
+  return f6(Math.min(Math.ceil(f6(f6(width) * density)), Math.ceil(f6(minimum / 2))) / density);
+}
+
+// src/motion/interaction-tween.js
+var f7 = Math.fround;
+function outgoingElevationEasing(fraction) {
+  if (fraction <= 0 || fraction >= 1) return fraction;
+  const progress = Math.max(f7(fraction), f7(11920929e-14));
+  const p0 = f7(-progress), p12 = f7(f7(0.4) - progress);
+  const p22 = f7(f7(0.6) - progress), p3 = f7(1 - progress);
+  const divisor = -p0 + 3 * f7(p12 - p22) + p3;
+  const a = 3 * (p0 - 2 * p12 + p22) / divisor;
+  const b = 3 * f7(p12 - p0) / divisor, c = p0 / divisor;
+  const o3 = (3 * b - a * a) / 9;
+  const q2 = (2 * a * a * a - 9 * a * b + 27 * c) / 54;
+  const root = Math.sqrt(q2 * q2 + o3 * o3 * o3);
+  const t = f7(f7(fastCbrt(f7(-q2 + root)) - fastCbrt(f7(q2 + root))) - a / 3);
+  const value = f7(f7(3 * f7(f7(f7(f7(f7(f7(1 / 3) - 1) * t) + 1) * t))) * t);
+  return Math.max(0, Math.min(1, value));
+}
+function elevationSpec(from, to) {
+  const known = (kind) => ["hover", "focus", "press", "drag"].includes(kind);
+  if (to !== null) return { duration: known(to) ? 120 : 0, easing: "incoming" };
+  return { duration: known(from) ? from === "hover" ? 120 : 150 : 0, easing: "outgoing" };
+}
+function stateLayerSpec(from, to) {
+  return { duration: to === "focus" || to === "drag" ? 45 : to === null && from === "drag" ? 150 : 15, easing: "linear" };
+}
+function interactionTween(from, to, elapsed, spec) {
+  from = f7(from);
+  to = f7(to);
+  const time = Math.max(0, Math.trunc(elapsed));
+  if (!spec.duration) return to;
+  const fraction = f7(Math.min(time, spec.duration) / spec.duration);
+  const factor = spec.easing === "incoming" ? drawerEasing(fraction) : spec.easing === "outgoing" ? outgoingElevationEasing(fraction) : fraction;
+  return f7(f7(f7(1 - factor) * from) + f7(to * factor));
+}
+var InteractionOrder = class {
+  constructor() {
+    this.active = [];
+    this.identities = [];
+  }
+  set(kind, active, identity = kind) {
+    const index = this.identities.indexOf(identity);
+    if (active && index < 0) {
+      this.active.push(kind);
+      this.identities.push(identity);
+    } else if (!active && index >= 0) {
+      this.active.splice(index, 1);
+      this.identities.splice(index, 1);
+    } else return false;
+    return true;
+  }
+  latest(includePress = true) {
+    return this.active.filter((kind) => includePress || kind !== "press").at(-1) ?? null;
+  }
+  clear() {
+    this.active.length = 0;
+    this.identities.length = 0;
+  }
+};
+
+// src/motion/shadow-tween.js
+function splitLayers(text) {
+  let depth = 0, start = 0;
+  const layers = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "(") depth++;
+    else if (text[i] === ")") depth--;
+    else if (text[i] === "," && !depth) {
+      layers.push(text.slice(start, i));
+      start = i + 1;
+    }
+  }
+  layers.push(text.slice(start));
+  return layers;
+}
+function parseLayer(text) {
+  const lengths = [...text.matchAll(/(-?[\d.]+)px/g)].map((match) => Number(match[1]));
+  if (lengths.length < 2) return null;
+  while (lengths.length < 4) lengths.push(0);
+  const color = text.replace(/-?[\d.]+px/g, "").replace(/\binset\b/g, "").trim();
+  return { lengths, color: color || "currentColor", inset: /\binset\b/.test(text) };
+}
+function interpolateShadow(from, to, fraction) {
+  if (fraction <= 0) return from;
+  if (fraction >= 1) return to;
+  const a = from === "none" ? [] : splitLayers(from).map(parseLayer);
+  const b = to === "none" ? [] : splitLayers(to).map(parseLayer);
+  if ([...a, ...b].some((layer) => !layer)) return fraction < 0.5 ? from : to;
+  return Array.from({ length: Math.max(a.length, b.length) }, (_, index) => {
+    const left = a[index] || { lengths: [0, 0, 0, 0], color: "transparent", inset: b[index].inset };
+    const right = b[index] || { lengths: [0, 0, 0, 0], color: "transparent", inset: a[index].inset };
+    const lengths = left.lengths.map((value, i) => `${value + (right.lengths[i] - value) * fraction}px`).join(" ");
+    const color = left.color === right.color ? left.color : `color-mix(in srgb, ${left.color} ${(1 - fraction) * 100}%, ${right.color} ${fraction * 100}%)`;
+    return `${left.inset ? "inset " : ""}${lengths} ${color}`;
+  }).join(", ") || "none";
+}
+
+// src/motion/button-elevation.js
+var f8 = Math.fround;
+var fields = ["defaultElevation", "pressedElevation", "focusedElevation", "hoveredElevation", "disabledElevation"];
+var dp = [0, 1, 3, 6, 8, 12];
+var buttonElevationDefaults = (variant) => variant === "elevated" ? [1, 1, 1, 3, 0] : variant === "filled" || variant === "tonal" ? [0, 0, 0, 1, 0] : null;
+function buttonElevationDefinition(value) {
+  if (value === null || value === void 0) return value;
+  if (typeof value !== "object" || fields.some((key) => typeof value[key] !== "number" || !Number.isFinite(f8(value[key])))) {
+    throw new TypeError("Button elevation requires five finite numeric elevation fields.");
+  }
+  return Object.freeze(Object.fromEntries(fields.map((key) => [key, f8(value[key])])));
+}
+var buttonElevationValues = (definition) => fields.map((key) => definition[key]);
+var ButtonElevationMotion = class {
+  constructor(values, enabled = true) {
+    this.value = this.target = this.from = f8(values[enabled ? 0 : 4]);
+    this.start = 0;
+    this.spec = null;
+    this.initialVelocity = 0;
+    this.launches = 0;
+    this.snaps = 0;
+  }
+  sample(time) {
+    if (!this.spec) return this.value;
+    if (time - this.start >= this.spec.duration) {
+      this.value = this.target;
+      this.spec = null;
+      return this.value;
+    }
+    return this.value = interactionTween(this.from, this.target, time - this.start, this.spec);
+  }
+  velocity(time) {
+    this.sample(time);
+    if (!this.spec) return 0;
+    const elapsed = Math.max(0, Math.trunc(time - this.start));
+    if (!elapsed) return this.initialVelocity;
+    return f8(f8(interactionTween(this.from, this.target, elapsed, this.spec) - interactionTween(this.from, this.target, elapsed - 1, this.spec)) * 1e3);
+  }
+  update(values, kind, enabled, time) {
+    const target = f8(values[!enabled ? 4 : kind === "press" ? 1 : kind === "focus" ? 2 : kind === "hover" ? 3 : kind === "drag" && values.length > 5 ? 5 : 0]);
+    if (target === this.target) return;
+    const current = this.sample(time), velocity = this.velocity(time), previous = this.target;
+    this.target = target;
+    if (!enabled) {
+      this.from = this.value = target;
+      this.spec = null;
+      this.initialVelocity = 0;
+      this.snaps++;
+      return;
+    }
+    const fromKind = previous === values[1] ? "press" : previous === values[3] ? "hover" : previous === values[2] ? "focus" : values.length > 5 && previous === values[5] ? "drag" : null;
+    const spec = elevationSpec(fromKind, kind);
+    if (!spec.duration) {
+      this.from = this.value = target;
+      this.spec = null;
+      this.initialVelocity = 0;
+      this.snaps++;
+      return;
+    }
+    this.from = current;
+    this.initialVelocity = velocity;
+    this.start = time;
+    this.spec = spec;
+    this.launches++;
+  }
+  finish() {
+    this.value = this.target;
+    this.spec = null;
+    this.initialVelocity = 0;
+  }
+};
+function buttonElevationShadow(value, shadows) {
+  if (!(value > 0)) return shadows[0];
+  let high = dp.findIndex((level) => level >= value);
+  if (high < 0) high = dp.length - 1;
+  if (value === dp[high] || value >= dp.at(-1)) return shadows[high];
+  return interpolateShadow(shadows[high - 1], shadows[high], (value - dp[high - 1]) / (dp[high] - dp[high - 1]));
+}
+function bindButtonElevation(button, { configuration, disabled, hitTest = () => true, MotionClass = ButtonElevationMotion, interactionSource = () => true, compositionKey = () => void 0, signal }) {
+  const order = new InteractionOrder(), media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const probes = dp.map((_, level) => {
+    const probe = document.createElement("span");
+    probe.hidden = true;
+    probe.setAttribute("aria-hidden", "true");
+    probe.style.boxShadow = `var(--md-sys-elevation-level${level}, var(--md-sys-elevation-level-${level}, none))`;
+    button.append(probe);
+    return probe;
+  });
+  let values = configuration(), interactive = interactionSource(), key = compositionKey(), motion = values ? new MotionClass(values, !disabled(), interactive) : null, raf = null, disposed = false;
+  const originalShadow = button.style.boxShadow;
+  let writtenShadow;
+  function paint(time) {
+    const elevation = motion?.sample(time) ?? 0;
+    writtenShadow = buttonElevationShadow(elevation, probes.map((probe) => getComputedStyle(probe).boxShadow));
+    button.style.boxShadow = writtenShadow;
+    writtenShadow = button.style.boxShadow;
+    button.dataset.elevation = String(elevation);
+  }
+  function tick(time = performance.now()) {
+    if (disposed) return;
+    if (raf !== null) cancelAnimationFrame(raf);
+    raf = null;
+    paint(time);
+    if (motion?.spec) raf = requestAnimationFrame(tick);
+  }
+  function update2() {
+    if (disposed) return;
+    const time = performance.now();
+    motion?.update(values, order.latest(), !disabled(), time);
+    if (media?.matches) motion?.finish();
+    tick(time);
+  }
+  function set(kind, active, identity = kind) {
+    if (disposed || !motion || !interactive || active && disabled()) return;
+    if (order.set(kind, active, identity)) update2();
+  }
+  function refresh() {
+    if (disposed) return;
+    const next = configuration();
+    const nextInteractive = interactionSource(), nextKey = compositionKey();
+    if (Boolean(next) !== Boolean(values) || nextInteractive !== interactive || nextKey !== key) {
+      order.clear();
+      motion = next ? new MotionClass(next, !disabled(), nextInteractive) : null;
+    }
+    interactive = nextInteractive;
+    key = nextKey;
+    values = next;
+    update2();
+  }
+  const hoverBinding = bindPointerHover(button, { hitTest, onHover: (active) => set("hover", active), signal });
+  const focusBinding = bindFocusIndication(button, { onFocus: (active) => set("focus", active), signal });
+  const preference = () => {
+    if (media.matches) {
+      motion?.finish();
+      tick();
+    }
+  };
+  media?.addEventListener("change", preference);
+  function dispose() {
+    focusBinding.dispose();
+    hoverBinding.dispose();
+    if (disposed) return;
+    disposed = true;
+    if (raf !== null) cancelAnimationFrame(raf);
+    raf = null;
+    media?.removeEventListener("change", preference);
+    probes.forEach((probe) => probe.remove());
+    if (button.style.boxShadow === writtenShadow) button.style.boxShadow = originalShadow;
+    delete button.dataset.elevation;
+    order.clear();
+  }
+  signal.addEventListener("abort", dispose, { once: true });
+  paint(performance.now());
+  return {
+    press(active, identity = "press") {
+      set("press", active, identity);
+    },
+    drag(active, identity = "drag") {
+      if (values?.length > 5) set("drag", active, identity);
+    },
+    refresh,
+    dispose,
+    get motion() {
+      return motion;
+    },
+    get order() {
+      return [...order.active];
+    },
+    get raf() {
+      return raf;
+    },
+    get disposed() {
+      return disposed;
+    }
+  };
+}
+
+// src/components/row-column-layout.js
+var f9 = Math.fround;
+var INF = 2147483647;
+var clamp2 = (v, a, b) => Math.max(a, Math.min(b, v));
+var int = (v) => clamp2(Math.trunc(v), -2147483648, INF) || 0;
+var round = (v) => clamp2(Math.round(v), -2147483648, INF) || 0;
+var bounds = (o) => ({ minMain: o.minMain ?? 0, maxMain: o.maxMain ?? INF, minCross: o.minCross ?? 0, maxCross: o.maxCross ?? INF });
+function layoutPlaceable(id, requested, constraints, children = [], data = {}) {
+  const size = { width: clamp2(requested.width, constraints.minWidth, constraints.maxWidth), height: clamp2(requested.height, constraints.minHeight, constraints.maxHeight) };
+  return { id, requested, size, constraints, offset: { x: int((size.width - requested.width) / 2), y: int((size.height - requested.height) / 2) }, children, ...data };
+}
+function minimumInteractiveLayout(o) {
+  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF };
+  const width = clamp2(o.width, c.minWidth, c.maxWidth), height = clamp2(o.height, c.minHeight, c.maxHeight);
+  const minimum = Math.max(0, round(o.minimum ?? 48));
+  const requested = { width: Math.max(minimum, width), height: Math.max(minimum, height) };
+  const touch = layoutPlaceable("touch", requested, c);
+  const body = { x: touch.offset.x + round(f9((requested.width - width) / 2)), y: touch.offset.y + round(f9((requested.height - height) / 2)), width, height };
+  return { size: touch.size, requested, body, lines: { top: Math.max(0, round(f9((minimum - height) / 2))), left: Math.max(0, round(f9((minimum - width) / 2))) } };
+}
+function axisConstraints(b, vertical) {
+  return vertical ? { minWidth: b.minCross, maxWidth: b.maxCross, minHeight: b.minMain, maxHeight: b.maxMain } : { minWidth: b.minMain, maxWidth: b.maxMain, minHeight: b.minCross, maxHeight: b.maxCross };
+}
+function layoutPlacements(node, x = 0, y2 = 0, result = {}) {
+  x += node.offset.x;
+  y2 += node.offset.y;
+  result[node.id] = { x, y: y2, width: node.requested.width, height: node.requested.height };
+  for (const p of node.children) layoutPlacements(p.node, x + p.x, y2 + p.y, result);
+  return result;
+}
+function measureLayoutLeaf(id, input, constraints, vertical) {
+  if (input.ink) {
+    const interactive = minimumInteractiveLayout({ ...input.ink, ...constraints });
+    const body = interactive.body, offset2 = { x: int((interactive.size.width - interactive.requested.width) / 2), y: int((interactive.size.height - interactive.requested.height) / 2) };
+    const ink = layoutPlaceable(id + "-body", { width: body.width, height: body.height }, { minWidth: body.width, maxWidth: body.width, minHeight: body.height, maxHeight: body.height });
+    return layoutPlaceable(id, interactive.requested, constraints, [{ node: ink, x: body.x - offset2.x, y: body.y - offset2.y }], { line: input.line ?? null, interactiveLines: interactive.lines });
+  }
+  const natural = vertical ? { width: input.cross, height: input.main } : { width: input.main, height: input.cross };
+  const requested = input.required ? natural : { width: clamp2(natural.width, constraints.minWidth, constraints.maxWidth), height: clamp2(natural.height, constraints.minHeight, constraints.maxHeight) };
+  return layoutPlaceable(id, requested, constraints, [], { line: input.line ?? null });
+}
+function rowAlignmentLines(node) {
+  let top = null, left = null;
+  for (const p of node.children) {
+    const child = p.node, lines = child.interactiveLines;
+    if (!lines) continue;
+    const y2 = p.y + child.offset.y + lines.top + child.offset.y, x = p.x + child.offset.x + lines.left + child.offset.x;
+    top = top === null ? y2 : Math.min(top, y2);
+    left = left === null ? x : Math.min(left, x);
+  }
+  return { top: top === null ? null : top + node.offset.y, left: left === null ? null : left + node.offset.x };
+}
+function arrange(main, sizes, name, rtl, vertical, spacing) {
+  const consumed = sizes.reduce((a, b) => a + b, 0), positions3 = sizes.map(() => 0), reverse = rtl && !vertical;
+  if (name === "spaced") {
+    let free = main, last = 0;
+    if (reverse) {
+      for (let i = 0; i < sizes.length; i++) {
+        positions3[i] = Math.max(0, free - sizes[i]);
+        last = Math.min(spacing, positions3[i]);
+        free = positions3[i] - last;
+      }
+      free += last;
+    } else {
+      let occupied = 0;
+      for (let i = 0; i < sizes.length; i++) {
+        positions3[i] = Math.min(occupied, main - sizes[i]);
+        last = Math.min(spacing, main - positions3[i] - sizes[i]);
+        occupied = positions3[i] + sizes[i] + last;
+      }
+      occupied -= last;
+      free = main - occupied;
+    }
+    if (free > 0) {
+      const group = round(f9(free / 2)), offset2 = reverse ? group - free : group;
+      for (let i = 0; i < sizes.length; i++) positions3[i] += offset2;
+    }
+    return positions3;
+  }
+  let gap = 0, current = 0;
+  if (name === "center") current = f9((main - consumed) / 2);
+  else if (name === "end") current = main - consumed;
+  else if (name === "between") {
+    gap = f9((main - consumed) / Math.max(sizes.length - 1, 1));
+    if (reverse && sizes.length === 1) current = gap;
+  } else if (name === "around") {
+    gap = sizes.length ? f9((main - consumed) / sizes.length) : 0;
+    current = f9(gap / 2);
+  } else if (name === "evenly") {
+    gap = f9((main - consumed) / (sizes.length + 1));
+    current = gap;
+  }
+  if (reverse && name === "start") current = main - consumed;
+  if (reverse && name === "end") current = 0;
+  const order = reverse ? [...sizes.keys()].reverse() : [...sizes.keys()];
+  for (const i of order) {
+    positions3[i] = round(current);
+    current = f9(current + f9(f9(sizes[i]) + gap));
+  }
+  return positions3;
+}
+function crossPosition(input, size, item, vertical, rtl, before, line, defaultAlignment = "center") {
+  if (input.align === "line") {
+    if (line === null) return 0;
+    const delta = before - line;
+    return vertical && rtl ? size - item - delta : delta;
+  }
+  const alignment = input.align ?? defaultAlignment, bias = alignment === "start" ? -1 : alignment === "end" ? 1 : 0;
+  return round(f9(f9((size - item) / 2) * f9(1 + (vertical && rtl ? -bias : bias))));
+}
+function measureRowColumn(o, measure = (input, c, i) => measureLayoutLeaf("c" + i, input, c, !!o.vertical)) {
+  const vertical = !!o.vertical, rtl = !!o.rtl, b = bounds(o), inputs = o.children || [], spacing = o.arrangement === "spaced" ? round(o.spacing ?? 7) : 0;
+  const nodes = inputs.map(() => null), mainSizes = inputs.map(() => 0), crossSizes = inputs.map(() => 0);
+  let totalWeight = 0, fixed = 0, cross = 0, weightedCount = 0, lastSpacing = 0, relative4 = false;
+  const measureChild = (i, minMain, maxMain) => {
+    const input = inputs[i], desired = input.fillCrossFraction !== void 0 && b.maxCross !== INF ? round(f9(f9(input.fillCrossFraction) * f9(b.maxCross))) : null;
+    const c = axisConstraints({ minMain, maxMain, minCross: desired ?? 0, maxCross: desired ?? b.maxCross }, vertical);
+    const node = measure(input, c, i);
+    nodes[i] = node;
+    mainSizes[i] = node.size[vertical ? "height" : "width"];
+    crossSizes[i] = node.size[vertical ? "width" : "height"];
+    cross = Math.max(cross, crossSizes[i]);
+    return mainSizes[i];
+  };
+  for (let i = 0; i < inputs.length; i++) {
+    const weight = f9(inputs[i].weight || 0);
+    relative4 ||= inputs[i].align === "line";
+    if (weight > 0) {
+      totalWeight = f9(totalWeight + weight);
+      weightedCount++;
+    } else {
+      const remaining = b.maxMain - fixed, size = measureChild(i, 0, b.maxMain === INF ? INF : Math.max(0, remaining));
+      lastSpacing = Math.min(spacing, Math.max(0, remaining - size));
+      fixed += size + lastSpacing;
+    }
+  }
+  let weighted = 0;
+  if (weightedCount === 0) fixed -= lastSpacing;
+  else {
+    const target = b.maxMain === INF ? b.minMain : b.maxMain, totalSpacing = spacing * (weightedCount - 1), remaining = Math.max(0, target - fixed - totalSpacing), unit = f9(f9(remaining) / totalWeight);
+    let remainder = remaining;
+    for (const input of inputs) remainder -= round(f9(unit * f9(input.weight || 0)));
+    for (let i = 0; i < inputs.length; i++) if (nodes[i] === null) {
+      const correction = Math.sign(remainder);
+      remainder -= correction;
+      const main2 = Math.max(0, round(f9(unit * f9(inputs[i].weight || 0))) + correction);
+      weighted += measureChild(i, inputs[i].fill !== false && main2 !== INF ? main2 : 0, main2);
+    }
+    weighted = clamp2(int(weighted + totalSpacing), 0, b.maxMain - fixed);
+  }
+  let before = 0, after = 0;
+  if (relative4) {
+    for (let i = 0; i < inputs.length; i++) if (inputs[i].align === "line") {
+      const line = nodes[i].line ?? null;
+      if (line !== null) {
+        before = Math.max(before, line);
+        after = Math.max(after, crossSizes[i] - line);
+      }
+    }
+  }
+  const main = Math.max(Math.max(0, fixed + weighted), b.minMain), breadth = Math.max(cross, b.minCross, before + after);
+  const positions3 = arrange(main, mainSizes, o.arrangement || "start", rtl, vertical, spacing);
+  const children = nodes.map((node, i) => {
+    const c = crossPosition(inputs[i], breadth, crossSizes[i], vertical, rtl, before, node.line ?? null, o.crossAlignment ?? "center");
+    return { node, x: vertical ? c : positions3[i], y: vertical ? positions3[i] : c };
+  });
+  const requested = vertical ? { width: breadth, height: main } : { width: main, height: breadth };
+  return layoutPlaceable(o.id || "row", requested, axisConstraints(b, vertical), children, { fullTargets: nodes.map((n) => n.size[vertical ? "height" : "width"]) });
+}
+function rowColumnLayout(o) {
+  const node = measureRowColumn(o);
+  return { size: node.size, requested: node.requested, placements: layoutPlacements(node) };
+}
+function rowColumnIntrinsic(o, available, query = (input, axis, space2, kind) => {
+  const value = kind === "min" ? input[axis === "main" ? "intrinsicMinMain" : "intrinsicMinCross"] ?? input[axis] : input[axis];
+  return axis === "cross" && input.wrap ? value * Math.max(1, Math.ceil(input.main / Math.max(1, space2))) : value;
+}) {
+  const children = o.children || [], spacing = o.arrangement === "spaced" ? 7 : 0;
+  const main = (kind) => {
+    if (!children.length) return 0;
+    let unit = 0, fixed = 0, total = 0;
+    for (const child of children) {
+      const weight = f9(child.weight || 0), size = query(child, "main", available, kind);
+      if (weight === 0) fixed += size;
+      else if (weight > 0) {
+        total = f9(total + weight);
+        unit = Math.max(unit, round(f9(f9(size) / weight)));
+      }
+    }
+    return round(f9(f9(unit) * total)) + fixed + (children.length - 1) * spacing;
+  };
+  const cross = (kind) => {
+    if (!children.length) return 0;
+    let fixed = Math.min((children.length - 1) * spacing, available), maximum = 0, total = 0;
+    for (const child of children) {
+      const weight = f9(child.weight || 0);
+      if (weight === 0) {
+        const remaining = available === INF ? INF : available - fixed, size = Math.min(query(child, "main", INF, "max"), remaining);
+        fixed += size;
+        maximum = Math.max(maximum, query(child, "cross", size, kind));
+      } else if (weight > 0) total = f9(total + weight);
+    }
+    const unit = total === 0 ? 0 : available === INF ? INF : round(f9(f9(Math.max(available - fixed, 0)) / total));
+    for (const child of children) {
+      const weight = f9(child.weight || 0);
+      if (weight > 0) maximum = Math.max(maximum, query(child, "cross", unit === INF ? INF : round(f9(f9(unit) * weight)), kind));
+    }
+    return maximum;
+  };
+  return o.vertical ? { minWidth: cross("min"), minHeight: main("min"), maxWidth: cross("max"), maxHeight: main("max") } : { minWidth: main("min"), minHeight: cross("min"), maxWidth: main("max"), maxHeight: cross("max") };
+}
+
+// src/components/button-layout.js
+var INF2 = 2147483647;
+var f10 = Math.fround;
+var clamp3 = (n, a, b) => Math.max(a, Math.min(b, n));
+var relative = (x, node, width, rtl) => rtl && width !== 0 ? width - node.size.width - x : x;
+function toggleButtonMetrics(height) {
+  const i = height < 40 ? 0 : height < 56 ? 1 : height < 96 ? 2 : height < 136 ? 3 : 4;
+  return { height, padding: [12, 16, 24, 48, 64][i], vertical: [6, 10, 16, 32, 48][i], icon: [20, 20, 24, 32, 40][i], gap: [4, 8, 8, 12, 16][i] };
+}
+function toggleButtonLayout({ height = 40, rtl = false, constraints = {}, icon: icon2 = null, content = [] }, measureLeaf = (id, input, c) => input) {
+  const c = { minWidth: 0, maxWidth: INF2, minHeight: 0, maxHeight: INF2, ...constraints }, s = toggleButtonMetrics(height), measured = [];
+  const leaf3 = (id, input, incoming) => {
+    const p3 = measureLeaf(id, input, incoming);
+    measured.push({ id, constraints: { ...incoming } });
+    const requested2 = p3.required ? { width: p3.width, height: p3.height } : { width: clamp3(p3.width, incoming.minWidth, incoming.maxWidth), height: clamp3(p3.height, incoming.minHeight, incoming.maxHeight) };
+    return layoutPlaceable(id, requested2, incoming);
+  };
+  const wrap = (id, child, incoming, x = 0, y2 = 0, requested2 = child.size) => layoutPlaceable(id, requested2, incoming, [{ node: child, x, y: y2 }]);
+  const iconNode = (incoming) => {
+    const w = clamp3(s.icon, incoming.minWidth, incoming.maxWidth), h = clamp3(s.icon, incoming.minHeight, incoming.maxHeight), fixed = { minWidth: w, maxWidth: w, minHeight: h, maxHeight: h };
+    const nodes = icon2.map((p3, i) => leaf3("icon-" + i, p3, fixed));
+    const box3 = layoutPlaceable("icon-box", { width: w, height: h }, fixed, nodes.map((node) => ({ node, x: Math.round(f10(f10(w - node.size.width) / 2)), y: Math.round(f10(f10(h - node.size.height) / 2)) })));
+    return wrap("icon-size-0", box3, incoming, relative(0, box3, box3.size.width, rtl));
+  };
+  const spacerNode = (incoming) => {
+    const width = clamp3(s.gap, incoming.minWidth, incoming.maxWidth), fixed = { ...incoming, minWidth: width, maxWidth: width };
+    const node = layoutPlaceable("spacer", { width, height: fixed.minHeight === fixed.maxHeight ? fixed.maxHeight : 0 }, fixed);
+    return wrap("spacer-size-0", node, incoming, relative(0, node, node.size.width, rtl));
+  };
+  const d = { ...c, minHeight: c.minHeight === 0 ? clamp3(height, 0, c.maxHeight) : c.minHeight };
+  const dx = s.padding * 2, dy = s.vertical * 2, p = { minWidth: Math.max(0, d.minWidth - dx), maxWidth: d.maxWidth === INF2 ? INF2 : Math.max(0, d.maxWidth - dx), minHeight: Math.max(0, d.minHeight - dy), maxHeight: d.maxHeight === INF2 ? INF2 : Math.max(0, d.maxHeight - dy) };
+  const children = [];
+  if (icon2 !== null) children.push({ measure: iconNode }, { measure: spacerNode });
+  content.forEach((item, i) => children.push({ ...item, measure: (incoming) => leaf3("content-" + i, item, incoming) }));
+  const row2 = measureRowColumn({ id: "row", rtl, minMain: p.minWidth, maxMain: p.maxWidth, minCross: p.minHeight, maxCross: p.maxHeight, arrangement: "center", children }, (input, incoming) => input.measure(incoming));
+  const requested = { width: clamp3(row2.size.width + dx, d.minWidth, d.maxWidth), height: clamp3(row2.size.height + dy, d.minHeight, d.maxHeight) };
+  const padded = wrap("button-padding-1", row2, d, s.padding, s.vertical, requested);
+  const root = wrap("button-default-min-0", padded, c, relative(0, padded, padded.size.width, rtl));
+  return { size: root.size, requested: root.requested, placements: layoutPlacements(root), measurements: measured, root };
+}
+
+// src/components/toggle-button-dom-layout.js
+var INF3 = 2147483647;
+var PROBE = 1e6;
+var write2 = (e, n, v) => {
+  if (e.style[n] !== v) e.style[n] = v;
+};
+var dimension = (e, n) => Math.ceil(parseFloat(getComputedStyle(e)[n]) || 0);
+var rect = (e, p) => {
+  write2(e, "left", p.x + "px");
+  write2(e, "top", p.y + "px");
+  write2(e, "width", p.width + "px");
+  write2(e, "height", p.height + "px");
+};
+var leased = ["position", "left", "right", "top", "bottom", "width", "height", "min-width", "max-width", "min-height", "max-height", "box-sizing", "margin"];
+var ToggleButtonDOMLayout = class {
+  constructor(host) {
+    this.host = host;
+    this.owned = /* @__PURE__ */ new Map();
+    this.disposed = false;
+    this.raf = null;
+    this.style = document.createElement("style");
+    this.style.textContent = ":host([toggle]){--_toggle-width:0px;--_toggle-height:0px}";
+    host.shadowRoot.append(this.style);
+    this.sizing = this.style.sheet.cssRules[0].style;
+    this.probe = document.createElement("span");
+    this.probe.setAttribute("aria-hidden", "true");
+    this.probe.style.cssText = "position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;display:block;box-sizing:border-box;min-height:1lh;overflow-wrap:anywhere;";
+    host.shadowRoot.append(this.probe);
+    this.resize = new ResizeObserver(() => this.schedule());
+    this.resize.observe(host);
+    this.mutations = new MutationObserver(() => this.schedule());
+    this.observe();
+    this.onFonts = () => this.schedule();
+    document.fonts?.addEventListener("loadingdone", this.onFonts);
+  }
+  observe() {
+    this.mutations.observe(this.host, { subtree: true, childList: true, characterData: true, attributes: true });
+  }
+  schedule() {
+    if (this.disposed || this.raf !== null) return;
+    this.raf = requestAnimationFrame(() => {
+      this.raf = null;
+      this.measure();
+    });
+  }
+  restore(e) {
+    const entry = this.owned.get(e);
+    if (!entry) return;
+    for (const [n, d] of entry) {
+      if (e.style.getPropertyValue(n) === d.applied && e.style.getPropertyPriority(n) === d.appliedPriority) {
+        d.value ? e.style.setProperty(n, d.value, d.priority) : e.style.removeProperty(n);
+      } else {
+        d.value = e.style.getPropertyValue(n);
+        d.priority = e.style.getPropertyPriority(n);
+      }
+      d.applied = null;
+    }
+  }
+  own(e, values) {
+    let entry = this.owned.get(e);
+    if (!entry) {
+      entry = new Map(leased.map((n) => [n, { value: e.style.getPropertyValue(n), priority: e.style.getPropertyPriority(n) }]));
+      this.owned.set(e, entry);
+    }
+    for (const [n, v] of Object.entries(values)) {
+      const d = entry.get(n);
+      if (d.applied != null && (e.style.getPropertyValue(n) !== d.applied || e.style.getPropertyPriority(n) !== d.appliedPriority)) {
+        d.value = e.style.getPropertyValue(n);
+        d.priority = e.style.getPropertyPriority(n);
+      }
+      if (e.style.getPropertyValue(n) !== v || e.style.getPropertyPriority(n) !== "") e.style.setProperty(n, v);
+      d.applied = v;
+      d.appliedPriority = "";
+    }
+  }
+  contentSize(axis) {
+    const css2 = getComputedStyle(this.host);
+    let n = parseFloat(css2[axis]) || 0;
+    if (css2.boxSizing === "border-box") {
+      const sides = axis === "width" ? ["Left", "Right"] : ["Top", "Bottom"];
+      for (const side2 of sides) n -= (parseFloat(css2["padding" + side2]) || 0) + (parseFloat(css2["border" + side2 + "Width"]) || 0);
+    }
+    return Math.max(0, Math.round(n));
+  }
+  setSize(w, h) {
+    this.sizing.setProperty("--_toggle-width", w + "px");
+    this.sizing.setProperty("--_toggle-height", h + "px");
+  }
+  text(value, style3, c) {
+    for (const n of ["font", "letterSpacing", "direction", "textAlign", "whiteSpace", "overflowWrap", "wordBreak"]) write2(this.probe, n, style3[n]);
+    this.probe.textContent = value;
+    write2(this.probe, "width", "max-content");
+    write2(this.probe, "maxWidth", c.maxWidth === INF3 ? "none" : c.maxWidth + "px");
+    write2(this.probe, "minWidth", c.minWidth + "px");
+    write2(this.probe, "height", "auto");
+    return { width: dimension(this.probe, "width"), height: Math.min(dimension(this.probe, "height"), c.maxHeight) };
+  }
+  element(e, c) {
+    this.restore(e);
+    this.own(e, { position: "absolute", left: "0px", right: "auto", top: "0px", bottom: "auto", "box-sizing": "border-box", margin: "0px", "min-width": c.minWidth + "px", "max-width": c.maxWidth === INF3 ? "none" : c.maxWidth + "px", "min-height": c.minHeight + "px", "max-height": c.maxHeight === INF3 ? "none" : c.maxHeight + "px" });
+    const width = dimension(e, "width"), height = dimension(e, "height");
+    return { width, height, required: width > c.maxWidth || height > c.maxHeight };
+  }
+  release() {
+    for (const e of this.owned.keys()) this.restore(e);
+    this.owned.clear();
+  }
+  measure() {
+    if (this.disposed || this.measuring) return;
+    if (!this.host.toggle) {
+      this.release();
+      return;
+    }
+    this.measuring = true;
+    this.mutations.disconnect();
+    try {
+      const h = this.host, b = h.shadowRoot.querySelector(".btn"), label = b.querySelector(".lbl-wrapper"), lead = b.querySelector(".lead-ico"), trail = b.querySelector(".trail-ico"), slot = b.querySelector(".icon-slot"), iconElements = slot?.assignedElements() ?? [], s = toggleButtonMetrics({ xs: 32, s: 40, m: 56, l: 96, xl: 136 }[h.size]);
+      const active = new Set(iconElements);
+      for (const e of this.owned.keys()) if (!active.has(e)) {
+        this.restore(e);
+        this.owned.delete(e);
+        this.resize.unobserve(e);
+      }
+      for (const e of active) this.resize.observe(e);
+      const hasContent2 = h.hasAttribute("label") || b.querySelector(".label-slot").assignedNodes().some((n) => n.nodeType === 1 || n.textContent.trim()), hasIcon = iconElements.length > 0 || !!h.icon, hasTrail = !!h.trailingIcon;
+      const glyph = lead.querySelector(".icon-glyph");
+      if (glyph) glyph.hidden = iconElements.length > 0;
+      lead.style.display = hasIcon ? "inline-flex" : "none";
+      const icon2 = hasIcon ? iconElements.length ? iconElements.map(() => ({ width: 0, height: 0 })) : [{ width: s.icon, height: s.icon }] : null;
+      const content = [];
+      let textIndex = null, trailIndex = null;
+      if (hasContent2) {
+        textIndex = content.length;
+        content.push({ width: 0, height: 0 });
+      }
+      if (hasTrail) {
+        if (hasContent2) content.push({ width: s.gap, height: 0 });
+        trailIndex = content.length;
+        content.push({ width: s.icon, height: s.icon });
+      }
+      const input = { height: s.height, rtl: getComputedStyle(h).direction === "rtl", icon: icon2, content, constraints: { minWidth: 0, maxWidth: INF3, minHeight: 0, maxHeight: INF3 } };
+      const measure = (id, initial, c) => {
+        if (id.startsWith("icon-")) {
+          const i2 = Number(id.slice(5));
+          return iconElements.length ? this.element(iconElements[i2], c) : initial;
+        }
+        const i = Number(id.slice(8));
+        if (i !== textIndex) return initial;
+        if (h.hasAttribute("label")) return this.text(h.labelText, getComputedStyle(b.querySelector(".lbl")), c);
+        for (const [n, v] of Object.entries({ left: "0px", top: "0px", width: "max-content", maxWidth: c.maxWidth === INF3 ? "none" : c.maxWidth + "px", minWidth: c.minWidth + "px", height: "auto" })) write2(label, n, v);
+        return { width: dimension(label, "width"), height: Math.min(dimension(label, "height"), c.maxHeight) };
+      };
+      const natural = toggleButtonLayout(input, measure), preferredWidth = Math.max(48, natural.size.width);
+      this.setSize(0, 0);
+      const minWidth = this.contentSize("width"), minHeight = this.contentSize("height");
+      this.setSize(preferredWidth, PROBE);
+      const maxWidth = this.contentSize("width"), maximumHeight = this.contentSize("height");
+      input.constraints = { minWidth: Math.min(minWidth, maxWidth), maxWidth, minHeight: Math.min(minHeight, maximumHeight), maxHeight: maximumHeight >= PROBE ? INF3 : maximumHeight };
+      const records = [];
+      const layout = toggleButtonLayout(input, (id, p3, c) => {
+        const result = measure(id, p3, c);
+        records.push({ id, constraints: { ...c } });
+        if (id.startsWith("icon-")) input.icon[Number(id.slice(5))] = result;
+        else input.content[Number(id.slice(8))] = result;
+        return result;
+      });
+      const touch = minimumInteractiveLayout({ ...input.constraints, width: layout.size.width, height: layout.size.height });
+      this.setSize(preferredWidth, touch.requested.height);
+      rect(b, touch.body);
+      const p = layout.placements;
+      if (hasIcon) {
+        rect(lead, p["icon-box"]);
+        if (glyph) write2(glyph, "fontSize", Math.min(s.icon, p["icon-box"].width, p["icon-box"].height) + "px");
+        if (iconElements.length) {
+          for (const [i, e] of iconElements.entries()) {
+            const leaf3 = p["icon-" + i], box3 = p["icon-box"];
+            this.own(e, { position: "absolute", left: leaf3.x - box3.x + "px", top: leaf3.y - box3.y + "px", right: "auto", bottom: "auto", width: leaf3.width + "px", height: leaf3.height + "px" });
+          }
+        }
+      }
+      rect(label, textIndex === null ? { x: 0, y: 0, width: 0, height: 0 } : p["content-" + textIndex]);
+      if (hasTrail) {
+        const placement = p["content-" + trailIndex];
+        rect(trail, placement);
+        write2(trail, "fontSize", Math.min(s.icon, placement.width, placement.height) + "px");
+      }
+      h._toggleLayoutInput = input;
+      h._toggleLayout = layout;
+      h._toggleTouch = touch;
+      h._toggleLayoutMeasurements = records;
+      h._surface?.clip();
+    } finally {
+      this.measuring = false;
+      if (!this.disposed) this.observe();
+    }
+  }
+  clearGeometry() {
+    const b = this.host.shadowRoot.querySelector(".btn");
+    if (!b) return;
+    for (const e of [b, ...b.querySelectorAll(".lbl-wrapper,.lead-ico,.trail-ico")]) for (const n of ["left", "top", "width", "height", "min-width", "max-width"]) e.style.removeProperty(n);
+    b.querySelector(".icon-glyph")?.style.removeProperty("font-size");
+  }
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.resize.disconnect();
+    this.mutations.disconnect();
+    document.fonts?.removeEventListener("loadingdone", this.onFonts);
+    this.release();
+    this.clearGeometry();
+    this.style.remove();
+    this.probe.remove();
+  }
+};
+
+// src/theme/surface-color.js
+var f11 = Math.fround;
+var schemeCache = /* @__PURE__ */ new WeakMap();
+var CONTENT_COLOR_ROLES = Object.freeze([
+  ["primary", "on-primary"],
+  ["secondary", "on-secondary"],
+  ["tertiary", "on-tertiary"],
+  ["background", "on-background"],
+  ["error", "on-error"],
+  ["primary-container", "on-primary-container"],
+  ["secondary-container", "on-secondary-container"],
+  ["tertiary-container", "on-tertiary-container"],
+  ["error-container", "on-error-container"],
+  ["inverse-surface", "inverse-on-surface"],
+  ["surface", "on-surface"],
+  ["surface-variant", "on-surface-variant"],
+  ...[
+    "surface-bright",
+    "surface-container",
+    "surface-container-high",
+    "surface-container-highest",
+    "surface-container-low",
+    "surface-container-lowest",
+    "surface-dim"
+  ].map((role) => [role, "on-surface"]),
+  ...["primary", "secondary", "tertiary"].flatMap((role) => [[role + "-fixed", "on-" + role + "-fixed"], [role + "-fixed-dim", "on-" + role + "-fixed"]])
+]);
+function packSrgb([red, green, blue, alpha = 1]) {
+  const byte = (value) => Math.trunc(f11(f11(Math.min(1, Math.max(0, f11(value))) * 255) + 0.5));
+  return (byte(alpha) << 24 | byte(red) << 16 | byte(green) << 8 | byte(blue)) >>> 0;
+}
+function unpackSrgb(color) {
+  return [color >>> 16 & 255, color >>> 8 & 255, color & 255, color >>> 24].map((value) => f11(value / 255));
+}
+function copySrgbAlpha(color, alpha) {
+  return packSrgb([...unpackSrgb(color).slice(0, 3), alpha]);
+}
+function compositeSrgb(foreground, background) {
+  const fg = unpackSrgb(foreground), bg = unpackSrgb(background), remainder = f11(1 - fg[3]);
+  const alpha = f11(fg[3] + f11(bg[3] * remainder));
+  return packSrgb([...fg.slice(0, 3).map((channel2, i) => alpha === 0 ? 0 : f11(f11(f11(channel2 * fg[3]) + f11(f11(bg[i] * bg[3]) * remainder)) / alpha)), alpha]);
+}
+function tonalSurfaceColor(surface, tint, elevation) {
+  elevation = f11(elevation);
+  if (elevation === 0) return surface;
+  const alpha = f11(f11(f11(4.5 * f11(Math.log(f11(elevation + 1)))) + 2) / 100);
+  return compositeSrgb(copySrgbAlpha(tint, alpha), surface);
+}
+function matchingContentColor(background, scheme) {
+  for (const [container, content] of CONTENT_COLOR_ROLES) if (scheme[container] !== void 0 && background === scheme[container]) return scheme[content];
+  return void 0;
+}
+function srgbCss(color) {
+  const [r, g, b, a] = [color >>> 16 & 255, color >>> 8 & 255, color & 255, color >>> 24];
+  return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+}
+function resolveSurfaceColor(probe, color) {
+  probe.style.color = "";
+  probe.style.color = color;
+  const css2 = getComputedStyle(probe).color;
+  const rgb = /^rgba?\(([^)]+)\)$/.exec(css2), srgb = /^color\(srgb\s+([^)]+)\)$/.exec(css2);
+  let packed;
+  if (rgb) {
+    const channels = rgb[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    packed = packSrgb([...channels.slice(0, 3).map((v) => v / 255), channels[3] ?? 1]);
+  } else if (srgb) {
+    const channels = srgb[1].split(/[\s/]+/).filter(Boolean).map(Number);
+    packed = packSrgb(channels);
+  }
+  return { css: css2, key: packed ?? css2, packed };
+}
+function resolveSurfaceColors(host, probe, { container, content, elevation = 0 }) {
+  const style3 = getComputedStyle(host), resolved = /* @__PURE__ */ new Map();
+  const resolve = (color) => {
+    if (!resolved.has(color)) resolved.set(color, resolveSurfaceColor(probe, color));
+    return resolved.get(color);
+  };
+  const roles = [...new Set(CONTENT_COLOR_ROLES.flat())];
+  const values = roles.map((role) => style3.getPropertyValue("--md-sys-color-" + role).trim());
+  const signature = JSON.stringify([style3.color, values]);
+  let cached = schemeCache.get(host);
+  if (cached?.signature !== signature) {
+    const scheme2 = {};
+    for (let i = 0; i < roles.length; i++) {
+      if (values[i]) scheme2[roles[i]] = resolve(values[i]).key;
+    }
+    cached = { signature, scheme: scheme2 };
+    schemeCache.set(host, cached);
+  }
+  const scheme = cached.scheme;
+  const background = resolve(container);
+  const foreground = content ? resolve(content).css : matchingContentColor(background.key, scheme);
+  const parent2 = parseFloat(style3.getPropertyValue("--md-absolute-tonal-elevation")) || 0;
+  const total = f11(f11(parent2) + f11(elevation));
+  const enabled = !["false", "0"].includes(style3.getPropertyValue("--md-tonal-elevation-enabled").trim());
+  const tint = style3.getPropertyValue("--md-sys-color-surface-tint").trim();
+  const tintColor = tint ? resolve(tint) : null;
+  const tonal = enabled && background.key === scheme.surface && background.packed !== void 0 && tintColor?.packed !== void 0;
+  return {
+    container: tonal ? srgbCss(tonalSurfaceColor(background.packed, tintColor.packed, total)) : background.css,
+    content: typeof foreground === "number" ? srgbCss(foreground) : foreground ?? style3.color,
+    total
+  };
+}
+
+// src/components/button-surface.js
+function surfaceContentClip(surface, child) {
+  const { width, height, radius: radius2 } = surface;
+  return `inset(${-child.y}px ${child.x + child.width - width}px ${child.y + child.height - height}px ${-child.x}px round ${radius2}px)`;
+}
+var ButtonSurface = class {
+  constructor(host, button) {
+    this.host = host;
+    this.button = button;
+    this.disposed = false;
+    this.background = { value: button.style.getPropertyValue("background-color"), priority: button.style.getPropertyPriority("background-color"), applied: null };
+    this.children = [...button.querySelectorAll(".lbl-wrapper,.lead-ico,.trail-ico")];
+    this.clips = new Map(this.children.map((child) => [child, { value: child.style.getPropertyValue("clip-path"), priority: child.style.getPropertyPriority("clip-path"), applied: null }]));
+    this.probe = document.createElement("span");
+    this.probe.hidden = true;
+    this.probe.setAttribute("aria-hidden", "true");
+    host.shadowRoot.append(this.probe);
+    this.resize = new ResizeObserver(() => this.clip());
+    for (const node of [button, ...this.children]) this.resize.observe(node);
+    this.onFonts = () => this.clip();
+    document.fonts?.addEventListener("loadingdone", this.onFonts);
+    this.mutations = new MutationObserver(() => {
+      if (button.style.getPropertyValue("background-color") !== this.background.applied || button.style.getPropertyPriority("background-color") !== this.background.appliedPriority) this.refresh();
+    });
+    this.observe();
+  }
+  observe() {
+    this.mutations.observe(this.button, { attributes: true, attributeFilter: ["style"] });
+  }
+  pointerInput(event) {
+    const type = { mouse: "Mouse", touch: "Touch", pen: "Stylus" }[event.pointerType];
+    if (!type) return null;
+    const root = this.button.getBoundingClientRect(), css2 = getComputedStyle(this.button);
+    const width = parseFloat(css2.width) || 0, height = parseFloat(css2.height) || 0;
+    const scaleX = root.width / width || 1, scaleY = root.height / height || 1;
+    return {
+      width,
+      height,
+      radius: Math.min(parseFloat(css2.borderTopLeftRadius) || 0, width / 2, height / 2),
+      x: (event.clientX - root.left) / scaleX,
+      y: (event.clientY - root.top) / scaleY,
+      type
+    };
+  }
+  hitTest(event) {
+    const input = this.pointerInput(event);
+    return input === null || roundedPointerHit(input) !== null;
+  }
+  outOfBounds(event) {
+    const input = this.pointerInput(event);
+    return input !== null && capturedPointerOutOfBounds(input);
+  }
+  restore(node, name, entry) {
+    if (entry.applied === null) return;
+    if (node.style.getPropertyValue(name) === entry.applied && node.style.getPropertyPriority(name) === entry.appliedPriority) {
+      if (entry.value) node.style.setProperty(name, entry.value, entry.priority);
+      else node.style.removeProperty(name);
+    } else {
+      entry.value = node.style.getPropertyValue(name);
+      entry.priority = node.style.getPropertyPriority(name);
+    }
+    entry.applied = null;
+  }
+  refresh() {
+    if (this.disposed || !this.host.isConnected) return;
+    this.mutations.disconnect();
+    try {
+      this.restore(this.button, "background-color", this.background);
+      const css2 = getComputedStyle(this.button);
+      const input = css2.backgroundColor;
+      this.resolved = resolveSurfaceColors(this.host, this.probe, { container: input, content: css2.color, elevation: 0 });
+      if (this.resolved.container !== input) {
+        this.button.style.setProperty("background-color", this.resolved.container, "important");
+      }
+      this.background.applied = this.button.style.getPropertyValue("background-color");
+      this.background.appliedPriority = this.button.style.getPropertyPriority("background-color");
+    } finally {
+      if (!this.disposed) this.observe();
+    }
+    this.clip();
+  }
+  clip() {
+    if (this.disposed || !this.host.isConnected) return;
+    const root = this.button.getBoundingClientRect(), css2 = getComputedStyle(this.button);
+    const width = parseFloat(css2.width) || 0, height = parseFloat(css2.height) || 0;
+    const scaleX = root.width / width || 1, scaleY = root.height / height || 1;
+    const surface = { width, height, radius: parseFloat(css2.borderTopLeftRadius) || 0 };
+    for (const child of this.children) {
+      const rect6 = child.getBoundingClientRect(), entry = this.clips.get(child);
+      if (entry.applied !== null && (child.style.getPropertyValue("clip-path") !== entry.applied || child.style.getPropertyPriority("clip-path") !== entry.appliedPriority)) {
+        entry.value = child.style.getPropertyValue("clip-path");
+        entry.priority = child.style.getPropertyPriority("clip-path");
+      }
+      const value = surfaceContentClip(surface, { x: (rect6.left - root.left) / scaleX, y: (rect6.top - root.top) / scaleY, width: rect6.width / scaleX, height: rect6.height / scaleY });
+      if (child.style.getPropertyValue("clip-path") !== value) child.style.setProperty("clip-path", value);
+      entry.applied = child.style.getPropertyValue("clip-path");
+      entry.appliedPriority = child.style.getPropertyPriority("clip-path");
+    }
+  }
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.resize.disconnect();
+    this.mutations.disconnect();
+    document.fonts?.removeEventListener("loadingdone", this.onFonts);
+    this.restore(this.button, "background-color", this.background);
+    for (const [child, entry] of this.clips) this.restore(child, "clip-path", entry);
+    this.probe.remove();
+  }
+};
+
+// src/motion/state-layer.js
+var StateLayerMotion = class {
+  constructor(value = 0, kind = null) {
+    this.value = this.from = this.target = Math.fround(value);
+    this.kind = kind;
+    this.start = 0;
+    this.spec = { duration: 0, easing: "linear" };
+  }
+  sample(time) {
+    return this.value = interactionTween(this.from, this.target, time - this.start, this.spec);
+  }
+  update(kind, value, time) {
+    if (kind === this.kind) return false;
+    this.sample(time);
+    this.from = this.value;
+    this.target = Math.fround(value);
+    this.spec = stateLayerSpec(this.kind, kind);
+    this.kind = kind;
+    this.start = time;
+    return true;
+  }
+  finish() {
+    this.value = this.from = this.target;
+    this.spec = { duration: 0, easing: "linear" };
+  }
+  running(time) {
+    return this.spec.duration > 0 && time - this.start < this.spec.duration;
+  }
+};
+function bindStateLayer(button, { disabled = () => false, hitTest = () => true, property = "--md-button-state-alpha", onChange = () => {
+}, signal } = {}) {
+  const order = new InteractionOrder(), motion = new StateLayerMotion();
+  const original = button.style.getPropertyValue(property), priority = button.style.getPropertyPriority(property);
+  const media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+  let raf = null, disposed = false, written;
+  function paint(time) {
+    button.style.setProperty(property, String(motion.sample(time)));
+    written = button.style.getPropertyValue(property);
+  }
+  function tick(time = performance.now()) {
+    if (disposed) return;
+    if (raf !== null) cancelAnimationFrame(raf);
+    raf = null;
+    paint(time);
+    if (motion.running(time)) raf = requestAnimationFrame(tick);
+  }
+  function target(kind) {
+    if (kind === null) return 0;
+    const value = parseFloat(getComputedStyle(button).getPropertyValue(`--md-sys-state-${kind === "drag" ? "dragged" : kind}-opacity`));
+    return Number.isFinite(value) ? value : kind === "hover" ? 0.08 : kind === "drag" ? 0.16 : 0.1;
+  }
+  function refresh() {
+    if (disposed) return;
+    if (disabled()) order.clear();
+    const kind = order.latest(false), time = performance.now();
+    motion.update(kind, target(kind), time);
+    if (media?.matches) motion.finish();
+    tick(time);
+    onChange(kind);
+  }
+  function set(kind, active, identity = kind) {
+    if (disposed || active && disabled()) return;
+    if (order.set(kind, active, identity)) refresh();
+  }
+  const hoverBinding = bindPointerHover(button, { hitTest, onHover: (active) => set("hover", active), signal });
+  const focusBinding = bindFocusIndication(button, { onFocus: (active) => set("focus", active), signal });
+  const preference = () => {
+    if (media.matches) {
+      motion.finish();
+      tick();
+    }
+  };
+  media?.addEventListener("change", preference);
+  function dispose() {
+    focusBinding.dispose();
+    hoverBinding.dispose();
+    if (disposed) return;
+    disposed = true;
+    if (raf !== null) cancelAnimationFrame(raf);
+    raf = null;
+    media?.removeEventListener("change", preference);
+    order.clear();
+    if (button.style.getPropertyValue(property) === written) {
+      if (original) button.style.setProperty(property, original, priority);
+      else button.style.removeProperty(property);
+    }
+  }
+  signal?.addEventListener("abort", dispose, { once: true });
+  paint(performance.now());
+  return { motion, refresh, dispose, drag(active, identity = "drag") {
+    set("drag", active, identity);
+  }, get order() {
+    return [...order.active];
+  }, get raf() {
+    return raf;
+  }, get disposed() {
+    return disposed;
+  } };
 }
 
 // src/components/md-button.js
 var defaultStyle = `
   :host {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    max-width: 100%;
     vertical-align: middle;
     outline: none;
     -webkit-tap-highlight-color: transparent;
+  }
+  :host([toggle]) {
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    width: var(--_toggle-width, auto);
+    height: var(--_toggle-height, auto);
   }
 
   .btn {
@@ -887,6 +3007,8 @@ var defaultStyle = `
     justify-content: center;
     box-sizing: border-box;
     border: none;
+    min-width: 58px;
+    max-width: 100%;
     outline: none;
     user-select: none;
     cursor: pointer;
@@ -894,18 +3016,35 @@ var defaultStyle = `
     letter-spacing: 0.1px;
     overflow: visible;
     will-change: transform, border-radius;
-    transition:
-      background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      box-shadow var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      border-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease);
+    /* ButtonColors resolves enabled/theme roles directly; elevation is separate. */
+    transition: none;
   }
 
-  /* Focus Ring (\xA75.3) */
-  .btn:focus-visible {
-    outline: 3px solid var(--md-sys-color-secondary, #625b71);
-    outline-offset: 2px;
+  /* ToggleButton's Row supplies a height minimum, without Button's 58dp width. */
+  .btn.togglable {
+    min-width: 0;
+    max-width: none;
+    min-height: 0;
+    position: absolute;
+    padding: 0;
+    gap: 0;
   }
+  .btn.togglable .icon, .btn.togglable .lbl-wrapper {
+    position: absolute;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  .btn.togglable .lbl-wrapper { display: block; }
+  .icon-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+  .icon-glyph[hidden] { display: none; }
+  .btn:not(.togglable) .icon-slot { display: none; }
 
   /* Touch Target expand for small sizes (\xA74.2 - 48dp min) */
   .btn.xs::before,
@@ -922,22 +3061,28 @@ var defaultStyle = `
     pointer-events: auto;
   }
 
+  /* Surface's border is drawn inside its shape; it does not measure as padding. */
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    border: var(--_button-outline-width, 0px) solid;
+    border-color: inherit;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
   /* State Layer (\xA75.1 & \xA75.2) */
   .state-layer {
     position: absolute;
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background-color: currentColor;
-    opacity: 0;
-    transition: opacity var(--md-sys-motion-duration-short-2, 100ms) ease;
-  }
-
-  .btn:hover:not([disabled]) .state-layer {
-    opacity: var(--md-sys-state-hover-opacity, 0.08);
-  }
-  .btn:focus-visible:not([disabled]) .state-layer {
-    opacity: var(--md-sys-state-focus-opacity, 0.10);
+    /* Native color.copy(alpha=indicationAlpha) replaces content alpha. */
+    background-color: rgb(from currentColor r g b / 1);
+    opacity: var(--md-button-state-alpha, 0);
+    transition: none;
   }
 
   /* Ripple Effect */
@@ -967,7 +3112,7 @@ var defaultStyle = `
   .btn.filled:hover:not([disabled]) {
     box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
   }
-  .btn.filled:active:not([disabled]) {
+  .btn.filled:is(:active, .pressed):not([disabled]) {
     box-shadow: var(--md-sys-elevation-level0, none);
   }
 
@@ -980,7 +3125,7 @@ var defaultStyle = `
   .btn.elevated:hover:not([disabled]) {
     box-shadow: var(--md-sys-elevation-level2, 0px 1px 2px rgba(0,0,0,0.3));
   }
-  .btn.elevated:active:not([disabled]) {
+  .btn.elevated:is(:active, .pressed):not([disabled]) {
     box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
   }
 
@@ -993,12 +3138,15 @@ var defaultStyle = `
   .btn.tonal:hover:not([disabled]) {
     box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
   }
+  .btn.tonal:is(:active, .pressed):not([disabled]) {
+    box-shadow: var(--md-sys-elevation-level0, none);
+  }
 
   /* Varyant: Outlined */
   .btn.outlined {
     background-color: transparent;
     color: var(--md-sys-color-on-surface-variant, #49454f);
-    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    border-color: var(--md-sys-color-outline-variant, #cac4d0);
     box-shadow: var(--md-sys-elevation-level0, none);
   }
   .btn.outlined:active:not([disabled]) {
@@ -1008,29 +3156,21 @@ var defaultStyle = `
   /* Varyant: Text */
   .btn.text {
     background-color: transparent;
-    color: var(--md-sys-color-on-surface-variant, #49454f);
+    color: var(--md-sys-color-primary, #6750a4);
     box-shadow: var(--md-sys-elevation-level0, none);
   }
 
   /* MDC DockedToolbar's theme overlay for ordinary/text buttons. */
   .btn.text {
     background-color: var(--md-toolbar-button-container, transparent);
-    color: var(--md-toolbar-button-content, var(--md-sys-color-on-surface-variant));
+    color: var(--md-toolbar-button-content, var(--md-sys-color-primary));
   }
   :host(:not([variant])) .btn.filled {
     background-color: var(--md-toolbar-button-container, var(--md-sys-color-primary));
     color: var(--md-toolbar-button-content, var(--md-sys-color-on-primary));
   }
-  .btn.text.togglable.selected:not(:disabled) {
-    background-color: var(--md-toolbar-button-selected-container, transparent);
-    color: var(--md-toolbar-button-selected-content, var(--md-sys-color-on-surface-variant));
-  }
-  :host(:not([variant])) .btn.filled.togglable.selected:not(:disabled) {
-    background-color: var(--md-toolbar-button-selected-container, var(--md-sys-color-primary));
-    color: var(--md-toolbar-button-selected-content, var(--md-sys-color-on-primary));
-  }
   .btn.text.togglable.selected:is(:hover,:focus-visible,:active):not(:disabled) {
-    color: var(--md-toolbar-button-interacting-content, var(--md-toolbar-button-selected-content, var(--md-sys-color-on-surface-variant)));
+    color: var(--md-toolbar-button-interacting-content, var(--md-toolbar-button-selected-content, var(--md-sys-color-primary)));
   }
   :host(:not([variant])) .btn.filled.togglable.selected:is(:hover,:focus-visible,:active):not(:disabled) {
     color: var(--md-toolbar-button-interacting-content, var(--md-toolbar-button-selected-content, var(--md-sys-color-on-primary)));
@@ -1039,12 +3179,8 @@ var defaultStyle = `
     background-color: var(--md-toolbar-button-container, color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent));
     color: var(--md-toolbar-button-disabled-content, color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent));
   }
-  :host(:not([variant])) .btn.filled.togglable:not(.selected):not(:disabled) {
-    background-color: var(--md-toolbar-button-container, var(--md-sys-color-surface-container));
-    color: var(--md-toolbar-button-content, var(--md-sys-color-on-surface-variant));
-  }
-  .btn { transition-duration: var(--md-toolbar-icon-transition, var(--md-sys-motion-duration-short-2, 100ms)); }
-  .state-layer, .md-ripple-effect { background-color: var(--md-toolbar-button-state-color, currentColor); }
+  .state-layer { background-color: rgb(from var(--md-toolbar-button-state-color, currentColor) r g b / 1); }
+  .md-ripple-effect { background-color: var(--md-toolbar-button-state-color, currentColor); }
   .md-ripple-effect { --md-ripple-color: var(--md-toolbar-button-state-color, currentColor); }
 
   /* Toggle Selected States */
@@ -1055,6 +3191,10 @@ var defaultStyle = `
   .btn.togglable.selected.filled:not(:disabled) {
     background-color: var(--md-sys-color-primary, #6750a4);
     color: var(--md-sys-color-on-primary, #ffffff);
+  }
+  .btn.togglable.selected.elevated:not(:disabled) {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
   }
   .btn.togglable.selected.tonal:not(:disabled) {
     background-color: var(--md-sys-color-secondary, #625b71);
@@ -1069,7 +3209,6 @@ var defaultStyle = `
   /* Disabled State */
   .btn:disabled, .btn[disabled] {
     cursor: not-allowed;
-    box-shadow: none !important;
     pointer-events: none;
   }
   .btn.filled:disabled, .btn.elevated:disabled {
@@ -1081,13 +3220,37 @@ var defaultStyle = `
     color: color-mix(in srgb, var(--md-sys-color-on-surface, #1d1b20) 38%, transparent);
   }
   .btn.outlined:disabled {
-    border-color: var(--md-sys-color-outline-variant);
+    border-color: color-mix(in srgb, var(--md-sys-color-outline-variant) 10%, transparent);
     color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent);
     background-color: transparent;
   }
   .btn.text:disabled {
     color: var(--md-toolbar-button-disabled-content, color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent));
     background-color: var(--md-toolbar-button-container, transparent);
+  }
+  /* ToggleButtonColors uses the TonalButton token family, whose disabled
+     roles differ from ordinary FilledTonalButtonColors. Checked never changes
+     the disabled target; selected outlined toggles have no default border. */
+  .btn.togglable.tonal:disabled {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+    color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent);
+  }
+  .btn.togglable.outlined:disabled {
+    background-color: color-mix(in srgb, var(--md-sys-color-outline-variant) 10%, transparent);
+  }
+
+  /* DockedToolbar supplies its own MDC theme overlay for text toggles. */
+  .btn.text.togglable.selected:not(:disabled) {
+    background-color: var(--md-toolbar-button-selected-container, transparent);
+    color: var(--md-toolbar-button-selected-content, var(--md-sys-color-primary));
+  }
+  :host(:not([variant])) .btn.filled.togglable:not(.selected):not(:disabled) {
+    background-color: var(--md-toolbar-button-container, var(--md-sys-color-surface-container));
+    color: var(--md-toolbar-button-content, var(--md-sys-color-on-surface-variant));
+  }
+  :host(:not([variant])) .btn.filled.togglable.selected:not(:disabled) {
+    background-color: var(--md-toolbar-button-selected-container, var(--md-sys-color-primary));
+    color: var(--md-toolbar-button-selected-content, var(--md-sys-color-on-primary));
   }
 
   .icon {
@@ -1096,27 +3259,40 @@ var defaultStyle = `
     justify-content: center;
     font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Google Symbols', sans-serif;
     line-height: 1;
+    flex: 0 0 auto;
     pointer-events: none;
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
 
   .lbl {
     display: inline-block;
+    min-height: 1lh;
+    min-width: 0;
     pointer-events: none;
   }
+  .lbl-wrapper {display: flex; align-items: center; min-width: 0; overflow-wrap: anywhere;}
+  .label-slot[hidden], .lbl[hidden] {display: none;}
 `;
 var buttonSheet = createComponentSheet(defaultStyle);
 var SIZES = {
-  xs: { height: 32, pad: 16, iconSize: 20, iconGap: 8, round: 16, square: 12, press: 8, fontSize: 14, lineHeight: 20, fontWeight: 500 },
-  s: { height: 40, pad: 16, iconSize: 20, iconGap: 8, round: 20, square: 12, press: 8, fontSize: 14, lineHeight: 20, fontWeight: 500 },
-  m: { height: 56, pad: 24, iconSize: 24, iconGap: 8, round: 28, square: 16, press: 12, fontSize: 16, lineHeight: 24, fontWeight: 500 },
-  l: { height: 96, pad: 48, iconSize: 32, iconGap: 12, round: 48, square: 28, press: 16, fontSize: 24, lineHeight: 32, fontWeight: 400 },
-  xl: { height: 136, pad: 64, iconSize: 40, iconGap: 16, round: 68, square: 28, press: 16, fontSize: 32, lineHeight: 40, fontWeight: 400 }
+  xs: { height: 32, pad: 12, vertical: 6, iconSize: 20, iconGap: 4, square: 12, press: 8, fontSize: 14, lineHeight: 20, fontWeight: 500 },
+  s: { height: 40, pad: 16, vertical: 10, iconSize: 20, iconGap: 8, square: 12, press: 8, fontSize: 14, lineHeight: 20, fontWeight: 500 },
+  m: { height: 56, pad: 24, vertical: 16, iconSize: 24, iconGap: 8, square: 16, press: 12, fontSize: 16, lineHeight: 24, fontWeight: 500 },
+  l: { height: 96, pad: 48, vertical: 32, iconSize: 32, iconGap: 12, square: 28, press: 16, fontSize: 24, lineHeight: 32, fontWeight: 400 },
+  xl: { height: 136, pad: 64, vertical: 48, iconSize: 40, iconGap: 16, square: 28, press: 16, fontSize: 32, lineHeight: 40, fontWeight: 400 }
 };
+var SHAPE_ROLES = {
+  xs: ["medium", "small"],
+  s: ["medium", "small"],
+  m: ["large", "medium"],
+  l: ["extra-large", "large"],
+  xl: ["extra-large", "large"]
+};
+var VARIANTS = /* @__PURE__ */ new Set(["filled", "elevated", "tonal", "outlined", "text"]);
 var MdButton = class extends HTMLElement {
   static formAssociated = true;
   static get observedAttributes() {
-    return ["variant", "size", "shape", "disabled", "toggle", "selected", "icon", "trailing-icon", "label", "type"];
+    return ["variant", "size", "shape", "disabled", "toggle", "selected", "icon", "trailing-icon", "label", "type", "aria-label"];
   }
   constructor() {
     super();
@@ -1125,6 +3301,7 @@ var MdButton = class extends HTMLElement {
     this._internals = this.attachInternals ? this.attachInternals() : null;
     this._rendered = false;
     this._abortController = null;
+    this._pressBinding = null;
   }
   connectedCallback() {
     if (!this._rendered) {
@@ -1132,28 +3309,61 @@ var MdButton = class extends HTMLElement {
       this._rendered = true;
     }
     this._bindEvents();
+    this._surface ||= new ButtonSurface(this, this.shadowRoot.querySelector(".btn"));
     this._sync();
+    this._resize?.disconnect();
+    this._resize = new ResizeObserver(() => {
+      this._updateShape();
+      this._updateBorder();
+    });
+    this._resize.observe(this.shadowRoot.querySelector(".btn"));
+    this._stopThemeObservation?.();
+    this._stopThemeObservation = observeThemeContext(this, () => {
+      this._toggleDOM?.measure();
+      this._updateShape();
+      this._updateBorder();
+      this._elevationMotion?.refresh();
+      this._stateLayer?.refresh();
+      this._surface?.refresh();
+    });
   }
   disconnectedCallback() {
+    this._surface?.dispose();
+    this._surface = null;
+    this._toggleDOM?.dispose();
+    this._toggleDOM = null;
     this._abortController?.abort();
     this._abortController = null;
+    this._pressBinding = null;
+    this._resize?.disconnect();
+    this._stopThemeObservation?.();
+    this._stopThemeObservation = null;
+    this._shapeMotion?.dispose();
+    this._shapeMotion = null;
+    this._shapeState = null;
+    this._shapeComposition = null;
+    this._shapeMode = null;
+    this._pressed = false;
+    this._elevationMotion = null;
+    this._stateLayer = null;
+    this._disposeBorder();
   }
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     this._sync();
-    if (name === "selected") morphShape(this.shadowRoot.querySelector(".btn"), SIZES[this.size].press, this._getBaseRadius(), "expressiveSpatialFast");
   }
   get variant() {
-    return sanitizeAttribute(this.getAttribute("variant") || "filled");
+    const value = sanitizeAttribute(this.getAttribute("variant") || "filled");
+    return VARIANTS.has(value) ? value : "filled";
   }
   get size() {
-    return SIZES[this.getAttribute("size")] ? this.getAttribute("size") : "s";
+    return Object.hasOwn(SIZES, this.getAttribute("size")) ? this.getAttribute("size") : "s";
   }
   get shape() {
-    return this.getAttribute("shape") || "round";
+    return this.getAttribute("shape") === "square" ? "square" : "round";
   }
   get disabled() {
-    return this.hasAttribute("disabled");
+    return this.hasAttribute("disabled") || !!this._formDisabled;
   }
   set disabled(v) {
     v ? this.setAttribute("disabled", "") : this.removeAttribute("disabled");
@@ -1167,6 +3377,13 @@ var MdButton = class extends HTMLElement {
   set selected(v) {
     v ? this.setAttribute("selected", "") : this.removeAttribute("selected");
   }
+  get elevation() {
+    return this._elevation;
+  }
+  set elevation(value) {
+    this._elevation = buttonElevationDefinition(value);
+    this._elevationMotion?.refresh();
+  }
   get icon() {
     return this.getAttribute("icon") || "";
   }
@@ -1177,15 +3394,154 @@ var MdButton = class extends HTMLElement {
     return this.getAttribute("label") || "";
   }
   get type() {
-    return this.getAttribute("type") || "button";
+    const value = this.getAttribute("type");
+    return value === "submit" || value === "reset" ? value : "button";
   }
   get form() {
     return this._internals?.form;
   }
+  formDisabledCallback(disabled) {
+    this._formDisabled = disabled;
+    if (this._rendered) this._sync();
+  }
+  focus(options) {
+    this.shadowRoot.querySelector(".btn")?.focus(options);
+  }
+  click() {
+    this.shadowRoot.querySelector(".btn")?.click();
+  }
   _getBaseRadius() {
-    const s = SIZES[this.size];
-    if (this.shape === "square" !== (this.toggle && this.selected)) return s.square;
-    return s.round;
+    const btn = this.shadowRoot.querySelector(".btn");
+    return buttonCornerRadius(this._baseShape(), btn?.offsetWidth ?? 58, btn?.offsetHeight ?? SIZES[this.size].height);
+  }
+  _baseShape() {
+    const shapes = this._buttonShapes();
+    return this.toggle && this.selected ? shapes.checkedShape : shapes.shape;
+  }
+  _cornerRole(css2, role, fallback) {
+    const value = css2.getPropertyValue(`--md-sys-shape-corner-${role}`).trim();
+    if (/^(?:\d+(?:\.\d*)?|\.\d+)%$/.test(value)) {
+      const percent = Number.parseFloat(value);
+      if (percent <= 100) return { unit: "percent", value: percent };
+    }
+    if (/^(?:\d+(?:\.\d*)?|\.\d+)px$/.test(value) || value === "0") {
+      return { unit: "px", value: Number.parseFloat(value) };
+    }
+    if (value && !value.includes("%") && CSS.supports("width", value) && !/^(auto|initial|inherit|unset|revert|revert-layer|min-content|max-content|fit-content|stretch)$/.test(value)) {
+      if (!this._cornerProbe) {
+        this._cornerProbe = document.createElement("span");
+        this._cornerProbe.setAttribute("aria-hidden", "true");
+        this._cornerProbe.style.cssText = "position:absolute;display:block;visibility:hidden;pointer-events:none;box-sizing:border-box;min-width:0;max-width:none;height:0;padding:0;border:0;";
+        this.shadowRoot.querySelector(".btn").append(this._cornerProbe);
+      }
+      this._cornerProbe.style.width = value;
+      const pixels = this._cornerProbe.getBoundingClientRect().width;
+      if (Number.isFinite(pixels)) return { unit: "px", value: pixels };
+    }
+    return { unit: "px", value: fallback };
+  }
+  _buttonShapes() {
+    const css2 = getComputedStyle(this.shadowRoot.querySelector(".btn"));
+    const [squareRole, pressedRole] = SHAPE_ROLES[this.size], s = SIZES[this.size];
+    const square = this._cornerRole(css2, squareRole, s.square), round6 = { unit: "percent", value: 50 };
+    const shapes = {
+      shape: this.shape === "square" ? square : round6,
+      // The public small ToggleButton default overrides its raw token with 6dp.
+      pressedShape: this.toggle && this.size === "s" ? { unit: "px", value: 6 } : this._cornerRole(css2, pressedRole, s.press)
+    };
+    if (this.toggle) shapes.checkedShape = this.shape === "square" ? round6 : square;
+    return shapes;
+  }
+  _updateShape() {
+    if (!this.isConnected) return;
+    const btn = this.shadowRoot.querySelector(".btn");
+    const shapes = this._buttonShapes();
+    const now = performance.now();
+    const spec = SpringPhysics.getPreset(this.toggle ? "expressiveSpatialFast" : "expressiveEffectMedium", this);
+    const mode = this.toggle ? "toggle" : "button";
+    if (mode !== this._shapeMode) {
+      this._shapeMode = mode;
+      this._shapeComposition = null;
+      this._shapeState = null;
+    }
+    this._shapeComposition ||= new ButtonShapeComposition();
+    const state = this._shapeComposition.update(shapes, !!this._pressed, spec, now, this.toggle && this.selected);
+    if (state !== this._shapeState || !this._shapeMotion || this._shapeMotion.disposed) {
+      this._shapeMotion?.dispose();
+      this._shapeState = state;
+      this._shapeMotion = new SelectionMotion(this, { progress: state.progress.sample(now).position }, (values) => {
+        const shape2 = state.getMorphedShape(null, values.progress);
+        btn.style.borderRadius = `${Math.max(0, buttonCornerRadius(shape2, btn.offsetWidth, btn.offsetHeight))}px`;
+        this._surface?.clip();
+      });
+      this._shapeMotion.channels.progress = state.progress;
+    }
+    if (this._shapeMotion.media?.matches) this._shapeMotion.finish();
+    else this._shapeMotion.tick(now);
+  }
+  _disposeBorder() {
+    this._borderDensityMedia?.removeEventListener("change", this._onBorderDensity);
+    this._borderDensityMedia = this._onBorderDensity = null;
+    this._borderWidthMotion?.dispose();
+    this._borderColorMotion?.dispose();
+    this._borderWidthMotion = this._borderColorMotion = null;
+    this._borderProbe?.remove();
+    this._borderProbe = null;
+    this.shadowRoot.querySelector(".btn")?.style.removeProperty("border-color");
+  }
+  _updateBorder() {
+    if (!this.isConnected) return;
+    if (!this.toggle) {
+      this._disposeBorder();
+      return;
+    }
+    const btn = this.shadowRoot.querySelector(".btn");
+    const width = this.variant === "outlined" && !this.selected ? 1 : 0;
+    if (this._borderDensityMedia && !this._borderDensityMedia.matches) {
+      this._borderDensityMedia.removeEventListener("change", this._onBorderDensity);
+      this._borderDensityMedia = null;
+    }
+    if (!this._borderDensityMedia) {
+      this._borderDensityMedia = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+      this._onBorderDensity = () => {
+        this._borderDensityMedia.removeEventListener("change", this._onBorderDensity);
+        this._borderDensityMedia = null;
+        this._updateBorder();
+      };
+      this._borderDensityMedia.addEventListener("change", this._onBorderDensity);
+    }
+    if (!this._borderProbe) {
+      this._borderProbe = document.createElement("span");
+      this._borderProbe.hidden = true;
+      this._borderProbe.setAttribute("aria-hidden", "true");
+      this.shadowRoot.append(this._borderProbe);
+    }
+    const role = getComputedStyle(btn).getPropertyValue("--md-sys-color-outline-variant").trim();
+    if (width && !role) {
+      const previous = btn.style.borderColor;
+      btn.style.removeProperty("border-color");
+      this._borderProbe.style.color = getComputedStyle(btn).borderColor;
+      btn.style.borderColor = previous;
+    } else {
+      this._borderProbe.style.color = !width ? "transparent" : this.disabled ? `color-mix(in srgb, ${role} 10%, transparent)` : role;
+    }
+    const color = getComputedStyle(this._borderProbe).color;
+    if (!this._borderWidthMotion) {
+      this._borderWidthMotion = new SelectionMotion(this, { width }, (values) => {
+        const stroke = buttonBorderStroke(values.width, btn.offsetWidth, btn.offsetHeight, window.devicePixelRatio);
+        btn.style.setProperty("--_button-outline-width", `${stroke}px`);
+      });
+      this._borderColorMotion = new ColorMotion(
+        this,
+        this._borderProbe,
+        color,
+        (value) => {
+          btn.style.borderColor = value;
+        }
+      );
+    }
+    this._borderWidthMotion.set({ width: { value: width, role: "expressiveSpatialFast" } });
+    this._borderColorMotion.set(color);
   }
   _render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
@@ -1193,9 +3549,9 @@ var MdButton = class extends HTMLElement {
       ${hasAdopted ? "" : `<style>${defaultStyle}</style>`}
       <button class="btn" type="button" part="button">
         <span class="state-layer"></span>
-        <span class="icon lead-ico" style="display: none;"></span>
-        <span class="lbl-wrapper"><slot></slot></span>
-        <span class="icon trail-ico" style="display: none;"></span>
+        <span class="icon lead-ico" aria-hidden="true" style="display: none;"><span class="icon-glyph"></span><slot class="icon-slot" name="icon"></slot></span>
+        <span class="lbl-wrapper"><span class="lbl" hidden></span><slot class="label-slot"></slot></span>
+        <span class="icon trail-ico" aria-hidden="true" style="display: none;"></span>
       </button>
     `;
   }
@@ -1203,20 +3559,37 @@ var MdButton = class extends HTMLElement {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
+    this.shadowRoot.querySelector(".icon-slot").addEventListener("slotchange", () => this._sync(), { signal });
+    this.shadowRoot.querySelector(".label-slot").addEventListener("slotchange", () => this._sync(), { signal });
+    window.addEventListener("resize", () => {
+      this._toggleDOM?.measure();
+      this._updateShape();
+      this._updateBorder();
+      this._surface?.refresh();
+    }, { signal });
     const btn = this.shadowRoot.querySelector(".btn");
     if (!btn) return;
-    bindPress(btn, {
+    this._elevationMotion = bindButtonElevation(btn, {
+      configuration: () => this._elevation === void 0 ? buttonElevationDefaults(this.variant) : this._elevation === null ? null : buttonElevationValues(this._elevation),
       disabled: () => this.disabled,
+      hitTest: (event) => this._surface?.hitTest(event) ?? true,
+      signal
+    });
+    this._stateLayer = bindStateLayer(btn, { disabled: () => this.disabled, hitTest: (event) => this._surface?.hitTest(event) ?? true, signal });
+    this._pressBinding = bindPress(btn, {
+      disabled: () => this.disabled,
+      keyboardActivation: true,
+      ignoreEvent: (event) => nestedInteractiveEvent(event, btn),
+      pointerPolicy: { input: (event) => this._surface?.pointerInput(event), hitTest: (event) => this._surface?.hitTest(event) ?? true, outOfBounds: (event) => this._surface?.outOfBounds(event) ?? false },
+      onInteraction: ({ type, press }) => this._elevationMotion.press(type === "press", press),
       onPress: (e) => {
-        const s = SIZES[this.size];
-        const baseR = this._getBaseRadius();
-        morphShape(btn, baseR, s.press, "expressiveSpatialFast");
+        this._pressed = true;
+        this._updateShape();
         createRipple(e, btn);
       },
       onRelease: () => {
-        const s = SIZES[this.size];
-        const baseR = this._getBaseRadius();
-        morphShape(btn, s.press, baseR, "expressiveSpatialMedium");
+        this._pressed = false;
+        this._updateShape();
       },
       onActivate: () => {
         if (this.disabled) return;
@@ -1234,32 +3607,40 @@ var MdButton = class extends HTMLElement {
     });
   }
   _sync() {
+    if (!this.toggle) {
+      this._toggleDOM?.dispose();
+      this._toggleDOM = null;
+    }
     const btn = this.shadowRoot.querySelector(".btn");
     if (!btn) return;
     const s = SIZES[this.size];
-    const baseR = this._getBaseRadius();
-    btn.className = `btn ${this.variant} ${this.size}${this.selected ? " selected" : ""}${this.toggle ? " togglable" : ""}`;
+    btn.className = `btn ${this.variant} ${this.size}${this.selected ? " selected" : ""}${this.toggle ? " togglable" : ""}${this._pressed ? " pressed" : ""}`;
     btn.disabled = this.disabled;
     btn.setAttribute("aria-disabled", this.disabled ? "true" : "false");
     btn.setAttribute("tabindex", this.disabled ? "-1" : "0");
-    btn.setAttribute("role", "button");
-    if (this.toggle) btn.setAttribute("aria-pressed", this.selected ? "true" : "false");
-    else btn.removeAttribute("aria-pressed");
-    btn.style.height = `${s.height}px`;
+    btn.setAttribute("role", this.toggle ? "checkbox" : "button");
+    if (this.hasAttribute("aria-label")) btn.setAttribute("aria-label", this.getAttribute("aria-label"));
+    else btn.removeAttribute("aria-label");
+    btn.removeAttribute("aria-pressed");
+    if (this.toggle) btn.setAttribute("aria-checked", this.selected ? "true" : "false");
+    else btn.removeAttribute("aria-checked");
+    btn.style.height = "auto";
     btn.style.minHeight = `${s.height}px`;
-    btn.style.padding = `0 ${s.pad}px`;
+    btn.style.padding = `${s.vertical}px ${s.pad}px`;
     btn.style.gap = `${s.iconGap}px`;
     const typeRole = s.height >= 136 ? "headline-large" : s.height >= 96 ? "headline-small" : s.height >= 56 ? "title-medium" : "label-large";
     btn.style.font = `var(--md-sys-typescale-${typeRole}, ${s.fontWeight} ${s.fontSize}px/${s.lineHeight}px Roboto, sans-serif)`;
     btn.style.letterSpacing = `var(--md-sys-typescale-${typeRole}-tracking, ${s.height >= 96 ? 0 : s.height >= 56 ? 0.2 : 0.1}px)`;
-    btn.style.borderRadius = `${baseR}px`;
-    btn.style.borderWidth = this.variant === "outlined" ? `${this.size === "xl" ? 3 : this.size === "l" ? 2 : 1}px` : "0";
+    btn.style.borderWidth = "0px";
+    btn.style.setProperty("--_button-outline-width", this.variant === "outlined" && !(this.toggle && this.selected) ? `${this.toggle ? 1 : this.size === "xl" ? 3 : this.size === "l" ? 2 : 1}px` : "0px");
     const leadIcon = this.shadowRoot.querySelector(".lead-ico");
     const leadVal = this.icon;
     if (leadIcon) {
-      leadIcon.textContent = leadVal || "";
+      leadIcon.querySelector(".icon-glyph").textContent = leadVal || "";
+      if (!this.toggle) leadIcon.querySelector(".icon-glyph").hidden = false;
       leadIcon.style.display = leadVal ? "inline-flex" : "none";
       leadIcon.style.fontSize = `${s.iconSize}px`;
+      leadIcon.style.width = leadIcon.style.height = `${s.iconSize}px`;
     }
     const trailIcon = this.shadowRoot.querySelector(".trail-ico");
     const trailVal = this.trailingIcon;
@@ -1267,15 +3648,27 @@ var MdButton = class extends HTMLElement {
       trailIcon.textContent = trailVal || "";
       trailIcon.style.display = trailVal ? "inline-flex" : "none";
       trailIcon.style.fontSize = `${s.iconSize}px`;
+      trailIcon.style.width = trailIcon.style.height = `${s.iconSize}px`;
     }
-    const lblWrapper = this.shadowRoot.querySelector(".lbl-wrapper");
-    if (lblWrapper) {
-      if (this.labelText) {
-        lblWrapper.innerHTML = `<span class="lbl">${escapeHtml(this.labelText)}</span>`;
-      } else {
-        lblWrapper.innerHTML = "<slot></slot>";
-      }
+    const label = this.shadowRoot.querySelector(".lbl");
+    const slot = this.shadowRoot.querySelector(".label-slot");
+    const hasLabel = this.hasAttribute("label");
+    if (label.textContent !== this.labelText) label.textContent = this.labelText;
+    label.hidden = !hasLabel;
+    slot.hidden = hasLabel;
+    if (this.toggle && this.isConnected) {
+      btn.style.padding = "0px";
+      btn.style.gap = "0px";
+      btn.style.minHeight = "0px";
+      this._toggleDOM ||= new ToggleButtonDOMLayout(this);
+      this._toggleDOM.measure();
     }
+    this._updateShape();
+    this._updateBorder();
+    this._pressBinding?.refresh();
+    this._elevationMotion?.refresh();
+    this._stateLayer?.refresh();
+    this._surface?.refresh();
   }
 };
 if (!customElements.get("md-button")) {
@@ -1452,6 +3845,8 @@ var MdSplitButton = class extends HTMLElement {
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this.shadowRoot.querySelector(".dropdown-menu")?._springAnim?.cancel();
+    this._closing = false;
     document.removeEventListener("click", this._docClick);
   }
   attributeChangedCallback(name, oldVal, newVal) {
@@ -1516,6 +3911,10 @@ var MdSplitButton = class extends HTMLElement {
   }
   openMenu() {
     if (this.disabled) return;
+    if (this.open && !this._closing) {
+      this._sync();
+      return;
+    }
     this._closing = false;
     this.shadowRoot.querySelector(".dropdown-menu")?._springAnim?.cancel();
     document.querySelectorAll("md-split-button[open]").forEach((sb) => {
@@ -1531,10 +3930,13 @@ var MdSplitButton = class extends HTMLElement {
     if (!this.open || this._closing) return;
     this._closing = true;
     const menu = this.shadowRoot.querySelector(".dropdown-menu");
+    const current = menu ? getComputedStyle(menu) : null;
+    const from = current ? { transform: current.transform, opacity: current.opacity } : { transform: "none", opacity: 1 };
+    this.removeAttribute("open");
     if (menu && this.isConnected) {
       menu._springAnim?.cancel?.();
       const anim = menu.animate([
-        { transform: "scale(1, 1) translateY(0)", opacity: 1 },
+        from,
         { transform: "scale(0.9, 0.82) translateY(-8px)", opacity: 0 }
       ], {
         duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 150,
@@ -1543,8 +3945,8 @@ var MdSplitButton = class extends HTMLElement {
       });
       menu._springAnim = anim;
       anim.onfinish = () => {
+        if (menu._springAnim !== anim) return;
         this._closing = false;
-        this.removeAttribute("open");
         menu.style.visibility = "hidden";
         menu.style.pointerEvents = "none";
         menu._springAnim = null;
@@ -1552,7 +3954,6 @@ var MdSplitButton = class extends HTMLElement {
       };
     } else {
       this._closing = false;
-      this.removeAttribute("open");
     }
   }
   _sync() {
@@ -1587,8 +3988,11 @@ var MdSplitButton = class extends HTMLElement {
     if (menu) {
       menu.inert = !this.open || this.disabled;
       if (this.open) {
+        this._closing = false;
         menu.style.visibility = "visible";
-        menu.style.pointerEvents = "auto";
+        menu.style.pointerEvents = this.disabled ? "none" : "auto";
+        if (menu.dataset.open === "true") return;
+        menu.dataset.open = "true";
         const { keyframes, duration } = SpringPhysics.generateKeyframes({
           from: 0.62,
           to: 1,
@@ -1611,8 +4015,12 @@ var MdSplitButton = class extends HTMLElement {
         });
         menu._springAnim = anim;
       } else {
-        menu._springAnim?.cancel();
-        menu.style.visibility = "hidden";
+        menu.dataset.open = "false";
+        if (!this._closing) {
+          menu._springAnim?.cancel();
+          menu._springAnim = null;
+          menu.style.visibility = "hidden";
+        }
         menu.style.pointerEvents = "none";
       }
     }
@@ -2106,96 +4514,6 @@ if (!customElements.get("md-icon-button")) {
   customElements.define("md-icon-button", MdIconButton);
 }
 
-// src/motion/interaction-tween.js
-var f3 = Math.fround;
-function outgoingElevationEasing(fraction) {
-  if (fraction <= 0 || fraction >= 1) return fraction;
-  const progress = Math.max(f3(fraction), f3(11920929e-14));
-  const p0 = f3(-progress), p12 = f3(f3(0.4) - progress);
-  const p22 = f3(f3(0.6) - progress), p3 = f3(1 - progress);
-  const divisor = -p0 + 3 * f3(p12 - p22) + p3;
-  const a = 3 * (p0 - 2 * p12 + p22) / divisor;
-  const b = 3 * f3(p12 - p0) / divisor, c = p0 / divisor;
-  const o3 = (3 * b - a * a) / 9;
-  const q2 = (2 * a * a * a - 9 * a * b + 27 * c) / 54;
-  const root = Math.sqrt(q2 * q2 + o3 * o3 * o3);
-  const t = f3(f3(fastCbrt(f3(-q2 + root)) - fastCbrt(f3(q2 + root))) - a / 3);
-  const value = f3(f3(3 * f3(f3(f3(f3(f3(f3(1 / 3) - 1) * t) + 1) * t))) * t);
-  return Math.max(0, Math.min(1, value));
-}
-function elevationSpec(from, to) {
-  const known = (kind) => ["hover", "focus", "press", "drag"].includes(kind);
-  if (to !== null) return { duration: known(to) ? 120 : 0, easing: "incoming" };
-  return { duration: known(from) ? from === "hover" ? 120 : 150 : 0, easing: "outgoing" };
-}
-function stateLayerSpec(from, to) {
-  return { duration: to === "focus" || to === "drag" ? 45 : to === null && from === "drag" ? 150 : 15, easing: "linear" };
-}
-function interactionTween(from, to, elapsed, spec) {
-  from = f3(from);
-  to = f3(to);
-  const time = Math.max(0, Math.trunc(elapsed));
-  if (!spec.duration) return to;
-  const fraction = f3(Math.min(time, spec.duration) / spec.duration);
-  const factor = spec.easing === "incoming" ? drawerEasing(fraction) : spec.easing === "outgoing" ? outgoingElevationEasing(fraction) : fraction;
-  return f3(f3(f3(1 - factor) * from) + f3(to * factor));
-}
-var InteractionOrder = class {
-  constructor() {
-    this.active = [];
-  }
-  set(kind, active) {
-    const index = this.active.indexOf(kind);
-    if (active && index < 0) this.active.push(kind);
-    else if (!active && index >= 0) this.active.splice(index, 1);
-    else return false;
-    return true;
-  }
-  latest(includePress = true) {
-    return this.active.filter((kind) => includePress || kind !== "press").at(-1) ?? null;
-  }
-  clear() {
-    this.active.length = 0;
-  }
-};
-
-// src/motion/shadow-tween.js
-function splitLayers(text) {
-  let depth = 0, start = 0;
-  const layers = [];
-  for (let i = 0; i < text.length; i++) {
-    if (text[i] === "(") depth++;
-    else if (text[i] === ")") depth--;
-    else if (text[i] === "," && !depth) {
-      layers.push(text.slice(start, i));
-      start = i + 1;
-    }
-  }
-  layers.push(text.slice(start));
-  return layers;
-}
-function parseLayer(text) {
-  const lengths = [...text.matchAll(/(-?[\d.]+)px/g)].map((match) => Number(match[1]));
-  if (lengths.length < 2) return null;
-  while (lengths.length < 4) lengths.push(0);
-  const color = text.replace(/-?[\d.]+px/g, "").replace(/\binset\b/g, "").trim();
-  return { lengths, color: color || "currentColor", inset: /\binset\b/.test(text) };
-}
-function interpolateShadow(from, to, fraction) {
-  if (fraction <= 0) return from;
-  if (fraction >= 1) return to;
-  const a = from === "none" ? [] : splitLayers(from).map(parseLayer);
-  const b = to === "none" ? [] : splitLayers(to).map(parseLayer);
-  if ([...a, ...b].some((layer) => !layer)) return fraction < 0.5 ? from : to;
-  return Array.from({ length: Math.max(a.length, b.length) }, (_, index) => {
-    const left = a[index] || { lengths: [0, 0, 0, 0], color: "transparent", inset: b[index].inset };
-    const right = b[index] || { lengths: [0, 0, 0, 0], color: "transparent", inset: a[index].inset };
-    const lengths = left.lengths.map((value, i) => `${value + (right.lengths[i] - value) * fraction}px`).join(" ");
-    const color = left.color === right.color ? left.color : `color-mix(in srgb, ${left.color} ${(1 - fraction) * 100}%, ${right.color} ${fraction * 100}%)`;
-    return `${left.inset ? "inset " : ""}${lengths} ${color}`;
-  }).join(", ") || "none";
-}
-
 // src/motion/fab-interactions.js
 var Channel = class {
   constructor(value) {
@@ -2221,7 +4539,7 @@ var Channel = class {
     return this.spec.duration > 0 && time - this.start < this.spec.duration;
   }
 };
-function bindFabInteractions(button, { configuration, disabled, signal }) {
+function bindFabInteractions(button, { configuration, disabled, hitTest = () => true, signal }) {
   const order = new InteractionOrder();
   const media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
   const now = () => performance.now();
@@ -2291,13 +4609,10 @@ function bindFabInteractions(button, { configuration, disabled, signal }) {
     paint(time);
     schedule();
   }
-  function set(kind, active) {
+  function set(kind, active, identity = kind) {
     if (disposed) return;
     if (active && disabled()) return;
-    if (order.set(kind, active)) update2();
-  }
-  function focus() {
-    set("focus", button.matches(":focus-visible"));
+    if (order.set(kind, active, identity)) update2();
   }
   function refresh() {
     if (disposed) return;
@@ -2310,13 +4625,8 @@ function bindFabInteractions(button, { configuration, disabled, signal }) {
     if (changed) elevation.retarget(disabled() ? 0 : order.latest() === "hover" ? config.hover : config.rest, now(), { duration: 0 }, true);
     update2();
   }
-  const options = { signal };
-  button.addEventListener("pointerenter", (event) => {
-    if (event.pointerType !== "touch") set("hover", true);
-  }, options);
-  button.addEventListener("pointerleave", () => set("hover", false), options);
-  button.addEventListener("focus", focus, options);
-  button.addEventListener("blur", () => set("focus", false), options);
+  const hoverBinding = bindPointerHover(button, { hitTest, onHover: (active) => set("hover", active), signal });
+  const focusBinding = bindFocusIndication(button, { onFocus: (active) => set("focus", active), signal });
   const motionChange = () => {
     if (media?.matches) {
       if (raf !== null) cancelAnimationFrame(raf);
@@ -2329,6 +4639,8 @@ function bindFabInteractions(button, { configuration, disabled, signal }) {
   media?.addEventListener("change", motionChange);
   const stopTheme = observeThemeContext(button.getRootNode().host, refresh);
   function dispose() {
+    focusBinding.dispose();
+    hoverBinding.dispose();
     if (disposed) return;
     disposed = true;
     if (raf !== null) cancelAnimationFrame(raf);
@@ -2342,9 +4654,8 @@ function bindFabInteractions(button, { configuration, disabled, signal }) {
   }
   signal.addEventListener("abort", dispose, { once: true });
   paint(now());
-  return { press(active) {
-    focus();
-    set("press", active);
+  return { press(active, identity = "press") {
+    set("press", active, identity);
   }, refresh, dispose };
 }
 
@@ -2394,318 +4705,6 @@ var FabExpansion = class {
 };
 function fabWidth(minimum, intrinsic, progress) {
   return minimum + Math.round((intrinsic - minimum) * Math.fround(progress));
-}
-
-// src/components/row-column-layout.js
-var f4 = Math.fround;
-var INF = 2147483647;
-var clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-var int = (v) => clamp(Math.trunc(v), -2147483648, INF) || 0;
-var round = (v) => clamp(Math.round(v), -2147483648, INF) || 0;
-var bounds = (o) => ({ minMain: o.minMain ?? 0, maxMain: o.maxMain ?? INF, minCross: o.minCross ?? 0, maxCross: o.maxCross ?? INF });
-function layoutPlaceable(id, requested, constraints, children = [], data = {}) {
-  const size = { width: clamp(requested.width, constraints.minWidth, constraints.maxWidth), height: clamp(requested.height, constraints.minHeight, constraints.maxHeight) };
-  return { id, requested, size, constraints, offset: { x: int((size.width - requested.width) / 2), y: int((size.height - requested.height) / 2) }, children, ...data };
-}
-function minimumInteractiveLayout(o) {
-  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF };
-  const width = clamp(o.width, c.minWidth, c.maxWidth), height = clamp(o.height, c.minHeight, c.maxHeight);
-  const minimum = Math.max(0, round(o.minimum ?? 48));
-  const requested = { width: Math.max(minimum, width), height: Math.max(minimum, height) };
-  const touch = layoutPlaceable("touch", requested, c);
-  const body = { x: touch.offset.x + round(f4((requested.width - width) / 2)), y: touch.offset.y + round(f4((requested.height - height) / 2)), width, height };
-  return { size: touch.size, requested, body, lines: { top: Math.max(0, round(f4((minimum - height) / 2))), left: Math.max(0, round(f4((minimum - width) / 2))) } };
-}
-function axisConstraints(b, vertical) {
-  return vertical ? { minWidth: b.minCross, maxWidth: b.maxCross, minHeight: b.minMain, maxHeight: b.maxMain } : { minWidth: b.minMain, maxWidth: b.maxMain, minHeight: b.minCross, maxHeight: b.maxCross };
-}
-function layoutPlacements(node, x = 0, y2 = 0, result = {}) {
-  x += node.offset.x;
-  y2 += node.offset.y;
-  result[node.id] = { x, y: y2, width: node.requested.width, height: node.requested.height };
-  for (const p of node.children) layoutPlacements(p.node, x + p.x, y2 + p.y, result);
-  return result;
-}
-function measureLayoutLeaf(id, input, constraints, vertical) {
-  if (input.ink) {
-    const interactive = minimumInteractiveLayout({ ...input.ink, ...constraints });
-    const body = interactive.body, offset = { x: int((interactive.size.width - interactive.requested.width) / 2), y: int((interactive.size.height - interactive.requested.height) / 2) };
-    const ink = layoutPlaceable(id + "-body", { width: body.width, height: body.height }, { minWidth: body.width, maxWidth: body.width, minHeight: body.height, maxHeight: body.height });
-    return layoutPlaceable(id, interactive.requested, constraints, [{ node: ink, x: body.x - offset.x, y: body.y - offset.y }], { line: input.line ?? null, interactiveLines: interactive.lines });
-  }
-  const natural = vertical ? { width: input.cross, height: input.main } : { width: input.main, height: input.cross };
-  const requested = input.required ? natural : { width: clamp(natural.width, constraints.minWidth, constraints.maxWidth), height: clamp(natural.height, constraints.minHeight, constraints.maxHeight) };
-  return layoutPlaceable(id, requested, constraints, [], { line: input.line ?? null });
-}
-function rowAlignmentLines(node) {
-  let top = null, left = null;
-  for (const p of node.children) {
-    const child = p.node, lines = child.interactiveLines;
-    if (!lines) continue;
-    const y2 = p.y + child.offset.y + lines.top + child.offset.y, x = p.x + child.offset.x + lines.left + child.offset.x;
-    top = top === null ? y2 : Math.min(top, y2);
-    left = left === null ? x : Math.min(left, x);
-  }
-  return { top: top === null ? null : top + node.offset.y, left: left === null ? null : left + node.offset.x };
-}
-function arrange(main, sizes, name, rtl, vertical, spacing) {
-  const consumed = sizes.reduce((a, b) => a + b, 0), positions2 = sizes.map(() => 0), reverse = rtl && !vertical;
-  if (name === "spaced") {
-    let free = main, last = 0;
-    if (reverse) {
-      for (let i = 0; i < sizes.length; i++) {
-        positions2[i] = Math.max(0, free - sizes[i]);
-        last = Math.min(spacing, positions2[i]);
-        free = positions2[i] - last;
-      }
-      free += last;
-    } else {
-      let occupied = 0;
-      for (let i = 0; i < sizes.length; i++) {
-        positions2[i] = Math.min(occupied, main - sizes[i]);
-        last = Math.min(spacing, main - positions2[i] - sizes[i]);
-        occupied = positions2[i] + sizes[i] + last;
-      }
-      occupied -= last;
-      free = main - occupied;
-    }
-    if (free > 0) {
-      const group = round(f4(free / 2)), offset = reverse ? group - free : group;
-      for (let i = 0; i < sizes.length; i++) positions2[i] += offset;
-    }
-    return positions2;
-  }
-  let gap = 0, current = 0;
-  if (name === "center") current = f4((main - consumed) / 2);
-  else if (name === "end") current = main - consumed;
-  else if (name === "between") {
-    gap = f4((main - consumed) / Math.max(sizes.length - 1, 1));
-    if (reverse && sizes.length === 1) current = gap;
-  } else if (name === "around") {
-    gap = sizes.length ? f4((main - consumed) / sizes.length) : 0;
-    current = f4(gap / 2);
-  } else if (name === "evenly") {
-    gap = f4((main - consumed) / (sizes.length + 1));
-    current = gap;
-  }
-  if (reverse && name === "start") current = main - consumed;
-  if (reverse && name === "end") current = 0;
-  const order = reverse ? [...sizes.keys()].reverse() : [...sizes.keys()];
-  for (const i of order) {
-    positions2[i] = round(current);
-    current = f4(current + f4(f4(sizes[i]) + gap));
-  }
-  return positions2;
-}
-function crossPosition(input, size, item, vertical, rtl, before, line, defaultAlignment = "center") {
-  if (input.align === "line") {
-    if (line === null) return 0;
-    const delta = before - line;
-    return vertical && rtl ? size - item - delta : delta;
-  }
-  const alignment = input.align ?? defaultAlignment, bias = alignment === "start" ? -1 : alignment === "end" ? 1 : 0;
-  return round(f4(f4((size - item) / 2) * f4(1 + (vertical && rtl ? -bias : bias))));
-}
-function measureRowColumn(o, measure = (input, c, i) => measureLayoutLeaf("c" + i, input, c, !!o.vertical)) {
-  const vertical = !!o.vertical, rtl = !!o.rtl, b = bounds(o), inputs = o.children || [], spacing = o.arrangement === "spaced" ? round(o.spacing ?? 7) : 0;
-  const nodes = inputs.map(() => null), mainSizes = inputs.map(() => 0), crossSizes = inputs.map(() => 0);
-  let totalWeight = 0, fixed = 0, cross = 0, weightedCount = 0, lastSpacing = 0, relative = false;
-  const measureChild = (i, minMain, maxMain) => {
-    const input = inputs[i], desired = input.fillCrossFraction !== void 0 && b.maxCross !== INF ? round(f4(f4(input.fillCrossFraction) * f4(b.maxCross))) : null;
-    const c = axisConstraints({ minMain, maxMain, minCross: desired ?? 0, maxCross: desired ?? b.maxCross }, vertical);
-    const node = measure(input, c, i);
-    nodes[i] = node;
-    mainSizes[i] = node.size[vertical ? "height" : "width"];
-    crossSizes[i] = node.size[vertical ? "width" : "height"];
-    cross = Math.max(cross, crossSizes[i]);
-    return mainSizes[i];
-  };
-  for (let i = 0; i < inputs.length; i++) {
-    const weight = f4(inputs[i].weight || 0);
-    relative ||= inputs[i].align === "line";
-    if (weight > 0) {
-      totalWeight = f4(totalWeight + weight);
-      weightedCount++;
-    } else {
-      const remaining = b.maxMain - fixed, size = measureChild(i, 0, b.maxMain === INF ? INF : Math.max(0, remaining));
-      lastSpacing = Math.min(spacing, Math.max(0, remaining - size));
-      fixed += size + lastSpacing;
-    }
-  }
-  let weighted = 0;
-  if (weightedCount === 0) fixed -= lastSpacing;
-  else {
-    const target = b.maxMain === INF ? b.minMain : b.maxMain, totalSpacing = spacing * (weightedCount - 1), remaining = Math.max(0, target - fixed - totalSpacing), unit = f4(f4(remaining) / totalWeight);
-    let remainder = remaining;
-    for (const input of inputs) remainder -= round(f4(unit * f4(input.weight || 0)));
-    for (let i = 0; i < inputs.length; i++) if (nodes[i] === null) {
-      const correction = Math.sign(remainder);
-      remainder -= correction;
-      const main2 = Math.max(0, round(f4(unit * f4(inputs[i].weight || 0))) + correction);
-      weighted += measureChild(i, inputs[i].fill !== false && main2 !== INF ? main2 : 0, main2);
-    }
-    weighted = clamp(int(weighted + totalSpacing), 0, b.maxMain - fixed);
-  }
-  let before = 0, after = 0;
-  if (relative) {
-    for (let i = 0; i < inputs.length; i++) if (inputs[i].align === "line") {
-      const line = nodes[i].line ?? null;
-      if (line !== null) {
-        before = Math.max(before, line);
-        after = Math.max(after, crossSizes[i] - line);
-      }
-    }
-  }
-  const main = Math.max(Math.max(0, fixed + weighted), b.minMain), breadth = Math.max(cross, b.minCross, before + after);
-  const positions2 = arrange(main, mainSizes, o.arrangement || "start", rtl, vertical, spacing);
-  const children = nodes.map((node, i) => {
-    const c = crossPosition(inputs[i], breadth, crossSizes[i], vertical, rtl, before, node.line ?? null, o.crossAlignment ?? "center");
-    return { node, x: vertical ? c : positions2[i], y: vertical ? positions2[i] : c };
-  });
-  const requested = vertical ? { width: breadth, height: main } : { width: main, height: breadth };
-  return layoutPlaceable(o.id || "row", requested, axisConstraints(b, vertical), children, { fullTargets: nodes.map((n) => n.size[vertical ? "height" : "width"]) });
-}
-function rowColumnLayout(o) {
-  const node = measureRowColumn(o);
-  return { size: node.size, requested: node.requested, placements: layoutPlacements(node) };
-}
-function rowColumnIntrinsic(o, available, query = (input, axis, space, kind) => {
-  const value = kind === "min" ? input[axis === "main" ? "intrinsicMinMain" : "intrinsicMinCross"] ?? input[axis] : input[axis];
-  return axis === "cross" && input.wrap ? value * Math.max(1, Math.ceil(input.main / Math.max(1, space))) : value;
-}) {
-  const children = o.children || [], spacing = o.arrangement === "spaced" ? 7 : 0;
-  const main = (kind) => {
-    if (!children.length) return 0;
-    let unit = 0, fixed = 0, total = 0;
-    for (const child of children) {
-      const weight = f4(child.weight || 0), size = query(child, "main", available, kind);
-      if (weight === 0) fixed += size;
-      else if (weight > 0) {
-        total = f4(total + weight);
-        unit = Math.max(unit, round(f4(f4(size) / weight)));
-      }
-    }
-    return round(f4(f4(unit) * total)) + fixed + (children.length - 1) * spacing;
-  };
-  const cross = (kind) => {
-    if (!children.length) return 0;
-    let fixed = Math.min((children.length - 1) * spacing, available), maximum = 0, total = 0;
-    for (const child of children) {
-      const weight = f4(child.weight || 0);
-      if (weight === 0) {
-        const remaining = available === INF ? INF : available - fixed, size = Math.min(query(child, "main", INF, "max"), remaining);
-        fixed += size;
-        maximum = Math.max(maximum, query(child, "cross", size, kind));
-      } else if (weight > 0) total = f4(total + weight);
-    }
-    const unit = total === 0 ? 0 : available === INF ? INF : round(f4(f4(Math.max(available - fixed, 0)) / total));
-    for (const child of children) {
-      const weight = f4(child.weight || 0);
-      if (weight > 0) maximum = Math.max(maximum, query(child, "cross", unit === INF ? INF : round(f4(f4(unit) * weight)), kind));
-    }
-    return maximum;
-  };
-  return o.vertical ? { minWidth: cross("min"), minHeight: main("min"), maxWidth: cross("max"), maxHeight: main("max") } : { minWidth: main("min"), minHeight: cross("min"), maxWidth: main("max"), maxHeight: cross("max") };
-}
-
-// src/theme/surface-color.js
-var f5 = Math.fround;
-var schemeCache = /* @__PURE__ */ new WeakMap();
-var CONTENT_COLOR_ROLES = Object.freeze([
-  ["primary", "on-primary"],
-  ["secondary", "on-secondary"],
-  ["tertiary", "on-tertiary"],
-  ["background", "on-background"],
-  ["error", "on-error"],
-  ["primary-container", "on-primary-container"],
-  ["secondary-container", "on-secondary-container"],
-  ["tertiary-container", "on-tertiary-container"],
-  ["error-container", "on-error-container"],
-  ["inverse-surface", "inverse-on-surface"],
-  ["surface", "on-surface"],
-  ["surface-variant", "on-surface-variant"],
-  ...[
-    "surface-bright",
-    "surface-container",
-    "surface-container-high",
-    "surface-container-highest",
-    "surface-container-low",
-    "surface-container-lowest",
-    "surface-dim"
-  ].map((role) => [role, "on-surface"]),
-  ...["primary", "secondary", "tertiary"].flatMap((role) => [[role + "-fixed", "on-" + role + "-fixed"], [role + "-fixed-dim", "on-" + role + "-fixed"]])
-]);
-function packSrgb([red, green, blue, alpha = 1]) {
-  const byte = (value) => Math.trunc(f5(f5(Math.min(1, Math.max(0, f5(value))) * 255) + 0.5));
-  return (byte(alpha) << 24 | byte(red) << 16 | byte(green) << 8 | byte(blue)) >>> 0;
-}
-function unpackSrgb(color) {
-  return [color >>> 16 & 255, color >>> 8 & 255, color & 255, color >>> 24].map((value) => f5(value / 255));
-}
-function tonalSurfaceColor(surface, tint, elevation) {
-  elevation = f5(elevation);
-  if (elevation === 0) return surface;
-  const alpha = f5(f5(f5(4.5 * f5(Math.log(f5(elevation + 1)))) + 2) / 100);
-  const fg = unpackSrgb(packSrgb([...unpackSrgb(tint).slice(0, 3), alpha])), bg = unpackSrgb(surface);
-  const remainder = f5(1 - fg[3]), a = f5(fg[3] + f5(bg[3] * remainder));
-  const components = fg.slice(0, 3).map((channel2, i) => a === 0 ? 0 : f5(f5(f5(channel2 * fg[3]) + f5(f5(bg[i] * bg[3]) * remainder)) / a));
-  return packSrgb([...components, a]);
-}
-function matchingContentColor(background, scheme) {
-  for (const [container, content] of CONTENT_COLOR_ROLES) if (scheme[container] !== void 0 && background === scheme[container]) return scheme[content];
-  return void 0;
-}
-function srgbCss(color) {
-  const [r, g, b, a] = [color >>> 16 & 255, color >>> 8 & 255, color & 255, color >>> 24];
-  return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-}
-function resolveSurfaceColor(probe, color) {
-  probe.style.color = "";
-  probe.style.color = color;
-  const css = getComputedStyle(probe).color;
-  const rgb = /^rgba?\(([^)]+)\)$/.exec(css), srgb = /^color\(srgb\s+([^)]+)\)$/.exec(css);
-  let packed;
-  if (rgb) {
-    const channels = rgb[1].split(/[,\s/]+/).filter(Boolean).map(Number);
-    packed = packSrgb([...channels.slice(0, 3).map((v) => v / 255), channels[3] ?? 1]);
-  } else if (srgb) {
-    const channels = srgb[1].split(/[\s/]+/).filter(Boolean).map(Number);
-    packed = packSrgb(channels);
-  }
-  return { css, key: packed ?? css, packed };
-}
-function resolveSurfaceColors(host, probe, { container, content, elevation = 0 }) {
-  const style3 = getComputedStyle(host), resolved = /* @__PURE__ */ new Map();
-  const resolve = (color) => {
-    if (!resolved.has(color)) resolved.set(color, resolveSurfaceColor(probe, color));
-    return resolved.get(color);
-  };
-  const roles = [...new Set(CONTENT_COLOR_ROLES.flat())];
-  const values = roles.map((role) => style3.getPropertyValue("--md-sys-color-" + role).trim());
-  const signature = JSON.stringify([style3.color, values]);
-  let cached = schemeCache.get(host);
-  if (cached?.signature !== signature) {
-    const scheme2 = {};
-    for (let i = 0; i < roles.length; i++) {
-      if (values[i]) scheme2[roles[i]] = resolve(values[i]).key;
-    }
-    cached = { signature, scheme: scheme2 };
-    schemeCache.set(host, cached);
-  }
-  const scheme = cached.scheme;
-  const background = resolve(container);
-  const foreground = content ? resolve(content).css : matchingContentColor(background.key, scheme);
-  const parent = parseFloat(style3.getPropertyValue("--md-absolute-tonal-elevation")) || 0;
-  const total = f5(f5(parent) + f5(elevation));
-  const enabled = !["false", "0"].includes(style3.getPropertyValue("--md-tonal-elevation-enabled").trim());
-  const tint = style3.getPropertyValue("--md-sys-color-surface-tint").trim();
-  const tintColor = tint ? resolve(tint) : null;
-  const tonal = enabled && background.key === scheme.surface && background.packed !== void 0 && tintColor?.packed !== void 0;
-  return {
-    container: tonal ? srgbCss(tonalSurfaceColor(background.packed, tintColor.packed, total)) : background.css,
-    content: typeof foreground === "number" ? srgbCss(foreground) : foreground ?? style3.color,
-    total
-  };
 }
 
 // src/components/md-fab.js
@@ -2956,6 +4955,7 @@ var MdFab = class extends HTMLElement {
     const fabAriaLabel = this.getAttribute("aria-label") || this.label || this.icon || "Floating action button";
     fab.setAttribute("aria-label", fabAriaLabel);
     fab.disabled = this.disabled;
+    this._pressBinding?.refresh();
     this._syncColors();
     fab.setAttribute("aria-disabled", this.disabled ? "true" : "false");
     if (this._lastDisabled !== this.disabled) fab.setAttribute("tabindex", this.disabled ? "-1" : "0");
@@ -3077,6 +5077,7 @@ var MdFab = class extends HTMLElement {
     if (!fab) return;
     this._interactions = bindFabInteractions(fab, {
       disabled: () => this.disabled,
+      hitTest: (event) => domPointerHoverHit(fab, event),
       configuration: () => {
         const style3 = getComputedStyle(fab);
         if (this.elevation === "bottom-app-bar") return { rest: 0, hover: 0, restShadow: "var(--md-sys-elevation-level-0)", hoverShadow: "var(--md-sys-elevation-level-0)" };
@@ -3092,13 +5093,12 @@ var MdFab = class extends HTMLElement {
       },
       signal
     });
-    bindPress(fab, {
+    this._pressBinding = bindPress(fab, {
       disabled: () => this.disabled,
-      onPress: (event) => {
-        this._interactions.press(true);
-        createRipple(event, fab);
-      },
-      onRelease: () => this._interactions.press(false),
+      keyboardActivation: true,
+      pointerPolicy: { input: (event) => domPointerInput(fab, event), hitTest: (event) => domPointerHit(fab, event), outOfBounds: (event) => domPointerOutOfBounds(fab, event) },
+      onInteraction: ({ type, press }) => this._interactions.press(type === "press", press),
+      onPress: (event) => createRipple(event, fab),
       signal
     });
     this._expansionMedia = matchMedia("(prefers-reduced-motion: reduce)");
@@ -3150,6 +5150,109 @@ if (!customElements.get("md-fab")) {
   customElements.define("md-fab", MdFab);
 }
 
+// src/motion/card-elevation.js
+var f12 = Math.fround;
+var fields2 = ["defaultElevation", "pressedElevation", "focusedElevation", "hoveredElevation", "disabledElevation", "draggedElevation"];
+function cardElevationDefinition(value) {
+  if (value === void 0) return void 0;
+  if (!value || typeof value !== "object" || Object.keys(value).some((key) => !fields2.includes(key)) || Object.entries(value).some(([, number4]) => typeof number4 !== "number" || !Number.isFinite(f12(number4)))) throw new TypeError("Card elevation accepts finite named default/pressed/focused/hovered/dragged/disabled elevations.");
+  return Object.freeze(Object.fromEntries(Object.entries(value).map(([key, value2]) => [key, f12(value2)])));
+}
+function cardElevationValues(variant = "filled", definition) {
+  const base = variant === "elevated" ? [1, 1, 1, 3, 1, 8] : [0, 0, 0, 1, 0, 6];
+  if (variant === "outlined") {
+    const value = definition?.defaultElevation ?? 0;
+    base.splice(0, 6, value, value, value, value, 0, 6);
+  }
+  return fields2.map((key, index) => f12(definition?.[key] ?? base[index]));
+}
+var CardElevationMotion = class extends ButtonElevationMotion {
+  constructor(values, enabled = true, interactive = true) {
+    super(values, interactive ? enabled : true);
+    this.interactive = interactive;
+  }
+  update(values, kind, enabled, time) {
+    if (this.interactive) super.update(values, kind, enabled, time);
+  }
+};
+
+// src/theme/color-alpha.js
+var space = (css2) => /^color\(\s*([\w-]+)/.exec(css2)?.[1] ?? /^(oklab|oklch|lab|lch)\(/.exec(css2)?.[1] ?? "srgb";
+function cssCopyAlpha(css2, alpha) {
+  const kind = space(css2), channels = kind === "oklab" || kind === "lab" ? "l a b" : kind === "oklch" || kind === "lch" ? "l c h" : kind.startsWith("xyz") ? "x y z" : "r g b";
+  return ["oklab", "oklch", "lab", "lch"].includes(kind) ? `${kind}(from ${css2} ${channels} / ${alpha})` : `color(from ${css2} ${kind} ${channels} / ${alpha})`;
+}
+function resolveColorAlpha(probe, { color, alpha, over }) {
+  const foreground = resolveSurfaceColor(probe, color), background = over ? resolveSurfaceColor(probe, over) : null;
+  if (foreground.packed !== void 0 && (!background || background.packed !== void 0)) {
+    const copied2 = copySrgbAlpha(foreground.packed, alpha);
+    return srgbCss(background ? compositeSrgb(copied2, background.packed) : copied2);
+  }
+  const copied = cssCopyAlpha(foreground.css, alpha);
+  if (!background) return copied;
+  const opaque = cssCopyAlpha(foreground.css, 1);
+  return `color-mix(in ${space(background.css)}, ${opaque} ${alpha * 100}%, ${background.css})`;
+}
+
+// src/theme/card-color.js
+var fields3 = ["containerColor", "contentColor", "disabledContainerColor", "disabledContentColor"];
+function cardColorDefinition(value) {
+  if (value === void 0) return void 0;
+  if (!value || typeof value !== "object" || fields3.some((key) => typeof value[key] !== "string" || !value[key].trim() || globalThis.CSS && !CSS.supports("color", value[key]))) throw new TypeError("Card colors require four valid container/content/disabled container/disabled content CSS colors.");
+  return Object.freeze(Object.fromEntries(fields3.map((key) => [key, value[key]])));
+}
+function bindCardColors(host, card, { variant, disabled, definition, signal }) {
+  const probe = document.createElement("span");
+  probe.hidden = true;
+  probe.setAttribute("aria-hidden", "true");
+  card.append(probe);
+  const names = ["--_md-card-container-color", "--_md-card-content-color", "--_md-card-outline-color"];
+  const records = names.map((name) => ({ name, value: card.style.getPropertyValue(name), priority: card.style.getPropertyPriority(name), written: null }));
+  let disposed = false;
+  function refresh() {
+    if (disposed || !host.isConnected) return;
+    const mode = variant(), isDisabled = disabled(), custom = definition(), style3 = getComputedStyle(host);
+    const role = (name) => `var(--md-sys-color-${name})`, override = (name) => style3.getPropertyValue(`--md-card-${name}`).trim();
+    const defaultContainer = role(mode === "elevated" ? "surface-container-low" : mode === "outlined" ? "surface" : "surface-container-highest");
+    const container = custom?.containerColor ?? (override("container-color") || defaultContainer);
+    const base = resolveSurfaceColors(host, probe, { container, content: custom?.contentColor ?? (override("content-color") || void 0), elevation: 0 });
+    let background = base.container, content = base.content;
+    if (isDisabled) {
+      background = custom?.disabledContainerColor ?? override("disabled-container-color");
+      if (!background) background = mode === "outlined" ? role("surface") : resolveColorAlpha(probe, { color: role(mode === "filled" ? "surface-variant" : "surface"), alpha: 0.38, over: role(mode === "filled" ? "surface-container-highest" : "surface") });
+      content = custom?.disabledContentColor ?? override("disabled-content-color");
+      if (!content) {
+        const input = mode === "outlined" ? resolveSurfaceColors(host, probe, { container: container || defaultContainer, elevation: 0 }).content : base.content;
+        content = resolveColorAlpha(probe, { color: input, alpha: 0.38 });
+      }
+      const surface = resolveSurfaceColors(host, probe, { container: background, content, elevation: 0 });
+      background = surface.container;
+      content = surface.content;
+    }
+    const outline = isDisabled ? resolveColorAlpha(probe, { color: role("outline"), alpha: 0.12, over: role("surface-container-low") }) : resolveSurfaceColor(probe, role("outline-variant")).css;
+    for (const [index, color] of [background, content, outline].entries()) {
+      const record = records[index];
+      card.style.setProperty(record.name, color);
+      record.written = card.style.getPropertyValue(record.name);
+    }
+  }
+  const stopTheme = observeThemeContext(host, refresh);
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    stopTheme();
+    probe.remove();
+    for (const record of records) if (card.style.getPropertyValue(record.name) === record.written) {
+      if (record.value) card.style.setProperty(record.name, record.value, record.priority);
+      else card.style.removeProperty(record.name);
+    }
+  }
+  signal?.addEventListener("abort", dispose, { once: true });
+  return { refresh, dispose, records, get disposed() {
+    return disposed;
+  } };
+}
+
 // src/components/md-card.js
 var defaultStyle5 = `
   :host {
@@ -3168,20 +5271,17 @@ var defaultStyle5 = `
     padding: var(--md-card-padding, var(--md-sys-spacing-4, 16px));
     gap: var(--md-card-gap, 16px);
     height: 100%;
-    color: var(--md-sys-color-on-surface, #1d1b20);
+    color: var(--_md-card-content-color, var(--md-sys-color-on-surface));
+    background-color: var(--_md-card-container-color, var(--md-sys-color-surface-container-highest));
     font-family: var(--md-sys-typescale-font-family, 'Roboto', system-ui, sans-serif);
     overflow: hidden;
-    will-change: transform, box-shadow;
-    transition:
-      box-shadow var(--md-sys-motion-duration-medium-2, 300ms) var(--md-sys-motion-easing-emphasized, ease),
-      background-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease),
-      border-color var(--md-sys-motion-duration-short-2, 100ms) var(--md-sys-motion-easing-emphasized, ease);
+    transition: none;
     outline: none;
   }
 
   /* Focus Ring (\xA75.3) */
-  .card:focus-visible {
-    outline: 3px solid var(--md-sys-color-secondary, #625b71);
+  .card.focus-indicated {
+    outline: 3px solid var(--md-sys-color-secondary);
     outline-offset: 2px;
   }
 
@@ -3196,85 +5296,20 @@ var defaultStyle5 = `
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background-color: var(--md-sys-color-on-surface, #1d1b20);
-    opacity: 0;
-    transition: opacity var(--md-sys-motion-duration-short-2, 100ms) ease;
+    background-color: rgb(from currentColor r g b / 1);
+    opacity: var(--md-card-state-alpha, 0);
   }
-
-  .card.interactive:hover:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-hover-opacity, 0.08);
-  }
-  .card.interactive:focus-visible:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-focus-opacity, 0.10);
-  }
-  .card.interactive:active:not(.disabled) .state-layer,
-  .card.interactive.pressed:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-pressed-opacity, 0.10);
-  }
-
-  /* Ripple Effect */
-  .md-ripple-effect {
-    position: absolute;
-    border-radius: 50%;
-    background-color: currentColor;
-    opacity: 0.10;
-    transform: scale(0);
-    animation: ripple-anim 450ms var(--md-sys-motion-easing-emphasized-decelerate, cubic-bezier(0.05, 0.7, 0.1, 1)) forwards;
-    pointer-events: none;
-  }
-
-  @keyframes ripple-anim {
-    to {
-      transform: scale(2.5);
-      opacity: 0;
-    }
-  }
-
-  /* Elevated Card (\xA78.2) */
-  .card.elevated {
-    background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-    box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
-    border: none;
-  }
-  .card.elevated.interactive:hover:not(.disabled) {
-    box-shadow: var(--md-sys-elevation-level2, 0px 1px 2px rgba(0,0,0,0.3));
-  }
-  .card.elevated.interactive:active:not(.disabled) {
-    box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
-  }
-
-  /* Filled Card (\xA78.2) */
-  .card.filled {
-    background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
-    box-shadow: var(--md-sys-elevation-level0, none);
-    border: none;
-  }
-  .card.filled.interactive:hover:not(.disabled) {
-    box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
-  }
-  .card.filled.interactive.pressed:not(.disabled), .card.outlined.interactive.pressed:not(.disabled) { box-shadow: none; }
-  .card.elevated.interactive.pressed:not(.disabled) { box-shadow: var(--md-sys-elevation-level-1); }
-
-  /* Outlined Card (\xA78.2) */
+  /* Elevation is driven by CardElevation's source scalar, not CSS selectors. */
+  .card.filled, .card.elevated { border: none; }
   .card.outlined {
-    background-color: var(--md-sys-color-surface, #fef7ff);
-    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-    box-shadow: var(--md-sys-elevation-level0, none);
-  }
-  .card.outlined.interactive:hover:not(.disabled) {
-    box-shadow: var(--md-sys-elevation-level1, 0px 1px 2px rgba(0,0,0,0.3));
+    border: 1px solid var(--_md-card-outline-color, var(--md-sys-color-outline-variant));
   }
 
   /* Disabled State */
   .card.disabled {
     opacity: 1;
-    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
     cursor: not-allowed;
-    box-shadow: none;
   }
-  .card.filled.disabled { background: color-mix(in srgb, var(--md-sys-color-surface-variant) 38%, var(--md-sys-color-surface-container-highest)); }
-  .card.elevated.disabled { background: var(--md-sys-color-surface); box-shadow: var(--md-sys-elevation-level-1); }
-  .card.outlined.disabled { border-color: color-mix(in srgb, var(--md-sys-color-outline) 12%, var(--md-sys-color-surface-container-low)); }
 
   /* Slot Layouts (\xA78.1) */
   ::slotted([slot="header"]) {
@@ -3305,6 +5340,8 @@ var MdCard = class extends HTMLElement {
     adoptSheet(this.shadowRoot, cardSheet);
     this._rendered = false;
     this._abortController = null;
+    this._elevation = void 0;
+    this._colors = void 0;
   }
   connectedCallback() {
     if (!this._rendered) {
@@ -3317,16 +5354,24 @@ var MdCard = class extends HTMLElement {
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._pressBinding = this._stateLayer = this._elevationMotion = this._focusBinding = this._colorsBinding = null;
   }
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     this._sync();
   }
   get variant() {
-    return sanitizeAttribute(this.getAttribute("variant") || "filled");
+    const value = this.getAttribute("variant");
+    return ["filled", "elevated", "outlined"].includes(value) ? value : "filled";
+  }
+  set variant(value) {
+    this.setAttribute("variant", value);
   }
   get interactive() {
     return this.hasAttribute("interactive") || Boolean(this.href);
+  }
+  set interactive(value) {
+    this.toggleAttribute("interactive", Boolean(value));
   }
   get disabled() {
     return this.hasAttribute("disabled");
@@ -3338,12 +5383,30 @@ var MdCard = class extends HTMLElement {
   get href() {
     return this.getAttribute("href") || "";
   }
+  set href(value) {
+    if (value) this.setAttribute("href", value);
+    else this.removeAttribute("href");
+  }
+  get elevation() {
+    return this._elevation;
+  }
+  set elevation(value) {
+    this._elevation = cardElevationDefinition(value);
+    if (this._rendered) this._sync();
+  }
+  get colors() {
+    return this._colors;
+  }
+  set colors(value) {
+    this._colors = cardColorDefinition(value);
+    if (this._rendered) this._sync();
+  }
   _render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle5}</style>`}
       <div class="card" role="region" part="card">
-        <span class="state-layer"></span>
+        <span class="state-layer" aria-hidden="true"></span>
         <slot name="media"></slot>
         <slot name="header"></slot>
         <slot></slot>
@@ -3357,6 +5420,23 @@ var MdCard = class extends HTMLElement {
     const { signal } = this._abortController;
     const card = this.shadowRoot.querySelector(".card");
     if (!card) return;
+    this._elevationMotion = bindButtonElevation(card, {
+      configuration: () => cardElevationValues(this.variant, this.elevation),
+      disabled: () => this.disabled,
+      MotionClass: CardElevationMotion,
+      interactionSource: () => this.interactive,
+      compositionKey: () => this.interactive ? true : this.variant,
+      hitTest: (event) => domPointerHoverHit(card, event),
+      signal
+    });
+    this._stateLayer = bindStateLayer(card, {
+      disabled: () => !this.interactive || this.disabled,
+      property: "--md-card-state-alpha",
+      hitTest: (event) => domPointerHoverHit(card, event),
+      signal
+    });
+    this._focusBinding = bindFocusIndication(card, { onFocus: (active) => card.classList.toggle("focus-indicated", active && this.interactive && !this.disabled), signal });
+    this._colorsBinding = bindCardColors(this, card, { variant: () => this.variant, disabled: () => this.interactive && this.disabled, definition: () => this.colors, signal });
     const press = (e) => {
       if (!this.interactive || this.disabled) return;
       if (e) createRipple(e, card);
@@ -3372,33 +5452,64 @@ var MdCard = class extends HTMLElement {
         composed: true
       }));
     };
-    bindPress(card, {
+    this._pressBinding = bindPress(card, {
+      pointerNode: () => this.interactive,
       disabled: () => !this.interactive || this.disabled,
-      ignoreEvent: (e) => {
-        for (const node of e.composedPath()) {
-          if (node === card) break;
-          if (node.matches?.('button,a[href],input,select,textarea,[role="button"],[role="checkbox"],[tabindex="0"]')) return true;
-        }
-        return false;
+      keyboardActivation: true,
+      pointerPolicy: {
+        input: (event) => ({ ...domPointerInput(card, event), clipping: true }),
+        hitTest: (event) => domPointerHit(card, event),
+        outOfBounds: (event) => domPointerOutOfBounds(card, event)
       },
+      ignoreEvent: (event) => nestedInteractiveEvent(event, card),
+      onInteraction: ({ type, press: press2 }) => this._elevationMotion.press(type === "press", press2),
       onPress: press,
       onActivate: activate,
       signal
     });
+    let drag = null;
+    const finishDrag = () => {
+      if (!drag) return;
+      this._elevationMotion.drag(false, drag);
+      this._stateLayer.drag(false, drag);
+      drag = null;
+    };
+    card.addEventListener("dragstart", (event) => {
+      if (!this.interactive || this.disabled) return;
+      const owner = event.composedPath().find((node) => node.matches?.('[draggable="true"]'));
+      if (owner !== card && owner !== this) return;
+      finishDrag();
+      drag = {};
+      this._elevationMotion.drag(true, drag);
+      this._stateLayer.drag(true, drag);
+    }, { signal });
+    card.addEventListener("dragend", finishDrag, { signal });
+    signal.addEventListener("abort", finishDrag, { once: true });
+    this._finishDrag = finishDrag;
   }
   _sync() {
     const card = this.shadowRoot.querySelector(".card");
     if (!card) return;
     const isInteractive = this.interactive && !this.disabled;
-    card.className = `card ${this.variant}${isInteractive ? " interactive" : ""}${this.disabled ? " disabled" : ""}`;
-    if (isInteractive) {
+    card.classList.remove("filled", "elevated", "outlined");
+    card.classList.add(this.variant);
+    card.classList.toggle("interactive", this.interactive);
+    card.classList.toggle("disabled", this.interactive && this.disabled);
+    if (this.interactive) {
       card.setAttribute("role", this.href ? "link" : "button");
-      card.setAttribute("tabindex", "0");
     } else {
       card.setAttribute("role", "region");
       card.removeAttribute("tabindex");
     }
-    card.setAttribute("aria-disabled", this.disabled ? "true" : "false");
+    if (isInteractive) card.setAttribute("tabindex", "0");
+    else card.removeAttribute("tabindex");
+    card.setAttribute("aria-disabled", this.interactive && this.disabled ? "true" : "false");
+    this._pressBinding?.refresh();
+    if (!isInteractive) this._finishDrag?.();
+    this._elevationMotion?.refresh();
+    this._stateLayer?.refresh();
+    this._focusBinding?.refresh();
+    this._colorsBinding?.refresh();
   }
 };
 if (!customElements.get("md-card")) {
@@ -3782,25 +5893,25 @@ if (!customElements.get("md-chip")) {
 }
 
 // src/motion/touch-slop.js
-var f6 = Math.fround;
+var f13 = Math.fround;
 function pointerSlop(pointerType, touchSlop = 8) {
-  return pointerType === "mouse" ? f6(f6(touchSlop) * f6(0.125 / 18)) : f6(touchSlop);
+  return pointerType === "mouse" ? f13(f13(touchSlop) * f13(0.125 / 18)) : f13(touchSlop);
 }
 var HorizontalTouchSlop = class {
   constructor(slop) {
-    this.slop = f6(slop);
+    this.slop = f13(slop);
     this.total = 0;
   }
   add(delta) {
-    this.total = f6(this.total + f6(delta));
+    this.total = f13(this.total + f13(delta));
     const distance = Math.abs(this.total);
     if (distance === 0 || distance < this.slop) return null;
-    return f6(this.total - f6(Math.sign(this.total) * this.slop));
+    return f13(this.total - f13(Math.sign(this.total) * this.slop));
   }
 };
 
 // src/shapes/corner-shape.js
-var f7 = Math.fround;
+var f14 = Math.fround;
 var uniform = (value) => [value, value, value, value];
 var circleCornerShape = Object.freeze({
   type: "rounded",
@@ -3818,7 +5929,7 @@ function normalizeCornerShape(value = circleCornerShape) {
   if (corners.length !== 4) throw new TypeError("Expected four corners in top-start, top-end, bottom-end, bottom-start order");
   const normalized = corners.map((corner) => {
     const unit = typeof corner === "number" ? "px" : corner?.unit;
-    const size = f7(typeof corner === "number" ? corner : corner?.value);
+    const size = f14(typeof corner === "number" ? corner : corner?.value);
     if (!["px", "dp", "percent"].includes(unit) || !Number.isFinite(size) || size < 0 || unit === "percent" && size > 100) {
       throw new RangeError("Corners need finite nonnegative px/dp sizes or percentages in [0, 100]");
     }
@@ -3827,55 +5938,55 @@ function normalizeCornerShape(value = circleCornerShape) {
   return Object.freeze({ type: value.type, absolute: value.absolute === true, corners: Object.freeze(normalized) });
 }
 function cornerPx(corner, minimum, density) {
-  const value = f7(typeof corner === "number" ? corner : corner.value);
+  const value = f14(typeof corner === "number" ? corner : corner.value);
   switch (typeof corner === "number" ? "px" : corner.unit) {
     case "px":
       return value;
     case "dp":
-      return f7(value * density);
+      return f14(value * density);
     case "percent":
       if (value < 0 || value > 100) throw new RangeError("Corner percent must be in [0, 100]");
-      return f7(minimum * f7(value / 100));
+      return f14(minimum * f14(value / 100));
     default:
       throw new TypeError("Unknown corner unit");
   }
 }
 function cornerShapeOutline(shape2 = circleCornerShape, width, height, rtl = false, density = 1) {
-  width = f7(width);
-  height = f7(height);
-  density = f7(density);
-  const bounds2 = { left: 0, top: 0, right: width, bottom: height };
-  if (shape2.type === "rectangle") return { type: "rectangle", bounds: bounds2 };
+  width = f14(width);
+  height = f14(height);
+  density = f14(density);
+  const bounds4 = { left: 0, top: 0, right: width, bottom: height };
+  if (shape2.type === "rectangle") return { type: "rectangle", bounds: bounds4 };
   if (!["rounded", "cut"].includes(shape2.type) || shape2.corners?.length !== 4) throw new TypeError("Invalid corner shape");
   const minimum = Math.min(Math.abs(width), Math.abs(height));
   let [ts, te, be, bs] = shape2.corners.map((value) => cornerPx(value, minimum, density));
-  if (f7(ts + bs) > minimum) {
-    const scale2 = f7(minimum / f7(ts + bs));
-    ts = f7(ts * scale2);
-    bs = f7(bs * scale2);
+  if (f14(ts + bs) > minimum) {
+    const scale2 = f14(minimum / f14(ts + bs));
+    ts = f14(ts * scale2);
+    bs = f14(bs * scale2);
   }
-  if (f7(te + be) > minimum) {
-    const scale2 = f7(minimum / f7(te + be));
-    te = f7(te * scale2);
-    be = f7(be * scale2);
+  if (f14(te + be) > minimum) {
+    const scale2 = f14(minimum / f14(te + be));
+    te = f14(te * scale2);
+    be = f14(be * scale2);
   }
   if (![ts, te, be, bs].every((value) => value >= 0)) throw new RangeError("Corner size cannot be negative or NaN");
-  if (f7(f7(f7(ts + te) + be) + bs) === 0) return { type: "rectangle", bounds: bounds2 };
+  if (f14(f14(f14(ts + te) + be) + bs) === 0) return { type: "rectangle", bounds: bounds4 };
   const [tl, tr, br, bl] = rtl && !shape2.absolute ? [te, ts, bs, be] : [ts, te, be, bs];
-  if (shape2.type === "rounded") return { type: "rounded", bounds: bounds2, radii: [tl, tr, br, bl].map((value) => [value, value]) };
-  return { type: "generic", bounds: bounds2, points: [
+  if (shape2.type === "rounded") return { type: "rounded", bounds: bounds4, radii: [tl, tr, br, bl].map((value) => [value, value]) };
+  return { type: "generic", bounds: bounds4, points: [
     [0, tl],
     [tl, 0],
-    [f7(width - tr), 0],
+    [f14(width - tr), 0],
     [width, tr],
-    [width, f7(height - br)],
-    [f7(width - br), height],
+    [width, f14(height - br)],
+    [f14(width - br), height],
     [bl, height],
-    [0, f7(height - bl)]
+    [0, f14(height - bl)]
   ] };
 }
 function roundedOutlineRadii({ bounds: b, radii }) {
-  const width = f7(b.right - b.left), height = f7(b.bottom - b.top);
+  const width = f14(b.right - b.left), height = f14(b.bottom - b.top);
   let scale2 = 1;
   for (const [a, z, limit] of [
     [radii[3][1], radii[0][1], height],
@@ -3883,71 +5994,71 @@ function roundedOutlineRadii({ bounds: b, radii }) {
     [radii[1][1], radii[2][1], height],
     [radii[2][0], radii[3][0], width]
   ]) {
-    const sum = f7(a + z);
-    if (sum > limit && sum !== 0) scale2 = Math.min(scale2, f7(limit / sum));
+    const sum = f14(a + z);
+    if (sum > limit && sum !== 0) scale2 = Math.min(scale2, f14(limit / sum));
   }
-  return radii.map((corner) => corner.map((value) => f7(value * scale2)));
+  return radii.map((corner) => corner.map((value) => f14(value * scale2)));
 }
 
 // src/components/slider-layout.js
-var f8 = Math.fround;
-var lerp2 = (a, b, t) => f8(f8(f8(1 - t) * a) + f8(t * b));
-var scale = (a, b, value, min, max) => lerp2(f8(min), f8(max), sliderValueFraction(value, a, b));
+var f15 = Math.fround;
+var lerp3 = (a, b, t) => f15(f15(f15(1 - t) * a) + f15(t * b));
+var scale = (a, b, value, min, max) => lerp3(f15(min), f15(max), sliderValueFraction(value, a, b));
 var SLIDER_METRICS = Object.freeze({ track: 16, handle: 4, handleLength: 44, gap: 6, insideCorner: 2, stop: 4 });
 function sliderValueFraction(value, min, max) {
-  const span = f8(f8(max) - f8(min));
-  return span === 0 ? 0 : f8(Math.max(0, Math.min(1, f8(f8(f8(value) - f8(min)) / span))));
+  const span = f15(f15(max) - f15(min));
+  return span === 0 ? 0 : f15(Math.max(0, Math.min(1, f15(f15(f15(value) - f15(min)) / span))));
 }
 function sliderTickFractions(steps) {
-  return steps > 0 ? Array.from({ length: steps + 2 }, (_, i) => f8(i / (steps + 1))) : [];
+  return steps > 0 ? Array.from({ length: steps + 2 }, (_, i) => f15(i / (steps + 1))) : [];
 }
 function snapSliderValue(value, min, max, steps = 0) {
-  const current = f8(Math.max(min, Math.min(max, value)));
+  const current = f15(Math.max(min, Math.min(max, value)));
   if (!steps || max <= min) return current;
-  const fraction = f8(f8(current - min) / f8(max - min));
+  const fraction = f15(f15(current - min) / f15(max - min));
   const lower = Math.max(0, Math.min(steps + 1, Math.floor(fraction * (steps + 1))));
-  const a = lerp2(f8(min), f8(max), f8(lower / (steps + 1)));
-  const b = lerp2(f8(min), f8(max), f8(Math.min(steps + 1, lower + 1) / (steps + 1)));
-  return Math.abs(f8(a - current)) <= Math.abs(f8(b - current)) ? a : b;
+  const a = lerp3(f15(min), f15(max), f15(lower / (steps + 1)));
+  const b = lerp3(f15(min), f15(max), f15(Math.min(steps + 1, lower + 1) / (steps + 1)));
+  return Math.abs(f15(a - current)) <= Math.abs(f15(b - current)) ? a : b;
 }
 function sliderThumbOffset(length, fraction, steps = 0, corner = 8) {
-  const p = f8(fraction);
-  return steps > 0 && p !== 0 && p !== 1 ? Math.round(f8(f8(f8(length - corner * 2) * p))) + corner : Math.round(f8(length * p));
+  const p = f15(fraction);
+  return steps > 0 && p !== 0 && p !== 1 ? Math.round(f15(f15(f15(length - corner * 2) * p))) + corner : Math.round(f15(length * p));
 }
-function sliderPointerValue(coordinate, total, min, max, steps = 0) {
-  const maxPx = f8(Math.max(f8(total - 2), 0)), minPx = f8(Math.min(2, maxPx));
-  const offset = snapSliderValue(f8(coordinate), minPx, maxPx, steps);
-  return scale(minPx, maxPx, offset, min, max);
+function sliderPointerValue(coordinate2, total, min, max, steps = 0) {
+  const maxPx = f15(Math.max(f15(total - 2), 0)), minPx = f15(Math.min(2, maxPx));
+  const offset2 = snapSliderValue(f15(coordinate2), minPx, maxPx, steps);
+  return scale(minPx, maxPx, offset2, min, max);
 }
 var SliderPointerState = class {
   constructor(min, max, steps = 0) {
-    this.min = f8(min);
-    this.max = f8(max);
+    this.min = f15(min);
+    this.max = f15(max);
     this.steps = steps;
     this.total = 0;
     this.rawOffset = 0;
     this.pressOffset = 0;
   }
-  press(coordinate) {
-    this.pressOffset = f8(f8(coordinate) - this.rawOffset);
+  press(coordinate2) {
+    this.pressOffset = f15(f15(coordinate2) - this.rawOffset);
   }
   drag(delta) {
-    this.rawOffset = f8(f8(this.rawOffset + f8(delta)) + this.pressOffset);
+    this.rawOffset = f15(f15(this.rawOffset + f15(delta)) + this.pressOffset);
     this.pressOffset = 0;
     return sliderPointerValue(this.rawOffset, this.total, this.min, this.max, this.steps);
   }
 };
 var RangeSliderPointerState = class {
   constructor(min, max, steps = 0) {
-    this.min = f8(min);
-    this.max = f8(max);
+    this.min = f15(min);
+    this.max = f15(max);
     this.steps = steps;
     this.minPx = this.maxPx = this.rawOffsetStart = this.rawOffsetEnd = 0;
   }
   update(total, start, end, dragging = false) {
-    this.start = f8(start);
-    this.end = f8(end);
-    const maxPx = f8(Math.max(f8(total - 2), 0)), minPx = f8(Math.min(2, maxPx));
+    this.start = f15(start);
+    this.end = f15(end);
+    const maxPx = f15(Math.max(f15(total - 2), 0)), minPx = f15(Math.min(2, maxPx));
     if (!dragging && (this.minPx !== minPx || this.maxPx !== maxPx || this.start !== this.end)) {
       this.minPx = minPx;
       this.maxPx = maxPx;
@@ -3959,12 +6070,12 @@ var RangeSliderPointerState = class {
     const { minPx, maxPx } = this;
     let start, end;
     if (isStart) {
-      this.rawOffsetStart = f8(this.rawOffsetStart + f8(delta));
+      this.rawOffsetStart = f15(this.rawOffsetStart + f15(delta));
       this.rawOffsetEnd = scale(this.min, this.max, this.end, minPx, maxPx);
       end = this.rawOffsetEnd;
       start = Math.min(end, snapSliderValue(Math.max(minPx, Math.min(end, this.rawOffsetStart)), minPx, maxPx, this.steps));
     } else {
-      this.rawOffsetEnd = f8(this.rawOffsetEnd + f8(delta));
+      this.rawOffsetEnd = f15(this.rawOffsetEnd + f15(delta));
       this.rawOffsetStart = scale(this.min, this.max, this.start, minPx, maxPx);
       start = this.rawOffsetStart;
       end = Math.max(start, snapSliderValue(Math.max(start, Math.min(maxPx, this.rawOffsetEnd)), minPx, maxPx, this.steps));
@@ -3981,70 +6092,70 @@ function sliderTrackLayout({
   end = 0.5,
   steps = 0,
   range = false,
-  centered = false,
+  centered: centered2 = false,
   vertical = false,
   rtl = false,
   reverse = false,
   gap = 6,
   insideCorner = 2,
   corner = thickness / 2,
-  shrink = centered || vertical,
+  shrink = centered2 || vertical,
   stopIndicators = true
 }) {
-  length = f8(Math.max(0, length));
-  thickness = f8(thickness);
-  corner = f8(corner);
-  insideCorner = f8(insideCorner);
-  start = f8(start);
-  end = f8(end);
+  length = f15(Math.max(0, length));
+  thickness = f15(thickness);
+  corner = f15(corner);
+  insideCorner = f15(insideCorner);
+  start = f15(start);
+  end = f15(end);
   const ticks = sliderTickFractions(steps), rtlHorizontal = rtl && !vertical;
-  const valuePosition = (p) => ticks.length && p !== 0 && p !== 1 ? f8(f8(f8(length - f8(corner * 2)) * p) + corner) : f8(length * p);
-  const valueStart = valuePosition(start), valueEnd = valuePosition(end), center = f8(length / 2);
-  const startHandle = range || centered && end <= 0.5 ? 4 : 0;
-  const endHandle = !centered || end >= 0.5 ? 4 : 0;
-  const startGap = (range || centered) && gap > 0 ? f8(startHandle / 2 + gap) : 0;
-  const endGap = gap > 0 ? f8(endHandle / 2 + gap) : 0;
+  const valuePosition = (p) => ticks.length && p !== 0 && p !== 1 ? f15(f15(f15(length - f15(corner * 2)) * p) + corner) : f15(length * p);
+  const valueStart = valuePosition(start), valueEnd = valuePosition(end), center = f15(length / 2);
+  const startHandle = range || centered2 && end <= 0.5 ? 4 : 0;
+  const endHandle = !centered2 || end >= 0.5 ? 4 : 0;
+  const startGap = (range || centered2) && gap > 0 ? f15(startHandle / 2 + gap) : 0;
+  const endGap = gap > 0 ? f15(endHandle / 2 + gap) : 0;
   const paths = [], dots = [];
-  const axisPosition = (p) => (vertical ? reverse : rtlHorizontal) ? f8(length - p) : p;
+  const axisPosition = (p) => (vertical ? reverse : rtlHorizontal) ? f15(length - p) : p;
   const drawPath = (role, from, to, first2, last) => {
-    const extent = f8(to - from);
-    const lo = rtlHorizontal ? f8(length - to) : from;
-    const hi = f8(lo + extent);
+    const extent = f15(to - from);
+    const lo = rtlHorizontal ? f15(length - to) : from;
+    const hi = f15(lo + extent);
     if (vertical && reverse || rtlHorizontal) [first2, last] = [last, first2];
-    const bounds2 = vertical ? { left: 0, top: reverse ? f8(length - hi) : lo, right: thickness, bottom: reverse ? f8(length - lo) : hi } : { left: lo, top: 0, right: hi, bottom: thickness };
+    const bounds4 = vertical ? { left: 0, top: reverse ? f15(length - hi) : lo, right: thickness, bottom: reverse ? f15(length - lo) : hi } : { left: lo, top: 0, right: hi, bottom: thickness };
     const radii = (vertical ? [first2, first2, last, last] : [first2, last, last, first2]).map((r) => [r, r]);
-    paths.push({ role, bounds: bounds2, radii });
+    paths.push({ role, bounds: bounds4, radii });
   };
   const drawDot = (position, role, kind) => dots.push({ position: axisPosition(position), role, kind });
-  let leftThreshold = startGap, rightThreshold = f8(length - endGap);
+  let leftThreshold = startGap, rightThreshold = f15(length - endGap);
   if (!shrink || ticks.length) {
-    leftThreshold = f8(leftThreshold + corner);
-    rightThreshold = f8(rightThreshold - corner);
+    leftThreshold = f15(leftThreshold + corner);
+    rightThreshold = f15(rightThreshold - corner);
   }
-  const adjustedEnd = centered ? Math.min(valueEnd, center) : valueStart;
-  const adjustedStart = centered ? Math.max(valueEnd, center) : valueEnd;
-  if ((centered || range) && adjustedEnd > leftThreshold) {
-    drawPath("inactive", 0, f8(adjustedEnd - startGap), corner, insideCorner);
+  const adjustedEnd = centered2 ? Math.min(valueEnd, center) : valueStart;
+  const adjustedStart = centered2 ? Math.max(valueEnd, center) : valueEnd;
+  if ((centered2 || range) && adjustedEnd > leftThreshold) {
+    drawPath("inactive", 0, f15(adjustedEnd - startGap), corner, insideCorner);
     if (stopIndicators) drawDot(corner, "active", "stop");
   }
   if (adjustedStart < rightThreshold) {
-    drawPath("inactive", f8(adjustedStart + endGap), length, insideCorner, corner);
-    if (stopIndicators) drawDot(f8(length - corner), "active", "stop");
+    drawPath("inactive", f15(adjustedStart + endGap), length, insideCorner, corner);
+    if (stopIndicators) drawDot(f15(length - corner), "active", "stop");
   }
-  const activeStart = centered ? f8(adjustedEnd + (adjustedEnd < center ? startGap : 0)) : range ? f8(valueStart + startGap) : 0;
-  const activeEnd = centered ? f8(adjustedStart - (adjustedStart > center ? endGap : 0)) : f8(valueEnd - endGap);
-  const activeWidth = rtlHorizontal && !centered && !range ? activeEnd : f8(activeEnd - activeStart);
-  const first = centered || range ? insideCorner : corner;
-  const threshold2 = !shrink || ticks.length ? rtlHorizontal || centered || range ? insideCorner : corner : 0;
+  const activeStart = centered2 ? f15(adjustedEnd + (adjustedEnd < center ? startGap : 0)) : range ? f15(valueStart + startGap) : 0;
+  const activeEnd = centered2 ? f15(adjustedStart - (adjustedStart > center ? endGap : 0)) : f15(valueEnd - endGap);
+  const activeWidth = rtlHorizontal && !centered2 && !range ? activeEnd : f15(activeEnd - activeStart);
+  const first = centered2 || range ? insideCorner : corner;
+  const threshold2 = !shrink || ticks.length ? rtlHorizontal || centered2 || range ? insideCorner : corner : 0;
   if (activeWidth > threshold2) drawPath("active", activeStart, activeEnd, first, insideCorner);
-  const tickStart = corner, tickEnd = f8(length - corner);
-  const centerGap = centered ? valueEnd > center ? startGap : endGap : 0;
-  const handleGap = centered ? valueEnd > center ? endGap : startGap : endGap;
-  const inGap = (position, middle, size) => position >= f8(middle - size) && position <= f8(middle + size);
+  const tickStart = corner, tickEnd = f15(length - corner);
+  const centerGap = centered2 ? valueEnd > center ? startGap : endGap : 0;
+  const handleGap = centered2 ? valueEnd > center ? endGap : startGap : endGap;
+  const inGap = (position, middle, size) => position >= f15(middle - size) && position <= f15(middle + size);
   ticks.forEach((tick, index) => {
-    if (stopIndicators && ((centered || range) && index === 0 || index === ticks.length - 1)) return;
-    const p = lerp2(tickStart, tickEnd, tick);
-    if (centered && inGap(p, center, centerGap) || range && inGap(p, valueStart, startGap) || inGap(p, valueEnd, handleGap)) return;
+    if (stopIndicators && ((centered2 || range) && index === 0 || index === ticks.length - 1)) return;
+    const p = lerp3(tickStart, tickEnd, tick);
+    if (centered2 && inGap(p, center, centerGap) || range && inGap(p, valueStart, startGap) || inGap(p, valueEnd, handleGap)) return;
     drawDot(p, p >= activeStart && p <= activeEnd ? "active-tick" : "inactive-tick", "tick");
   });
   return { length, thickness, paths, dots, valueStart, valueEnd };
@@ -4390,7 +6501,7 @@ var MdSlider = class extends HTMLElement {
     else for (const attr of ["aria-valuemin", "aria-valuemax", "aria-valuenow", "aria-orientation"]) root.removeAttribute(attr);
     for (const [n, p, value, isStart] of [[this._thumb, end, range ? this.rangeEnd : this.value, false], [this._startThumb, start, this.rangeStart, true]]) {
       n.hidden = isStart && !range;
-      const offset = sliderThumbOffset(length, p, this.steps), position = 2 + (reverse ? length - offset : offset);
+      const offset2 = sliderThumbOffset(length, p, this.steps), position = 2 + (reverse ? length - offset2 : offset2);
       n.style.left = vertical ? "50%" : `${position}px`;
       n.style.top = vertical ? `${position}px` : "50%";
       n.classList.toggle("focused", !this.disabled && (range ? this.shadowRoot.activeElement === n : this.shadowRoot.activeElement === root));
@@ -4419,9 +6530,9 @@ var MdSlider = class extends HTMLElement {
     if (p && finish) this._emit("change");
   }
   _pointerCoordinates(e, p) {
-    const root = this._root, rect4 = root.getBoundingClientRect();
-    const x = Math.fround(rect4.width ? (e.clientX - rect4.left) * root.clientWidth / rect4.width : 0);
-    const y2 = Math.fround(rect4.height ? (e.clientY - rect4.top) * root.clientHeight / rect4.height : 0);
+    const root = this._root, rect6 = root.getBoundingClientRect();
+    const x = Math.fround(rect6.width ? (e.clientX - rect6.left) * root.clientWidth / rect6.width : 0);
+    const y2 = Math.fround(rect6.height ? (e.clientY - rect6.top) * root.clientHeight / rect6.height : 0);
     return { axis: p.vertical ? y2 : x, cross: p.vertical ? x : y2 };
   }
   _updatePointer(delta) {
@@ -4584,11 +6695,263 @@ function setSelectionValidity(control, anchor, valueMissing) {
   anchor?.setAttribute("aria-invalid", String(Boolean(control.error) || control._internals.willValidate && !control._internals.validity.valid));
 }
 
+// src/motion/selection-color.js
+function bindSelectionColors(element2, channels, { disabled = () => false, role = () => "expressiveEffectMedium", onPaint = () => {
+}, signal } = {}) {
+  let disposed = false, previousDisabled = disabled();
+  const records = channels.map((channel2) => {
+    const probe = document.createElement("span");
+    probe.hidden = true;
+    probe.setAttribute("aria-hidden", "true");
+    channel2.scope.append(probe);
+    return {
+      ...channel2,
+      probe,
+      motion: null,
+      color: null,
+      written: null,
+      original: channel2.node.style.getPropertyValue(channel2.property),
+      priority: channel2.node.style.getPropertyPriority(channel2.property)
+    };
+  });
+  function refresh() {
+    if (disposed || !element2.isConnected) return;
+    const nowDisabled = disabled(), enabledChanged = nowDisabled !== previousDisabled;
+    for (const record of records) {
+      const descriptor = record.disabledColor?.(nowDisabled);
+      let color;
+      if (descriptor) color = resolveColorAlpha(record.probe, descriptor);
+      else {
+        record.probe.style.color = `var(${record.token})`;
+        color = getComputedStyle(record.probe).color;
+      }
+      const draw = (value) => {
+        record.color = value;
+        record.node.style.setProperty(record.property, value);
+        record.written = record.node.style.getPropertyValue(record.property);
+        onPaint();
+      };
+      if (!record.motion) record.motion = new ColorMotion(element2, record.probe, color, draw, { role: role() });
+      else {
+        record.motion.role = role();
+        const snap = record.snapAlways || record.snapDisabled && (nowDisabled || enabledChanged);
+        record.motion.set(color, { snap });
+        if (snap) record.motion.finish();
+      }
+    }
+    previousDisabled = nowDisabled;
+    onPaint();
+  }
+  const stopTheme = observeThemeContext(element2, refresh);
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    stopTheme();
+    for (const record of records) {
+      record.motion?.dispose();
+      record.probe.remove();
+      if (record.node.style.getPropertyValue(record.property) === record.written) {
+        if (record.original) record.node.style.setProperty(record.property, record.original, record.priority);
+        else record.node.style.removeProperty(record.property);
+      }
+    }
+  }
+  signal?.addEventListener("abort", dispose, { once: true });
+  return { refresh, dispose, records, get disposed() {
+    return disposed;
+  } };
+}
+
+// src/motion/selection-layout.js
+var f16 = Math.fround;
+var round2 = (value) => Math.floor(f16(value) + 0.5);
+var clamp4 = (v, min, max) => Math.min(max, Math.max(min, v));
+var infinity = 2147483647;
+var offset = (value, amount) => value === infinity ? value : Math.max(0, value + amount);
+var constrained = (size, c) => ({ width: clamp4(size.width, c.minWidth, c.maxWidth), height: clamp4(size.height, c.minHeight, c.maxHeight) });
+var centered = (parent2, child) => ({ x: round2(f16(f16(parent2.width - child.width) / 2)), y: round2(f16(f16(parent2.height - child.height) / 2)) });
+function measureSelectionLayout({ kind, minimum = 48, clickable = true, rtl = false, constraints = { minWidth: 0, maxWidth: infinity, minHeight: 0, maxHeight: infinity } }) {
+  const dimensions2 = { checkbox: { width: 18, height: 18 }, radio: { width: 20, height: 20 }, switch: { width: 52, height: 32 } };
+  const body = dimensions2[kind];
+  if (!body) throw new TypeError(`Unknown selection kind: ${kind}`);
+  const c = { ...constraints };
+  for (const axis of ["Width", "Height"]) if (!Number.isInteger(c["min" + axis]) || !Number.isInteger(c["max" + axis]) || c["min" + axis] < 0 || c["max" + axis] < c["min" + axis]) throw new RangeError("Invalid native selection constraints");
+  const measured = {}, placements2 = {};
+  function placeable(name, size, bounds4, child = null, position = { x: 0, y: 0 }) {
+    const reported = constrained(size, bounds4);
+    const apparent = { x: Math.trunc((reported.width - size.width) / 2), y: Math.trunc((reported.height - size.height) / 2) };
+    measured[name] = { ...size };
+    return { name, size, reported, apparent, child, position };
+  }
+  function build(index, bounds4) {
+    if (index === nodes.length) return placeable("content", body, { minWidth: body.width, maxWidth: body.width, minHeight: body.height, maxHeight: body.height });
+    const { type, name } = nodes[index];
+    if (type === "required") {
+      const child2 = build(index + 1, { minWidth: body.width, maxWidth: body.width, minHeight: body.height, maxHeight: body.height });
+      return placeable(name, child2.reported, bounds4, child2);
+    }
+    if (type === "padding") {
+      const inner = { minWidth: offset(bounds4.minWidth, -4), maxWidth: offset(bounds4.maxWidth, -4), minHeight: offset(bounds4.minHeight, -4), maxHeight: offset(bounds4.maxHeight, -4) };
+      const child2 = build(index + 1, inner), size2 = constrained({ width: child2.reported.width + 4, height: child2.reported.height + 4 }, bounds4);
+      const x = rtl && size2.width !== 0 ? size2.width - child2.reported.width - 2 : 2;
+      return placeable(name, size2, bounds4, child2, { x, y: 2 });
+    }
+    if (type === "wrap") {
+      const child2 = build(index + 1, { ...bounds4, minWidth: 0, minHeight: 0 });
+      const size2 = constrained(child2.reported, bounds4);
+      return placeable(name, size2, bounds4, child2, centered(size2, child2.reported));
+    }
+    const child = build(index + 1, bounds4), min = f16(minimum === null ? NaN : minimum), active = Number.isFinite(min) && min > 0;
+    const pixel = active ? round2(min) : 0;
+    const size = active ? { width: Math.max(child.reported.width, pixel), height: Math.max(child.reported.height, pixel) } : child.reported;
+    return placeable(name, size, bounds4, child, centered(size, child.reported));
+  }
+  const base = clickable ? 2 : 0, nodes = [];
+  if (clickable) nodes.push({ type: "minimum", name: "minimum-0" });
+  nodes.push({ type: "wrap", name: clickable ? "input" : "wrap-0" });
+  if (kind === "radio") nodes.push({ type: "padding", name: `padding-${base + 1}` });
+  nodes.push({ type: "required", name: `required-${base + (kind === "radio" ? 2 : 1)}` });
+  const root = build(0, c);
+  function place3(node, x, y2) {
+    placements2[node.name] = { x: x + node.apparent.x, y: y2 + node.apparent.y, ...node.size };
+    if (node.child) place3(node.child, x + node.apparent.x + node.position.x, y2 + node.apparent.y + node.position.y);
+  }
+  place3(root, 0, 0);
+  return { size: root.reported, requested: root.size, placements: placements2, measured };
+}
+
+// src/components/selection-dom-layout.js
+var INF4 = 2147483647;
+var PROBE2 = 1e6;
+var dimensions = { checkbox: { width: 18, height: 18 }, radio: { width: 24, height: 24 }, switch: { width: 52, height: 32 } };
+var properties = ["position", "left", "top", "width", "height"];
+var SelectionDOMLayout = class {
+  constructor(host, { kind, control, canvas, ripple, signal }) {
+    Object.assign(this, { host, kind, control, canvas, ripple });
+    this.disposed = false;
+    this.raf = null;
+    this.owned = /* @__PURE__ */ new Map();
+    this.style = document.createElement("style");
+    this.style.textContent = ":host{--_md-selection-width:0px;--_md-selection-height:0px}";
+    host.shadowRoot.append(this.style);
+    this.sizing = this.style.sheet.cssRules[0].style;
+    this.probe = document.createElement("span");
+    this.probe.setAttribute("aria-hidden", "true");
+    this.probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;width:max(0px,var(--md-minimum-interactive-component-size,48px));height:0;";
+    host.shadowRoot.append(this.probe);
+    this.resize = new ResizeObserver(() => this.schedule());
+    this.resize.observe(host);
+    if (host.parentElement) this.resize.observe(host.parentElement);
+    this.stopTheme = observeThemeContext(host, () => this.schedule());
+    signal?.addEventListener("abort", () => this.dispose(), { once: true });
+    this.measure();
+  }
+  setSize(width, height) {
+    this.sizing.setProperty("--_md-selection-width", width + "px");
+    this.sizing.setProperty("--_md-selection-height", height + "px");
+  }
+  contentSize(axis) {
+    const css2 = getComputedStyle(this.host);
+    let value = parseFloat(css2[axis]) || 0;
+    if (css2.boxSizing === "border-box") for (const side2 of axis === "width" ? ["Left", "Right"] : ["Top", "Bottom"]) value -= (parseFloat(css2["padding" + side2]) || 0) + (parseFloat(css2["border" + side2 + "Width"]) || 0);
+    return Math.max(0, Math.round(value));
+  }
+  own(node, name, value) {
+    let records = this.owned.get(node);
+    if (!records) {
+      records = new Map(properties.map((property) => [property, { value: node.style.getPropertyValue(property), priority: node.style.getPropertyPriority(property), written: null }]));
+      this.owned.set(node, records);
+    }
+    const record = records.get(name);
+    if (record.written !== null && (node.style.getPropertyValue(name) !== record.written || node.style.getPropertyPriority(name) !== "")) {
+      record.value = node.style.getPropertyValue(name);
+      record.priority = node.style.getPropertyPriority(name);
+    }
+    node.style.setProperty(name, value);
+    record.written = node.style.getPropertyValue(name);
+  }
+  rect(node, r) {
+    this.own(node, "position", "absolute");
+    for (const [name, value] of Object.entries({ left: r.x, top: r.y, width: r.width, height: r.height })) this.own(node, name, value + "px");
+  }
+  schedule() {
+    if (this.disposed || this.raf !== null) return;
+    this.raf = requestAnimationFrame(() => {
+      this.raf = null;
+      this.measure();
+    });
+  }
+  measure() {
+    if (this.disposed || this.measuring || !this.host.isConnected) return;
+    this.measuring = true;
+    try {
+      const minimum = parseFloat(getComputedStyle(this.probe).width) || 0, body = dimensions[this.kind], preferred = { width: Math.max(body.width, Math.round(minimum)), height: Math.max(body.height, Math.round(minimum)) };
+      this.setSize(0, 0);
+      const minWidth = this.contentSize("width"), minHeight = this.contentSize("height");
+      this.setSize(preferred.width, PROBE2);
+      const maxWidth = this.contentSize("width"), maxHeight = this.contentSize("height");
+      const constraints = { minWidth: Math.min(minWidth, maxWidth), maxWidth, minHeight: Math.min(minHeight, maxHeight), maxHeight: maxHeight >= PROBE2 ? INF4 : maxHeight };
+      const input = { kind: this.kind, minimum, rtl: getComputedStyle(this.host).direction === "rtl", constraints };
+      const layout = measureSelectionLayout(input), interaction = layout.placements.input, draw = layout.placements.content, css2 = getComputedStyle(this.host);
+      this.setSize(preferred.width, layout.requested.height);
+      this.rect(this.control, { ...interaction, x: interaction.x + (parseFloat(css2.paddingLeft) || 0), y: interaction.y + (parseFloat(css2.paddingTop) || 0) });
+      this.rect(this.canvas, { ...draw, x: draw.x - interaction.x, y: draw.y - interaction.y });
+      if (this.ripple) this.rect(this.ripple, { x: 0, y: 0, width: interaction.width, height: interaction.height });
+      this.input = input;
+      this.layout = layout;
+      this.host._selectionLayoutInput = input;
+      this.host._selectionLayout = layout;
+    } finally {
+      this.measuring = false;
+    }
+  }
+  pointerInput(event) {
+    const type = { mouse: "Mouse", touch: "Touch", pen: "Stylus" }[event.pointerType];
+    if (!type) return null;
+    const rect6 = this.control.getBoundingClientRect(), css2 = getComputedStyle(this.control), width = parseFloat(css2.width) || 0, height = parseFloat(css2.height) || 0;
+    const layer = this.control.querySelector(".state-layer"), layerRect = layer?.getBoundingClientRect(), layerCss = layer ? getComputedStyle(layer) : null;
+    const scaleX = width ? rect6.width / width : layerRect?.width / (parseFloat(layerCss?.width) || 1) || 1, scaleY = height ? rect6.height / height : layerRect?.height / (parseFloat(layerCss?.height) || 1) || 1;
+    return { width, height, radius: 0, type, x: (event.clientX - rect6.left) / (scaleX || 1), y: (event.clientY - rect6.top) / (scaleY || 1) };
+  }
+  hitTest(event) {
+    const input = this.pointerInput(event);
+    return input === null || roundedPointerHit(input) !== null;
+  }
+  hoverHitTest(event) {
+    const input = this.pointerInput(event);
+    return input === null || roundedPointerHit(input)?.direct === true;
+  }
+  outOfBounds(event) {
+    const input = this.pointerInput(event);
+    return input !== null && capturedPointerOutOfBounds(input);
+  }
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.resize.disconnect();
+    this.stopTheme();
+    for (const [node, records] of this.owned) for (const [name, record] of records) if (node.style.getPropertyValue(name) === record.written && node.style.getPropertyPriority(name) === "") {
+      if (record.value) node.style.setProperty(name, record.value, record.priority);
+      else node.style.removeProperty(name);
+    }
+    this.owned.clear();
+    this.style.remove();
+    this.probe.remove();
+  }
+};
+
 // src/components/md-switch.js
 var defaultStyle8 = `
   :host {
-    display: inline-flex;
-    align-items: center;
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    width: var(--_md-selection-width, max(52px, var(--md-minimum-interactive-component-size, 48px)));
+    height: var(--_md-selection-height, max(32px, var(--md-minimum-interactive-component-size, 48px)));
+    max-width: 100%;
+    max-height: 100%;
     outline: none;
     vertical-align: middle;
   }
@@ -4599,8 +6962,7 @@ var defaultStyle8 = `
     align-items: center;
     justify-content: center;
     width: 52px;
-    min-width: 52px;
-    height: max(32px, var(--md-minimum-interactive-component-size, 48px));
+    height: 32px;
     box-sizing: border-box;
     cursor: pointer;
     user-select: none;
@@ -4608,9 +6970,9 @@ var defaultStyle8 = `
     outline: none;
   }
   .switch-root:focus { outline: none; }
-  .switch-root:focus-visible .track {
-    outline: 3px solid var(--md-sys-color-secondary, #625B71);
-    outline-offset: 2px;
+  .switch-root::after {
+    content: ''; position: absolute; width: max(100%, 48px); height: max(100%, 48px);
+    left: 50%; top: 50%; transform: translate(-50%, -50%);
   }
 
   /* 52x32dp Track */
@@ -4620,14 +6982,16 @@ var defaultStyle8 = `
     height: 32px;
     border-radius: 9999px;
     box-sizing: border-box;
-    border: 2px solid var(--md-sys-color-outline, #79747E);
-    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    --_md-switch-border: var(--md-sys-color-outline);
+    --_md-switch-track: var(--md-sys-color-surface-container-highest);
+    border: 2px solid var(--_md-switch-border);
+    background-color: var(--_md-switch-track);
     outline: none;
   }
 
   .track.checked {
-    background-color: var(--md-sys-color-primary, #6750A4);
-    border-color: transparent;
+    --_md-switch-track: var(--md-sys-color-primary);
+    --_md-switch-border: transparent;
   }
 
   /* Handle: 16x16dp unselected -> 24x24dp selected -> 28x28dp pressed */
@@ -4649,7 +7013,10 @@ var defaultStyle8 = `
     width: 100%;
     height: 100%;
     border-radius: 9999px;
-    background-color: var(--md-sys-color-outline, #79747E);
+    --_md-switch-handle: var(--md-sys-color-outline);
+    --_md-switch-icon: var(--md-switch-icon-color, var(--md-sys-color-surface-container-highest));
+    background-color: var(--_md-switch-handle);
+    color: var(--_md-switch-icon);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4657,7 +7024,17 @@ var defaultStyle8 = `
   }
 
   .track.checked .handle {
-    background-color: var(--md-sys-color-on-primary, #FFFFFF);
+    --_md-switch-handle: var(--md-switch-selected-handle-color, var(--md-sys-color-on-primary));
+    /* ColorSpec2025 can make OnPrimary and OnPrimaryContainer equally dark.
+       An OnPrimary thumb uses its paired Primary content in the resting state. */
+    --_md-switch-icon: var(--md-switch-selected-icon-color, var(--md-sys-color-primary));
+  }
+  .switch-root:is(.interacting, .pressed):not(.disabled) .handle {
+    --_md-switch-handle: var(--md-sys-color-on-surface-variant);
+  }
+  .switch-root:is(.interacting, .pressed):not(.disabled) .track.checked .handle {
+    --_md-switch-handle: var(--md-switch-selected-interactive-handle-color, var(--md-sys-color-primary-container));
+    --_md-switch-icon: var(--md-switch-selected-interactive-icon-color, var(--md-sys-color-on-primary-container));
   }
   .switch-root.has-icon .icon { opacity: 1; }
 
@@ -4666,12 +7043,11 @@ var defaultStyle8 = `
     font-family: 'Material Symbols Rounded', 'Material Symbols Outlined';
     font-size: 16px;
     line-height: 1;
-    color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    color: inherit;
     opacity: 0;
     font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
   }
   .track.checked .icon {
-    color: var(--md-sys-color-on-primary-container);
     opacity: 1;
   }
 
@@ -4681,43 +7057,32 @@ var defaultStyle8 = `
     width: 40px;
     height: 40px;
     border-radius: 9999px;
-    background: currentColor;
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    opacity: 0;
+    background: rgb(from var(--md-ripple-color, currentColor) r g b / 1);
+    opacity: var(--md-selection-state-alpha, 0);
     pointer-events: none;
-    transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-  }
-  .track.checked .state-layer {
-    color: var(--md-sys-color-primary, #6750A4);
-  }
-  .switch-root:hover:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-  }
-  .switch-root:focus-visible:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-focus-opacity, 0.1);
-  }
-  .switch-root.pressed:not(.disabled) .state-layer {
-    opacity: var(--md-sys-state-pressed-opacity, 0.1);
+    transition: none;
   }
 
-  .switch-root.disabled .icon { color: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 38%, var(--md-sys-color-surface)); }
-  .switch-root.disabled .track.checked .icon { color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, var(--md-sys-color-surface)); }
   /* Disabled */
   .switch-root.disabled {
     cursor: not-allowed;
   }
   .switch-root.disabled .track {
-    border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, var(--md-sys-color-surface));
-    background-color: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 12%, var(--md-sys-color-surface));
+    --_md-switch-border: color-mix(in srgb, rgb(from var(--md-sys-color-on-surface) r g b / 1) 12%, var(--md-sys-color-surface));
+    --_md-switch-track: color-mix(in srgb, rgb(from var(--md-sys-color-surface-container-highest) r g b / 1) 12%, var(--md-sys-color-surface));
   }
   .switch-root.disabled .track.checked {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, var(--md-sys-color-surface));
-    border-color: transparent;
+    --_md-switch-track: color-mix(in srgb, rgb(from var(--md-sys-color-on-surface) r g b / 1) 12%, var(--md-sys-color-surface));
+    --_md-switch-border: transparent;
   }
   .switch-root.disabled .handle {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, var(--md-sys-color-surface));
+    --_md-switch-handle: color-mix(in srgb, rgb(from var(--md-sys-color-on-surface) r g b / 1) 38%, var(--md-sys-color-surface));
+    --_md-switch-icon: color-mix(in srgb, rgb(from var(--md-sys-color-surface-container-highest) r g b / 1) 38%, var(--md-sys-color-surface));
   }
-  .switch-root.disabled .track.checked .handle { background-color: var(--md-sys-color-surface); }
+  .switch-root.disabled .track.checked .handle {
+    --_md-switch-handle: rgb(from var(--md-sys-color-surface) r g b / 1);
+    --_md-switch-icon: color-mix(in srgb, rgb(from var(--md-sys-color-on-surface) r g b / 1) 38%, var(--md-sys-color-surface));
+  }
 `;
 var switchSheet = createComponentSheet(defaultStyle8);
 var MdSwitch = class extends HTMLElement {
@@ -4861,6 +7226,10 @@ var MdSwitch = class extends HTMLElement {
     else root.classList.remove("disabled");
     if (isChecked) track.classList.add("checked");
     else track.classList.remove("checked");
+    this._layout?.measure();
+    this._pressBinding?.refresh();
+    this._stateLayer?.refresh();
+    this._colorBinding?.refresh();
     this._syncThumb();
     if (this._internals && this._internals.setFormValue) {
       this._internals.setFormValue(isChecked ? this.value : null, String(isChecked));
@@ -4872,9 +7241,9 @@ var MdSwitch = class extends HTMLElement {
     if (!root) return;
     const pressed = root.classList.contains("pressed") && !this.disabled;
     const size = pressed ? 28 : this.checked || this.icon ? 24 : 16;
-    const offset = pressed ? this.checked ? 22 : 2 : this.checked ? 24 : (32 - size) / 2;
+    const offset2 = pressed ? this.checked ? 22 : 2 : this.checked ? 24 : (32 - size) / 2;
     if (!this._thumbMotion) {
-      this._thumbMotion = new SelectionMotion(this, { size, offset }, (values) => {
+      this._thumbMotion = new SelectionMotion(this, { size, offset: offset2 }, (values) => {
         const container = root.querySelector(".handle-container");
         const actualSize = Math.max(0, Math.trunc(values.size));
         container.style.width = container.style.height = `${actualSize}px`;
@@ -4882,7 +7251,7 @@ var MdSwitch = class extends HTMLElement {
       });
     } else this._thumbMotion.set({
       size: { value: size, role: "expressiveSpatialFast", snap: pressed },
-      offset: { value: offset, role: "expressiveSpatialFast", snap: pressed }
+      offset: { value: offset2, role: "expressiveSpatialFast", snap: pressed }
     });
   }
   _setup() {
@@ -4891,16 +7260,65 @@ var MdSwitch = class extends HTMLElement {
     const { signal } = this._abortController;
     const root = this.shadowRoot.querySelector(".switch-root");
     if (!root) return;
+    const track = root.querySelector(".track"), handle = root.querySelector(".handle");
+    this._layout = new SelectionDOMLayout(this, { kind: "switch", control: root, canvas: track, signal });
+    const over = (role, alpha) => ({ color: `var(--md-sys-color-${role})`, alpha, over: "var(--md-sys-color-surface)" });
+    this._colorBinding = bindSelectionColors(this, [
+      {
+        key: "track",
+        scope: track,
+        node: track,
+        property: "background-color",
+        token: "--_md-switch-track",
+        snapAlways: true,
+        disabledColor: (disabled) => disabled ? over(this.checked ? "on-surface" : "surface-container-highest", 0.12) : null
+      },
+      {
+        key: "border",
+        scope: track,
+        node: track,
+        property: "border-color",
+        token: "--_md-switch-border",
+        snapAlways: true,
+        disabledColor: (disabled) => disabled && !this.checked ? over("on-surface", 0.12) : null
+      },
+      {
+        key: "handle",
+        scope: handle,
+        node: handle,
+        property: "background-color",
+        token: "--_md-switch-handle",
+        snapAlways: true,
+        disabledColor: (disabled) => disabled ? over(this.checked ? "surface" : "on-surface", this.checked ? 1 : 0.38) : null
+      },
+      {
+        key: "icon",
+        scope: handle,
+        node: handle,
+        property: "color",
+        token: "--_md-switch-icon",
+        snapAlways: true,
+        disabledColor: (disabled) => disabled ? over(this.checked ? "on-surface" : "surface-container-highest", 0.38) : null
+      }
+    ], { disabled: () => this.disabled, signal });
     this.addEventListener("click", (event) => {
       if (event.composedPath()[0] === this && !this.disabled) root.click();
     }, { signal });
-    const press = () => {
+    this._stateLayer = bindStateLayer(root, { disabled: () => this.disabled, hitTest: (event) => this._layout.hoverHitTest(event), property: "--md-selection-state-alpha", onChange: (kind) => {
+      root.classList.toggle("interacting", kind !== null);
+      this._colorBinding.refresh();
+    }, signal });
+    const press = (event) => {
       if (this.disabled) return;
       root.classList.add("pressed");
+      this._colorBinding.refresh();
       this._syncThumb();
+      const thumb = root.querySelector(".handle-container");
+      createRipple(event, thumb, { bounded: false, radius: 20, before: thumb.querySelector(".state-layer") });
     };
     const release = () => {
       root.classList.remove("pressed");
+      this._colorBinding.refresh();
       this._syncThumb();
     };
     const activate = () => {
@@ -4913,9 +7331,10 @@ var MdSwitch = class extends HTMLElement {
         composed: true
       }));
     };
-    bindPress(root, {
+    this._pressBinding = bindPress(root, {
       disabled: () => this.disabled,
-      ignoreEvent: (event) => event.type.startsWith("key") && event.key === "Enter",
+      pointerPolicy: { input: (event) => ({ ...this._layout.pointerInput(event), clipping: false }), hitTest: (event) => this._layout.hitTest(event), outOfBounds: (event) => this._layout.outOfBounds(event) },
+      keyboardActivation: true,
       onPress: press,
       onRelease: release,
       onActivate: activate,
@@ -4929,10 +7348,10 @@ var MdSwitch = class extends HTMLElement {
       <div class="switch-root" role="switch" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute("aria-label") || this.getAttribute("label") || this._internals?.labels?.[0]?.textContent.trim() || "Switch")}">
         <div class="track">
           <div class="handle-container">
-            <div class="state-layer"></div>
             <div class="handle">
               <span class="icon" aria-hidden="true">${escapeHtml(this.icon)}</span>
             </div>
+            <div class="state-layer" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -5497,6 +7916,7 @@ var MdTextField = class extends HTMLElement {
       this.dispatchEvent(new CustomEvent("blur", { bubbles: true, composed: true }));
     }, { signal });
     input.addEventListener("input", (e) => {
+      e.stopPropagation();
       this._value = e.target.value;
       const counter = this.shadowRoot.querySelector(".counter");
       if (counter && this.maxlength) {
@@ -5510,6 +7930,7 @@ var MdTextField = class extends HTMLElement {
       }));
     }, { signal });
     input.addEventListener("change", (e) => {
+      e.stopPropagation();
       this._value = e.target.value;
       this.dispatchEvent(new CustomEvent("change", {
         detail: { value: this._value },
@@ -5552,24 +7973,30 @@ if (!customElements.get("md-text-field")) {
 
 // src/components/md-checkbox.js
 var defaultStyle10 = `
-  .ripple { position: absolute; width: 40px; height: 40px; border-radius: 50%; pointer-events: none; color: var(--md-sys-color-on-surface); }
-  .md-ripple-effect { position: absolute; background: currentColor; border-radius: 50%; opacity: .1; transform: scale(0); animation: selection-ripple 450ms ease-out forwards; }
-  @keyframes selection-ripple { to { transform: scale(1); opacity: 0; } }
+  /* MD3 canvas has no legacy M2 padding; indication remains unbounded. */
+  .ripple { position: absolute; width: 18px; height: 18px; pointer-events: none; color: var(--_md-checkbox-press-color); }
 
   :host {
-    display: inline-flex;
-    align-items: center;
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    width: var(--_md-selection-width, max(18px, var(--md-minimum-interactive-component-size, 48px)));
+    height: var(--_md-selection-height, max(18px, var(--md-minimum-interactive-component-size, 48px)));
+    max-width: 100%;
+    max-height: 100%;
     outline: none;
     vertical-align: middle;
   }
 
   .chk-root {
+    --_md-checkbox-state-color: var(--md-sys-color-on-surface);
+    --_md-checkbox-press-color: var(--md-sys-color-primary);
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: max(24px, var(--md-minimum-interactive-component-size, 48px));
-    height: max(24px, var(--md-minimum-interactive-component-size, 48px));
+    width: 18px;
+    height: 18px;
     box-sizing: border-box;
     border-radius: 9999px;
     cursor: pointer;
@@ -5582,81 +8009,77 @@ var defaultStyle10 = `
     left: 50%; top: 50%; transform: translate(-50%, -50%);
   }
   .chk-root:focus { outline: none; }
-  .chk-root:focus-visible .box {
-    outline: 3px solid var(--md-sys-color-secondary, #625B71);
-    outline-offset: 3px;
+  .chk-root.selected {
+    --_md-checkbox-state-color: var(--md-sys-color-primary);
+    --_md-checkbox-press-color: var(--md-sys-color-on-surface);
+  }
+  .chk-root.error {
+    --_md-checkbox-state-color: var(--md-sys-color-error);
+    --_md-checkbox-press-color: var(--md-sys-color-error);
   }
 
   /* 40x40 State layer */
-  .chk-root::before {
-    content: '';
+  .state-layer {
     position: absolute;
     width: 40px;
     height: 40px;
     border-radius: 9999px;
-    background: currentColor;
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    opacity: 0;
+    background: rgb(from var(--md-ripple-color, var(--_md-checkbox-state-color)) r g b / 1);
+    opacity: var(--md-selection-state-alpha, 0);
     pointer-events: none;
-    transition: opacity var(--md-sys-motion-effect-medium-duration) var(--md-sys-motion-effect-medium-easing);
-  }
-  .chk-root:hover:not(.disabled)::before {
-    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-  }
-  .chk-root:focus-visible:not(.disabled)::before {
-    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.10);
-  }
-  .chk-root.pressed:not(.disabled)::before {
-    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.10);
+    transition: none;
   }
 
-  /* Default public Compose Checkbox (styling-fix flag off): 20px canvas. */
+  /* CheckboxTokens.ContainerSize, from the updated MD3 styling branch. */
   .box {
     position: relative;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     box-sizing: border-box;
     border-radius: 2px;
-    border: 2px solid var(--md-sys-color-on-surface-variant, #49454F);
-    background-color: transparent;
+    border: none;
+    background: none;
+    --_md-checkbox-box: transparent;
+    --_md-checkbox-border: var(--md-sys-color-on-surface-variant);
+    --_md-checkbox-mark: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition:
-      background-color var(--md-sys-motion-effect-fast-duration) var(--md-sys-motion-effect-fast-easing),
-      border-color var(--md-sys-motion-effect-fast-duration) var(--md-sys-motion-effect-fast-easing);
+    transition: none;
     outline: none;
   }
 
   .box.checked,
   .box.indeterminate {
-    background-color: var(--md-sys-color-primary, #6750A4);
-    border-color: var(--md-sys-color-primary, #6750A4);
-    transition-duration: var(--md-sys-motion-effect-medium-duration);
-    transition-timing-function: var(--md-sys-motion-effect-medium-easing);
+    --_md-checkbox-box: var(--md-sys-color-primary);
+    --_md-checkbox-border: var(--md-sys-color-primary);
+    --_md-checkbox-mark: var(--md-sys-color-on-primary);
   }
 
   .box.error {
-    border-color: var(--md-sys-color-error, #B3261E);
+    --_md-checkbox-border: var(--md-sys-color-error);
+  }
+  .chk-root:where(.interacting, .pressed) .box:where(:not(.checked, .indeterminate, .error)) {
+    --_md-checkbox-border: var(--md-sys-color-on-surface);
   }
   .box.error.checked,
   .box.error.indeterminate {
-    background-color: var(--md-sys-color-error, #B3261E);
-    border-color: var(--md-sys-color-error, #B3261E);
+    --_md-checkbox-box: var(--md-sys-color-error);
+    --_md-checkbox-border: var(--md-sys-color-error);
+    --_md-checkbox-mark: var(--md-sys-color-on-error);
   }
 
   .chk-root.disabled {
     cursor: not-allowed;
   }
   .chk-root.disabled .box {
-    border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
-    transition: none;
+    --_md-checkbox-border: rgb(from var(--md-sys-color-on-surface) r g b / .38);
+    --_md-checkbox-mark: var(--md-sys-color-surface);
   }
   .chk-root.disabled .box.checked,
   .chk-root.disabled .box.indeterminate {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
-    border-color: transparent;
-    background-clip: border-box;
+    --_md-checkbox-box: rgb(from var(--md-sys-color-on-surface) r g b / .38);
+    --_md-checkbox-border: rgb(from var(--md-sys-color-on-surface) r g b / .38);
   }
 
   /* One continuously drawn/morphed path, as in Compose drawCheck. */
@@ -5665,22 +8088,22 @@ var defaultStyle10 = `
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     pointer-events: none;
+    overflow: visible;
   }
 
   .mark-check {
     fill: none;
-    stroke: var(--md-sys-color-on-primary, #FFFFFF);
+    stroke: var(--_md-checkbox-mark);
     stroke-width: 2;
     stroke-linecap: square;
     stroke-linejoin: miter;
   }
 
-  .box.error .mark-check {
-    stroke: var(--md-sys-color-on-error, #FFFFFF);
-  }
+  .box-fill { fill: var(--_md-checkbox-box); }
+  .box-outline { fill: none; stroke: var(--_md-checkbox-border); }
 `;
 var checkboxSheet = createComponentSheet(defaultStyle10);
 var MdCheckbox = class extends HTMLElement {
@@ -5841,10 +8264,17 @@ var MdCheckbox = class extends HTMLElement {
     const box3 = this.shadowRoot.querySelector(".box");
     if (!root || !box3) return;
     this._internals?.setFormValue(this.checked ? this.value : null, JSON.stringify({ checked: this.checked, indeterminate: this.indeterminate }));
-    root.className = `chk-root${this.disabled ? " disabled" : ""}`;
+    root.classList.toggle("disabled", this.disabled);
+    root.classList.toggle("selected", this.checked || this.indeterminate);
+    root.classList.toggle("error", this.error);
+    if (this.disabled) root.classList.remove("pressed");
     box3.className = `box${this.checked && !this.indeterminate ? " checked" : ""}${this.indeterminate ? " indeterminate" : ""}${this.error ? " error" : ""}`;
-    box3.style.borderWidth = `${this.outlineStroke}px`;
+    this._layout?.measure();
+    this._pressBinding?.refresh();
+    this._stateLayer?.refresh();
     this.shadowRoot.querySelector(".mark-check").style.strokeWidth = `${this.checkmarkStroke}px`;
+    this._colorBinding?.refresh();
+    this._paintBox();
     this._syncMark();
     root.setAttribute("tabindex", this.disabled ? "-1" : "0");
     root.setAttribute("aria-disabled", this.disabled ? "true" : "false");
@@ -5865,12 +8295,10 @@ var MdCheckbox = class extends HTMLElement {
       const selected = this._markTarget !== "off" ? 1 : 0;
       this._markMotion = new SelectionMotion(this, {
         fraction: selected,
-        gravitation: this.indeterminate ? 1 : 0,
-        opacity: selected
+        gravitation: this.indeterminate ? 1 : 0
       }, (values) => {
         const mark = this.shadowRoot.querySelector(".mark-check");
         mark.setAttribute("d", checkboxPath(values.fraction, values.gravitation));
-        mark.style.opacity = String(Math.max(0, Math.min(1, values.opacity)));
       });
       return;
     }
@@ -5890,10 +8318,25 @@ var MdCheckbox = class extends HTMLElement {
           snap: previous === "off" || !selected,
           delay: previous === "off" ? 0 : 100,
           transition: true
-        },
-        opacity: { value: selected ? 1 : 0, role: selected ? "expressiveEffectMedium" : "expressiveEffectFast" }
+        }
       });
     });
+  }
+  _paintBox() {
+    const fill2 = this.shadowRoot.querySelector(".box-fill"), outline = this.shadowRoot.querySelector(".box-outline");
+    if (!fill2 || !outline) return;
+    const equal = getComputedStyle(fill2).fill === getComputedStyle(outline).stroke;
+    const geometry = checkboxBox(18, this.outlineStroke, 2, equal);
+    const paint = (node, rect6) => {
+      for (const key of ["x", "y", "width", "height"]) node.setAttribute(key, String(rect6[key]));
+      node.setAttribute("rx", String(Math.max(0, rect6.radius)));
+    };
+    paint(fill2, geometry.fill);
+    outline.style.display = geometry.outline ? "" : "none";
+    if (geometry.outline) {
+      paint(outline, geometry.outline);
+      outline.setAttribute("stroke-width", String(geometry.outline.stroke));
+    }
   }
   _setup() {
     this._abortController?.abort();
@@ -5901,14 +8344,45 @@ var MdCheckbox = class extends HTMLElement {
     const { signal } = this._abortController;
     const root = this.shadowRoot.querySelector(".chk-root");
     if (!root) return;
+    const box3 = root.querySelector(".box");
+    this._layout = new SelectionDOMLayout(this, { kind: "checkbox", control: root, canvas: box3, ripple: root.querySelector(".ripple"), signal });
+    this._colorBinding = bindSelectionColors(this, [
+      {
+        key: "box",
+        scope: box3,
+        node: box3.querySelector(".box-fill"),
+        property: "fill",
+        token: "--_md-checkbox-box",
+        snapDisabled: true,
+        disabledColor: (disabled) => disabled && (this.checked || this.indeterminate) ? { color: "var(--md-sys-color-on-surface)", alpha: 0.38 } : null
+      },
+      {
+        key: "border",
+        scope: box3,
+        node: box3.querySelector(".box-outline"),
+        property: "stroke",
+        token: "--_md-checkbox-border",
+        snapDisabled: true,
+        disabledColor: (disabled) => disabled ? { color: "var(--md-sys-color-on-surface)", alpha: 0.38 } : null
+      },
+      { key: "mark", scope: box3, node: box3.querySelector(".mark-check"), property: "stroke", token: "--_md-checkbox-mark" }
+    ], { disabled: () => this.disabled, role: () => this.checked || this.indeterminate ? "expressiveEffectMedium" : "expressiveEffectFast", onPaint: () => this._paintBox(), signal });
     this.addEventListener("click", (event) => {
       if (event.composedPath()[0] === this && !this.disabled) root.click();
     }, { signal });
+    this._stateLayer = bindStateLayer(root, { disabled: () => this.disabled, hitTest: (event) => this._layout.hoverHitTest(event), property: "--md-selection-state-alpha", onChange: (kind) => {
+      root.classList.toggle("interacting", kind !== null);
+      this._colorBinding.refresh();
+    }, signal });
     const press = (event) => {
       root.classList.add("pressed");
-      createRipple(event, root.querySelector(".ripple"));
+      this._colorBinding.refresh();
+      createRipple(event, root.querySelector(".ripple"), { bounded: false, radius: 20 });
     };
-    const release = () => root.classList.remove("pressed");
+    const release = () => {
+      root.classList.remove("pressed");
+      this._colorBinding.refresh();
+    };
     const activate = () => {
       if (this.disabled) return;
       if (this.indeterminate) {
@@ -5924,9 +8398,10 @@ var MdCheckbox = class extends HTMLElement {
         composed: true
       }));
     };
-    bindPress(root, {
+    this._pressBinding = bindPress(root, {
       disabled: () => this.disabled,
-      ignoreEvent: (event) => event.type.startsWith("key") && event.key === "Enter",
+      pointerPolicy: { input: (event) => ({ ...this._layout.pointerInput(event), clipping: false }), hitTest: (event) => this._layout.hitTest(event), outOfBounds: (event) => this._layout.outOfBounds(event) },
+      keyboardActivation: true,
       onPress: press,
       onRelease: release,
       onActivate: activate,
@@ -5938,12 +8413,15 @@ var MdCheckbox = class extends HTMLElement {
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle10}</style>`}
       <div class="chk-root" role="checkbox" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute("aria-label") || this.getAttribute("label") || this._internals?.labels?.[0]?.textContent.trim() || "Checkbox")}">
-        <span class="ripple" aria-hidden="true"></span>
         <div class="box">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
+          <svg viewBox="0 0 18 18" aria-hidden="true">
+            <rect class="box-fill"></rect>
+            <rect class="box-outline"></rect>
             <path class="mark-check" d=""></path>
           </svg>
         </div>
+        <span class="ripple" aria-hidden="true"></span>
+        <span class="state-layer" aria-hidden="true"></span>
       </div>
     `;
   }
@@ -5954,13 +8432,17 @@ if (!customElements.get("md-checkbox")) {
 
 // src/components/md-radio-button.js
 var defaultStyle11 = `
-  .ripple { position: absolute; width: 40px; height: 40px; border-radius: 50%; pointer-events: none; color: var(--md-sys-color-on-surface); }
-  .md-ripple-effect { position: absolute; background: currentColor; border-radius: 50%; opacity: .1; transform: scale(0); animation: selection-ripple 450ms ease-out forwards; }
-  @keyframes selection-ripple { to { transform: scale(1); opacity: 0; } }
+  /* Default Compose canvas plus its 2dp padding, inside the minimum target. */
+  .ripple { position: absolute; width: 24px; height: 24px; pointer-events: none; }
 
   :host {
-    display: inline-flex;
-    align-items: center;
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    width: var(--_md-selection-width, max(24px, var(--md-minimum-interactive-component-size, 48px)));
+    height: var(--_md-selection-height, max(24px, var(--md-minimum-interactive-component-size, 48px)));
+    max-width: 100%;
+    max-height: 100%;
     outline: none;
     vertical-align: middle;
   }
@@ -5970,8 +8452,8 @@ var defaultStyle11 = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: max(24px, var(--md-minimum-interactive-component-size, 48px));
-    height: max(24px, var(--md-minimum-interactive-component-size, 48px));
+    width: 24px;
+    height: 24px;
     box-sizing: border-box;
     border-radius: 9999px;
     cursor: pointer;
@@ -5984,32 +8466,17 @@ var defaultStyle11 = `
     left: 50%; top: 50%; transform: translate(-50%, -50%);
   }
   .radio-root:focus { outline: none; }
-  .radio-root:focus-visible .ring {
-    outline: 3px solid var(--md-sys-color-secondary, #625B71);
-    outline-offset: 3px;
-  }
 
   /* 40x40 State layer */
-  .radio-root::before {
-    content: '';
+  .state-layer {
     position: absolute;
     width: 40px;
     height: 40px;
     border-radius: 9999px;
-    background: currentColor;
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    opacity: 0;
+    background: rgb(from var(--md-ripple-color, currentColor) r g b / 1);
+    opacity: var(--md-selection-state-alpha, 0);
     pointer-events: none;
-    transition: opacity var(--md-sys-motion-effect-medium-duration) var(--md-sys-motion-effect-medium-easing);
-  }
-  .radio-root:hover:not(.disabled)::before {
-    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-  }
-  .radio-root:focus-visible:not(.disabled)::before {
-    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.10);
-  }
-  .radio-root.pressed:not(.disabled)::before {
-    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.10);
+    transition: none;
   }
 
   /* 20x20 Outer Ring */
@@ -6019,18 +8486,19 @@ var defaultStyle11 = `
     height: 20px;
     box-sizing: border-box;
     border-radius: 9999px;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
+    --_md-radio-color: var(--md-sys-color-on-surface-variant);
+    color: var(--_md-radio-color);
     border: 2px solid currentColor;
     background-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color var(--md-sys-motion-effect-medium-duration) var(--md-sys-motion-effect-medium-easing);
+    transition: none;
     outline: none;
   }
 
   .ring.checked {
-    color: var(--md-sys-color-primary, #6750A4);
+    --_md-radio-color: var(--md-sys-color-primary);
   }
 
   /* Radius animates 0..6dp, then half the 2dp stroke is subtracted. */
@@ -6046,7 +8514,7 @@ var defaultStyle11 = `
     cursor: not-allowed;
   }
   .radio-root.disabled .ring {
-    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+    --_md-radio-color: rgb(from var(--md-sys-color-on-surface) r g b / .38);
     transition: none;
   }
 `;
@@ -6198,6 +8666,10 @@ var MdRadioButton = class extends HTMLElement {
     else root.classList.remove("disabled");
     if (isChecked) ring.classList.add("checked");
     else ring.classList.remove("checked");
+    this._layout?.measure();
+    this._pressBinding?.refresh();
+    this._stateLayer?.refresh();
+    this._colorBinding?.refresh();
     if (this.isConnected) {
       const radius2 = isChecked ? 6 : 0;
       if (!this._dotMotion) {
@@ -6217,12 +8689,24 @@ var MdRadioButton = class extends HTMLElement {
     const { signal } = this._abortController;
     const root = this.shadowRoot.querySelector(".radio-root");
     if (!root) return;
+    const ring = root.querySelector(".ring");
+    this._layout = new SelectionDOMLayout(this, { kind: "radio", control: root, canvas: ring, ripple: root.querySelector(".ripple"), signal });
+    this._colorBinding = bindSelectionColors(this, [{
+      key: "ring",
+      scope: ring,
+      node: ring,
+      property: "color",
+      token: "--_md-radio-color",
+      snapDisabled: true,
+      disabledColor: (disabled) => disabled ? { color: "var(--md-sys-color-on-surface)", alpha: 0.38 } : null
+    }], { disabled: () => this.disabled, signal });
     this.addEventListener("click", (event) => {
       if (event.composedPath()[0] === this && !this.disabled) root.click();
     }, { signal });
+    this._stateLayer = bindStateLayer(root, { disabled: () => this.disabled, hitTest: (event) => this._layout.hoverHitTest(event), property: "--md-selection-state-alpha", signal });
     const press = (event) => {
       root.classList.add("pressed");
-      createRipple(event, root.querySelector(".ripple"));
+      createRipple(event, root.querySelector(".ripple"), { bounded: false, radius: 20 });
     };
     const release = () => root.classList.remove("pressed");
     const activate = () => {
@@ -6247,9 +8731,10 @@ var MdRadioButton = class extends HTMLElement {
       next.shadowRoot.querySelector(".radio-root").focus();
       next.shadowRoot.querySelector(".radio-root").click();
     }, { signal });
-    bindPress(root, {
+    this._pressBinding = bindPress(root, {
       disabled: () => this.disabled,
-      ignoreEvent: (event) => event.type.startsWith("key") && event.key === "Enter",
+      pointerPolicy: { input: (event) => ({ ...this._layout.pointerInput(event), clipping: false }), hitTest: (event) => this._layout.hitTest(event), outOfBounds: (event) => this._layout.outOfBounds(event) },
+      keyboardActivation: true,
       onPress: press,
       onRelease: release,
       onActivate: activate,
@@ -6291,10 +8776,11 @@ var MdRadioButton = class extends HTMLElement {
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? "" : `<style>${defaultStyle11}</style>`}
       <div class="radio-root" role="radio" tabindex="0" aria-checked="false" aria-label="${escapeHtml(this.getAttribute("aria-label") || this.getAttribute("label") || this._internals?.labels?.[0]?.textContent.trim() || this.getAttribute("value") || "Radio button")}">
-        <span class="ripple" aria-hidden="true"></span>
         <div class="ring">
           <div class="dot"></div>
         </div>
+        <span class="ripple" aria-hidden="true"></span>
+        <span class="state-layer" aria-hidden="true"></span>
       </div>
     `;
   }
@@ -6318,80 +8804,80 @@ function cubicBezier(x1, y1, x2, y2, progress) {
 }
 
 // src/components/progress-indicator-layout.js
-var f9 = Math.fround;
-var clamp2 = (x, a, b) => Math.max(a, Math.min(b, x));
+var f17 = Math.fround;
+var clamp5 = (x, a, b) => Math.max(a, Math.min(b, x));
 var phase = (ms, period) => (Math.max(0, ms) % period + period) % period;
 function linearIndeterminateFractions(elapsed) {
   const t = Math.floor(phase(elapsed, 1750));
-  const sample = (delay, duration) => f9(cubicBezier(0.3, 0, 0.8, 0.15, f9(clamp2((t - delay) / duration, 0, 1))));
+  const sample = (delay, duration) => f17(cubicBezier(0.3, 0, 0.8, 0.15, f17(clamp5((t - delay) / duration, 0, 1))));
   return [sample(250, 1e3), sample(0, 1e3), sample(900, 850), sample(650, 850)];
 }
 function circularIndeterminateState(elapsed) {
   const elapsedCycle = phase(elapsed, 6e3), t = Math.floor(elapsedCycle);
   const step = Math.floor(t / 1500), ramp = Math.min(1, t % 1500 / 300);
-  const additional = f9((step + ramp) * 90);
-  const progress = t <= 3e3 ? f9(f9(0.1) + f9(f9(f9(0.87) - f9(0.1)) * f9(t / 3e3))) : f9(f9(0.87) + f9(f9(f9(0.1) - f9(0.87)) * f9(cubicBezier(0.2, 0, 0, 1, f9((t - 3e3) / 3e3)))));
-  return { progress, rotation: f9(f9(f9(elapsedCycle / 6e3) * 1080) + additional) };
+  const additional = f17((step + ramp) * 90);
+  const progress = t <= 3e3 ? f17(f17(0.1) + f17(f17(f17(0.87) - f17(0.1)) * f17(t / 3e3))) : f17(f17(0.87) + f17(f17(f17(0.1) - f17(0.87)) * f17(cubicBezier(0.2, 0, 0, 1, f17((t - 3e3) / 3e3)))));
+  return { progress, rotation: f17(f17(f17(elapsedCycle / 6e3) * 1080) + additional) };
 }
 function standardLinearLayout({ width, height, progress, fractions, gap = 4, stop = 4, cap = "round" }) {
-  progress = f9(progress);
-  const w = f9(width), h = f9(height), butt = cap === "butt" || h > w;
-  const gapFraction = f9(f9(butt ? gap : f9(gap + h)) / w);
+  progress = f17(progress);
+  const w = f17(width), h = f17(height), butt = cap === "butt" || h > w;
+  const gapFraction = f17(f17(butt ? gap : f17(gap + h)) / w);
   const tracks = [], active = [];
   const line = (out, start, end) => {
     if (start === end) return;
     out.push([
-      butt ? f9(start * w) : clamp2(f9(start * w), h / 2, w - h / 2),
-      butt ? f9(end * w) : clamp2(f9(end * w), h / 2, w - h / 2)
+      butt ? f17(start * w) : clamp5(f17(start * w), h / 2, w - h / 2),
+      butt ? f17(end * w) : clamp5(f17(end * w), h / 2, w - h / 2)
     ]);
   };
   if (fractions) {
     const [t1, h1, t2, h2] = fractions;
-    if (h1 < f9(1 - gapFraction)) line(tracks, h1 > 0 ? f9(h1 + gapFraction) : 0, 1);
+    if (h1 < f17(1 - gapFraction)) line(tracks, h1 > 0 ? f17(h1 + gapFraction) : 0, 1);
     if (h1 - t1 > 0) line(active, h1, t1);
-    if (t1 > gapFraction) line(tracks, h2 > 0 ? f9(h2 + gapFraction) : 0, t1 < 1 ? f9(t1 - gapFraction) : 1);
+    if (t1 > gapFraction) line(tracks, h2 > 0 ? f17(h2 + gapFraction) : 0, t1 < 1 ? f17(t1 - gapFraction) : 1);
     if (h2 - t2 > 0) line(active, h2, t2);
-    if (t2 > gapFraction) line(tracks, 0, t2 < 1 ? f9(t2 - gapFraction) : 1);
+    if (t2 > gapFraction) line(tracks, 0, t2 < 1 ? f17(t2 - gapFraction) : 1);
   } else {
-    const start = f9(progress + Math.min(progress, gapFraction));
+    const start = f17(progress + Math.min(progress, gapFraction));
     if (start <= 1) line(tracks, start, 1);
     line(active, 0, progress);
   }
-  const size = Math.min(stop, h), offset = Math.min((h - size) / 2, 6);
+  const size = Math.min(stop, h), offset2 = Math.min((h - size) / 2, 6);
   return {
     tracks,
     active,
     cap: butt ? "butt" : cap,
-    stop: fractions || size <= 0 ? null : { x: w - size / 2 - offset, y: h / 2, size }
+    stop: fractions || size <= 0 ? null : { x: w - size / 2 - offset2, y: h / 2, size }
   };
 }
 function standardCircularLayout({ size, stroke = 4, progress, rotation = 270, gap = 4, cap = "round" }) {
-  progress = f9(progress);
-  const sweep = f9(progress * 360);
-  const gapSweep = f9(f9(f9((cap === "butt" ? gap : f9(gap + stroke)) / f9(Math.PI * size)) * 360));
+  progress = f17(progress);
+  const sweep = f17(progress * 360);
+  const gapSweep = f17(f17(f17((cap === "butt" ? gap : f17(gap + stroke)) / f17(Math.PI * size)) * 360));
   const adaptive = Math.min(sweep, gapSweep);
   return {
-    radius: f9(f9(size - stroke) / 2),
+    radius: f17(f17(size - stroke) / 2),
     start: rotation,
     sweep,
-    trackStart: f9(f9(rotation + sweep) + adaptive),
-    trackSweep: f9(f9(360 - sweep) - f9(2 * adaptive))
+    trackStart: f17(f17(rotation + sweep) + adaptive),
+    trackSweep: f17(f17(360 - sweep) - f17(2 * adaptive))
   };
 }
 function linearWavyLayout({ width, height, stroke = 4, trackStroke = stroke, fractions, gap = 4, stop = 4, cap = "round", trackCap = cap }) {
   const capWidth = cap === "butt" && trackCap === "butt" || height > width ? 0 : Math.max(stroke / 2, trackStroke / 2);
-  const clampX = (x2) => clamp2(x2, capWidth, width - capWidth);
+  const clampX = (x2) => clamp5(x2, capWidth, width - capWidth);
   const active = [], tracks = [];
-  let nextEnd = width - capWidth, adaptiveGap = gap, visible = false;
+  let nextEnd = width - capWidth, adaptiveGap = gap, visible2 = false;
   for (let i = 0; i < fractions.length; i += 2) {
     const tail = fractions[i] * width, head = fractions[i + 1] * width;
     if (i === 0) {
       adaptiveGap = head < capWidth ? 0 : Math.min(head - capWidth, gap);
-      visible = head >= capWidth;
+      visible2 = head >= capWidth;
     }
     const start = clampX(tail), end = clampX(head);
     if (end > start) active.push([start, end]);
-    const spacing = visible ? adaptiveGap + capWidth * 2 : adaptiveGap;
+    const spacing = visible2 ? adaptiveGap + capWidth * 2 : adaptiveGap;
     if (nextEnd > end + spacing) tracks.push([nextEnd, Math.max(capWidth, end + spacing)]);
     if (head > tail) nextEnd = Math.max(capWidth, start - spacing);
   }
@@ -6416,11 +8902,11 @@ function split(points, t) {
   const a = mix(points[0], points[1], t), b = mix(points[1], points[2], t), c = mix(a, b, t);
   return [[points[0], a, c], [c, b, points[2]]];
 }
-function linearWaveSegments(start, end, { height, stroke = 4, wavelength, amplitude = 1, offset = 0 }) {
+function linearWaveSegments(start, end, { height, stroke = 4, wavelength, amplitude = 1, offset: offset2 = 0 }) {
   if (end <= start) return [];
   if (!amplitude) return [[[start, height / 2], [(start + end) / 2, height / 2], [end, height / 2]]];
   const dx = wavelength / 2, dy = height - stroke, measure = halfWaveMeasure(dx, dy), scale2 = measure.length / dx;
-  const shift = offset * wavelength, from = (start + shift) * scale2, to = (end + shift) * scale2, result = [];
+  const shift = offset2 * wavelength, from = (start + shift) * scale2, to = (end + shift) * scale2, result = [];
   const inverse = (distance) => {
     if (distance <= 0) return 0;
     if (distance >= measure.length) return 1;
@@ -6448,7 +8934,7 @@ function linearWaveSegments(start, end, { height, stroke = 4, wavelength, amplit
 var progressMorphs = { "5": [1, 0.5, 0.49999994, 0.47155723, 0.49999997, [[0.8728427, 0.22911389, 0.8783204, 0.23665328, 0.88354254, 0.24431728, 0.8885088, 0.25209427], [0.8885088, 0.25209427, 0.8988186, 0.26823878, 0.9080266, 0.28487018, 0.91613275, 0.3018844], [0.91613275, 0.3018844, 0.93250465, 0.3362481, 0.94438183, 0.37217337, 0.95176446, 0.4088028], [0.95176446, 0.4088028, 0.9640112, 0.46956605, 0.9638893, 0.532267, 0.95139897, 0.59299165], [0.95139897, 0.59299165, 0.9438995, 0.6294522, 0.93194103, 0.6652003, 0.91552365, 0.69938874], [0.91552365, 0.69938874, 0.90747625, 0.71614695, 0.89835745, 0.73253053, 0.8881674, 0.74843955], [0.8881674, 0.74843955, 0.8833032, 0.7560334, 0.87819505, 0.7635192, 0.8728427, 0.770886]], [[0.8213799, 0.2458391, 0.8270108, 0.25358918, 0.83302915, 0.26105767, 0.83941394, 0.26821536], [0.839414, 0.26821533, 0.8526036, 0.28300157, 0.8657932, 0.29778782, 0.8789829, 0.31257406], [0.8789829, 0.31257406, 0.92145276, 0.36018494, 0.94268763, 0.38399038, 0.95398504, 0.4050985], [0.95398504, 0.4050985, 0.98571706, 0.4643873, 0.98571706, 0.53561264, 0.95398504, 0.59490144], [0.95398504, 0.59490144, 0.94268763, 0.6160096, 0.92145276, 0.639815, 0.8789829, 0.68742585], [0.8789829, 0.68742585, 0.8657932, 0.70221215, 0.8526036, 0.7169985, 0.8394139, 0.73178476], [0.83941394, 0.73178476, 0.83302903, 0.73894256, 0.82701075, 0.74641085, 0.8213801, 0.7541608]], [[0.960859, 0.49999994, 0.960859, 0.59506166, 0.9315202, 0.6901234, 0.8728427, 0.770886]], [[0.97778404, 0.5, 0.97778404, 0.53262854, 0.969851, 0.5652571, 0.95398504, 0.59490144], [0.95398504, 0.59490144, 0.94268763, 0.6160096, 0.92145276, 0.639815, 0.8789829, 0.68742585], [0.8789829, 0.68742585, 0.8657932, 0.70221215, 0.8526036, 0.7169985, 0.83941394, 0.73178476], [0.83941394, 0.73178476, 0.826644, 0.7461005, 0.81534064, 0.7616583, 0.8056716, 0.778227], [0.8056716, 0.778227, 0.7956848, 0.7953403, 0.78569806, 0.8124536, 0.77571124, 0.829567], [0.77571124, 0.829567, 0.7435546, 0.8846709, 0.7274761, 0.91222286, 0.71089226, 0.9294899]]], "6": [1, 0.51092076, 0.5, 0.5064112, 0.5, [[0.93447584, 0.25546035, 0.9455922, 0.27471453, 0.95529413, 0.2945372, 0.9635816, 0.3147837], [0.9635816, 0.3147837, 0.9717514, 0.3347426, 0.9785466, 0.35511345, 0.9839672, 0.37575752], [0.9839672, 0.37575752, 1.0054421, 0.45754272, 1.0053437, 0.54361707, 0.98367167, 0.6253629], [0.98367167, 0.6253629, 0.9782372, 0.6458615, 0.9714462, 0.666088, 0.9632986, 0.6859064], [0.9632986, 0.6859064, 0.9550735, 0.7059133, 0.9454659, 0.7255044, 0.9344759, 0.74453974]], [[0.88103724, 0.28370982, 0.8917829, 0.30232173, 0.9046457, 0.31971124, 0.9194159, 0.33551466], [0.9194158, 0.33551463, 0.94285923, 0.36059806, 0.9545809, 0.3731398, 0.96153265, 0.3826082], [0.96153265, 0.3826082, 1.0128224, 0.45246595, 1.0128224, 0.547534, 0.9615327, 0.6173917], [0.9615327, 0.6173917, 0.9545809, 0.62686014, 0.94285923, 0.6394019, 0.9194157, 0.6644854], [0.9194157, 0.6644854, 0.90464556, 0.6802888, 0.8917828, 0.69767827, 0.8810373, 0.71629006]], [[1, 0.50000006, 1.0000001, 0.58443946, 0.9781587, 0.6688789, 0.93447584, 0.7445397]], [[0.99999994, 0.49999994, 1, 0.5412314, 0.98717755, 0.58246285, 0.9615327, 0.6173917], [0.9615327, 0.6173917, 0.9545809, 0.62686014, 0.94285923, 0.6394019, 0.9194157, 0.6644854], [0.9194157, 0.6644854, 0.88987535, 0.6960924, 0.8679643, 0.7340435, 0.855362, 0.7754297], [0.855362, 0.7754297, 0.84536093, 0.8082738, 0.8403603, 0.8246958, 0.83563614, 0.8354508]]], "7": [1, 0.49999994, 0.49999994, 0.49517143, 0.5, [[0.9320587, 0.29193154, 0.94408506, 0.3169046, 0.9538272, 0.34265965, 0.9612852, 0.3688997], [0.9612852, 0.3688997, 0.98565876, 0.45465428, 0.9856367, 0.54558843, 0.9612189, 0.63133365], [0.9612189, 0.63133365, 0.95376945, 0.657493, 0.94404936, 0.68316936, 0.93205863, 0.7080683]], [[0.88255584, 0.31344587, 0.89429486, 0.33782232, 0.9100957, 0.36024275, 0.9294623, 0.37967744], [0.9294624, 0.37967744, 0.99574983, 0.4461979, 0.99574983, 0.5538021, 0.9294624, 0.6203225], [0.9294623, 0.62032247, 0.9100956, 0.6397573, 0.89429474, 0.6621777, 0.88255566, 0.6865542]], [[0.97954893, 0.49999994, 0.9795489, 0.57116264, 0.9637188, 0.6423253, 0.9320586, 0.70806843]], [[0.97917795, 0.49999997, 0.97917795, 0.5435311, 0.9626061, 0.5870623, 0.9294623, 0.62032247], [0.9294623, 0.62032247, 0.89072883, 0.65919214, 0.8662588, 0.7100045, 0.86001927, 0.76452243]]], "8": [1, 0.50618637, 0.50000006, 0.5070844, 0.50000006, [[0.95669526, 0.31339327, 0.9672748, 0.33893457, 0.97559285, 0.36515066, 0.9816493, 0.39175305], [0.9816493, 0.39175305, 0.9978831, 0.46305886, 0.99786836, 0.53714, 0.98160505, 0.60844076], [0.98160505, 0.60844076, 0.9755523, 0.6349767, 0.96724916, 0.66112745, 0.95669526, 0.68660676]], [[0.90425843, 0.33548543, 0.9145976, 0.3604465, 0.9302179, 0.3832201, 0.9504088, 0.40209094], [0.9504089, 0.402091, 1.0070844, 0.455061, 1.0070845, 0.54493904, 0.9504089, 0.5979091], [0.9504088, 0.59790915, 0.93021774, 0.61678004, 0.9145974, 0.63955384, 0.90425813, 0.66451514]], [[0.9938136, 0.50000006, 0.9938136, 0.5634328, 0.9814408, 0.6268656, 0.95669526, 0.6866069]], [[0.9929156, 0.5, 0.9929156, 0.535712, 0.97874665, 0.57142407, 0.9504088, 0.59790915], [0.9504088, 0.59790915, 0.91002685, 0.6356509, 0.88792735, 0.6890038, 0.8897943, 0.7442456]]], "9": [0, 0.5, 0.5, 0.49789155, 0.5, [[0.95810384, 0.3332639, 0.9671067, 0.35799915, 0.97404194, 0.38328126, 0.97890955, 0.40885907], [0.97890955, 0.40885907, 0.9903783, 0.46912426, 0.99036866, 0.5310309, 0.9788805, 0.5912934], [0.9788805, 0.5912934, 0.9740144, 0.61681914, 0.9670888, 0.6420499, 0.9581038, 0.66673607], [0.9581037, 0.6667362, 0.94910085, 0.69147134, 0.9381626, 0.7152964, 0.9254504, 0.7380189], [0.9254504, 0.7380189, 0.8954983, 0.7915567, 0.85569793, 0.8389739, 0.8081615, 0.87775314], [0.8081615, 0.87775314, 0.78802615, 0.8941792, 0.7665028, 0.90905553, 0.74375194, 0.9221908], [0.74375194, 0.9221908, 0.7209559, 0.9353521, 0.6972622, 0.94657207, 0.6729184, 0.95580727], [0.6729184, 0.95580727, 0.6155601, 0.97756684, 0.5545921, 0.9883073, 0.49325, 0.98745805], [0.49325, 0.98745805, 0.46726707, 0.98709846, 0.44121704, 0.98465943, 0.41534576, 0.9800976], [0.4153458, 0.9800976, 0.3894231, 0.9755267, 0.3640606, 0.96889186, 0.3394759, 0.96031845], [0.3394759, 0.96031845, 0.28155005, 0.9401181, 0.22794202, 0.9091563, 0.18149717, 0.8690759], [0.18149717, 0.8690759, 0.16182429, 0.8520989, 0.14343661, 0.8334857, 0.12655036, 0.8133615], [0.12655036, 0.8133614, 0.10963042, 0.793197, 0.09446639, 0.7718114, 0.08114421, 0.7494409], [0.08114421, 0.7494409, 0.049755186, 0.6967327, 0.028590985, 0.63855624, 0.018775363, 0.577999], [0.018775363, 0.577999, 0.014617686, 0.5523482, 0.012496147, 0.52627033, 0.012496147, 0.49999994], [0.012496147, 0.49999988, 0.012496147, 0.4736774, 0.014626111, 0.44754824, 0.018800126, 0.4218483], [0.018800126, 0.4218483, 0.028634863, 0.36129475, 0.04981733, 0.3031246, 0.08122377, 0.25042543], [0.08122377, 0.25042543, 0.09452679, 0.2281033, 0.109664164, 0.20676275, 0.12655048, 0.18663844], [0.12655045, 0.18663844, 0.14347024, 0.16647424, 0.16189742, 0.14782721, 0.1816145, 0.13082296], [0.1816145, 0.13082296, 0.22807136, 0.09075795, 0.28168905, 0.059812903, 0.33962205, 0.03963066], [0.33962205, 0.03963066, 0.36416113, 0.031081924, 0.38947448, 0.024464224, 0.41534582, 0.019902408], [0.4153461, 0.01990238, 0.44126844, 0.015331574, 0.46737036, 0.012891901, 0.4934044, 0.012539742], [0.4934044, 0.012539742, 0.554746, 0.011709981, 0.61571085, 0.022469496, 0.6730633, 0.044247728], [0.6730633, 0.044247728, 0.69735634, 0.053472452, 0.72100127, 0.06467411, 0.7437521, 0.07780935], [0.7437522, 0.07780932, 0.7665482, 0.09097062, 0.78811187, 0.1058799, 0.80828166, 0.12234473], [0.80828166, 0.12234473, 0.8558051, 0.1611386, 0.89559054, 0.2085681, 0.925526, 0.2621163], [0.925526, 0.2621163, 0.9382061, 0.28479812, 0.94911885, 0.30857772, 0.95810384, 0.3332639]], [[0.90375537, 0.35227776, 0.912724, 0.37691906, 0.92786205, 0.39931488, 0.94829786, 0.41707084], [0.9482979, 0.4170708, 0.99870473, 0.4608674, 0.9987048, 0.5391326, 0.9482979, 0.58292925], [0.94829786, 0.5829293, 0.92786205, 0.60068524, 0.912724, 0.623081, 0.90375537, 0.6477223], [0.90375537, 0.6477223, 0.8947866, 0.67236364, 0.89198726, 0.69925034, 0.89622873, 0.7259881], [0.89622873, 0.7259881, 0.90669066, 0.7919392, 0.85638267, 0.85189384, 0.7896169, 0.85304314], [0.7896169, 0.85304314, 0.7625489, 0.85350907, 0.73655677, 0.86093473, 0.7138473, 0.874046], [0.7138473, 0.874046, 0.6911377, 0.8871573, 0.6717107, 0.9059544, 0.65777314, 0.92916316], [0.65777314, 0.92916316, 0.6233949, 0.9864094, 0.54631865, 1, 0.4944344, 0.9579642], [0.49443442, 0.9579642, 0.47339952, 0.940922, 0.44871524, 0.92990303, 0.42289084, 0.9253495], [0.42289084, 0.9253495, 0.39706653, 0.9207959, 0.37010217, 0.9227079, 0.34450713, 0.9315279], [0.34450716, 0.9315279, 0.28137475, 0.95328325, 0.21359505, 0.91415066, 0.20086944, 0.84859866], [0.20086944, 0.8485986, 0.19571027, 0.8220228, 0.183884, 0.797715, 0.16702846, 0.7776273], [0.16702846, 0.7776273, 0.15017281, 0.75753945, 0.12828785, 0.74167174, 0.10301149, 0.73197603], [0.10301146, 0.731976, 0.04066524, 0.7080607, 0.013896971, 0.63451546, 0.04628454, 0.57611996], [0.04628454, 0.57611996, 0.059415027, 0.5524454, 0.06598029, 0.52622277, 0.065980315, 0.5000001], [0.065980315, 0.5000001, 0.065980345, 0.47377732, 0.05941511, 0.4475546, 0.04628461, 0.42387995], [0.04628454, 0.42387986, 0.013896971, 0.3654843, 0.040665302, 0.29193908, 0.103011556, 0.26802388], [0.103011556, 0.26802382, 0.12828794, 0.25832814, 0.1501729, 0.24246037, 0.16702858, 0.22237252], [0.16702858, 0.22237252, 0.1838841, 0.2022848, 0.19571039, 0.17797706, 0.20086958, 0.15140122], [0.20086958, 0.15140122, 0.21359518, 0.08584934, 0.28137484, 0.046716742, 0.34450722, 0.068472], [0.34450734, 0.06847197, 0.3701026, 0.07729203, 0.39706728, 0.07920398, 0.42289186, 0.07465028], [0.42289186, 0.07465028, 0.44871587, 0.07009668, 0.47339982, 0.059077736, 0.49443442, 0.042035885], [0.49443462, 0.042035755, 0.546319, 0, 0.62339514, 0.013590652, 0.6577733, 0.070836894], [0.6577733, 0.070836924, 0.6717108, 0.09404547, 0.6911376, 0.11284243, 0.713847, 0.12595378], [0.713847, 0.12595378, 0.7365566, 0.13906527, 0.7625489, 0.14649102, 0.7896171, 0.14695697], [0.789617, 0.146957, 0.8563828, 0.1481063, 0.90669066, 0.20806092, 0.89622873, 0.27401197], [0.89622873, 0.274012, 0.89198726, 0.30074972, 0.89478666, 0.32763648, 0.90375537, 0.35227776]], [[0.9875038, 0.5, 0.9875039, 0.5564427, 0.9777038, 0.61288536, 0.9581037, 0.6667362], [0.9581037, 0.6667362, 0.91890365, 0.7744375, 0.84301, 0.864884, 0.74375194, 0.9221908], [0.74375194, 0.9221908, 0.64449376, 0.9794975, 0.5282181, 1, 0.4153458, 0.9800976], [0.4153458, 0.9800976, 0.30247357, 0.9601951, 0.20022245, 0.9011605, 0.12655036, 0.8133614], [0.12655036, 0.8133614, 0.05287825, 0.72556233, 0.012496147, 0.6146134, 0.012496147, 0.49999988], [0.012496147, 0.49999988, 0.012496147, 0.38538644, 0.05287831, 0.27443743, 0.12655045, 0.18663844], [0.12655045, 0.18663844, 0.20022257, 0.09883948, 0.30247363, 0.039804816, 0.4153461, 0.01990238], [0.4153461, 0.01990238, 0.52821827, 0, 0.644494, 0.020502592, 0.7437522, 0.07780932], [0.7437522, 0.07780932, 0.84301025, 0.13511607, 0.91890377, 0.22556247, 0.95810384, 0.3332639], [0.95810384, 0.3332639, 0.97770387, 0.3871146, 0.9875039, 0.44355732, 0.9875038, 0.5]], [[0.98610306, 0.5, 0.98610306, 0.53051543, 0.9735013, 0.5610309, 0.94829786, 0.5829293], [0.94829786, 0.5829293, 0.90742624, 0.6184412, 0.8877458, 0.6725126, 0.89622873, 0.7259881], [0.89622873, 0.7259881, 0.90669066, 0.7919392, 0.85638267, 0.85189384, 0.7896169, 0.85304314], [0.7896169, 0.85304314, 0.7354807, 0.85397506, 0.68564826, 0.8827458, 0.65777314, 0.92916316], [0.65777314, 0.92916316, 0.6233949, 0.9864094, 0.54631865, 1, 0.49443442, 0.9579642], [0.49443442, 0.9579642, 0.45236468, 0.9238799, 0.3956972, 0.9138879, 0.34450716, 0.9315279], [0.34450716, 0.9315279, 0.28137475, 0.95328325, 0.21359505, 0.91415066, 0.20086944, 0.8485986], [0.20086944, 0.8485986, 0.19055107, 0.79544675, 0.15356405, 0.75136733, 0.10301146, 0.731976], [0.10301146, 0.731976, 0.04066524, 0.7080607, 0.013896971, 0.63451546, 0.04628454, 0.57611996], [0.04628454, 0.57611996, 0.07254555, 0.5287708, 0.07254558, 0.47122917, 0.04628454, 0.42387986], [0.04628454, 0.42387986, 0.013896971, 0.3654843, 0.040665302, 0.29193908, 0.103011556, 0.26802382], [0.103011556, 0.26802382, 0.15356414, 0.2486325, 0.19055119, 0.2045531, 0.20086958, 0.15140122], [0.20086958, 0.15140122, 0.21359518, 0.08584934, 0.28137484, 0.046716742, 0.34450734, 0.06847197], [0.34450734, 0.06847197, 0.39569733, 0.086111896, 0.4523647, 0.076119974, 0.49443462, 0.042035755], [0.49443462, 0.042035755, 0.546319, 0, 0.62339514, 0.013590652, 0.6577733, 0.070836924], [0.6577733, 0.070836924, 0.68564844, 0.11725424, 0.73548096, 0.14602506, 0.789617, 0.146957], [0.789617, 0.146957, 0.8563828, 0.1481063, 0.90669066, 0.20806092, 0.89622873, 0.274012], [0.89622873, 0.274012, 0.8877458, 0.32748744, 0.90742624, 0.38155892, 0.9482979, 0.4170708], [0.9482979, 0.4170708, 0.9735013, 0.4389691, 0.98610306, 0.46948457, 0.98610306, 0.5]]], "10": [1, 0.5040456, 0.5, 0.5057865, 0.5, [[0.9757263, 0.34674183, 0.9835216, 0.3707333, 0.98943937, 0.39517084, 0.99347955, 0.4198395], [0.99347955, 0.4198395, 1.0021801, 0.47296363, 1.0021734, 0.5271598, 0.9934596, 0.58028233], [0.9934596, 0.58028233, 0.98941976, 0.60490966, 0.9835087, 0.6293062, 0.97572625, 0.6532582]], [[0.9222192, 0.36469322, 0.9300524, 0.3888012, 0.9447365, 0.41068313, 0.9652808, 0.4272903], [0.9652809, 0.42729038, 1.011573, 0.46471113, 1.011573, 0.53528893, 0.9652809, 0.5727096], [0.9652808, 0.5727097, 0.94473636, 0.58931696, 0.9300522, 0.6111991, 0.92221904, 0.6353072]], [[1, 0.5, 1, 0.5517268, 0.9919087, 0.6034536, 0.97572625, 0.6532584]], [[1, 0.5, 1, 0.52699965, 0.9884269, 0.5539993, 0.9652808, 0.5727097], [0.9652808, 0.5727097, 0.92419195, 0.6059242, 0.90654427, 0.6602381, 0.9202629, 0.7112606]]], "11": [1, 0.5, 0.50000006, 0.4996316, 0.50000006, [[0.97167903, 0.3615027, 0.97829187, 0.38402393, 0.9832576, 0.40690032, 0.9865764, 0.42995504], [0.9865764, 0.42995504, 0.9932683, 0.47644216, 0.9932637, 0.523654, 0.9865627, 0.5701401], [0.9865627, 0.5701401, 0.98324406, 0.59316266, 0.97828275, 0.61600715, 0.97167903, 0.6384974]], [[0.9171153, 0.3774166, 0.9238498, 0.40035176, 0.93778247, 0.42117327, 0.9578637, 0.43630686], [0.9578637, 0.4363069, 1.0002033, 0.4682147, 1.0002033, 0.5317854, 0.9578637, 0.5636932], [0.9578637, 0.5636933, 0.9377822, 0.578827, 0.9238495, 0.5996487, 0.917115, 0.622584]], [[0.9915919, 0.5000001, 0.9915919, 0.546643, 0.98495424, 0.593286, 0.9716789, 0.63849753]], [[0.9896184, 0.50000006, 0.9896184, 0.5238697, 0.97903347, 0.5477393, 0.9578637, 0.5636933], [0.9578637, 0.5636933, 0.9177007, 0.59396076, 0.90213275, 0.64698046, 0.9195561, 0.6941568]]], "12": [1, 0.50280756, 0.5, 0.5049412, 0.5, [[0.9803466, 0.3720439, 0.9860807, 0.3934438, 0.99035096, 0.41513276, 0.9931574, 0.43696323], [0.9931574, 0.43696323, 0.9985404, 0.47883755, 0.99853736, 0.5212325, 0.9931484, 0.56310624], [0.9931484, 0.56310624, 0.9903419, 0.58491325, 0.98607457, 0.60657895, 0.9803466, 0.6279561]], [[0.92646074, 0.3870547, 0.9323426, 0.40900546, 0.9456884, 0.4289562, 0.9654113, 0.44284993], [0.9654113, 0.44284993, 1.0049412, 0.4706966, 1.0049412, 0.5293034, 0.9654113, 0.5571501], [0.9654113, 0.5571502, 0.9456883, 0.57104397, 0.93234235, 0.59099483, 0.9264606, 0.6129458]], [[0.9971924, 0.5, 0.9971924, 0.5430217, 0.99157715, 0.58604336, 0.9803466, 0.6279562]], [[0.9950588, 0.5, 0.9950588, 0.52161336, 0.98517627, 0.5432267, 0.9654113, 0.5571502], [0.9654113, 0.5571502, 0.9259653, 0.5849377, 0.9120276, 0.6369538, 0.93229496, 0.6807416]]], "13": [1, 0.49999994, 0.5, 0.50066364, 0.5, [[0.9796086, 0.38178724, 0.9845871, 0.40198594, 0.9882705, 0.42242056, 0.99065876, 0.44296828], [0.99065876, 0.44296828, 0.9950651, 0.4808777, 0.9950632, 0.51917225, 0.99065304, 0.55708134], [0.99065304, 0.55708134, 0.9882645, 0.57761234, 0.984583, 0.5980303, 0.97960854, 0.61821276]], [[0.9263733, 0.3950724, 0.9315561, 0.41609985, 0.9443773, 0.43524462, 0.9637326, 0.44802645], [0.96373266, 0.4480265, 1.0010146, 0.4726467, 1.0010147, 0.5273532, 0.9637327, 0.5519735], [0.9637326, 0.5519736, 0.9443771, 0.5647555, 0.93155587, 0.58390045, 0.92637306, 0.6049281]], [[0.99396217, 0.5, 0.99396217, 0.53969467, 0.9891776, 0.5793894, 0.97960854, 0.61821294]], [[0.99169415, 0.49999997, 0.9916942, 0.51983166, 0.9823737, 0.5396634, 0.9637326, 0.5519736], [0.9637326, 0.5519736, 0.92502177, 0.57753736, 0.9124476, 0.62855315, 0.9348442, 0.6691786]]], "14": [1, 0.5020806, 0.5, 0.50445575, 0.5, [[0.98751605, 0.3892025, 0.99191034, 0.4084552, 0.99514455, 0.42790395, 0.9972188, 0.44744527], [0.9972188, 0.44744527, 1.0009284, 0.48239583, 1.000927, 0.5176425, 0.9972146, 0.5525929], [0.9972146, 0.5525929, 0.9951403, 0.5721213, 0.9919075, 0.5915573, 0.98751605, 0.6107975]], [[0.9370998, 0.40125236, 0.941733, 0.42155114, 0.9541594, 0.4400711, 0.97326547, 0.45193332], [0.97326547, 0.4519333, 1.0089115, 0.47406465, 1.0089115, 0.52593535, 0.97326547, 0.5480667], [0.97326547, 0.5480667, 0.95415926, 0.559929, 0.9417329, 0.57844913, 0.9370997, 0.598748]], [[0.9999999, 0.5, 0.9999999, 0.53716695, 0.99583864, 0.5743339, 0.98751605, 0.6107975]], [[1, 0.5, 0.99999994, 0.5185005, 0.9910885, 0.537001, 0.97326547, 0.5480667], [0.97326547, 0.5480667, 0.93505305, 0.57179135, 0.9235596, 0.6221473, 0.94769406, 0.66010237]]], "15": [1, 0.5, 0.5, 0.50127506, 0.50000006, [[0.9846296, 0.3969889, 0.9884858, 0.41513127, 0.991312, 0.4334361, 0.9931079, 0.4518166], [0.9931079, 0.4518166, 0.9962402, 0.48387203, 0.9962392, 0.51615757, 0.9931051, 0.5482128], [0.9931051, 0.5482128, 0.9913089, 0.5665834, 0.9884838, 0.5848783, 0.9846296, 0.6030111]], [[0.93329924, 0.40817088, 0.9373992, 0.4274592, 0.9492608, 0.44509768, 0.967791, 0.4559446], [0.9677911, 0.45594463, 1.0014708, 0.47565943, 1.0014709, 0.52434057, 0.9677911, 0.5440554], [0.9677911, 0.5440554, 0.94926083, 0.5549023, 0.93739927, 0.57254076, 0.9332992, 0.591829]], [[0.99545646, 0.5, 0.99545646, 0.5345267, 0.9918475, 0.5690534, 0.9846295, 0.60301125]], [[0.9930509, 0.5, 0.99305093, 0.517099, 0.984631, 0.534198, 0.9677911, 0.5440554], [0.9677911, 0.5440554, 0.9307303, 0.56574935, 0.9203446, 0.6146102, 0.94537765, 0.6495025]]], "16": [1, 0.5015911, 0.5, 0.5040253, 0.50000006, [[0.9888628, 0.40307567, 0.99229586, 0.4203346, 0.9948029, 0.43773043, 0.996384, 0.4551893], [0.996384, 0.4551893, 0.99908465, 0.48500946, 0.9990839, 0.5150136, 0.996382, 0.54483366], [0.996382, 0.54483366, 0.9948007, 0.56228477, 0.9922943, 0.57967293, 0.9888628, 0.59692436]], [[0.93860626, 0.41355675, 0.94228595, 0.4320554, 0.953716, 0.4490124, 0.9718232, 0.45903242], [0.9718232, 0.45903242, 1.0040253, 0.47685215, 1.0040253, 0.52314794, 0.9718232, 0.54096764], [0.9718232, 0.54096764, 0.9537159, 0.5509877, 0.9422859, 0.5679448, 0.93860626, 0.58644354]], [[0.998409, 0.5, 0.998409, 0.5324649, 0.99522686, 0.56492984, 0.9888628, 0.59692454]], [[0.9959748, 0.5, 0.9959748, 0.51602894, 0.9879243, 0.53205776, 0.9718232, 0.54096764], [0.9718232, 0.54096764, 0.9356086, 0.56100786, 0.926103, 0.608796, 0.9518918, 0.6411694]]], "17": [1, 0.5, 0.5, 0.5016373, 0.50000006, [[0.98800504, 0.40877607, 0.9910694, 0.4251687, 0.9933005, 0.44167706, 0.9946985, 0.45823833], [0.9946985, 0.45823833, 0.99704516, 0.48603576, 0.9970447, 0.513982, 0.9946972, 0.54177934], [0.9946972, 0.54177934, 0.993299, 0.5583347, 0.9910683, 0.57483715, 0.9880051, 0.5912239]], [[0.93877256, 0.41828555, 0.9420952, 0.4360602, 0.95313007, 0.45239314, 0.9708284, 0.4616752], [0.9708284, 0.4616752, 1.0017297, 0.4778817, 1.0017297, 0.5221184, 0.9708284, 0.5383249], [0.9708284, 0.5383249, 0.9531298, 0.54760706, 0.942095, 0.56394035, 0.93877244, 0.5817152]], [[0.9964583, 0.5, 0.9964583, 0.53053856, 0.99364054, 0.5610771, 0.9880051, 0.59122396]], [[0.9940044, 0.50000006, 0.99400437, 0.51511085, 0.9862791, 0.53022164, 0.9708284, 0.5383249], [0.9708284, 0.5383249, 0.93543154, 0.55688906, 0.9266891, 0.6036572, 0.9529896, 0.6337546]]], "18": [1, 0.5012627, 0.49999994, 0.50374246, 0.50000006, [[0.99242306, 0.4133951, 0.99518824, 0.42907742, 0.9971967, 0.44485894, 0.9984481, 0.4606854], [0.9984481, 0.4606854, 1.0005177, 0.48685914, 1.0005174, 0.51315576, 0.99844694, 0.53932947], [0.99844694, 0.53932947, 0.99719536, 0.5551509, 0.9951874, 0.57092744, 0.99242306, 0.5866048]], [[0.94634676, 0.4219573, 0.94938385, 0.4391809, 0.96012586, 0.4550459, 0.97754526, 0.46372488], [0.97754526, 0.46372488, 1.0074849, 0.4786419, 1.0074849, 0.5213582, 0.97754526, 0.5362752], [0.97754526, 0.5362752, 0.96012586, 0.5449542, 0.94938385, 0.56081915, 0.94634676, 0.5780427]], [[1, 0.49999997, 1, 0.5289786, 0.9974744, 0.5579573, 0.99242306, 0.5866049]], [[1, 0.50000006, 1, 0.51440835, 0.9925151, 0.5288167, 0.97754526, 0.5362752], [0.97754526, 0.5362752, 0.9427062, 0.5536333, 0.9345771, 0.59973574, 0.9613783, 0.62796265]]], "19": [1, 0.5, 0.49999994, 0.50184834, 0.50000006, [[0.9903814, 0.41816977, 0.9928702, 0.43308413, 0.99467385, 0.44808358, 0.9957923, 0.46312127], [0.9957923, 0.46312127, 0.9976189, 0.4876771, 0.99761856, 0.5123348, 0.9957915, 0.5368906], [0.9957915, 0.5368906, 0.9946728, 0.5519243, 0.99286944, 0.5669197, 0.99038136, 0.5818301]], [[0.94326764, 0.4263404, 0.9460158, 0.44280896, 0.9563321, 0.45801458, 0.9732271, 0.46602914], [0.9732271, 0.46602914, 1.001873, 0.479618, 1.001873, 0.52038205, 0.9732271, 0.53397095], [0.9732271, 0.53397095, 0.95633185, 0.5419856, 0.9460156, 0.5571914, 0.9432676, 0.5736601]], [[0.997162, 0.4999999, 0.997162, 0.5273702, 0.9949018, 0.55474055, 0.9903814, 0.5818301]], [[0.9947115, 0.5, 0.9947115, 0.5135883, 0.98755, 0.5271765, 0.9732271, 0.53397095], [0.9732271, 0.53397095, 0.93943685, 0.55000013, 0.9319621, 0.59479374, 0.9587168, 0.6209262]]], "20": [1, 0.5010218, 0.5, 0.5034576, 0.5, [[0.99284756, 0.4221024, 0.99510884, 0.43637955, 0.9967446, 0.4507306, 0.9977548, 0.46511465], [0.9977548, 0.46511465, 0.99938637, 0.48834613, 0.9993861, 0.5116637, 0.99775416, 0.5348952], [0.99775416, 0.5348952, 0.99674386, 0.5492759, 0.9951083, 0.56362367, 0.99284756, 0.5778976]], [[0.94678104, 0.42978507, 0.94929683, 0.44566837, 0.95928776, 0.46036762, 0.97579664, 0.46783933], [0.97579676, 0.46783936, 1.0034575, 0.4803583, 1.0034575, 0.5196417, 0.97579676, 0.5321607], [0.97579664, 0.5321607, 0.9592875, 0.53963256, 0.9492966, 0.55433214, 0.9467809, 0.5702157]], [[0.99897826, 0.5, 0.99897826, 0.52604634, 0.9969347, 0.5520927, 0.99284756, 0.5778976]], [[0.99654233, 0.5, 0.99654233, 0.5129506, 0.9896271, 0.5259012, 0.97579664, 0.5321607], [0.97579664, 0.5321607, 0.9427786, 0.5471043, 0.9358327, 0.59095883, 0.96261704, 0.61537415]]], "21": [1, 0.5, 0.50000006, 0.50196534, 0.49999997, [[0.992117, 0.42582548, 0.99417603, 0.43948627, 0.995663, 0.45321137, 0.9965781, 0.46696505], [0.9965781, 0.46696505, 0.99804175, 0.48896673, 0.9980415, 0.51104164, 0.99657744, 0.53304327], [0.99657744, 0.53304327, 0.99566245, 0.54679424, 0.9941756, 0.5605166, 0.992117, 0.57417464]], [[0.9470616, 0.43291283, 0.9493736, 0.44825113, 0.9590591, 0.46247798, 0.9751937, 0.46945828], [0.9751937, 0.46945828, 1.0019459, 0.48103207, 1.0019459, 0.51896787, 0.97519374, 0.53054166], [0.9751936, 0.5305417, 0.9590589, 0.5375221, 0.94937325, 0.5517493, 0.9470614, 0.5670879]], [[0.9976756, 0.50000006, 0.9976756, 0.52479434, 0.9958227, 0.5495887, 0.9921169, 0.5741749]], [[0.99525785, 0.49999997, 0.9952578, 0.5123774, 0.9885698, 0.52475476, 0.9751936, 0.5305417], [0.9751936, 0.5305417, 0.94292444, 0.5445023, 0.93645114, 0.58744967, 0.9631718, 0.6103016]]], "22": [1, 0.50084686, 0.5, 0.50325507, 0.50000006, [[0.9949195, 0.42896318, 0.9968084, 0.44210166, 0.9981706, 0.45529667, 0.99900603, 0.46851677], [0.99900603, 0.46851677, 1.0003314, 0.48948714, 1.0003312, 0.5105205, 0.9990057, 0.53149086], [0.9990057, 0.53149086, 0.9981702, 0.54470843, 0.9968081, 0.5579009, 0.9949195, 0.5710368]], [[0.9522641, 0.43544248, 0.95440704, 0.45034698, 0.96385276, 0.46420145, 0.97970444, 0.47076872], [0.97970444, 0.47076872, 1.0057448, 0.4815571, 1.0057449, 0.518443, 0.9797045, 0.52923137], [0.97970444, 0.5292314, 0.9638529, 0.5357986, 0.9544072, 0.54965293, 0.9522641, 0.56455714]], [[0.99999994, 0.5, 1, 0.52373964, 0.9983065, 0.5474793, 0.9949195, 0.5710369]], [[0.99923474, 0.50000006, 0.9992348, 0.5119186, 0.9927247, 0.5238372, 0.97970444, 0.5292314], [0.97970444, 0.5292314, 0.94800097, 0.54236597, 0.9419215, 0.58464956, 0.9686404, 0.606184]]], "23": [1, 0.5, 0.5, 0.50202286, 0.5, [[0.9934222, 0.43218073, 0.9951527, 0.44477102, 0.996399, 0.45741093, 0.99716127, 0.47007278], [0.99716127, 0.47007278, 0.99836123, 0.4900083, 0.9983611, 0.509998, 0.99716085, 0.5299335], [0.99716085, 0.5299335, 0.9963986, 0.54259324, 0.9951525, 0.5552311, 0.9934222, 0.5678193]], [[0.95032847, 0.43838227, 0.9523015, 0.45273596, 0.9614289, 0.46610636, 0.97685033, 0.47223476], [0.97685033, 0.47223473, 1.0019749, 0.48221916, 1.0019749, 0.51778084, 0.97685033, 0.5277653], [0.97685015, 0.52776533, 0.96142864, 0.5338938, 0.95230126, 0.5472643, 0.9503284, 0.5616182]], [[0.9980611, 0.5, 0.9980611, 0.52265936, 0.9965148, 0.5453186, 0.99342215, 0.56781936]], [[0.9956938, 0.5, 0.99569374, 0.5113865, 0.98941267, 0.522773, 0.97685015, 0.52776533], [0.97685015, 0.52776533, 0.9460071, 0.54002225, 0.9403408, 0.5812474, 0.9667334, 0.6013712]]], "24": [1, 0.5007109, 0.5, 0.5030492, 0.50000006, [[0.9950237, 0.43492255, 0.99661946, 0.44704378, 0.99776757, 0.45920902, 0.9984677, 0.4713936], [0.9984677, 0.4713936, 0.999563, 0.49045056, 0.99956286, 0.50955474, 0.9984675, 0.52861166], [0.9984675, 0.52861166, 0.9977672, 0.5407945, 0.99661934, 0.55295795, 0.9950237, 0.5650774]], [[0.952867, 0.4407807, 0.9546983, 0.45469034, 0.9635708, 0.46767294, 0.9786555, 0.47343197], [0.9786555, 0.47343197, 1.0030493, 0.48274502, 1.0030493, 0.51725507, 0.9786555, 0.5265681], [0.9786555, 0.5265681, 0.96357083, 0.5323271, 0.9546983, 0.54530966, 0.952867, 0.55921924]], [[0.99928904, 0.5, 0.99928904, 0.5217391, 0.9978673, 0.5434782, 0.9950237, 0.5650775]], [[0.9969508, 0.5, 0.9969508, 0.5109558, 0.99085236, 0.5219116, 0.9786555, 0.5265681], [0.9786555, 0.5265681, 0.94848585, 0.53808624, 0.9431655, 0.578499, 0.9693259, 0.5974332]]], "25": [1, 0.50000006, 0.5, 0.5020421, 0.49999997, [[0.9944289, 0.4375393, 0.99590284, 0.44920722, 0.9969622, 0.4609145, 0.99760675, 0.47263905], [0.99760675, 0.47263905, 0.99860907, 0.49086738, 0.99860895, 0.5091374, 0.9976065, 0.52736574], [0.9976065, 0.52736574, 0.99696183, 0.53908867, 0.99590266, 0.55079436, 0.9944289, 0.56246066]], [[0.9531839, 0.44300783, 0.9548881, 0.45649743, 0.9635175, 0.46911216, 0.9782737, 0.47453225], [0.9782737, 0.47453225, 1.0019763, 0.48323843, 1.0019763, 0.51676154, 0.9782737, 0.5254677], [0.9782737, 0.5254677, 0.96351755, 0.53088784, 0.9548881, 0.5435024, 0.9531838, 0.55699193]], [[0.99835837, 0.49999997, 0.9983584, 0.5208617, 0.99704856, 0.5417234, 0.9944288, 0.56246084]], [[0.99605066, 0.49999997, 0.9960506, 0.5105573, 0.99012494, 0.5211146, 0.9782737, 0.5254677], [0.9782737, 0.5254677, 0.94876105, 0.53630805, 0.943756, 0.5759271, 0.96964556, 0.59376633]]], "26": [1, 0.5006069, 0.5, 0.502892, 0.5, [[0.99635893, 0.43980482, 0.99772793, 0.4510793, 0.99871093, 0.462389, 0.9993077, 0.47371405], [0.9993077, 0.47371405, 1.0002308, 0.49122694, 1.0002307, 0.5087765, 0.9993075, 0.52628934], [0.9993075, 0.52628934, 0.9987106, 0.5376133, 0.99772775, 0.5489218, 0.99635893, 0.56019515]], [[0.9569248, 0.4448708, 0.9585207, 0.45801294, 0.9669503, 0.4703252, 0.98144203, 0.47545338], [0.98144203, 0.47545338, 1.0045779, 0.48364046, 1.0045779, 0.51635957, 0.98144203, 0.5245466], [0.98144203, 0.5245466, 0.96695006, 0.5296749, 0.9585205, 0.5419874, 0.9569247, 0.55512977]], [[1, 0.5, 1, 0.52010196, 0.99878633, 0.5402039, 0.99635893, 0.56019527]], [[0.9987939, 0.5, 0.9987939, 0.51022655, 0.9930099, 0.5204531, 0.98144203, 0.5245466], [0.98144203, 0.5245466, 0.95245826, 0.5348031, 0.9477236, 0.5737965, 0.9734106, 0.5906912]]], "27": [1, 0.5, 0.50000006, 0.50203663, 0.5, [[0.9952209, 0.4421171, 0.99649113, 0.45298463, 0.9974023, 0.46388346, 0.9979547, 0.474796], [0.9979547, 0.474796, 0.9988047, 0.49158913, 0.99880457, 0.5084146, 0.9979545, 0.52520776], [0.9979545, 0.52520776, 0.9974021, 0.53611904, 0.99649096, 0.54701674, 0.9952209, 0.557883]], [[0.95570886, 0.44697395, 0.9571965, 0.45969915, 0.9653789, 0.47164172, 0.9795156, 0.47646737], [0.9795157, 0.4764674, 1.0019596, 0.4841287, 1.0019596, 0.5158713, 0.9795157, 0.5235326], [0.9795156, 0.5235326, 0.96537864, 0.52835834, 0.95719624, 0.5403012, 0.95570874, 0.5530266]], [[0.99859214, 0.5, 0.99859214, 0.51932704, 0.99746835, 0.5386541, 0.9952209, 0.5578831]], [[0.99634856, 0.5, 0.9963486, 0.509851, 0.9907376, 0.51970196, 0.9795156, 0.5235326], [0.9795156, 0.5235326, 0.9512416, 0.5331841, 0.9467859, 0.5713042, 0.9720722, 0.58721596]]], "28": [1, 0.5005229, 0.5, 0.50273377, 0.5, [[0.99633986, 0.44413474, 0.9975242, 0.45464572, 0.9983733, 0.4651854, 0.998887, 0.47573745], [0.998887, 0.47573745, 0.999674, 0.49190384, 0.9996739, 0.50809944, 0.9988867, 0.52426577], [0.9988867, 0.52426577, 0.99837303, 0.5348168, 0.997524, 0.5453553, 0.99633986, 0.5558653]], [[0.9576464, 0.44874406, 0.9590411, 0.46112144, 0.967018, 0.47275713, 0.98086387, 0.47732177], [0.98086387, 0.47732177, 1.0027337, 0.48453173, 1.0027337, 0.5154683, 0.98086387, 0.52267826], [0.98086387, 0.52267826, 0.96701765, 0.527243, 0.9590407, 0.53887916, 0.95764625, 0.5512569]], [[0.9994771, 0.5, 0.9994771, 0.51865155, 0.9984313, 0.5373031, 0.99633986, 0.5558653]], [[0.99726623, 0.5, 0.99726623, 0.5095366, 0.99179876, 0.51907325, 0.98086387, 0.52267826], [0.98086387, 0.52267826, 0.95317185, 0.5318076, 0.94895625, 0.56922174, 0.97392255, 0.5842843]]], "29": [1, 0.50000006, 0.5, 0.50201505, 0.5, [[0.9958557, 0.44607252, 0.9969613, 0.45623884, 0.9977534, 0.46643102, 0.9982319, 0.47663444], [0.9982319, 0.47663444, 0.998962, 0.49220383, 0.9989619, 0.5077993, 0.9982317, 0.5233687], [0.9982317, 0.5233687, 0.9977532, 0.53357106, 0.99696124, 0.5437622, 0.9958557, 0.5539275]], [[0.95796263, 0.450413, 0.9592726, 0.46245766, 0.9670514, 0.47379875, 0.98061234, 0.4781213], [0.98061234, 0.4781213, 1.0019315, 0.48491684, 1.0019315, 0.5150832, 0.98061234, 0.5218787], [0.9806122, 0.5218788, 0.96705145, 0.5262013, 0.9592726, 0.53754234, 0.9579626, 0.54958695]], [[0.9987794, 0.5, 0.9987794, 0.5180026, 0.9978048, 0.53600526, 0.99585557, 0.5539276]], [[0.9966017, 0.5, 0.9966017, 0.5092405, 0.991272, 0.51848096, 0.9806122, 0.5218788], [0.9806122, 0.5218788, 0.9534904, 0.5305239, 0.9494968, 0.5672436, 0.9741262, 0.5815171]]], "30": [1, 0.5004559, 0.5, 0.50260675, 0.50000006, [[0.9972632, 0.44778353, 0.9982997, 0.45764565, 0.99904186, 0.46753046, 0.99948955, 0.47742507], [0.99948955, 0.47742507, 1.0001701, 0.49246854, 1.0001701, 0.5075346, 0.9994895, 0.5225782], [0.9994895, 0.5225782, 0.9990418, 0.53247166, 0.9982997, 0.54235536, 0.9972633, 0.5522165]], [[0.96078634, 0.4518441, 0.96202266, 0.46360564, 0.9696337, 0.47469708, 0.9829559, 0.47880718], [0.9829559, 0.47880718, 1.0038095, 0.48524085, 1.0038095, 0.5147593, 0.9829559, 0.52119297], [0.9829559, 0.52119297, 0.96963346, 0.5253031, 0.9620224, 0.53639495, 0.9607862, 0.5481568]], [[0.99999994, 0.5, 1, 0.5174289, 0.99908775, 0.53485775, 0.9972633, 0.5522165]], [[0.9985961, 0.50000006, 0.9985961, 0.5089881, 0.9933827, 0.51797616, 0.9829559, 0.52119297], [0.9829559, 0.52119297, 0.9563111, 0.5294133, 0.9525119, 0.56556, 0.97686535, 0.5791405]]], "31": [1, 0.5, 0.5, 0.50198317, 0.5, [[0.99637187, 0.44952402, 0.9973429, 0.45907265, 0.99803764, 0.4686423, 0.99845624, 0.47822103], [0.99845624, 0.47822103, 0.9990903, 0.49273428, 0.9990903, 0.50726837, 0.99845606, 0.5217816], [0.99845606, 0.5217816, 0.99803746, 0.53135943, 0.9973427, 0.54092824, 0.9963718, 0.550476]], [[0.95998967, 0.4534254, 0.9611525, 0.46485996, 0.9685652, 0.4756589, 0.98159015, 0.47955212], [0.98159015, 0.47955212, 1.0018965, 0.4856218, 1.0018965, 0.5143782, 0.98159015, 0.52044785], [0.98159015, 0.5204479, 0.9685653, 0.5243411, 0.96115255, 0.53513986, 0.95998967, 0.5465743]], [[0.99893165, 0.5, 0.99893165, 0.51684695, 0.99807835, 0.53369397, 0.9963718, 0.55047613]], [[0.99682, 0.5, 0.99682, 0.5087065, 0.9917433, 0.517413, 0.98159015, 0.5204479], [0.98159015, 0.5204479, 0.9555401, 0.5282343, 0.9519393, 0.56364393, 0.9758886, 0.5765149]]], "32": [1, 0.5004006, 0.5, 0.50248003, 0.5, [[0.9971958, 0.45106986, 0.9981088, 0.46033967, 0.9987617, 0.46962905, 0.99915445, 0.4789269], [0.99915445, 0.4789269, 0.9997479, 0.49296993, 0.99974775, 0.5070322, 0.9991544, 0.52107525], [0.9991544, 0.52107525, 0.9987616, 0.5303724, 0.9981087, 0.53966105, 0.9971958, 0.54893017]], [[0.9615247, 0.4547879, 0.96262336, 0.4659425, 0.96986675, 0.47649193, 0.9826401, 0.48019442], [0.9826401, 0.48019442, 1.0024799, 0.4859453, 1.0024799, 0.5140548, 0.9826401, 0.5198056], [0.98264, 0.5198056, 0.9698666, 0.5235082, 0.96262324, 0.53405774, 0.9615247, 0.5452124]], [[0.99959946, 0.5, 0.99959946, 0.51633024, 0.99879825, 0.53266037, 0.9971957, 0.5489302]], [[0.99751997, 0.5, 0.9975199, 0.5084651, 0.99256, 0.5169302, 0.98264, 0.5198056], [0.98264, 0.5198056, 0.9570935, 0.52721065, 0.95366675, 0.56200284, 0.9772778, 0.57424945]]], "33": [1, 0.5, 0.5, 0.50194484, 0.50000006, [[0.9967973, 0.4525617, 0.9976567, 0.46156162, 0.99827087, 0.47057906, 0.99864006, 0.47960404], [0.99864006, 0.47960404, 0.999196, 0.49319625, 0.99919605, 0.5068056, 0.99864006, 0.52039784], [0.99864006, 0.52039784, 0.99827087, 0.52942216, 0.9976567, 0.53843904, 0.9967973, 0.5474383]], [[0.96182454, 0.4560873, 0.962864, 0.46697152, 0.9699429, 0.47727895, 0.98246866, 0.480803], [0.9824688, 0.480803, 1.0018572, 0.4862579, 1.0018572, 0.51374215, 0.9824688, 0.519197], [0.9824688, 0.519197, 0.969943, 0.52272105, 0.962864, 0.5330286, 0.96182454, 0.5439129]], [[0.9990572, 0.5, 0.9990571, 0.51583076, 0.99830383, 0.5316615, 0.9967973, 0.54743826]], [[0.99701, 0.5, 0.99701005, 0.5082348, 0.99216294, 0.5164696, 0.9824688, 0.519197], [0.9824688, 0.519197, 0.9574169, 0.5262453, 0.9541528, 0.5604277, 0.9774182, 0.57208973]]], "34": [1, 0.50035524, 0.5, 0.5023747, 0.50000006, [[0.9978686, 0.45389864, 0.9986801, 0.4626563, 0.9992598, 0.47142994, 0.9996079, 0.48021036], [0.9996079, 0.48021036, 1.0001307, 0.49339896, 1.0001307, 0.50660306, 0.99960774, 0.51979166], [0.99960774, 0.51979166, 0.9992597, 0.5285714, 0.99868, 0.53734434, 0.99786854, 0.54610133]], [[0.9640337, 0.4572215, 0.9650208, 0.46787128, 0.9719573, 0.47796962, 0.9842705, 0.48133492], [0.9842705, 0.48133495, 1.0032682, 0.4865272, 1.0032682, 0.5134729, 0.9842705, 0.51866513], [0.9842705, 0.5186652, 0.9719572, 0.5220305, 0.9650208, 0.5321289, 0.96403366, 0.5427786]], [[1, 0.5, 1, 0.5153834, 0.9992895, 0.53076684, 0.9978686, 0.5461014]], [[0.9985188, 0.50000006, 0.9985188, 0.5080345, 0.9937694, 0.51606905, 0.9842705, 0.5186652], [0.9842705, 0.5186652, 0.95964366, 0.5253959, 0.95652425, 0.5590597, 0.979495, 0.5702009]]], "35": [1, 0.49999994, 0.5, 0.50190276, 0.5, [[0.99715203, 0.45525563, 0.997918, 0.46376586, 0.998465, 0.47229046, 0.998793, 0.48082122], [0.998793, 0.48082122, 0.99928457, 0.49360305, 0.9992845, 0.5063987, 0.9987929, 0.51918054], [0.9987929, 0.51918054, 0.9984649, 0.52771074, 0.99791795, 0.53623474, 0.9971521, 0.5447444]], [[0.9634947, 0.45845625, 0.9644296, 0.46884185, 0.9712032, 0.4787019, 0.9832639, 0.48190653], [0.9832639, 0.48190653, 1.0018156, 0.48683584, 1.0018156, 0.51316416, 0.9832639, 0.5180935], [0.9832639, 0.5180935, 0.9712031, 0.52129817, 0.9644295, 0.5311583, 0.9634947, 0.54154396]], [[0.9991617, 0.5, 0.99916166, 0.5149295, 0.99849176, 0.52985895, 0.9971521, 0.54474473]], [[0.99717766, 0.5, 0.99717766, 0.5078144, 0.99253976, 0.5156288, 0.9832639, 0.5180935], [0.9832639, 0.5180935, 0.9591423, 0.5245029, 0.9561694, 0.5575342, 0.97875893, 0.56814754]]], "36": [1, 0.5003167, 0.5, 0.5022704, 0.50000006, [[0.9977832, 0.45647737, 0.99850816, 0.4647637, 0.99902564, 0.47306406, 0.99933577, 0.48137048], [0.99933577, 0.48137048, 0.9997992, 0.4937861, 0.99979913, 0.5062152, 0.9993357, 0.5186309], [0.9993357, 0.5186309, 0.9990256, 0.5269368, 0.9985081, 0.5352367, 0.9977832, 0.54352266]], [[0.96474487, 0.459539, 0.96563333, 0.4696941, 0.97226495, 0.47934672, 0.9841069, 0.48240805], [0.9841069, 0.48240802, 1.0022703, 0.48710358, 1.0022703, 0.5128966, 0.9841069, 0.51759213], [0.9841069, 0.51759213, 0.97226495, 0.5206535, 0.9656334, 0.530306, 0.96474475, 0.540461]], [[0.9996834, 0.5, 0.9996834, 0.51452184, 0.99904996, 0.5290437, 0.9977831, 0.54352283]], [[0.99772954, 0.50000006, 0.99772954, 0.50762224, 0.9931886, 0.51524436, 0.9841069, 0.51759213], [0.9841069, 0.51759213, 0.9604228, 0.52371484, 0.9575805, 0.5562029, 0.9798416, 0.56634533]]], "37": [1, 0.50000006, 0.5, 0.50185853, 0.49999997, [[0.99745125, 0.45766053, 0.9981381, 0.46572998, 0.9986282, 0.47381237, 0.99892163, 0.48190036], [0.99892163, 0.48190036, 0.99935913, 0.49396324, 0.9993592, 0.5060384, 0.99892163, 0.51810133], [0.99892163, 0.51810133, 0.99862814, 0.52618873, 0.998138, 0.53427064, 0.99745125, 0.5423395]], [[0.96502227, 0.46057928, 0.9658677, 0.4705106, 0.97236073, 0.47996113, 0.98398715, 0.48288748], [0.9839872, 0.48288748, 1.0017726, 0.48736402, 1.0017726, 0.51263595, 0.9839872, 0.51711243], [0.9839872, 0.51711243, 0.9723606, 0.52003884, 0.96586746, 0.52948976, 0.96502227, 0.53942126]], [[0.9992497, 0.5, 0.9992497, 0.51412636, 0.9986502, 0.5282527, 0.9974512, 0.54233956]], [[0.9973263, 0.49999997, 0.99732625, 0.5074371, 0.9928799, 0.5148742, 0.9839872, 0.51711243], [0.9839872, 0.51711243, 0.9607341, 0.5229652, 0.9580147, 0.55491537, 0.9799443, 0.56461376]]], "38": [1, 0.50028443, 0.5, 0.5021816, 0.50000006, [[0.998293, 0.45873398, 0.99894536, 0.46660712, 0.9994107, 0.47449133, 0.999689, 0.48238024], [0.999689, 0.48238024, 1.0001035, 0.49412352, 1.0001035, 0.5058773, 0.9996891, 0.5176206], [0.9996891, 0.5176206, 0.9994106, 0.52550924, 0.99894536, 0.53339314, 0.998293, 0.54126596]], [[0.9667989, 0.46150154, 0.96760577, 0.4712354, 0.97397685, 0.48050803, 0.9854143, 0.4833128], [0.9854143, 0.4833128, 1.002867, 0.48759264, 1.002867, 0.5124075, 0.9854143, 0.51668733], [0.9854143, 0.51668733, 0.9739766, 0.51949215, 0.96760553, 0.528765, 0.96679884, 0.53849906]], [[0.9999999, 0.5, 0.9999999, 0.5137665, 0.9994309, 0.52753305, 0.9982929, 0.541266]], [[0.9985038, 0.50000006, 0.9985038, 0.50727373, 0.9941406, 0.5145474, 0.9854143, 0.51668733], [0.9854143, 0.51668733, 0.9625387, 0.522297, 0.95993, 0.5537794, 0.98157036, 0.56307787]]], "39": [1, 0.50000006, 0.5000002, 0.5018134, 0.50000006, [[0.99770546, 0.45982122, 0.99832475, 0.46749264, 0.9987664, 0.4751757, 0.99903035, 0.48286384], [0.99903035, 0.48286384, 0.9994224, 0.4942847, 0.99942243, 0.50571656, 0.99903035, 0.5171374], [0.99903035, 0.5171374, 0.9987663, 0.5248252, 0.99832475, 0.532508, 0.99770546, 0.54017913]], [[0.9664251, 0.46249312, 0.9671935, 0.47200885, 0.9734281, 0.4810832, 0.9846486, 0.48376572], [0.9846488, 0.48376578, 1.0017296, 0.48784938, 1.0017295, 0.51215076, 0.98464876, 0.51623434], [0.98464876, 0.51623434, 0.97342813, 0.5189169, 0.9671934, 0.52799153, 0.9664252, 0.5375074]], [[0.9993244, 0.5000002, 0.9993244, 0.513405, 0.9987848, 0.5268099, 0.99770546, 0.54017925]], [[0.99745935, 0.50000006, 0.9974593, 0.5070963, 0.9931891, 0.5141926, 0.98464876, 0.51623434], [0.98464876, 0.51623434, 0.9622074, 0.52159953, 0.9597102, 0.55253273, 0.98100036, 0.56142825]]], "40": [1, 0.50025666, 0.5, 0.502094, 0.49999997, [[0.9982037, 0.46081066, 0.9987931, 0.46830016, 0.9992133, 0.4757998, 0.9994642, 0.48330373], [0.9994642, 0.48330373, 0.99983644, 0.49443176, 0.99983644, 0.50556934, 0.9994643, 0.51669735], [0.9994643, 0.51669735, 0.9992133, 0.5242009, 0.99879307, 0.5317002, 0.9982037, 0.5391893]], [[0.967465, 0.4633746, 0.9681987, 0.47269723, 0.9743126, 0.48159638, 0.98534197, 0.48416865], [0.98534197, 0.48416865, 1.002094, 0.48807555, 1.002094, 0.5119244, 0.98534197, 0.5158313], [0.9853419, 0.5158313, 0.97431254, 0.5184036, 0.96819866, 0.52730286, 0.967465, 0.53662556]], [[0.99974346, 0.5, 0.99974346, 0.5130734, 0.99923015, 0.5261467, 0.9982037, 0.5391893]], [[0.997906, 0.49999997, 0.997906, 0.5069389, 0.993718, 0.51387787, 0.9853419, 0.5158313], [0.9853419, 0.5158313, 0.9632832, 0.5209759, 0.9608864, 0.55142814, 0.981869, 0.5599601]]], "41": [1, 0.5000001, 0.5, 0.50175065, 0.5, [[0.99792385, 0.4617721, 0.9984851, 0.469083, 0.99888515, 0.47640407, 0.9991238, 0.48372942], [0.9991238, 0.48372942, 0.99947727, 0.49457362, 0.99947727, 0.5054273, 0.9991238, 0.5162715], [0.9991238, 0.5162715, 0.9988851, 0.5235965, 0.9984851, 0.5309173, 0.99792385, 0.53822786]], [[0.9677012, 0.46422726, 0.9684026, 0.47336137, 0.97439826, 0.48208898, 0.9852388, 0.48455676], [0.9852388, 0.48455676, 1.0016693, 0.48829708, 1.0016693, 0.511703, 0.9852388, 0.51544327], [0.98523873, 0.5154433, 0.97439826, 0.5179111, 0.96840256, 0.5266387, 0.9677012, 0.5357728]], [[0.99938893, 0.49999997, 0.99938893, 0.5127529, 0.99890053, 0.5255058, 0.9979238, 0.538228]], [[0.9975617, 0.50000006, 0.99756163, 0.5067866, 0.99345404, 0.51357317, 0.98523873, 0.5154433], [0.98523873, 0.5154433, 0.9635574, 0.52037895, 0.961256, 0.55035436, 0.98193, 0.55854183]]], "42": [1, 0.5002328, 0.5, 0.50193775, 0.5, [[0.99860245, 0.4626525, 0.9991381, 0.4698015, 0.9995198, 0.47695875, 0.9997476, 0.48411968], [0.9997476, 0.48411968, 1.0000842, 0.49470437, 1.0000842, 0.5052969, 0.9997476, 0.51588166], [0.9997476, 0.51588166, 0.9995198, 0.5230421, 0.9991382, 0.530199, 0.99860245, 0.5373475]], [[0.96909887, 0.4649921, 0.96977115, 0.47395778, 0.9756612, 0.48253214, 0.9863338, 0.4849049], [0.9863338, 0.4849049, 1.0024774, 0.488494, 1.0024774, 0.5115061, 0.9863338, 0.5150952], [0.98633367, 0.51509523, 0.97566104, 0.51746804, 0.9697709, 0.5260426, 0.9690988, 0.5350083]], [[0.99999994, 0.5, 1, 0.51245755, 0.99953413, 0.52491516, 0.99860233, 0.5373476]], [[0.9984415, 0.50000006, 0.9984415, 0.5066503, 0.9944056, 0.51330066, 0.98633367, 0.51509523], [0.98633367, 0.51509523, 0.96498793, 0.51984096, 0.9627731, 0.5493947, 0.98317325, 0.5572689]]], "43": [1, 0.5000001, 0.50000006, 0.5015871, 0.50000006, [[0.99811226, 0.46354306, 0.99862325, 0.47052532, 0.9989873, 0.47751665, 0.9992042, 0.4845118], [0.9992042, 0.4845118, 0.9995245, 0.4948349, 0.9995245, 0.5051663, 0.9992044, 0.51548946], [0.9992044, 0.51548946, 0.9989873, 0.5224842, 0.99862325, 0.52947515, 0.99811226, 0.53645706]], [[0.96877885, 0.46580648, 0.9694218, 0.47458875, 0.9751959, 0.4829954, 0.9856801, 0.48527306], [0.9856801, 0.4852731, 1.0015082, 0.4887117, 1.0015082, 0.5112884, 0.9856801, 0.51472706], [0.9856801, 0.51472706, 0.9751958, 0.5170047, 0.9694217, 0.5254115, 0.96877885, 0.5341938]], [[0.9994445, 0.5000001, 0.9994445, 0.5121615, 0.99900043, 0.5243229, 0.99811226, 0.53645736]], [[0.9975512, 0.50000006, 0.9975512, 0.5065039, 0.99359417, 0.51300776, 0.9856801, 0.51472706], [0.9856801, 0.51472706, 0.9647113, 0.51928246, 0.96258354, 0.54835457, 0.9826656, 0.5559145]]], "44": [1, 0.50021213, 0.5, 0.50175524, 0.50000006, [[0.99851507, 0.46436083, 0.99900365, 0.4711914, 0.9993515, 0.4780299, 0.99955875, 0.48487177], [0.99955875, 0.48487177, 0.9998642, 0.49495488, 0.99986416, 0.50504535, 0.9995587, 0.5151285], [0.9995587, 0.5151285, 0.9993515, 0.5219703, 0.9990036, 0.5288087, 0.99851507, 0.53563917]], [[0.96960676, 0.46653914, 0.97022325, 0.47515696, 0.9758935, 0.48341328, 0.9862094, 0.48560432], [0.9862094, 0.48560432, 1.0017551, 0.48890612, 1.0017551, 0.51109403, 0.9862094, 0.51439583], [0.9862093, 0.51439583, 0.975893, 0.5165869, 0.9702228, 0.52484363, 0.9696066, 0.53346175]], [[0.9997878, 0.5, 0.9997878, 0.51188767, 0.99936354, 0.52377534, 0.99851507, 0.5356394]], [[0.99786866, 0.50000006, 0.99786866, 0.5063725, 0.99398226, 0.5127449, 0.9862093, 0.51439583], [0.9862093, 0.51439583, 0.96557707, 0.51877797, 0.9635284, 0.54742193, 0.98332703, 0.5546958]]], "45": [1, 0.5, 0.5, 0.5014453, 0.50000006, [[0.9982757, 0.46515712, 0.998743, 0.47183985, 0.9990756, 0.47852954, 0.99927366, 0.48522228], [0.99927366, 0.48522228, 0.99956524, 0.49507228, 0.9995653, 0.50492877, 0.9992738, 0.5147788], [0.9992738, 0.5147788, 0.9990757, 0.52147114, 0.99874306, 0.5281606, 0.9982758, 0.5348429]], [[0.96979123, 0.46725047, 0.9703827, 0.47570744, 0.97595096, 0.48381627, 0.9861005, 0.4859249], [0.9861005, 0.4859249, 1.0013692, 0.48909697, 1.0013692, 0.51090306, 0.9861005, 0.51407516], [0.9861005, 0.51407516, 0.9759505, 0.51618385, 0.97038233, 0.5242932, 0.9697911, 0.5327504]], [[0.9994925, 0.5, 0.9994925, 0.5116214, 0.999087, 0.5232428, 0.9982758, 0.534843]], [[0.9975521, 0.5, 0.99755204, 0.50624454, 0.99373484, 0.5124891, 0.9861005, 0.51407516], [0.9861005, 0.51407516, 0.9658009, 0.5182924, 0.9638277, 0.5465115, 0.98334277, 0.5535129]]], "46": [1, 0.50019413, 0.5, 0.5015999, 0.5, [[0.9988352, 0.46589214, 0.99928284, 0.47243622, 0.9996014, 0.4789886, 0.999791, 0.4855444], [0.999791, 0.4855444, 1.0000697, 0.49517912, 1.0000697, 0.50482136, 0.99979097, 0.51445603], [0.99979097, 0.51445603, 0.99960136, 0.5210117, 0.99928284, 0.5275639, 0.9988352, 0.53410786]], [[0.9709703, 0.4678945, 0.971539, 0.47620624, 0.97701514, 0.48418224, 0.9870152, 0.48621532], [0.9870152, 0.48621532, 1.0020341, 0.48926875, 1.0020341, 0.5107313, 0.9870152, 0.5137847], [0.9870151, 0.51378477, 0.977015, 0.5158178, 0.9715389, 0.5237939, 0.9709703, 0.5321057]], [[1, 0.5, 1, 0.5113776, 0.99961174, 0.52275515, 0.99883515, 0.5341081]], [[0.99827933, 0.50000006, 0.99827933, 0.506129, 0.9945246, 0.512258, 0.9870151, 0.51378477], [0.9870151, 0.51378477, 0.9670148, 0.51785094, 0.9651106, 0.54568934, 0.98437107, 0.55244106]]], "47": [1, 0.49999988, 0.5, 0.50132155, 0.50000006, [[0.9984191, 0.46663496, 0.9988481, 0.47304282, 0.9991533, 0.4794555, 0.9993349, 0.48587027], [0.9993349, 0.48587027, 0.99960154, 0.49528894, 0.99960154, 0.50471205, 0.9993349, 0.5141307], [0.9993349, 0.5141307, 0.9991533, 0.5205451, 0.998848, 0.5269575, 0.9984191, 0.5333651]], [[0.97074354, 0.46857637, 0.9712896, 0.47673145, 0.97666585, 0.48456317, 0.9865007, 0.48652074], [0.9865008, 0.48652077, 1.0012485, 0.48945624, 1.0012485, 0.5105439, 0.9865008, 0.51347935], [0.9865007, 0.51347935, 0.97666585, 0.5154369, 0.9712896, 0.5232685, 0.9707435, 0.5314236]], [[0.9995349, 0.49999997, 0.9995349, 0.5111265, 0.999163, 0.52225304, 0.9984191, 0.5333655]], [[0.9975616, 0.50000006, 0.9975616, 0.5060059, 0.99387467, 0.51201165, 0.9865007, 0.51347935], [0.9865007, 0.51347935, 0.96683055, 0.51739454, 0.96499556, 0.544807, 0.98396826, 0.55130905]]], "48": [1, 0.5001783, 0.49999994, 0.5014616, 0.50000006, [[0.9987518, 0.46732187, 0.9991633, 0.4736004, 0.9994562, 0.47988436, 0.9996302, 0.4861706], [0.9996302, 0.4861706, 0.99988556, 0.49538898, 0.9998855, 0.5046123, 0.9996302, 0.5138308], [0.9996302, 0.5138308, 0.9994561, 0.52011657, 0.9991633, 0.5264, 0.9987518, 0.53267807]], [[0.9714619, 0.46919483, 0.97198725, 0.47720832, 0.9772731, 0.4849097, 0.98695904, 0.48679805], [0.98695904, 0.48679802, 1.0014615, 0.48962536, 1.0014615, 0.5103748, 0.98695904, 0.51320213], [0.9869591, 0.51320213, 0.9772731, 0.51509047, 0.9719872, 0.522792, 0.971462, 0.53080547]], [[0.99982166, 0.49999994, 0.9998217, 0.51089805, 0.9994651, 0.5217962, 0.9987518, 0.5326781]], [[0.9978359, 0.50000006, 0.9978359, 0.50589424, 0.99421024, 0.5117885, 0.9869591, 0.51320213], [0.9869591, 0.51320213, 0.96758705, 0.51697886, 0.9658155, 0.5440081, 0.9845289, 0.5502811]]], "49": [1, 0.49999988, 0.50000006, 0.50121295, 0.50000006, [[0.9985454, 0.46799237, 0.99894047, 0.47414562, 0.99922156, 0.4803035, 0.99938864, 0.4864634], [0.99938864, 0.4864634, 0.99963325, 0.49548683, 0.9996332, 0.50451446, 0.99938846, 0.5135378], [0.99938846, 0.5135378, 0.99922144, 0.51969737, 0.9989404, 0.5258549, 0.9985454, 0.53200775]], [[0.97164047, 0.46979752, 0.9721459, 0.47767204, 0.97734296, 0.48524538, 0.9868816, 0.48706755], [0.9868816, 0.48706758, 1.0011426, 0.48979193, 1.0011426, 0.5102082, 0.9868816, 0.51293254], [0.9868815, 0.5129326, 0.97734296, 0.5147548, 0.97214603, 0.5223279, 0.97164035, 0.5302023]], [[0.99957204, 0.50000006, 0.99957204, 0.51067394, 0.9992298, 0.5213479, 0.9985454, 0.5320079]], [[0.9975774, 0.5000001, 0.9975774, 0.5057852, 0.9940121, 0.51157033, 0.9868815, 0.5129326], [0.9868815, 0.5129326, 0.9678044, 0.51657695, 0.9660935, 0.5432256, 0.98454803, 0.54927963]]], "50": [1, 0.50016433, 0.5, 0.5013425, 0.50000006, [[0.9990138, 0.468615, 0.99939346, 0.47464985, 0.99966353, 0.48069084, 0.99982387, 0.48673442], [0.99982387, 0.48673442, 1.0000585, 0.49557644, 1.0000587, 0.504424, 0.9998239, 0.513266], [0.9998239, 0.513266, 0.9996635, 0.5193094, 0.99939346, 0.5253503, 0.9990138, 0.531385]], [[0.9726483, 0.4703484, 0.9731359, 0.4780961, 0.978252, 0.48555255, 0.98765653, 0.48731366], [0.98765653, 0.48731366, 1.0016981, 0.48994315, 1.0016981, 0.510057, 0.98765653, 0.51268643], [0.98765653, 0.51268643, 0.9782518, 0.51444757, 0.9731357, 0.5219043, 0.9726483, 0.52965224]], [[1, 0.5, 1, 0.5104678, 0.9996712, 0.5209356, 0.9990137, 0.531385]], [[0.9981878, 0.50000006, 0.9981878, 0.50568587, 0.9946773, 0.51137173, 0.98765653, 0.51268643], [0.98765653, 0.51268643, 0.96884716, 0.5162087, 0.96719223, 0.542513, 0.98541194, 0.548365]]], "51": [1, 0.49999988, 0.49999994, 0.50111705, 0.49999997, [[0.9986571, 0.46924374, 0.9990221, 0.47516185, 0.99928164, 0.4810842, 0.9994357, 0.48700827], [0.9994357, 0.48700827, 0.9996611, 0.49566844, 0.999661, 0.5043324, 0.9994358, 0.5129926], [0.9994358, 0.5129926, 0.99928164, 0.51891637, 0.99902207, 0.5248384, 0.9986571, 0.5307562]], [[0.9724862, 0.47092712, 0.9729558, 0.47853965, 0.97798496, 0.4858709, 0.9872438, 0.48757118], [0.9872438, 0.48757118, 1.0010494, 0.4901064, 1.0010494, 0.5098936, 0.9872438, 0.5124288], [0.98724365, 0.5124288, 0.9779849, 0.51412904, 0.97295576, 0.5214603, 0.9724861, 0.52907276]], [[0.9996048, 0.49999997, 0.9996048, 0.51025623, 0.9992889, 0.52051246, 0.99865705, 0.53075624]], [[0.99759793, 0.5, 0.99759793, 0.5055806, 0.9941466, 0.5111612, 0.98724365, 0.5124288], [0.98724365, 0.5124288, 0.968726, 0.5158294, 0.96712697, 0.5417542, 0.98508656, 0.5474046]]], "52": [1, 0.500152, 0.5, 0.5012355, 0.5, [[0.9989363, 0.46982896, 0.9992876, 0.47563678, 0.9995374, 0.48144883, 0.99968565, 0.48726264], [0.99968565, 0.48726264, 0.9999021, 0.49575323, 0.9999021, 0.5042476, 0.99968565, 0.51273817], [0.99968565, 0.51273817, 0.9995374, 0.5185517, 0.9992876, 0.5243635, 0.9989363, 0.53017104]], [[0.97311586, 0.4714563, 0.9735688, 0.4789455, 0.9785187, 0.48616272, 0.9876449, 0.48780677], [0.9876449, 0.4878068, 1.0012355, 0.4902551, 1.0012355, 0.5097449, 0.9876449, 0.51219326], [0.98764485, 0.51219326, 0.97851884, 0.51383734, 0.973569, 0.52105427, 0.97311586, 0.52854323]], [[0.999848, 0.5, 0.999848, 0.5100612, 0.99954414, 0.5201224, 0.99893624, 0.5301712]], [[0.9978379, 0.5, 0.99783784, 0.5054845, 0.9944402, 0.51096904, 0.98764485, 0.51219326], [0.98764485, 0.51219326, 0.9693926, 0.5154814, 0.9678454, 0.5410616, 0.98556817, 0.54652584]]], "53": [1, 0.49999976, 0.5, 0.5010321, 0.5, [[0.9987561, 0.47040153, 0.9990945, 0.47610378, 0.9993351, 0.48180744, 0.99947786, 0.4875117], [0.99947786, 0.4875117, 0.99968624, 0.49583727, 0.9996863, 0.50416404, 0.99947786, 0.5124896], [0.99947786, 0.5124896, 0.9993351, 0.5181934, 0.99909455, 0.5238967, 0.9987561, 0.5295985]], [[0.9732852, 0.47197497, 0.9737227, 0.47934243, 0.9785944, 0.48644656, 0.9875888, 0.4880367], [0.9875888, 0.4880367, 1.0009673, 0.49040186, 1.0009673, 0.5095982, 0.9875888, 0.51196337], [0.98758864, 0.5119634, 0.9785942, 0.51355356, 0.9737225, 0.5206578, 0.9732851, 0.5280253]], [[0.9996342, 0.5, 0.9996342, 0.50986755, 0.9993415, 0.51973516, 0.9987561, 0.52959865]], [[0.99762267, 0.5, 0.99762267, 0.5053904, 0.9942781, 0.5107808, 0.98758864, 0.5119634], [0.98758864, 0.5119634, 0.96959937, 0.51514375, 0.9681016, 0.5403815, 0.98558867, 0.5456672]]], "54": [1, 0.5001409, 0.50000006, 0.5011421, 0.50000006, [[0.9991543, 0.4709359, 0.99948037, 0.47653466, 0.9997122, 0.48213777, 0.9998497, 0.4877427], [0.9998497, 0.4877427, 1.0000501, 0.4959131, 1.0000501, 0.5040873, 0.9998496, 0.51225775], [0.9998496, 0.51225775, 0.9997122, 0.51786256, 0.9994804, 0.5234655, 0.9991543, 0.52906424]], [[0.97415674, 0.47245064, 0.97457963, 0.47970676, 0.97937965, 0.4867078, 0.9882538, 0.48824793], [0.9882541, 0.48824796, 1.0014383, 0.49053612, 1.0014383, 0.50946397, 0.9882541, 0.5117521], [0.9882539, 0.5117522, 0.9793797, 0.5132923, 0.9745797, 0.5202935, 0.9741569, 0.5275496]], [[0.9999999, 0.50000006, 0.99999994, 0.50969243, 0.99971807, 0.51938474, 0.9991543, 0.5290645]], [[0.99814224, 0.50000006, 0.99814224, 0.50530404, 0.99484617, 0.5106081, 0.9882539, 0.5117522], [0.9882539, 0.5117522, 0.97050524, 0.5148325, 0.96905357, 0.53975767, 0.9863246, 0.5448777]]], "55": [1, 0.49999988, 0.5, 0.5009565, 0.5, [[0.9988451, 0.47147503, 0.9991596, 0.47697344, 0.9993829, 0.48247457, 0.99951535, 0.48797685], [0.99951535, 0.48797685, 0.9997084, 0.49599177, 0.9997084, 0.5040092, 0.9995154, 0.51202416], [0.9995154, 0.51202416, 0.999383, 0.5175261, 0.99915946, 0.5230269, 0.9988451, 0.52852494]], [[0.97404045, 0.47294793, 0.97444856, 0.48008627, 0.97917235, 0.4869778, 0.9879171, 0.48846817], [0.9879171, 0.48846817, 1.0008942, 0.49067986, 1.0008942, 0.50932014, 0.9879172, 0.51153183], [0.9879171, 0.5115319, 0.9791726, 0.51302224, 0.9744488, 0.5199135, 0.9740405, 0.5270516]], [[0.9996602, 0.49999994, 0.9996602, 0.509511, 0.99938846, 0.519022, 0.99884504, 0.52852505]], [[0.9976499, 0.5, 0.99764997, 0.505213, 0.9944057, 0.510426, 0.9879171, 0.5115319], [0.9879171, 0.5115319, 0.97042775, 0.5145126, 0.9690219, 0.53909767, 0.9860575, 0.54405266]]], "56": [1, 0.50013095, 0.5, 0.50105757, 0.5, [[0.9990832, 0.47197953, 0.9993865, 0.4773798, 0.99960196, 0.48278576, 0.99972975, 0.48819417], [0.99972975, 0.48819417, 0.9999155, 0.4960631, 0.9999155, 0.5039371, 0.99972963, 0.511806], [0.99972963, 0.511806, 0.9996019, 0.5172143, 0.9993864, 0.52262026, 0.9990832, 0.52802044]], [[0.97459674, 0.47340703, 0.9749917, 0.4804366, 0.9796453, 0.48722684, 0.98827094, 0.48867097], [0.98827094, 0.48867095, 1.0010575, 0.4908117, 1.0010575, 0.5091883, 0.98827094, 0.5113291], [0.9882709, 0.5113291, 0.9796453, 0.51277316, 0.9749917, 0.5195634, 0.9745966, 0.52659285]], [[0.9998689, 0.5, 0.999869, 0.5093458, 0.9996071, 0.51869166, 0.99908316, 0.52802056]], [[0.9978608, 0.5, 0.99786085, 0.50512934, 0.9946642, 0.5102587, 0.9882709, 0.5113291], [0.9882709, 0.5113291, 0.9710194, 0.5142173, 0.9696561, 0.538491, 0.9864758, 0.54329276]]], "57": [1, 0.5, 0.5, 0.5008888, 0.5, [[0.9989249, 0.47247386, 0.9992178, 0.47778273, 0.9994258, 0.48309487, 0.99954915, 0.4884083], [0.99954915, 0.4884083, 0.99972844, 0.49613547, 0.99972844, 0.50386554, 0.99954915, 0.51159275], [0.99954915, 0.51159275, 0.9994258, 0.5169058, 0.99921775, 0.5222176, 0.9989249, 0.52752614]], [[0.9747559, 0.4738566, 0.97513795, 0.4807791, 0.9797225, 0.48746967, 0.9882302, 0.4888693], [0.9882302, 0.4888693, 1.0008291, 0.49094203, 1.0008291, 0.509058, 0.9882302, 0.5111307], [0.9882302, 0.5111307, 0.97972274, 0.5125303, 0.97513825, 0.51922053, 0.9747559, 0.5261429]], [[0.9996837, 0.5, 0.99968374, 0.5091786, 0.9994308, 0.51835716, 0.9989249, 0.5275265]], [[0.99767935, 0.5, 0.99767935, 0.5050472, 0.99452966, 0.51009434, 0.9882302, 0.5111307], [0.9882302, 0.5111307, 0.97121435, 0.5139301, 0.9698922, 0.5378942, 0.98649687, 0.5425484]]], "58": [1, 0.50012225, 0.50000006, 0.500983, 0.50000006, [[0.9992662, 0.47293752, 0.9995495, 0.47816208, 0.9997507, 0.48338595, 0.9998699, 0.48860946], [0.9998699, 0.48860946, 1.0000433, 0.49620396, 1.0000433, 0.5037978, 0.9998699, 0.51139235], [0.9998699, 0.51139235, 0.9997506, 0.51661533, 0.99954945, 0.5218386, 0.9992662, 0.5270626]], [[0.9755171, 0.4742723, 0.9758874, 0.48109612, 0.98040795, 0.48769468, 0.98880696, 0.48905283], [0.988807, 0.48905283, 1.0012326, 0.4910621, 1.0012326, 0.50893795, 0.988807, 0.5109473], [0.98880696, 0.5109473, 0.9804082, 0.5123054, 0.9758876, 0.5189037, 0.97551715, 0.5257273]], [[0.9999999, 0.50000006, 0.9999999, 0.5090202, 0.9997554, 0.51804036, 0.9992662, 0.5270628]], [[0.9981262, 0.5, 0.9981262, 0.5049713, 0.9950198, 0.50994265, 0.98880696, 0.5109473], [0.98880696, 0.5109473, 0.97200835, 0.5136637, 0.97072446, 0.53734326, 0.987131, 0.54186004]]], "59": [1, 0.5000003, 0.5, 0.500828, 0.5, [[0.9989972, 0.47340482, 0.99927056, 0.47853398, 0.99946475, 0.4836701, 0.99957967, 0.48880908], [0.99957967, 0.48880908, 0.9997465, 0.49626756, 0.9997465, 0.5037322, 0.99957967, 0.5111907], [0.99957967, 0.5111907, 0.9994647, 0.51632977, 0.99927056, 0.5214659, 0.9989972, 0.5265952]], [[0.9754339, 0.474705, 0.97579217, 0.48142487, 0.98024523, 0.48792642, 0.9885285, 0.48924336], [0.9885285, 0.48924336, 1.0007706, 0.4911897, 1.0007706, 0.5088104, 0.9885285, 0.51075673], [0.9885284, 0.5107568, 0.98024535, 0.51207376, 0.9757922, 0.5185751, 0.9754338, 0.5252948]], [[0.99970484, 0.49999997, 0.99970484, 0.5088719, 0.9994689, 0.5177438, 0.9989972, 0.52659565]], [[0.99771, 0.5, 0.99771005, 0.5048918, 0.9946495, 0.50978357, 0.9885284, 0.5107568], [0.9885284, 0.5107568, 0.97196174, 0.5133907, 0.970716, 0.5367636, 0.98690885, 0.5411436]]], "60": [1, 0.500114, 0.5, 0.5009151, 0.49999997, [[0.99920166, 0.47384405, 0.99946606, 0.4788897, 0.9996539, 0.48394248, 0.99976504, 0.4889982], [0.99976504, 0.4889982, 0.99992627, 0.49633056, 0.99992627, 0.50366926, 0.9997651, 0.5110016], [0.9997651, 0.5110016, 0.99965394, 0.5160574, 0.99946606, 0.5211102, 0.99920166, 0.5261559]], [[0.9759285, 0.47510597, 0.97627574, 0.48172963, 0.9806664, 0.48814124, 0.9888425, 0.48941967], [0.9888426, 0.48941967, 1.0009153, 0.49130738, 1.0009153, 0.50869256, 0.9888426, 0.5105803], [0.9888425, 0.5105803, 0.98066616, 0.51185876, 0.97627556, 0.5182707, 0.9759285, 0.5248945]], [[0.99988604, 0.5, 0.99988604, 0.50872564, 0.99965787, 0.5174513, 0.99920166, 0.526156]], [[0.9978971, 0.49999997, 0.99789715, 0.5048182, 0.99487895, 0.5096364, 0.9888425, 0.5105803], [0.9888425, 0.5105803, 0.97249, 0.5131372, 0.9712799, 0.53622764, 0.9872755, 0.5404799]]], "61": [1, 0.5000002, 0.5, 0.5007733, 0.5, [[0.99906164, 0.47427505, 0.99931765, 0.4792406, 0.9994994, 0.48421136, 0.9996069, 0.48918432], [0.9996069, 0.48918432, 0.99976295, 0.49639326, 0.999763, 0.5036068, 0.9996071, 0.51081574], [0.9996071, 0.51081574, 0.99949944, 0.5157887, 0.99931765, 0.5207594, 0.9990617, 0.52572495]], [[0.9760777, 0.47549984, 0.9764143, 0.4820285, 0.9807433, 0.48835132, 0.98881316, 0.48959267], [0.9888133, 0.48959267, 1.0007184, 0.491424, 1.0007184, 0.508576, 0.9888133, 0.5104073], [0.98881316, 0.5104073, 0.9807432, 0.51164865, 0.9764143, 0.5179715, 0.9760776, 0.52450025]], [[0.9997239, 0.49999997, 0.9997239, 0.50858015, 0.99950325, 0.5171603, 0.99906164, 0.52572507]], [[0.99774206, 0.5, 0.99774206, 0.50474584, 0.9947658, 0.5094917, 0.98881316, 0.5104073], [0.98881316, 0.5104073, 0.97267306, 0.51289004, 0.9714973, 0.5356994, 0.9872965, 0.5398286]]], "62": [1, 0.5001071, 0.5, 0.50085485, 0.5, [[0.99935794, 0.47468093, 0.99960613, 0.4795748, 0.9997824, 0.48446786, 0.9998867, 0.48936057], [0.9998867, 0.48936057, 1.0000379, 0.4964543, 1.0000378, 0.5035473, 0.9998865, 0.510641], [0.9998865, 0.510641, 0.99978226, 0.5155332, 0.99960613, 0.52042574, 0.99935794, 0.5253191]], [[0.9767482, 0.47586548, 0.9770748, 0.48230627, 0.9813465, 0.48854694, 0.9893182, 0.48975357], [0.9893182, 0.48975354, 1.0010679, 0.49153203, 1.0010679, 0.50846803, 0.9893182, 0.5102465], [0.98931813, 0.5102465, 0.9813467, 0.51145315, 0.97707504, 0.5176935, 0.97674817, 0.524134]], [[1, 0.5, 1, 0.5084389, 0.999786, 0.5168778, 0.99935794, 0.5253191]], [[0.9981305, 0.5, 0.99813044, 0.50467867, 0.995193, 0.5093573, 0.98931813, 0.5102465], [0.98931813, 0.5102465, 0.9733749, 0.5126598, 0.9722313, 0.53520924, 0.98784876, 0.5392231]]], "63": [1, 0.50000024, 0.5, 0.50072366, 0.5000001, [[0.99912035, 0.4750898, 0.99936044, 0.47990036, 0.999531, 0.48471653, 0.9996318, 0.48953506], [0.9996318, 0.48953506, 0.9997778, 0.4965102, 0.9997777, 0.5034903, 0.99963176, 0.51046544], [0.99963176, 0.51046544, 0.9995309, 0.51528376, 0.99936044, 0.5200998, 0.99912035, 0.5249102]], [[0.9766891, 0.47624552, 0.9770058, 0.4825939, 0.98121727, 0.48874795, 0.9890846, 0.48992005], [0.9890846, 0.48992005, 1.0006707, 0.49164614, 1.0006707, 0.50835407, 0.9890846, 0.51008016], [0.9890846, 0.51008016, 0.9812174, 0.5112523, 0.97700596, 0.51740617, 0.97668904, 0.5237544]], [[0.9997411, 0.5, 0.9997411, 0.50830895, 0.9995342, 0.5166179, 0.99912035, 0.52491033]], [[0.9977742, 0.5000001, 0.9977741, 0.50460863, 0.99487764, 0.50921714, 0.9890846, 0.51008016], [0.9890846, 0.51008016, 0.9733501, 0.51242435, 0.97223866, 0.534696, 0.98766154, 0.5385952]]], "64": [1, 0.50010026, 0.5, 0.50079954, 0.49999994, [[0.9992977, 0.4754762, 0.99953055, 0.4802159, 0.9996958, 0.4849579, 0.9997936, 0.48970085], [0.9997936, 0.48970085, 0.9999351, 0.49656647, 0.99993515, 0.5034341, 0.9997936, 0.5102997], [0.9997936, 0.5102997, 0.99969584, 0.5150425, 0.9995305, 0.51978433, 0.9992977, 0.5245238]], [[0.977132, 0.47660032, 0.97744, 0.4828624, 0.9815955, 0.48893523, 0.9893654, 0.49007484], [0.98936546, 0.49007484, 1.0007995, 0.49175188, 1.0007995, 0.508248, 0.98936546, 0.509925], [0.98936534, 0.50992507, 0.9815954, 0.51106465, 0.9774398, 0.5171376, 0.9771318, 0.5233997]], [[0.9998997, 0.5, 0.9998997, 0.5081769, 0.999699, 0.51635385, 0.9992976, 0.5245238]], [[0.997941, 0.49999994, 0.997941, 0.5045432, 0.9950825, 0.5090865, 0.98936534, 0.50992507], [0.98936534, 0.50992507, 0.9738246, 0.5122044, 0.9727431, 0.5342187, 0.9879856, 0.5380104]]], "65": [1, 0.49999976, 0.5, 0.5006788, 0.5, [[0.99917245, 0.47585484, 0.99939835, 0.48052603, 0.9995588, 0.4851956, 0.9996537, 0.48986453], [0.9996537, 0.48986453, 0.99979097, 0.4966222, 0.999791, 0.5033785, 0.9996537, 0.5101361], [0.9996537, 0.5101361, 0.9995588, 0.51480484, 0.9993984, 0.51947415, 0.99917245, 0.5241451]], [[0.97727114, 0.47694758, 0.97757006, 0.4831251, 0.98167026, 0.4891187, 0.9893443, 0.4902271], [0.9893443, 0.4902271, 1.000628, 0.49185687, 1.000628, 0.5081431, 0.9893443, 0.5097729], [0.98934424, 0.5097729, 0.9816698, 0.51088136, 0.9775695, 0.5168755, 0.97727096, 0.52305335]], [[0.9997566, 0.5, 0.99975663, 0.5080468, 0.9995619, 0.5160936, 0.99917245, 0.5241451]], [[0.9978071, 0.5, 0.9978071, 0.50447905, 0.9949862, 0.508958, 0.98934424, 0.5097729], [0.98934424, 0.5097729, 0.9739958, 0.5119898, 0.9729435, 0.5337479, 0.98800623, 0.53743577]]], "66": [1, 0.50009435, 0.5, 0.50074995, 0.5000001, [[0.99943376, 0.47621346, 0.99965286, 0.48081315, 0.9998084, 0.48541498, 0.9999004, 0.49001774], [0.9999004, 0.49001774, 1.0000333, 0.49667212, 1.0000333, 0.50332844, 0.99990034, 0.50998276], [0.99990034, 0.50998276, 0.99980843, 0.5145854, 0.99965286, 0.51918703, 0.99943376, 0.52378654]], [[0.9778662, 0.4772728, 0.9781569, 0.48337114, 0.9822055, 0.48929036, 0.98978996, 0.49036932], [0.98978996, 0.49036932, 1.0009335, 0.4919546, 1.0009335, 0.5080456, 0.98978996, 0.5096309], [0.98978996, 0.5096309, 0.9822049, 0.51071, 0.9781563, 0.51663, 0.9778662, 0.52272886]], [[1, 0.5, 1, 0.507931, 0.9998113, 0.515862, 0.9994337, 0.52378654]], [[0.9981476, 0.5000001, 0.9981476, 0.5044192, 0.99536175, 0.5088383, 0.98978996, 0.5096309], [0.98978996, 0.5096309, 0.9746207, 0.5117889, 0.97359556, 0.5333089, 0.9884911, 0.5368991]]], "67": [1, 0.49999994, 0.50000006, 0.5006379, 0.5, [[0.9992216, 0.47657475, 0.9994343, 0.4811064, 0.9995853, 0.48563927, 0.99967444, 0.49017262], [0.99967444, 0.49017262, 0.9998033, 0.4967241, 0.9998033, 0.50327665, 0.9996743, 0.5098281], [0.9996743, 0.5098281, 0.99958515, 0.51436126, 0.9994343, 0.51889396, 0.9992216, 0.5234254]], [[0.9778251, 0.4776088, 0.97810745, 0.48362458, 0.9821021, 0.4894661, 0.98959225, 0.49051586], [0.98959243, 0.49051592, 1.0005891, 0.49205717, 1.0005891, 0.5079428, 0.98959243, 0.50948405], [0.98959243, 0.50948405, 0.9821023, 0.5105338, 0.97810763, 0.5163754, 0.9778252, 0.52239126]], [[0.9997711, 0.50000006, 0.99977106, 0.5078097, 0.9995879, 0.51561934, 0.99922156, 0.5234254]], [[0.9978399, 0.49999997, 0.9978399, 0.50435674, 0.9950908, 0.5087134, 0.98959243, 0.50948405], [0.98959243, 0.50948405, 0.97461194, 0.5115836, 0.9736139, 0.53285086, 0.9883321, 0.53634405]]], "68": [1, 0.50008875, 0.5000001, 0.5007045, 0.50000006, [[0.99937844, 0.47691652, 0.9995848, 0.48137882, 0.99973124, 0.485847, 0.99981767, 0.4903176], [0.99981767, 0.4903176, 0.99994254, 0.49677068, 0.99994254, 0.5032288, 0.99981767, 0.5096818], [0.99981767, 0.5096818, 0.9997312, 0.5141527, 0.9995848, 0.5186212, 0.99937844, 0.52308375]], [[0.9782238, 0.4779235, 0.97849864, 0.48386207, 0.98244274, 0.48963082, 0.98984474, 0.4906531], [0.989845, 0.4906531, 1.0007046, 0.49215293, 1.0007046, 0.50784713, 0.989845, 0.5093469], [0.9898448, 0.50934696, 0.9824427, 0.51036924, 0.97849846, 0.51613826, 0.97822386, 0.52207696]], [[0.9999113, 0.5000001, 0.9999113, 0.5077005, 0.9997337, 0.5154008, 0.99937844, 0.523084]], [[0.9979897, 0.5, 0.9979897, 0.5042985, 0.9952748, 0.508597, 0.9898448, 0.50934696], [0.9898448, 0.50934696, 0.97504044, 0.5113915, 0.974068, 0.5324233, 0.9886207, 0.5358252]]], "69": [1, 0.5, 0.49999994, 0.5006006, 0.5, [[0.9992662, 0.4772526, 0.9994668, 0.48165435, 0.9996092, 0.486058, 0.99969316, 0.4904623], [0.99969316, 0.4904623, 0.9998145, 0.49682033, 0.9998145, 0.50317997, 0.99969316, 0.509538], [0.99969316, 0.509538, 0.9996091, 0.5139422, 0.9994668, 0.5183456, 0.9992662, 0.5227473]], [[0.97835356, 0.4782329, 0.9786207, 0.48409534, 0.982515, 0.48979247, 0.98982966, 0.49078813], [0.98982966, 0.49078813, 1.0005536, 0.49224788, 1.0005536, 0.5077522, 0.98982966, 0.5092119], [0.9898296, 0.5092119, 0.9825151, 0.51020753, 0.9786208, 0.5159044, 0.9783535, 0.5217667]], [[0.9997842, 0.4999999, 0.9997842, 0.50758415, 0.9996115, 0.5151684, 0.9992662, 0.52274734]], [[0.9978726, 0.50000006, 0.9978726, 0.504241, 0.99519163, 0.50848204, 0.9898296, 0.5092119], [0.9898296, 0.5092119, 0.9752001, 0.5112033, 0.9742525, 0.5320008, 0.9886405, 0.5353142]]], "70": [1, 0.5000839, 0.5, 0.5006633, 0.49999997, [[0.9994963, 0.4775714, 0.99969125, 0.48191375, 0.99982965, 0.48625636, 0.99991137, 0.49059907], [0.99991137, 0.49059907, 1.0000293, 0.49686643, 1.0000293, 0.503134, 0.9999114, 0.5094014], [0.9999114, 0.5094014, 0.99982965, 0.513744, 0.9996913, 0.51808643, 0.9994963, 0.52242863]], [[0.97888553, 0.47852314, 0.97914565, 0.48431414, 0.98299325, 0.48994404, 0.9902262, 0.4909146], [0.9902262, 0.4909146, 1.0008231, 0.49233657, 1.0008231, 0.50766337, 0.9902262, 0.50908536], [0.9902261, 0.50908536, 0.98299325, 0.51005596, 0.9791457, 0.51568574, 0.97888553, 0.52147675]], [[1, 0.5, 0.99999994, 0.50747645, 0.99983203, 0.51495296, 0.9994963, 0.5224287]], [[0.99817395, 0.49999997, 0.99817395, 0.50418717, 0.99552464, 0.50837433, 0.9902261, 0.50908536], [0.9902261, 0.50908536, 0.97576016, 0.51102656, 0.974836, 0.5316051, 0.98906976, 0.5348352]]], "71": [1, 0.49999994, 0.5, 0.5005665, 0.5000001, [[0.99930674, 0.4778926, 0.99949634, 0.4821736, 0.99963075, 0.48645487, 0.9997102, 0.4907363], [0.9997102, 0.4907363, 0.99982476, 0.4969123, 0.9998247, 0.5030886, 0.99971014, 0.5092646], [0.99971014, 0.5092646, 0.99963075, 0.51354575, 0.9994963, 0.5178268, 0.99930674, 0.5221074]], [[0.9788578, 0.47882384, 0.97911125, 0.48454022, 0.98291004, 0.49009943, 0.9900569, 0.49104503], [0.99005693, 0.49104506, 1.0005213, 0.49242958, 1.0005213, 0.50757056, 0.99005693, 0.5089551], [0.99005693, 0.5089551, 0.9829099, 0.5099008, 0.97911114, 0.5154602, 0.97885776, 0.5211767]], [[0.9997961, 0.50000006, 0.9997961, 0.50736946, 0.99963295, 0.5147389, 0.99930674, 0.5221076]], [[0.99790525, 0.50000006, 0.99790525, 0.50413144, 0.9952891, 0.5082629, 0.99005693, 0.5089551], [0.99005693, 0.5089551, 0.97576255, 0.51084644, 0.9748616, 0.53119403, 0.98893297, 0.5343413]]], "72": [1, 0.5000793, 0.5, 0.50062513, 0.5, [[0.9994448, 0.47819728, 0.9996291, 0.48241997, 0.9997599, 0.48664308, 0.999837, 0.49086633], [0.999837, 0.49086633, 0.9999484, 0.49695557, 0.99994844, 0.5030452, 0.99983704, 0.5091344], [0.99983704, 0.5091344, 0.9997599, 0.5133574, 0.99962914, 0.5175803, 0.9994448, 0.5218027]], [[0.97921836, 0.47910473, 0.9794652, 0.4847516, 0.9832183, 0.49024528, 0.9902849, 0.49116734], [0.9902849, 0.49116734, 1.000625, 0.49251658, 1.000625, 0.50748354, 0.9902849, 0.50883275], [0.99028486, 0.50883275, 0.9832182, 0.50975484, 0.97946507, 0.51524854, 0.97921836, 0.5208954]], [[0.9999207, 0.49999997, 0.99992067, 0.50726795, 0.99976206, 0.5145359, 0.9994448, 0.52180284]], [[0.99803996, 0.50000006, 0.99803996, 0.5040791, 0.99545497, 0.50815815, 0.99028486, 0.50883275], [0.99028486, 0.50883275, 0.9761512, 0.510677, 0.97527224, 0.5308085, 0.9891916, 0.53387755]]], "73": [1, 0.49999988, 0.5, 0.50053513, 0.50000006, [[0.9993441, 0.47849715, 0.99952346, 0.48266256, 0.99965066, 0.48682827, 0.9997258, 0.49099422], [0.9997258, 0.49099422, 0.99983406, 0.49699792, 0.99983406, 0.5030019, 0.9997258, 0.50900567], [0.9997258, 0.50900567, 0.9996507, 0.5131716, 0.9995235, 0.51733744, 0.9993441, 0.52150285]], [[0.9793396, 0.4793822, 0.9795799, 0.4849601, 0.9832878, 0.49038863, 0.99027467, 0.4912879], [0.99027467, 0.49128792, 1.0004916, 0.4926029, 1.0004916, 0.50739723, 0.99027467, 0.50871223], [0.9902746, 0.5087123, 0.98328745, 0.5096116, 0.97957957, 0.5150406, 0.97933954, 0.5206188]], [[0.999807, 0.5, 0.99980706, 0.507168, 0.99965274, 0.514336, 0.99934405, 0.5215029]], [[0.9979373, 0.50000006, 0.9979374, 0.5040274, 0.99538314, 0.50805473, 0.9902746, 0.5087123], [0.9902746, 0.5087123, 0.97630066, 0.51051086, 0.975443, 0.5304273, 0.98921067, 0.5334205]]], "74": [1, 0.50007516, 0.5, 0.5005907, 0.5000001, [[0.99954903, 0.47878253, 0.9997238, 0.48289603, 0.9998478, 0.48700717, 0.99992096, 0.4911173], [0.99992096, 0.4911173, 1.0000265, 0.49704036, 1.0000263, 0.5029614, 0.99992085, 0.50888443], [0.99992085, 0.50888443, 0.99984765, 0.512994, 0.99972373, 0.5171045, 0.99954903, 0.52121747]], [[0.97981745, 0.47964275, 0.9800517, 0.48515606, 0.9837171, 0.49052364, 0.9906292, 0.4914013], [0.9906292, 0.49140134, 1.0007305, 0.492684, 1.0007305, 0.5073163, 0.9906292, 0.5085989], [0.99062914, 0.5085989, 0.98371726, 0.50947666, 0.9800519, 0.5148438, 0.9798175, 0.52035695]], [[1, 0.5, 1, 0.5070702, 0.9998497, 0.51414025, 0.99954903, 0.52121747]], [[0.9982052, 0.5000001, 0.9982052, 0.50397885, 0.99567986, 0.5079576, 0.99062914, 0.5085989], [0.99062914, 0.5085989, 0.97680503, 0.51035434, 0.9759676, 0.53006893, 0.9895932, 0.53299046]]], "75": [1, 0.50000036, 0.5, 0.5005064, 0.5000001, [[0.9993797, 0.4790698, 0.99954945, 0.48311922, 0.9996698, 0.4871763, 0.9997408, 0.49123663], [0.9997408, 0.49123663, 0.9998429, 0.4970761, 0.9998429, 0.5029222, 0.9997407, 0.5087616], [0.9997407, 0.5087616, 0.9996698, 0.5128225, 0.99954945, 0.51688015, 0.9993797, 0.5209302]], [[0.97980016, 0.4799122, 0.9800286, 0.48535806, 0.98364985, 0.49066156, 0.9904834, 0.49151778], [0.99048364, 0.4915178, 1.0004647, 0.49276844, 1.0004647, 0.5072317, 0.99048364, 0.50848234], [0.9904835, 0.5084824, 0.98364997, 0.5093386, 0.9800288, 0.51464206, 0.9798003, 0.5200879]], [[0.9998174, 0.5, 0.9998174, 0.5069843, 0.99967146, 0.5139686, 0.99937963, 0.5209302]], [[0.99796945, 0.50000006, 0.9979694, 0.50392854, 0.99547416, 0.507857, 0.9904835, 0.5084824], [0.9904835, 0.5084824, 0.976816, 0.51019484, 0.97599864, 0.5296977, 0.9894749, 0.53254783]]], "76": [1, 0.5000712, 0.5, 0.50055856, 0.50000006, [[0.999501, 0.47934353, 0.99966675, 0.48335084, 0.9997843, 0.4873544, 0.9998538, 0.49135643], [0.9998538, 0.49135643, 0.9999537, 0.4971205, 0.9999536, 0.50288135, 0.9998537, 0.5086454], [0.9998537, 0.5086454, 0.99978423, 0.51264685, 0.9996667, 0.5166498, 0.999501, 0.52065647]], [[0.9801282, 0.48016566, 0.98035115, 0.48554814, 0.9839308, 0.49079162, 0.99069065, 0.49162754], [0.99069065, 0.49162754, 1.0005586, 0.4928478, 1.0005586, 0.50715226, 0.99069065, 0.5083725], [0.9906906, 0.50837255, 0.98393047, 0.50920844, 0.98035073, 0.51445234, 0.9801281, 0.5198352]], [[0.9999287, 0.5, 0.99992865, 0.50688183, 0.9997861, 0.51376367, 0.999501, 0.5206569]], [[0.99809164, 0.5, 0.99809164, 0.5038812, 0.99562466, 0.5077624, 0.9906906, 0.50837255], [0.9906906, 0.50837255, 0.9771702, 0.5100444, 0.9763718, 0.52934825, 0.98970795, 0.53213096]]], "77": [1, 0.49999964, 0.5, 0.50047976, 0.49999997, [[0.99940985, 0.47961313, 0.9995713, 0.48356843, 0.9996858, 0.48752046, 0.9997535, 0.49147114], [0.9997535, 0.49147114, 0.9998508, 0.4971587, 0.9998508, 0.5028434, 0.9997535, 0.5085309], [0.9997535, 0.5085309, 0.9996859, 0.512481, 0.99957144, 0.5164323, 0.99941, 0.5203869]], [[0.980241, 0.4804155, 0.9804584, 0.48573542, 0.9839969, 0.4909196, 0.9906837, 0.49173576], [0.9906837, 0.49173576, 1.0004395, 0.49292654, 1.0004395, 0.5070734, 0.9906837, 0.5082642], [0.9906837, 0.5082641, 0.9839972, 0.5090803, 0.98045874, 0.51426405, 0.98024106, 0.51958376]], [[0.9998265, 0.5, 0.99982643, 0.5067924, 0.9996877, 0.51358485, 0.99941, 0.520387]], [[0.9980005, 0.49999994, 0.9980005, 0.50383437, 0.9955616, 0.5076688, 0.9906837, 0.5082641], [0.9906837, 0.5082641, 0.9773097, 0.50989664, 0.9765297, 0.5290023, 0.98972625, 0.53171945]]], "78": [1, 0.5000675, 0.5, 0.5005293, 0.49999997, [[0.9995955, 0.4798699, 0.9997525, 0.48376498, 0.9998638, 0.48766908, 0.99992937, 0.491577], [0.99992937, 0.491577, 1.0000236, 0.49718916, 1.0000236, 0.50280917, 0.9999295, 0.50842136], [0.9999295, 0.50842136, 0.99986386, 0.51232976, 0.9997525, 0.51623446, 0.9995955, 0.5201301]], [[0.98067313, 0.48065132, 0.9808854, 0.4859122, 0.98438495, 0.49104044, 0.9910028, 0.49183792], [0.99100304, 0.49183792, 1.000653, 0.4930008, 1.000653, 0.50699914, 0.99100304, 0.508162], [0.991003, 0.50816196, 0.98438495, 0.5089595, 0.9808853, 0.51408786, 0.9806732, 0.51934886]], [[1.0000001, 0.5, 1.0000001, 0.50671893, 0.99986523, 0.51343787, 0.9995955, 0.5201301]], [[0.99824053, 0.5, 0.99824053, 0.50379026, 0.99582803, 0.5075806, 0.991003, 0.50816196], [0.991003, 0.50816196, 0.9777667, 0.509757, 0.97700435, 0.5286763, 0.9900693, 0.5313311]]], "79": [1, 0.49999958, 0.5, 0.5004552, 0.50000006, [[0.99943906, 0.4801284, 0.99959266, 0.4839872, 0.9997015, 0.48784035, 0.9997659, 0.4916911], [0.9997659, 0.4916911, 0.99985826, 0.49723274, 0.9998582, 0.5027695, 0.99976575, 0.50831115], [0.99976575, 0.50831115, 0.9997015, 0.51216114, 0.99959254, 0.51601356, 0.99943906, 0.5198716]], [[0.98066324, 0.48089427, 0.9808703, 0.486094, 0.9843297, 0.4911641, 0.9908758, 0.491943], [0.9908758, 0.491943, 1.0004162, 0.49307817, 1.0004162, 0.50692207, 0.9908758, 0.50805724], [0.9908758, 0.50805724, 0.98432946, 0.50883615, 0.98087, 0.51390654, 0.98066306, 0.5191064]], [[0.99983513, 0.5, 0.9998351, 0.50661826, 0.99970305, 0.5132365, 0.99943906, 0.5198716]], [[0.998031, 0.5000001, 0.998031, 0.50374484, 0.995646, 0.5074897, 0.9908758, 0.50805724], [0.9908758, 0.50805724, 0.9777831, 0.50961506, 0.9770381, 0.5283392, 0.98996574, 0.53093237]]], "80": [1, 0.5000641, 0.5, 0.500502, 0.5, [[0.9995516, 0.4803754, 0.9997008, 0.48417285, 0.99980664, 0.48798037, 0.99986887, 0.49179202], [0.99986887, 0.49179202, 0.9999583, 0.49726057, 0.9999583, 0.50273776, 0.9998688, 0.5082063], [0.9998688, 0.5082063, 0.99980664, 0.51201856, 0.9997008, 0.5158266, 0.9995516, 0.5196246]], [[0.980963, 0.48112306, 0.9811651, 0.48626518, 0.9845866, 0.49128067, 0.9910651, 0.49204195], [0.9910651, 0.49204195, 1.000502, 0.49315086, 1.000502, 0.50684917, 0.9910651, 0.50795805], [0.99106497, 0.50795805, 0.9845865, 0.5087193, 0.98116505, 0.5137348, 0.98096275, 0.51887697]], [[0.999936, 0.5, 0.9999359, 0.5065514, 0.99980783, 0.5131028, 0.99955153, 0.5196256]], [[0.9981427, 0.5, 0.9981427, 0.5037018, 0.99578357, 0.5074036, 0.99106497, 0.50795805], [0.99106497, 0.50795805, 0.9781076, 0.50948066, 0.97737914, 0.5280211, 0.99017715, 0.5305556]]], "81": [1, 0.49999964, 0.5, 0.5004325, 0.5000001, [[0.9994666, 0.4806183, 0.9996126, 0.4843827, 0.99971616, 0.48814204, 0.99977726, 0.4918993], [0.99977726, 0.4918993, 0.9998652, 0.49730188, 0.99986506, 0.50270015, 0.99977726, 0.5081027], [0.99977726, 0.5081027, 0.99971616, 0.5118593, 0.99961257, 0.515618, 0.9994666, 0.5193817]], [[0.98106825, 0.4813499, 0.9812657, 0.4864347, 0.98464954, 0.49139583, 0.9910607, 0.4921399], [0.9910608, 0.4921399, 1.000395, 0.49322328, 1.000395, 0.506777, 0.9910608, 0.50786036], [0.99106055, 0.50786036, 0.98464924, 0.50860447, 0.9812655, 0.5135658, 0.9810681, 0.5186507]], [[0.9998432, 0.5, 0.9998432, 0.50645566, 0.9997176, 0.5129113, 0.9994666, 0.5193817]], [[0.9980615, 0.5000001, 0.9980615, 0.5036594, 0.9957279, 0.5073187, 0.99106055, 0.50786036], [0.99106055, 0.50786036, 0.9782378, 0.50934863, 0.9775255, 0.52770597, 0.9901945, 0.5301835]]], "82": [1, 0.5000609, 0.5, 0.5004768, 0.5000001, [[0.9996342, 0.48085114, 0.9997762, 0.48455662, 0.99987686, 0.48827308, 0.99993616, 0.4919941], [0.99993616, 0.4919941, 1.0000212, 0.49732774, 1.0000212, 0.5026707, 0.99993616, 0.5080043], [0.99993616, 0.5080043, 0.9998769, 0.51172584, 0.99977624, 0.51544285, 0.9996342, 0.5191489]], [[0.98146075, 0.48156434, 0.9816539, 0.4865951, 0.98500204, 0.49150473, 0.9913496, 0.4922325], [0.9913496, 0.4922325, 1.0005869, 0.49329162, 1.0005869, 0.5067087, 0.9913496, 0.50776774], [0.99134934, 0.5077678, 0.9850017, 0.50849557, 0.9816535, 0.51340526, 0.98146045, 0.518436]], [[0.99999994, 0.5, 0.99999994, 0.50639373, 0.99987805, 0.51278746, 0.9996342, 0.51914936]], [[0.99827754, 0.5000002, 0.99827754, 0.5036192, 0.9959682, 0.5072382, 0.99134934, 0.5077678], [0.99134934, 0.5077678, 0.97865355, 0.5092234, 0.9779566, 0.52740794, 0.9905038, 0.5298312]]], "83": [1, 0.4999994, 0.5, 0.50041145, 0.49999997, [[0.9994916, 0.4810852, 0.9996308, 0.48476297, 0.9997295, 0.48843238, 0.9997878, 0.49209827], [0.9997878, 0.49209827, 0.99987155, 0.49736935, 0.9998716, 0.5026332, 0.9997878, 0.50790423], [0.9997878, 0.50790423, 0.9997295, 0.5115693, 0.9996308, 0.51523787, 0.9994916, 0.51891476]], [[0.98145664, 0.48178422, 0.98164535, 0.48675913, 0.98495674, 0.49161553, 0.99123824, 0.49232712], [0.9912385, 0.49232715, 1.0003754, 0.4933622, 1.0003754, 0.5066377, 0.9912385, 0.5076727], [0.9912385, 0.5076727, 0.98495674, 0.50838435, 0.98164535, 0.513241, 0.98145676, 0.5182161]], [[0.99985063, 0.5, 0.99985063, 0.5062967, 0.99973094, 0.5125934, 0.9994915, 0.51891476]], [[0.9980912, 0.49999994, 0.9980912, 0.5035776, 0.99580693, 0.5071552, 0.9912385, 0.5076727], [0.9912385, 0.5076727, 0.97867465, 0.50909597, 0.9779929, 0.52710044, 0.99041307, 0.5294698]]], "84": [1, 0.5000582, 0.5000001, 0.50045335, 0.5000001, [[0.99959266, 0.48130876, 0.9997282, 0.4849313, 0.9998243, 0.48855948, 0.99988085, 0.49219006], [0.99988085, 0.49219006, 0.999962, 0.49739507, 0.999962, 0.50260496, 0.9998809, 0.50780994], [0.9998809, 0.50780994, 0.9998243, 0.51144063, 0.9997282, 0.5150689, 0.99959266, 0.5186914]], [[0.9817311, 0.48199221, 0.9819154, 0.48691452, 0.98519194, 0.4917211, 0.9914113, 0.49241728], [0.9914113, 0.49241728, 1.0004532, 0.4934294, 1.0004532, 0.50657094, 0.9914113, 0.5075831], [0.99141115, 0.5075831, 0.9851918, 0.50827926, 0.9819153, 0.5130857, 0.98173094, 0.5180079]], [[0.9999417, 0.5000001, 0.9999417, 0.5062362, 0.99982536, 0.5124722, 0.99959266, 0.51869166]], [[0.9981928, 0.5000002, 0.9981928, 0.5035386, 0.9959323, 0.507077, 0.99141115, 0.5075831], [0.99141115, 0.5075831, 0.9789722, 0.5089755, 0.9783049, 0.52680963, 0.9906052, 0.5291277]]], "85": [1, 0.5000002, 0.49999994, 0.50039196, 0.5000001, [[0.99951684, 0.4815299, 0.9996493, 0.4851116, 0.9997431, 0.488697, 0.99979836, 0.49228394], [0.99979836, 0.49228394, 0.99987763, 0.49742684, 0.99987763, 0.5025729, 0.99979836, 0.50771576], [0.99979836, 0.50771576, 0.9997431, 0.51130277, 0.9996493, 0.5148882, 0.99951684, 0.51847]], [[0.98182976, 0.48219877, 0.98201, 0.48706853, 0.98525196, 0.49182492, 0.9914092, 0.4925061], [0.9914092, 0.4925061, 1.0003568, 0.49349594, 1.0003568, 0.5065044, 0.9914092, 0.5074943], [0.99140906, 0.5074943, 0.9852519, 0.50817543, 0.98201, 0.51293176, 0.98182964, 0.5178015]], [[0.9998579, 0.49999997, 0.9998579, 0.5061603, 0.9997442, 0.51232064, 0.99951684, 0.51847064]], [[0.99811995, 0.5000002, 0.99811995, 0.50349975, 0.995883, 0.5069994, 0.99140906, 0.5074943], [0.99140906, 0.5074943, 0.97909427, 0.50885665, 0.9784411, 0.5265212, 0.99062186, 0.52878934]]], "86": [1, 0.5000554, 0.5, 0.5004319, 0.50000006, [[0.99966747, 0.48174098, 0.9997966, 0.48527533, 0.9998881, 0.48882103, 0.999942, 0.4923715], [0.999942, 0.4923715, 1.0000192, 0.4974531, 1.0000192, 0.50254446, 0.99994206, 0.50762606], [0.99994206, 0.50762606, 0.99988824, 0.5111774, 0.9997967, 0.5147239, 0.99966747, 0.51825905]], [[0.9821878, 0.48239377, 0.98236394, 0.48721403, 0.9855732, 0.49192342, 0.99167174, 0.49259025], [0.99167174, 0.49259025, 1.00053, 0.49355885, 1.0005301, 0.5064413, 0.9916718, 0.50740993], [0.9916718, 0.50740993, 0.98557323, 0.5080768, 0.982364, 0.5127861, 0.9821878, 0.5176064]], [[0.99999994, 0.5, 0.99999994, 0.50609756, 0.99988914, 0.5121951, 0.99966747, 0.51825917]], [[0.99831545, 0.50000006, 0.9983155, 0.50346285, 0.99610096, 0.5069256, 0.9916718, 0.50740993], [0.9916718, 0.50740993, 0.97947454, 0.50874364, 0.9788348, 0.5262477, 0.99090225, 0.5284682]]], "87": [1, 0.5, 0.50000006, 0.50037366, 0.5, [[0.9995383, 0.48195383, 0.9996649, 0.4854567, 0.9997546, 0.4889605, 0.99980754, 0.49246457], [0.99980754, 0.49246457, 0.99988323, 0.49748814, 0.9998832, 0.50251245, 0.9998075, 0.50753605], [0.9998075, 0.50753605, 0.9997546, 0.51104, 0.9996649, 0.51454353, 0.9995383, 0.5180463]], [[0.98218834, 0.48259464, 0.9823609, 0.48736352, 0.98553634, 0.49202377, 0.9915738, 0.49267638], [0.9915738, 0.49267638, 1.00034, 0.493624, 1.00034, 0.506376, 0.9915738, 0.5073236], [0.9915738, 0.5073236, 0.9855361, 0.5079763, 0.98236066, 0.5126369, 0.98218834, 0.51740605]], [[0.9998642, 0.50000006, 0.9998642, 0.5060163, 0.99975556, 0.5120325, 0.9995383, 0.51804656]], [[0.99814844, 0.5, 0.99814844, 0.5034249, 0.9959569, 0.5068498, 0.9915738, 0.5073236], [0.9915738, 0.5073236, 0.9794984, 0.5086289, 0.97887206, 0.5259661, 0.99082196, 0.52813935]]], "88": [1, 0.50005305, 0.5, 0.50041175, 0.5000002, [[0.999628, 0.48215795, 0.9997518, 0.48562396, 0.9998395, 0.48908818, 0.9998911, 0.4925516], [0.9998911, 0.4925516, 0.9999652, 0.49751812, 0.9999653, 0.50248307, 0.99989116, 0.50744957], [0.99989116, 0.50744957, 0.9998395, 0.51091266, 0.9997518, 0.5143764, 0.999628, 0.51784205]], [[0.98244095, 0.48278508, 0.9826098, 0.4875054, 0.9857532, 0.4921194, 0.9917329, 0.49275848], [0.9917329, 0.49275848, 1.0004116, 0.49368596, 1.0004116, 0.5063144, 0.99173295, 0.5072419], [0.9917328, 0.5072419, 0.98575306, 0.5078809, 0.9826097, 0.5124948, 0.9824408, 0.51721513]], [[0.99994683, 0.49999997, 0.99994683, 0.50594556, 0.9998405, 0.5118912, 0.999628, 0.51784205]], [[0.99824196, 0.5000002, 0.998242, 0.5033892, 0.9960723, 0.5067781, 0.9917328, 0.5072419], [0.9917328, 0.5072419, 0.97977275, 0.50852007, 0.9791592, 0.52569914, 0.99099773, 0.5278274]]], "89": [1, 0.5000001, 0.50000006, 0.5003568, 0.49999997, [[0.99955916, 0.48235902, 0.99968004, 0.48578185, 0.99976563, 0.48920807, 0.99981606, 0.49263582], [0.99981606, 0.49263582, 0.99988824, 0.49754438, 0.99988824, 0.5024559, 0.99981606, 0.50736445], [0.99981606, 0.50736445, 0.99976563, 0.51079214, 0.99968004, 0.51421833, 0.99955916, 0.51764107]], [[0.9825332, 0.48297286, 0.98269826, 0.48764518, 0.9858098, 0.49221343, 0.99173236, 0.49283928], [0.99173236, 0.49283928, 1.0003241, 0.49374723, 1.0003241, 0.5062527, 0.99173236, 0.5071607], [0.9917323, 0.5071607, 0.9858097, 0.50778663, 0.9826981, 0.512355, 0.98253316, 0.5170274]], [[0.9998703, 0.50000006, 0.99987024, 0.5058838, 0.9997665, 0.5117675, 0.99955916, 0.51764137]], [[0.9981762, 0.49999997, 0.99817616, 0.50335336, 0.99602824, 0.5067067, 0.9917323, 0.5071607], [0.9917323, 0.5071607, 0.9798871, 0.5084125, 0.9792861, 0.525434, 0.9910135, 0.5275182]]], "90": [1, 0.500051, 0.5, 0.500393, 0.5000001, [[0.99969417, 0.48255238, 0.99981284, 0.48595178, 0.99989694, 0.48933908, 0.99994665, 0.4927213], [0.99994665, 0.4927213, 1.0000179, 0.4975784, 1.0000179, 0.5024251, 0.9999466, 0.5072822], [0.9999466, 0.5072822, 0.999897, 0.5106633, 0.99981284, 0.51404935, 0.99969417, 0.5174476]], [[0.9828612, 0.4831526, 0.98302305, 0.48777893, 0.98610437, 0.49230313, 0.9919721, 0.49291638], [0.99197215, 0.4929164, 1.0004815, 0.49380568, 1.0004815, 0.5061945, 0.99197215, 0.5070838], [0.991972, 0.50708383, 0.98610437, 0.507697, 0.98302305, 0.5122211, 0.98286116, 0.5168473]], [[1.0000001, 0.5, 1.0000001, 0.50580394, 0.9998981, 0.5116079, 0.99969417, 0.5174476]], [[0.9983541, 0.5000001, 0.99835414, 0.5033196, 0.9962268, 0.5066391, 0.991972, 0.50708383], [0.991972, 0.50708383, 0.98023593, 0.5083103, 0.97964674, 0.5251823, 0.9912687, 0.5272245]]], "91": [1, 0.50000036, 0.5, 0.50034094, 0.5, [[0.9995789, 0.48274612, 0.99969435, 0.48608977, 0.99977624, 0.48944208, 0.9998243, 0.492798], [0.9998243, 0.492798, 0.99989307, 0.4975963, 0.9998931, 0.502402, 0.9998243, 0.5072003], [0.9998243, 0.5072003, 0.99977624, 0.51055676, 0.99969435, 0.51390964, 0.9995789, 0.5172539]], [[0.98286504, 0.48333564, 0.98302346, 0.48791495, 0.9860736, 0.49239427, 0.99188507, 0.49299496], [0.9918854, 0.49299502, 1.0003097, 0.49386576, 1.0003097, 0.50613415, 0.9918854, 0.507005], [0.9918852, 0.507005, 0.98607343, 0.5076057, 0.9830233, 0.5120854, 0.9828651, 0.5166649]], [[0.99987596, 0.5, 0.99987596, 0.5057598, 0.99977696, 0.51151955, 0.9995789, 0.51725435]], [[0.99820364, 0.49999997, 0.99820364, 0.50328475, 0.99609756, 0.50656956, 0.9918852, 0.507005], [0.9918852, 0.507005, 0.9802618, 0.5082064, 0.9796845, 0.52492344, 0.9911973, 0.5269239]]], "92": [1, 0.50004846, 0.5, 0.50037545, 0.5, [[0.99966055, 0.48293278, 0.9997736, 0.4862427, 0.9998538, 0.48955894, 0.9999009, 0.49287766], [0.9999009, 0.49287766, 0.9999683, 0.49762386, 0.9999683, 0.50237536, 0.9999009, 0.5071215], [0.9999009, 0.5071215, 0.99985373, 0.5104406, 0.9997736, 0.513757, 0.99966055, 0.51706725]], [[0.9830984, 0.48351032, 0.98325354, 0.48804483, 0.9862741, 0.4924813, 0.99203205, 0.49307], [0.99203205, 0.49307, 1.0003755, 0.49392307, 1.0003755, 0.50607693, 0.99203205, 0.50693], [0.9920318, 0.50693005, 0.9862737, 0.50751877, 0.9832531, 0.5119556, 0.98309827, 0.51649034]], [[0.9999514, 0.50000006, 0.9999514, 0.50569516, 0.99985445, 0.5113903, 0.99966055, 0.5170676]], [[0.99828964, 0.5, 0.99828964, 0.50325173, 0.9962038, 0.50650346, 0.9920318, 0.50693005], [0.9920318, 0.50693005, 0.9805156, 0.50810754, 0.97994953, 0.5246773, 0.9913587, 0.526638]]], "93": [1, 0.50000054, 0.5, 0.5003261, 0.49999997, [[0.9995971, 0.48311695, 0.9997076, 0.48638672, 0.9997859, 0.48966816, 0.99983186, 0.49295452], [0.99983186, 0.49295452, 0.9998976, 0.4976475, 0.9998976, 0.50235045, 0.9998319, 0.5070434], [0.9998319, 0.5070434, 0.9997859, 0.51033044, 0.9997077, 0.5136126, 0.9995972, 0.516883]], [[0.9831849, 0.4836825, 0.9833366, 0.4881728, 0.98632777, 0.49256712, 0.99203265, 0.49314415], [0.9920327, 0.49314412, 1.0002959, 0.49397996, 1.0002959, 0.50602, 0.9920327, 0.50685585], [0.9920325, 0.5068558, 0.9863277, 0.5074328, 0.9833365, 0.5118271, 0.98318475, 0.5163173]], [[0.9998812, 0.5, 0.99988127, 0.5056392, 0.99978656, 0.51127833, 0.9995972, 0.5168832]], [[0.99823004, 0.5, 0.9982301, 0.50321895, 0.9961643, 0.5064379, 0.9920325, 0.5068558], [0.9920325, 0.5068558, 0.9806228, 0.50800985, 0.9800678, 0.524433, 0.99137354, 0.52635473]]], "94": [1, 0.50004673, 0.5, 0.5003591, 0.5000001, [[0.99971974, 0.483294, 0.9998286, 0.48654938, 0.99990577, 0.4897943, 0.9999512, 0.49303487], [0.9999512, 0.49303487, 1.0000165, 0.49768215, 1.0000165, 0.50232047, 0.99995106, 0.5069678], [0.99995106, 0.5069678, 0.9999057, 0.5102074, 0.9998285, 0.5134515, 0.99971974, 0.516706]], [[0.98348624, 0.48384744, 0.98363495, 0.48829538, 0.98659813, 0.4926492, 0.99225223, 0.49321502], [0.99225223, 0.493215, 1.0004389, 0.49403426, 1.0004389, 0.505966, 0.9922523, 0.5067853], [0.99225223, 0.5067852, 0.98659813, 0.50735104, 0.983635, 0.5117048, 0.9834863, 0.5161526]], [[1, 0.5, 1, 0.5055584, 0.9999066, 0.5111168, 0.9997197, 0.516706]], [[0.9983922, 0.5000001, 0.9983923, 0.5031879, 0.99634564, 0.5063757, 0.99225223, 0.5067852], [0.99225223, 0.5067852, 0.980944, 0.5079169, 0.9803996, 0.52420044, 0.99160707, 0.52608496]]], "95": [1, 0.5000003, 0.5, 0.5003123, 0.49999994, [[0.9996136, 0.48347253, 0.9997196, 0.4866778, 0.9997948, 0.48989034, 0.99983895, 0.49310592], [0.99983895, 0.49310592, 0.999902, 0.49769968, 0.999902, 0.5022996, 0.99983895, 0.5068934], [0.99983895, 0.5068934, 0.9997947, 0.5101092, 0.9997195, 0.513322, 0.99961346, 0.5165275]], [[0.98349285, 0.4840163, 0.9836388, 0.48842055, 0.9865732, 0.4927324, 0.9921748, 0.4932871], [0.9921748, 0.493287, 1.0002829, 0.49408996, 1.0002829, 0.50591, 0.9921748, 0.506713], [0.99217474, 0.5067129, 0.9865736, 0.5072676, 0.9836391, 0.5115789, 0.98349273, 0.5159828]], [[0.9998862, 0.5, 0.9998862, 0.5055163, 0.9997953, 0.5110326, 0.99961346, 0.5165276]], [[0.9982559, 0.49999997, 0.9982559, 0.5031557, 0.9962288, 0.5063115, 0.99217474, 0.5067129], [0.99217474, 0.5067129, 0.9809711, 0.5078224, 0.98043716, 0.5239616, 0.9915431, 0.5258091]]], "96": [1, 0.50004464, 0.5, 0.5003438, 0.49999997, [[0.9996874, 0.4836436, 0.99979156, 0.48682463, 0.99986535, 0.49000305, 0.9999088, 0.4931804], [0.9999088, 0.4931804, 0.9999709, 0.4977279, 0.999971, 0.5022732, 0.99990875, 0.5068207], [0.99990875, 0.5068207, 0.9998653, 0.50999767, 0.9997915, 0.5131757, 0.9996874, 0.5163564]], [[0.98370874, 0.48417693, 0.98385185, 0.4885397, 0.9867588, 0.49281177, 0.9923105, 0.49335584], [0.99231064, 0.49335587, 1.0003438, 0.4941431, 1.0003438, 0.5058569, 0.99231064, 0.5066441], [0.9923105, 0.5066441, 0.9867586, 0.5071882, 0.9838516, 0.5114606, 0.9837087, 0.5158235]], [[0.9999553, 0.5, 0.99995536, 0.5054496, 0.999866, 0.5108992, 0.9996874, 0.51635677]], [[0.9983355, 0.5, 0.9983355, 0.50312525, 0.9963272, 0.5062505, 0.9923105, 0.5066441], [0.9923105, 0.5066441, 0.9812065, 0.50773233, 0.9806826, 0.5237341, 0.99169177, 0.52554625]]], "97": [1, 0.49999958, 0.5, 0.5002992, 0.50000006, [[0.99962765, 0.48381296, 0.9997299, 0.48696578, 0.99980223, 0.49011093, 0.99984497, 0.49325302], [0.99984497, 0.49325302, 0.999906, 0.49775368, 0.99990594, 0.50224787, 0.99984485, 0.5067485], [0.99984485, 0.5067485, 0.99980223, 0.5098901, 0.9997298, 0.51303476, 0.99962765, 0.516187]], [[0.98378986, 0.48433658, 0.98393035, 0.48865807, 0.98681, 0.49289054, 0.992312, 0.4934242], [0.992312, 0.4934242, 1.0002707, 0.49419612, 1.0002707, 0.5058041, 0.992312, 0.50657606], [0.9923119, 0.50657606, 0.9868096, 0.50710976, 0.9839299, 0.51134264, 0.98378974, 0.51566434]], [[0.9998906, 0.49999997, 0.9998906, 0.50538826, 0.99980295, 0.5107765, 0.9996276, 0.51618737]], [[0.998281, 0.5000001, 0.998281, 0.5030951, 0.9962914, 0.50619006, 0.9923119, 0.50657606], [0.9923119, 0.50657606, 0.9813071, 0.5076435, 0.98079306, 0.52350825, 0.99170595, 0.52528584]]], "98": [1, 0.5000429, 0.5, 0.5003294, 0.49999997, [[0.9997424, 0.48397544, 0.9998425, 0.487096, 0.99991333, 0.49021035, 0.9999551, 0.49332207], [0.9999551, 0.49332207, 1.000015, 0.49777663, 1.000015, 0.5022258, 0.9999551, 0.5066803], [0.9999551, 0.5066803, 0.99991333, 0.50979125, 0.9998424, 0.5129048, 0.9997424, 0.5160246]], [[0.98406786, 0.4844877, 0.9842053, 0.4887702, 0.987059, 0.4929655, 0.992514, 0.49348924], [0.992514, 0.49348918, 1.0004016, 0.49424645, 1.0004016, 0.5057535, 0.9925141, 0.5065108], [0.99251395, 0.50651085, 0.98705864, 0.5070346, 0.98420495, 0.51123023, 0.9840678, 0.51551294]], [[1, 0.5, 1, 0.50533545, 0.9999141, 0.51067084, 0.9997424, 0.51602477]], [[0.9984298, 0.49999997, 0.9984298, 0.50306606, 0.9964578, 0.5061321, 0.99251395, 0.50651085], [0.99251395, 0.50651085, 0.9816037, 0.5075583, 0.9810991, 0.5232925, 0.9919202, 0.5250369]]], "99": [1, 0.5, 0.49999994, 0.50028706, 0.50000006, [[0.9996434, 0.48413947, 0.9997413, 0.48722205, 0.9998107, 0.49030533, 0.9998514, 0.49338895], [0.9998514, 0.49338895, 0.99990964, 0.49779606, 0.99990964, 0.50220376, 0.99985147, 0.5066109], [0.99985147, 0.5066109, 0.99981064, 0.5096945, 0.9997413, 0.51277786, 0.9996435, 0.51586044]], [[0.98407674, 0.48464334, 0.9842117, 0.48888537, 0.9870387, 0.49304178, 0.9924449, 0.4935556], [0.99244493, 0.4935556, 1.0002596, 0.4942983, 1.0002596, 0.5057017, 0.99244493, 0.50644445], [0.9924449, 0.50644445, 0.9870385, 0.5069583, 0.98421144, 0.511115, 0.98407674, 0.5153572]], [[0.9998951, 0.49999994, 0.99989516, 0.5052875, 0.9998113, 0.51057506, 0.9996435, 0.5158607]], [[0.998306, 0.5, 0.998306, 0.50303656, 0.9963523, 0.5060731, 0.9924449, 0.50644445], [0.9924449, 0.50644445, 0.98163193, 0.50747216, 0.9811368, 0.5230717, 0.9918628, 0.52478313]]], "100": [1, 0.5000408, 0.5000001, 0.50031585, 0.49999994, [[0.9997136, 0.4842973, 0.99980915, 0.48733795, 0.99987686, 0.49039245, 0.99991655, 0.4934527], [0.99991655, 0.4934527, 0.9999732, 0.49781275, 0.99997324, 0.5021845, 0.9999166, 0.5065446], [0.9999166, 0.5065446, 0.99987686, 0.5096058, 0.99980915, 0.5126613, 0.9997136, 0.51570296]], [[0.98427725, 0.48479155, 0.9844097, 0.48899513, 0.9872112, 0.49311465, 0.99257094, 0.49361897], [0.99257094, 0.49361897, 1.0003159, 0.49434775, 1.0003159, 0.5056521, 0.99257094, 0.5063809], [0.99257076, 0.506381, 0.98721105, 0.5068853, 0.98440945, 0.5110048, 0.98427707, 0.51520836]], [[0.99995905, 0.5000001, 0.99995905, 0.50524795, 0.9998772, 0.5104958, 0.9997136, 0.51570314]], [[0.99837965, 0.49999994, 0.99837965, 0.50300825, 0.9964434, 0.5060165, 0.99257076, 0.506381], [0.99257076, 0.506381, 0.98185074, 0.50738966, 0.98136455, 0.52286065, 0.99200016, 0.5245405]]], "101": [1, 0.49999958, 0.49999994, 0.50027555, 0.5, [[0.9996564, 0.48445335, 0.99975073, 0.48748404, 0.9998176, 0.490506, 0.99985695, 0.49352422], [0.99985695, 0.49352422, 0.9999132, 0.49784476, 0.99991316, 0.5021577, 0.9998568, 0.5064782], [0.9998568, 0.5064782, 0.9998175, 0.5094956, 0.99975073, 0.5125166, 0.9996564, 0.5155465]], [[0.9843533, 0.48493823, 0.98448306, 0.48910376, 0.98725927, 0.49318695, 0.992573, 0.49368197], [0.992573, 0.49368197, 1.0002487, 0.4943971, 1.0002487, 0.505603, 0.992573, 0.5063181], [0.9925727, 0.50631815, 0.98725903, 0.50681317, 0.9844828, 0.5108963, 0.9843531, 0.5150619]], [[0.9998991, 0.4999999, 0.9998991, 0.5051735, 0.9998182, 0.510347, 0.9996564, 0.5155469]], [[0.99832976, 0.5, 0.99832976, 0.5029803, 0.99641085, 0.5059606, 0.9925727, 0.50631815], [0.9925727, 0.50631815, 0.9819452, 0.50730824, 0.98146784, 0.52265114, 0.99201363, 0.5243001]]], "102": [1, 0.5000393, 0.5, 0.5003032, 0.5000001, [[0.9997642, 0.48460364, 0.999856, 0.48758352, 0.999921, 0.49057928, 0.99995923, 0.49358165], [0.99995923, 0.49358165, 1.0000136, 0.49785495, 1.0000136, 0.50214165, 0.99995923, 0.506415], [0.99995923, 0.506415, 0.9999211, 0.5094185, 0.9998561, 0.51241535, 0.9997642, 0.51539636]], [[0.9846107, 0.48507896, 0.98473793, 0.48920795, 0.98748994, 0.4932561, 0.9927595, 0.4937422], [0.9927595, 0.49374226, 1.0003691, 0.4944442, 1.0003691, 0.505556, 0.9927595, 0.506258], [0.99275935, 0.5062581, 0.98748946, 0.5067442, 0.9847374, 0.51079285, 0.9846105, 0.51492214]], [[1, 0.49999997, 0.99999994, 0.5051476, 0.9999214, 0.5102953, 0.99976414, 0.5153966]], [[0.99846673, 0.5000001, 0.9984667, 0.5029535, 0.99656427, 0.505907, 0.99275935, 0.5062581], [0.99275935, 0.5062581, 0.9822202, 0.5072303, 0.9817512, 0.5224508, 0.99221075, 0.52407014]]], "103": [1, 0.5000001, 0.5, 0.50026476, 0.50000006, [[0.9996708, 0.48475468, 0.99976116, 0.48771715, 0.9998253, 0.49068218, 0.99986285, 0.49364838], [0.99986285, 0.49364838, 0.99991655, 0.49788183, 0.9999166, 0.5021175, 0.99986285, 0.506351], [0.99986285, 0.506351, 0.99982524, 0.5093174, 0.9997612, 0.5122826, 0.9996708, 0.5152453]], [[0.98462087, 0.48522207, 0.9847457, 0.48931378, 0.9874729, 0.4933262, 0.9926971, 0.49380347], [0.9926971, 0.49380347, 1.0002389, 0.4944925, 1.0002389, 0.5055077, 0.9926971, 0.50619674], [0.99269706, 0.5061967, 0.9874728, 0.50667405, 0.9847455, 0.51068646, 0.9846207, 0.5147782]], [[0.9999032, 0.5, 0.99990314, 0.50508434, 0.9998257, 0.5101687, 0.9996708, 0.5152454]], [[0.9983535, 0.5000001, 0.9983535, 0.5029262, 0.996468, 0.5058522, 0.99269706, 0.5061967], [0.99269706, 0.5061967, 0.98224866, 0.5071513, 0.9817881, 0.52224576, 0.99215907, 0.5238356]]], "104": [1, 0.50003815, 0.5, 0.5002912, 0.49999997, [[0.99973327, 0.48490083, 0.9998222, 0.48784322, 0.99988514, 0.4907792, 0.9999223, 0.49371257], [0.9999223, 0.49371257, 0.9999752, 0.49790677, 0.9999752, 0.5020955, 0.99992216, 0.5062897], [0.99992216, 0.5062897, 0.9998851, 0.50922227, 0.99982214, 0.51215756, 0.99973327, 0.51509917]], [[0.9848076, 0.4853592, 0.98493004, 0.48941517, 0.9876336, 0.4933932, 0.9928144, 0.49386203], [0.9928144, 0.49386203, 1.0002912, 0.49453855, 1.0002912, 0.5054614, 0.9928144, 0.5061379], [0.99281436, 0.5061379, 0.9876338, 0.5066067, 0.9849303, 0.51058424, 0.9848075, 0.5146399]], [[0.9999619, 0.5, 0.9999619, 0.5050268, 0.9998857, 0.51005363, 0.9997332, 0.51509917]], [[0.998422, 0.49999994, 0.998422, 0.5028998, 0.9965528, 0.50579965, 0.99281436, 0.5061379], [0.99281436, 0.5061379, 0.98245275, 0.5070755, 0.9820003, 0.52204955, 0.99228644, 0.52361107]]], "105": [1, 0.49999946, 0.5, 0.50025445, 0.49999997, [[0.99968183, 0.48504555, 0.9997692, 0.4879645, 0.99983114, 0.49087194, 0.99986756, 0.49377444], [0.99986756, 0.49377444, 0.9999198, 0.4979291, 0.9999198, 0.50207376, 0.99986756, 0.50622845], [0.99986756, 0.50622845, 0.9998311, 0.50913006, 0.9997692, 0.51203644, 0.99968183, 0.51495445]], [[0.9848792, 0.4854967, 0.98499984, 0.48951668, 0.9876797, 0.49345985, 0.9928169, 0.4939203], [0.9928169, 0.4939203, 1.0002292, 0.49458462, 1.0002292, 0.50541544, 0.9928169, 0.50607973], [0.99281675, 0.50607973, 0.98767954, 0.5065402, 0.98499966, 0.51048326, 0.9848789, 0.51450324]], [[0.9999067, 0.5, 0.99990666, 0.5049734, 0.99983174, 0.5099468, 0.99968183, 0.5149548]], [[0.99837613, 0.50000006, 0.99837613, 0.5028738, 0.9965231, 0.50574756, 0.99281675, 0.50607973], [0.99281675, 0.50607973, 0.98254156, 0.5070006, 0.982097, 0.5218546, 0.992299, 0.5233884]]], "106": [1, 0.5000368, 0.5, 0.50027984, 0.50000006, [[0.99977934, 0.48518473, 0.9998651, 0.48807722, 0.9999259, 0.49095783, 0.9999618, 0.4938335], [0.9999618, 0.4938335, 1.0000129, 0.49794894, 1.0000129, 0.5020542, 0.9999616, 0.50616974], [0.9999616, 0.50616974, 0.99992585, 0.5090443, 0.99986506, 0.51192385, 0.99977934, 0.5148153]], [[0.9851178, 0.4856272, 0.9852362, 0.4896132, 0.9878936, 0.49352378, 0.9929894, 0.49397618], [0.9929895, 0.49397615, 1.0003399, 0.49462876, 1.0003399, 0.5053715, 0.9929895, 0.50602406], [0.9929893, 0.50602406, 0.98789334, 0.5064765, 0.985236, 0.5103872, 0.9851176, 0.51437324]], [[1, 0.5, 1, 0.50492674, 0.99992645, 0.5098535, 0.99977934, 0.5148153]], [[0.99850225, 0.5000001, 0.99850225, 0.502849, 0.99666464, 0.5056978, 0.9929893, 0.50602406], [0.9929893, 0.50602406, 0.98279697, 0.506929, 0.98235995, 0.5216679, 0.9924812, 0.5231751]]], "107": [1, 0.49999964, 0.5, 0.500245, 0.49999997, [[0.999694, 0.48532498, 0.99977803, 0.48818648, 0.9998376, 0.49104047, 0.9998725, 0.49389124], [0.9998725, 0.49389124, 0.99992263, 0.49796662, 0.99992263, 0.5020356, 0.9998725, 0.50611097], [0.9998725, 0.50611097, 0.9998375, 0.5089611, 0.99977803, 0.5118143, 0.999694, 0.5146751]], [[0.9851292, 0.48576075, 0.9852458, 0.48971164, 0.98788, 0.49358827, 0.9929332, 0.4940327], [0.9929333, 0.49403274, 1.0002204, 0.49467373, 1.0002204, 0.5053262, 0.9929333, 0.5059672], [0.9929333, 0.5059672, 0.9878799, 0.5064117, 0.9852456, 0.5102886, 0.98512924, 0.5142398]], [[0.9999101, 0.5, 0.9999101, 0.50488424, 0.99983805, 0.50976855, 0.99969405, 0.5146755]], [[0.99839866, 0.49999994, 0.99839866, 0.50282335, 0.99657685, 0.5056467, 0.9929333, 0.5059672], [0.9929333, 0.5059672, 0.9828257, 0.5068562, 0.9823963, 0.52147704, 0.9924344, 0.52295774]]], "108": [1, 0.5000352, 0.5, 0.50026935, 0.50000006, [[0.99975336, 0.48545983, 0.9998356, 0.48828748, 0.9998938, 0.49111658, 0.99992806, 0.49394634], [0.99992806, 0.49394634, 0.999977, 0.4979819, 0.99997693, 0.5020187, 0.9999281, 0.50605434], [0.9999281, 0.50605434, 0.99989384, 0.50888383, 0.9998356, 0.5117128, 0.99975336, 0.5145402]], [[0.9853032, 0.48588675, 0.98541707, 0.48980486, 0.9880292, 0.49365038, 0.99304235, 0.49408725], [0.9930427, 0.49408728, 1.0002693, 0.49471703, 1.0002693, 0.5052831, 0.9930427, 0.50591284], [0.99304247, 0.5059129, 0.9880296, 0.5063497, 0.9854176, 0.5101948, 0.9853034, 0.5141126]], [[0.99996483, 0.5, 0.99996483, 0.5048482, 0.9998943, 0.50969636, 0.9997533, 0.5145402]], [[0.9984627, 0.50000006, 0.9984626, 0.50279903, 0.996656, 0.50559795, 0.99304247, 0.5059129], [0.99304247, 0.5059129, 0.9830164, 0.5067866, 0.98259425, 0.52129424, 0.99255264, 0.5227495]]], "109": [1, 0.50000066, 0.49999994, 0.5002359, 0.5, [[0.9997073, 0.4855933, 0.9997877, 0.48838228, 0.99984455, 0.49118713, 0.99987805, 0.49399865], [0.99987805, 0.49399865, 0.9999255, 0.4979939, 0.9999255, 0.5020025, 0.999878, 0.5059978], [0.999878, 0.5059978, 0.9998447, 0.5088104, 0.99978775, 0.5116164, 0.9997073, 0.5144066]], [[0.98537153, 0.48601386, 0.9854836, 0.48989862, 0.9880736, 0.4937119, 0.9930461, 0.49414125], [0.9930461, 0.49414125, 1.0002124, 0.49476, 1.0002124, 0.50524, 0.9930461, 0.5058588], [0.99304605, 0.50585884, 0.98807335, 0.50628823, 0.9854832, 0.51010185, 0.98537135, 0.51398677]], [[0.9999136, 0.49999994, 0.9999136, 0.5048176, 0.9998448, 0.5096353, 0.9997073, 0.5144066]], [[0.9984209, 0.5, 0.99842083, 0.5027747, 0.99662924, 0.50554943, 0.99304605, 0.50585884], [0.99304605, 0.50585884, 0.9831009, 0.50671756, 0.9826858, 0.5211124, 0.9925651, 0.5225427]]], "110": [1, 0.5000343, 0.5, 0.50025946, 0.50000006, [[0.9997944, 0.48572317, 0.99987435, 0.48851866, 0.9999309, 0.49129453, 0.9999643, 0.49406222], [0.9999643, 0.49406222, 1.000012, 0.49802798, 1.0000119, 0.50197685, 0.9999642, 0.50594264], [0.9999642, 0.50594264, 0.9999308, 0.5087087, 0.99987423, 0.51148295, 0.9997944, 0.51427686]], [[0.9855937, 0.4861357, 0.98570395, 0.4899885, 0.9882728, 0.49377102, 0.9932064, 0.49419317], [0.99320644, 0.49419314, 1.0003148, 0.49480134, 1.0003148, 0.50519884, 0.99320644, 0.50580704], [0.9932063, 0.505807, 0.9882726, 0.50622916, 0.98570365, 0.5100118, 0.9855935, 0.5138647]], [[1, 0.5, 1, 0.50473964, 0.99993145, 0.5094794, 0.9997944, 0.51427704]], [[0.9985378, 0.50000006, 0.9985378, 0.50275147, 0.9967606, 0.50550294, 0.9932063, 0.505807], [0.9932063, 0.505807, 0.9833387, 0.5066513, 0.98293054, 0.52093804, 0.99273396, 0.5223443]]], "111": [1, 0.5000001, 0.5, 0.5002273, 0.4999999, [[0.99971664, 0.48585305, 0.9997945, 0.48860377, 0.9998496, 0.49135712, 0.999882, 0.4941115], [0.999882, 0.4941115, 0.99992824, 0.49803656, 0.99992824, 0.5019638, 0.99988204, 0.5058888], [0.99988204, 0.5058888, 0.9998497, 0.50864315, 0.9997945, 0.5113963, 0.99971664, 0.5141469]], [[0.9856054, 0.48625875, 0.98571366, 0.49007925, 0.988261, 0.49383068, 0.99315494, 0.49424568], [0.99315494, 0.49424568, 1.0002043, 0.4948434, 1.0002043, 0.50515646, 0.99315494, 0.5057542], [0.99315494, 0.5057542, 0.98826116, 0.50616914, 0.9857138, 0.50992024, 0.9856055, 0.5137405]], [[0.9999167, 0.5, 0.9999167, 0.5047182, 0.99985, 0.50943637, 0.9997166, 0.51414704]], [[0.998442, 0.4999999, 0.998442, 0.5027276, 0.99667966, 0.5054553, 0.99315494, 0.5057542], [0.99315494, 0.5057542, 0.9833669, 0.5065841, 0.9829656, 0.5207599, 0.99269116, 0.5221423]]], "112": [1, 0.50003314, 0.5, 0.5002498, 0.5, [[0.999768, 0.48597905, 0.99984527, 0.48873198, 0.99990004, 0.49145767, 0.9999322, 0.49417198], [0.9999322, 0.49417198, 0.99997854, 0.49806762, 0.9999784, 0.5019398, 0.99993217, 0.5058355], [0.99993217, 0.5058355, 0.99989986, 0.5085473, 0.99984515, 0.5112705, 0.99976796, 0.514021]], [[0.9857685, 0.4863779, 0.98587483, 0.49016708, 0.9884014, 0.49388832, 0.9932572, 0.4942964], [0.9932572, 0.4942964, 1.0002497, 0.49488404, 1.0002497, 0.505116, 0.9932572, 0.5057036], [0.993257, 0.5057036, 0.98840165, 0.5061116, 0.985875, 0.5098324, 0.98576826, 0.5136212]], [[0.9999669, 0.49999997, 0.9999669, 0.50464684, 0.9999006, 0.5092937, 0.99976796, 0.514021]], [[0.9985016, 0.5, 0.9985016, 0.5027049, 0.99675345, 0.50540984, 0.993257, 0.5057036], [0.993257, 0.5057036, 0.9835453, 0.5065198, 0.98315054, 0.52058905, 0.9928015, 0.5219485]]], "113": [1, 0.5000001, 0.50000006, 0.5002193, 0.5000001, [[0.9997267, 0.48610312, 0.99980175, 0.4888036, 0.999855, 0.49150896, 0.9998862, 0.4942163], [0.9998862, 0.4942163, 0.99993074, 0.49807054, 0.9999307, 0.5019289, 0.9998862, 0.5057832], [0.9998862, 0.5057832, 0.9998549, 0.50849074, 0.9998018, 0.51119626, 0.9997267, 0.513897]], [[0.9858322, 0.4864957, 0.98593676, 0.49025398, 0.9884428, 0.49394548, 0.9932606, 0.49434683], [0.9932606, 0.4943468, 1.0001967, 0.49492455, 1.0001967, 0.50507575, 0.9932607, 0.50565356], [0.9932606, 0.50565356, 0.9884429, 0.5060549, 0.9859369, 0.5097461, 0.9858322, 0.51350415]], [[0.99991953, 0.50000006, 0.99991953, 0.5046371, 0.9998553, 0.5092741, 0.9997268, 0.51389706]], [[0.99846274, 0.5000002, 0.9984627, 0.5026824, 0.99672866, 0.50536466, 0.9932606, 0.50565356], [0.9932606, 0.50565356, 0.9836249, 0.50645614, 0.9832366, 0.52041924, 0.99281305, 0.5217562]]], "114": [1, 0.5000319, 0.5, 0.5002409, 0.49999997, [[0.99980867, 0.4862237, 0.99988306, 0.4889215, 0.9999357, 0.49160093, 0.9999666, 0.4942727], [0.9999666, 0.4942727, 1.0000112, 0.49809772, 1.0000112, 0.501907, 0.9999667, 0.50573194], [0.9999667, 0.50573194, 0.99993575, 0.5084022, 0.99988306, 0.51108015, 0.99980867, 0.51377636]], [[0.98603964, 0.48660865, 0.9861423, 0.4903372, 0.9886285, 0.49400014, 0.99341, 0.49439493], [0.99341, 0.49439493, 1.0002917, 0.49496317, 1.0002917, 0.50503683, 0.99341, 0.50560504], [0.99340993, 0.50560504, 0.9886283, 0.5059998, 0.98614216, 0.509663, 0.98603964, 0.51339155]], [[1.0000001, 0.5, 1.0000001, 0.5045741, 0.9999363, 0.50914824, 0.99980867, 0.5137768]], [[0.9985713, 0.49999997, 0.9985713, 0.50266045, 0.99685085, 0.5053209, 0.99340993, 0.50560504], [0.99340993, 0.50560504, 0.9838473, 0.5063946, 0.9834652, 0.5202558, 0.9929699, 0.521571]]], "115": [1, 0.50000083, 0.5, 0.5002114, 0.5, [[0.9997378, 0.48634526, 0.99980986, 0.48898354, 0.9998609, 0.491644, 0.9998906, 0.49431354], [0.9998906, 0.49431354, 0.9999331, 0.49809688, 0.9999331, 0.5018987, 0.9998908, 0.50568205], [0.9998908, 0.50568205, 0.9998609, 0.5083531, 0.99980986, 0.51101506, 0.9997378, 0.51365477]], [[0.9860521, 0.48672527, 0.9861535, 0.49042296, 0.98861945, 0.4940558, 0.9933631, 0.49444407], [0.9933631, 0.49444404, 1.0001895, 0.4950028, 1.0001895, 0.50499725, 0.9933631, 0.50555605], [0.9933631, 0.505556, 0.9886194, 0.50594425, 0.9861535, 0.50957716, 0.9860521, 0.51327485]], [[0.9999225, 0.5, 0.9999225, 0.5045731, 0.999861, 0.5091462, 0.9997378, 0.5136556]], [[0.9984829, 0.50000006, 0.99848294, 0.50263834, 0.99677634, 0.5052767, 0.9933631, 0.505556], [0.9933631, 0.505556, 0.9838751, 0.50633264, 0.9834992, 0.5200893, 0.99293095, 0.5213829]]], "116": [1, 0.50003046, 0.5, 0.5002324, 0.5000001, [[0.99978656, 0.48646227, 0.9998578, 0.48909262, 0.9999082, 0.49172848, 0.99993783, 0.4943667], [0.99993783, 0.4943667, 0.99998, 0.49812037, 0.99998, 0.50187874, 0.9999379, 0.50563246], [0.9999379, 0.50563246, 0.9999083, 0.5082709, 0.9998579, 0.5109071, 0.9997866, 0.5135377]], [[0.9862051, 0.48683673, 0.986305, 0.49050504, 0.98875153, 0.49410936, 0.99345905, 0.4944914], [0.99345905, 0.4944914, 1.0002322, 0.49504095, 1.0002322, 0.5049593, 0.9934591, 0.5055089], [0.99345887, 0.5055089, 0.98875105, 0.50589097, 0.9863045, 0.5094956, 0.9862049, 0.5131641]], [[0.9999695, 0.49999997, 0.99996954, 0.504518, 0.99990857, 0.50903594, 0.9997866, 0.5135379]], [[0.9985389, 0.5000001, 0.998539, 0.5026171, 0.99684566, 0.5052341, 0.99345887, 0.5055089], [0.99345887, 0.5055089, 0.98404264, 0.506273, 0.98367274, 0.51992935, 0.9930341, 0.52120215]]], "117": [1, 0.49999964, 0.5, 0.50020427, 0.49999997, [[0.999744, 0.48657796, 0.9998143, 0.4891984, 0.99986416, 0.4918104, 0.9998933, 0.49441895], [0.9998933, 0.49441895, 0.99993515, 0.49814266, 0.9999352, 0.50185925, 0.99989337, 0.5055829], [0.99989337, 0.5055829, 0.99986416, 0.5081909, 0.99981433, 0.51080227, 0.999744, 0.5134221]], [[0.98626584, 0.48694625, 0.98636395, 0.49058563, 0.9887911, 0.4941622, 0.99346316, 0.4945381], [0.9934632, 0.4945381, 1.0001833, 0.49507877, 1.0001833, 0.50492126, 0.9934632, 0.5054619], [0.9934629, 0.5054619, 0.98879033, 0.5058378, 0.98636305, 0.50941515, 0.98626554, 0.51305497]], [[0.9999248, 0.5, 0.9999248, 0.5044658, 0.9998646, 0.50893164, 0.999744, 0.5134229]], [[0.99850327, 0.5, 0.9985033, 0.5025958, 0.9968233, 0.50519156, 0.9934629, 0.5054619], [0.9934629, 0.5054619, 0.98411816, 0.50621367, 0.98375404, 0.51977, 0.9930453, 0.52102244]]], "118": [1, 0.50002974, 0.5, 0.5002241, 0.50000006, [[0.9998212, 0.48669127, 0.9998907, 0.48930016, 0.9999399, 0.49188897, 0.99996895, 0.49446934], [0.99996895, 0.49446934, 1.0000105, 0.49816388, 1.0000104, 0.50184125, 0.9999688, 0.5055357], [0.9999688, 0.5055357, 0.99993986, 0.50811446, 0.9998906, 0.51070154, 0.9998212, 0.5133087]], [[0.98645926, 0.48705342, 0.98655605, 0.4906644, 0.9889646, 0.4942134, 0.99360186, 0.49458334], [0.99360186, 0.49458337, 1.000271, 0.49511537, 1.000271, 0.5048848, 0.99360186, 0.5054168], [0.99360144, 0.50541687, 0.98896384, 0.50578684, 0.9865552, 0.50933635, 0.9864587, 0.5129477]], [[1, 0.5, 1, 0.5044165, 0.9999404, 0.50883305, 0.9998212, 0.5133091]], [[0.9986037, 0.50000006, 0.9986037, 0.50257546, 0.99693644, 0.5051508, 0.99360144, 0.50541687], [0.99360144, 0.50541687, 0.9843255, 0.50615686, 0.98396707, 0.51961684, 0.9931912, 0.5208496]]], "119": [1, 0.49999893, 0.5, 0.5001975, 0.49999994, [[0.9997507, 0.48680338, 0.99981916, 0.48939764, 0.9998677, 0.49196392, 0.9998963, 0.49451858], [0.9998963, 0.49451858, 0.9999373, 0.49818304, 0.99993724, 0.5018234, 0.99989617, 0.505488], [0.99989617, 0.505488, 0.99986756, 0.5080404, 0.99981904, 0.5106045, 0.9997507, 0.5131966]], [[0.98647255, 0.48715982, 0.9865674, 0.49074268, 0.98895705, 0.49426478, 0.99355966, 0.4946289], [0.9935598, 0.49462897, 1.0001769, 0.4951524, 1.0001769, 0.50484747, 0.9935598, 0.5053709], [0.9935598, 0.5053709, 0.9889568, 0.50573504, 0.98656714, 0.50925773, 0.98647267, 0.5128409]], [[0.99992704, 0.5, 0.99992704, 0.5043714, 0.9998683, 0.50874275, 0.9997507, 0.5131966]], [[0.99852264, 0.4999999, 0.99852264, 0.50255454, 0.9968684, 0.5051092, 0.9935598, 0.5053709], [0.9935598, 0.5053709, 0.9843541, 0.50609916, 0.9840012, 0.51946074, 0.99315584, 0.5206738]]], "120": [1, 0.500029, 0.5, 0.50021666, 0.5000002, [[0.999797, 0.48691255, 0.99986446, 0.48949125, 0.9999124, 0.49203598, 0.99994063, 0.49456656], [0.99994063, 0.49456656, 0.99998116, 0.49820146, 0.99998116, 0.5018071, 0.9999405, 0.5054421], [0.9999405, 0.5054421, 0.9999123, 0.5079698, 0.99986446, 0.5105117, 0.999797, 0.51308745]], [[0.98661566, 0.48726314, 0.98670876, 0.49081886, 0.9890801, 0.49431497, 0.99364924, 0.4946734], [0.99364924, 0.4946734, 1.0002164, 0.4951886, 1.0002164, 0.5048119, 0.99364924, 0.50532705], [0.99364924, 0.50532705, 0.98907983, 0.50568557, 0.98670846, 0.50918204, 0.9866158, 0.51273793]], [[0.9999709, 0.49999997, 0.9999709, 0.5043291, 0.999913, 0.5086582, 0.999797, 0.5130876]], [[0.9985746, 0.50000024, 0.99857455, 0.50253487, 0.9969328, 0.5050695, 0.99364924, 0.50532705], [0.99364924, 0.50532705, 0.9845112, 0.506044, 0.9841638, 0.5193107, 0.9932521, 0.52050495]]], "121": [1, 0.5000013, 0.5, 0.5001905, 0.5, [[0.9997644, 0.4870216, 0.9998292, 0.4895178, 0.999875, 0.49204916, 0.9999018, 0.49459514], [0.9999018, 0.49459514, 0.9999396, 0.4981863, 0.9999397, 0.50180644, 0.9999019, 0.5053977], [0.9999019, 0.5053977, 0.99987507, 0.507946, 0.9998293, 0.51047987, 0.99976444, 0.51297843]], [[0.9866732, 0.48736662, 0.9867648, 0.4908948, 0.98911804, 0.49436423, 0.9936533, 0.49471706], [0.9936533, 0.49471706, 1.0001705, 0.4952241, 1.0001705, 0.504776, 0.9936533, 0.505283], [0.9936532, 0.50528306, 0.9891179, 0.5056359, 0.98676467, 0.50910527, 0.98667294, 0.5126334]], [[0.99993026, 0.5, 0.99993026, 0.50436026, 0.999875, 0.5087205, 0.9997644, 0.51297927]], [[0.9985412, 0.50000006, 0.9985412, 0.5025148, 0.9969119, 0.5050295, 0.9936532, 0.50528306], [0.9936532, 0.50528306, 0.9845824, 0.5059888, 0.98424035, 0.5191611, 0.9932624, 0.52033675]]], "122": [1, 0.5000271, 0.5, 0.5002094, 0.5000001, [[0.9998369, 0.48712707, 0.99990064, 0.48960093, 0.9999457, 0.4921121, 0.9999721, 0.4946387], [0.9999721, 0.4946387, 1.0000092, 0.4982, 1.0000092, 0.50179195, 0.9999721, 0.5053532], [0.9999721, 0.5053532, 0.99994576, 0.5078826, 0.9999007, 0.5103965, 0.9998369, 0.51287293]], [[0.98685455, 0.4874664, 0.986945, 0.49096814, 0.98928064, 0.49441192, 0.99378335, 0.49475938], [0.99378353, 0.49475938, 1.0002527, 0.49525857, 1.0002527, 0.50474167, 0.99378353, 0.50524086], [0.99378353, 0.50524086, 0.98928094, 0.5055883, 0.98694515, 0.5090319, 0.9868546, 0.5125335]], [[0.9999999, 0.49999997, 0.9999999, 0.5043272, 0.9999456, 0.5086543, 0.9998369, 0.5128735]], [[0.9986354, 0.5000001, 0.9986354, 0.5024957, 0.9970181, 0.5049913, 0.99378353, 0.50524086], [0.99378353, 0.50524086, 0.98477757, 0.50593585, 0.9844406, 0.51901716, 0.993399, 0.5201749]]], "123": [1, 0.49999863, 0.5, 0.50018436, 0.4999999, [[0.99976593, 0.48723277, 0.99983025, 0.4897496, 0.9998758, 0.4922324, 0.99990267, 0.49470097], [0.99990267, 0.49470097, 0.9999412, 0.4982465, 0.9999411, 0.5017626, 0.99990255, 0.5053082], [0.99990255, 0.5053082, 0.9998757, 0.50777376, 0.9998302, 0.5102535, 0.99976593, 0.51276726]], [[0.98686826, 0.48756674, 0.9869571, 0.4910418, 0.9892749, 0.49445993, 0.99374473, 0.49480206], [0.99374473, 0.49480206, 1.0001651, 0.49529347, 1.0001651, 0.5047064, 0.99374473, 0.50519776], [0.9937446, 0.5051978, 0.9892751, 0.5055399, 0.9869572, 0.5089576, 0.9868681, 0.51243246]], [[0.9999316, 0.5, 0.9999316, 0.5042222, 0.9998764, 0.5084445, 0.9997659, 0.51276726]], [[0.9985601, 0.4999999, 0.9985601, 0.502476, 0.9969549, 0.5049521, 0.9937446, 0.5051978], [0.9937446, 0.5051978, 0.9848049, 0.5058821, 0.9844731, 0.5188704, 0.9933663, 0.5200103]]], "124": [1, 0.5000271, 0.5, 0.5002024, 0.5000001, [[0.99981034, 0.48733544, 0.99987346, 0.48982698, 0.9999182, 0.49229038, 0.99994457, 0.4947421], [0.99994457, 0.4947421, 0.99998236, 0.49825767, 0.9999823, 0.50174916, 0.99994445, 0.5052648], [0.99994445, 0.5052648, 0.9999181, 0.5077142, 0.9998734, 0.51017535, 0.99981034, 0.51266456]], [[0.98700327, 0.48766512, 0.987091, 0.49111408, 0.9893917, 0.49450672, 0.99382925, 0.49484366], [0.99382925, 0.49484363, 1.0002024, 0.4953275, 1.0002024, 0.5046728, 0.99382925, 0.5051567], [0.99382895, 0.5051567, 0.9893913, 0.50549364, 0.9870907, 0.50888634, 0.98700285, 0.5123353]], [[0.9999728, 0.5, 0.9999728, 0.50419396, 0.9999187, 0.5083879, 0.99981034, 0.512665]], [[0.9986091, 0.5000002, 0.9986091, 0.50245744, 0.99701583, 0.50491476, 0.99382895, 0.5051567], [0.99382895, 0.5051567, 0.9849531, 0.5058306, 0.9846262, 0.5187294, 0.99345666, 0.519852]]], "125": [1, 0.49999923, 0.5, 0.50017846, 0.50000006, [[0.9997747, 0.487437, 0.99983656, 0.4899009, 0.9998804, 0.49234575, 0.9999061, 0.4947827], [0.9999061, 0.4947827, 0.9999431, 0.49826807, 0.99994314, 0.5017372, 0.9999061, 0.50522256], [0.9999061, 0.50522256, 0.99988043, 0.50765777, 0.99983656, 0.5101009, 0.9997747, 0.512563]], [[0.98705757, 0.48776123, 0.98714375, 0.49118465, 0.9894273, 0.49455273, 0.9938333, 0.49488458], [0.9938333, 0.49488458, 1.0001595, 0.4953611, 1.0001595, 0.504639, 0.9938333, 0.5051155], [0.99383307, 0.50511557, 0.9894273, 0.5054474, 0.98714375, 0.5088151, 0.98705727, 0.51223826]], [[0.99993396, 0.5, 0.9999339, 0.50416905, 0.99988085, 0.5083381, 0.99977475, 0.5125632]], [[0.99857795, 0.50000006, 0.99857795, 0.50243866, 0.9969964, 0.50487727, 0.99383307, 0.50511557], [0.99383307, 0.50511557, 0.98502076, 0.5057793, 0.9846987, 0.5185886, 0.99346656, 0.5196943]]], "126": [1, 0.500026, 0.5, 0.5001958, 0.5000001, [[0.99984413, 0.487536, 0.9999048, 0.4899696, 0.99994785, 0.49239662, 0.9999732, 0.4948209], [0.9999732, 0.4948209, 1.0000092, 0.4982761, 1.0000091, 0.5017258, 0.99997306, 0.5051811], [0.99997306, 0.5051811, 0.9999478, 0.50760466, 0.9999048, 0.51003104, 0.99984413, 0.512464]], [[0.9872277, 0.48785543, 0.987313, 0.49125376, 0.98958004, 0.49459738, 0.99395514, 0.49492428], [0.99395514, 0.4949243, 1.000236, 0.49539366, 1.000236, 0.50460666, 0.99395514, 0.505076], [0.99395496, 0.50507605, 0.9895798, 0.5054029, 0.9873127, 0.50874686, 0.98722756, 0.5121453]], [[1, 0.5, 1, 0.5041482, 0.999948, 0.50829643, 0.99984413, 0.5124642]], [[0.9986658, 0.5000002, 0.9986658, 0.5024207, 0.9970956, 0.5048413, 0.99395496, 0.50507605], [0.99395496, 0.50507605, 0.985204, 0.5057299, 0.98488665, 0.5184531, 0.9935946, 0.51954246]]], "127": [1, 0.5000003, 0.5, 0.50017273, 0.5000002, [[0.999784, 0.4876348, 0.9998434, 0.49003488, 0.99988544, 0.49244475, 0.9999101, 0.49485865], [0.9999101, 0.49485865, 0.99994516, 0.49828303, 0.99994516, 0.50171554, 0.9999101, 0.5051399], [0.9999101, 0.5051399, 0.99988544, 0.5075543, 0.9998435, 0.5099646, 0.999784, 0.5123652]], [[0.98724097, 0.48795012, 0.98732483, 0.49132326, 0.98957515, 0.4946425, 0.993919, 0.49496454], [0.99391913, 0.49496454, 1.000154, 0.49542677, 1.000154, 0.50457364, 0.99391913, 0.5050358], [0.99391913, 0.5050358, 0.9895752, 0.50535786, 0.98732495, 0.5086773, 0.9872411, 0.5120505]], [[0.99993634, 0.5, 0.99993634, 0.5041312, 0.99988556, 0.5082624, 0.999784, 0.51236534]], [[0.99859536, 0.5000002, 0.9985953, 0.5024025, 0.9970366, 0.50480473, 0.99391913, 0.5050358], [0.99391913, 0.5050358, 0.9852306, 0.50567997, 0.984918, 0.51831526, 0.99356425, 0.51938826]]], "128": [1, 0.50002474, 0.49999994, 0.50018966, 0.5000001, [[0.9998267, 0.48773143, 0.9998847, 0.49009553, 0.9999258, 0.49248868, 0.9999497, 0.4948939], [0.9999497, 0.4948939, 0.99998367, 0.49828786, 0.99998367, 0.5017057, 0.9999499, 0.50509965], [0.9999499, 0.50509965, 0.99992585, 0.50750697, 0.99988484, 0.50990224, 0.9998267, 0.5122684]], [[0.9873687, 0.4880421, 0.98745155, 0.49139065, 0.9896856, 0.494686, 0.99399906, 0.49500328], [0.9939992, 0.49500328, 1.0001895, 0.49545866, 1.0001895, 0.50454164, 0.9939992, 0.504997], [0.99399894, 0.504997, 0.9896854, 0.50531435, 0.98745143, 0.50860965, 0.98736864, 0.51195836]], [[0.99997526, 0.49999994, 0.99997526, 0.5041176, 0.99992573, 0.50823534, 0.99982667, 0.51227]], [[0.9986419, 0.5000001, 0.99864197, 0.5023847, 0.9970944, 0.5047693, 0.99399894, 0.504997], [0.99399894, 0.504997, 0.98537076, 0.5056317, 0.98506266, 0.5181821, 0.9936493, 0.51923937]]], "129": [1, 0.49999875, 0.5, 0.5001676, 0.5, [[0.999787, 0.48782605, 0.9998455, 0.4902287, 0.999887, 0.49259654, 0.9999115, 0.49494982], [0.9999115, 0.49494982, 0.9999466, 0.4983293, 0.9999466, 0.50167876, 0.99991137, 0.5050583], [0.99991137, 0.5050583, 0.99988693, 0.5074089, 0.99984545, 0.5097741, 0.999787, 0.51217395]], [[0.98742074, 0.4881318, 0.98750186, 0.4914565, 0.98971987, 0.49472907, 0.9940038, 0.49504176], [0.994004, 0.49504167, 1.0001501, 0.49549028, 1.0001501, 0.50450975, 0.994004, 0.50495833], [0.9940036, 0.5049583, 0.98971957, 0.50527096, 0.9875016, 0.5085437, 0.98742056, 0.5118685]], [[0.9999378, 0.50000006, 0.9999378, 0.5040238, 0.9998875, 0.5080475, 0.9997869, 0.51217425]], [[0.9986136, 0.5, 0.99861354, 0.502367, 0.99707705, 0.50473404, 0.9940036, 0.5049583], [0.9940036, 0.5049583, 0.9854354, 0.5055837, 0.9851318, 0.5180495, 0.99365944, 0.5190913]]], "130": [1, 0.50002444, 0.5, 0.50018364, 0.5, [[0.99985325, 0.48791847, 0.9999105, 0.49028176, 0.99995095, 0.49263448, 0.99997485, 0.49498278], [0.99997485, 0.49498278, 1.0000087, 0.49833143, 1.0000086, 0.50167114, 0.99997467, 0.5050198], [0.99997467, 0.5050198, 0.9999509, 0.50736725, 0.9999104, 0.50971913, 0.99985325, 0.51208156]], [[0.9875805, 0.48821884, 0.98766017, 0.4915204, 0.98986256, 0.49477082, 0.9941178, 0.495079], [0.99411786, 0.495079, 1.0002211, 0.49552107, 1.0002211, 0.50447893, 0.99411786, 0.504921], [0.9941177, 0.504921, 0.98986244, 0.50522923, 0.98766, 0.5084797, 0.9875804, 0.51178133]], [[1, 0.5, 1, 0.5040169, 0.9999511, 0.5080337, 0.99985325, 0.51208156]], [[0.99869525, 0.5, 0.99869525, 0.50235, 0.9971695, 0.50469995, 0.9941177, 0.504921], [0.9941177, 0.504921, 0.98560756, 0.5055374, 0.9853082, 0.5179215, 0.993779, 0.5189484]]], "131": [1, 0.5000006, 0.49999994, 0.50016207, 0.5000002, [[0.9997977, 0.48801175, 0.9998534, 0.49033177, 0.9998928, 0.49266967, 0.9999159, 0.49501503], [0.9999159, 0.49501503, 0.9999485, 0.4983322, 0.9999485, 0.5016642, 0.99991584, 0.5049814], [0.99991584, 0.5049814, 0.9998928, 0.5073279, 0.9998534, 0.509667, 0.9997977, 0.5119881]], [[0.98759353, 0.48830926, 0.9876725, 0.49158666, 0.989859, 0.49481326, 0.99408424, 0.49511695], [0.9940845, 0.49511698, 1.0001442, 0.4955525, 1.0001442, 0.50444794, 0.9940845, 0.50488347], [0.9940845, 0.50488347, 0.98985887, 0.5051872, 0.98767227, 0.5084145, 0.9875938, 0.5116922]], [[0.9999403, 0.49999994, 0.9999403, 0.5040134, 0.9998928, 0.50802696, 0.9997977, 0.5119885]], [[0.99862933, 0.5000002, 0.99862933, 0.502333, 0.99711436, 0.50466573, 0.9940845, 0.50488347], [0.9940845, 0.50488347, 0.9856335, 0.5054909, 0.9853384, 0.5177917, 0.9937508, 0.5188036]]], "132": [1, 0.50002414, 0.5, 0.50017804, 0.5, [[0.99983114, 0.48810276, 0.9998872, 0.4904608, 0.9999271, 0.49277416, 0.9999505, 0.49506876], [0.9999505, 0.49506876, 0.9999844, 0.49837297, 0.9999844, 0.5016384, 0.9999505, 0.5049428], [0.9999505, 0.5049428, 0.999927, 0.50723356, 0.99988717, 0.5095431, 0.99983114, 0.5118972]], [[0.98771447, 0.48839495, 0.98779213, 0.4916494, 0.98996335, 0.4948539, 0.9941602, 0.49515328], [0.99416035, 0.49515328, 1.0001781, 0.49558258, 1.0001781, 0.5044175, 0.99416035, 0.5048468], [0.9941601, 0.5048468, 0.9899634, 0.50514615, 0.9877922, 0.5083506, 0.98771447, 0.51160496]], [[0.99997586, 0.5, 0.99997586, 0.5039216, 0.99992764, 0.5078434, 0.9998311, 0.51189727]], [[0.9986736, 0.5, 0.9986737, 0.5023161, 0.99716926, 0.5046321, 0.9941601, 0.5048468], [0.9941601, 0.5048468, 0.9857662, 0.50544554, 0.98547524, 0.5176659, 0.9938313, 0.51866335]]], "133": [1, 0.49999958, 0.5, 0.5001574, 0.5000002, [[0.9998014, 0.4881921, 0.999856, 0.49050263, 0.99989456, 0.4928022, 0.9999173, 0.4950972], [0.9999173, 0.4950972, 0.9999497, 0.49836957, 0.99994963, 0.5016327, 0.99991727, 0.5049051], [0.99991727, 0.5049051, 0.99989456, 0.50719935, 0.9998559, 0.5094981, 0.9998014, 0.5118079]], [[0.9877638, 0.48848087, 0.9878404, 0.4917124, 0.9899964, 0.49489462, 0.99416465, 0.49518973], [0.99416465, 0.49518973, 1.0001405, 0.49561277, 1.0001405, 0.5043876, 0.99416465, 0.50481063], [0.99416435, 0.5048107, 0.98999584, 0.5051058, 0.98783994, 0.5082882, 0.9877634, 0.5115199]], [[0.9999416, 0.49999997, 0.9999416, 0.5039252, 0.99989486, 0.5078505, 0.99980134, 0.5118081]], [[0.9986465, 0.5000002, 0.99864656, 0.50229967, 0.99715257, 0.5045991, 0.99416435, 0.5048107], [0.99416435, 0.5048107, 0.98582727, 0.5054009, 0.98554045, 0.51754093, 0.99384063, 0.5185242]]], "134": [1, 0.5000226, 0.5, 0.5001726, 0.50000006, [[0.9998644, 0.48827955, 0.9999174, 0.49054, 0.9999548, 0.4928271, 0.9999768, 0.4951252], [0.9999768, 0.4951252, 1.0000076, 0.498366, 1.0000076, 0.5016287, 0.99997675, 0.50486946], [0.99997675, 0.50486946, 0.9999549, 0.50716937, 0.9999174, 0.50945824, 0.9998644, 0.5117205]], [[0.9879143, 0.48856357, 0.98798984, 0.49177295, 0.9901311, 0.49493372, 0.99427193, 0.49522468], [0.99427193, 0.49522468, 1.0002074, 0.49564177, 1.0002074, 0.5043584, 0.99427193, 0.5047755], [0.99427193, 0.50477546, 0.9901311, 0.50506645, 0.9879899, 0.5082272, 0.9879144, 0.5114366]], [[1, 0.5, 0.99999994, 0.50393265, 0.9999548, 0.5078653, 0.99986434, 0.5117213]], [[0.99872357, 0.5000001, 0.99872357, 0.5022835, 0.9972397, 0.50456697, 0.99427193, 0.50477546], [0.99427193, 0.50477546, 0.98598975, 0.50535744, 0.985707, 0.51741993, 0.99395317, 0.51838946]]], "135": [1, 0.49999887, 0.5, 0.5001527, 0.5000001, [[0.99980557, 0.48836687, 0.999859, 0.4906631, 0.9998969, 0.49292666, 0.9999192, 0.49517655], [0.9999192, 0.49517655, 0.99995124, 0.49840435, 0.9999511, 0.501604, 0.99991924, 0.5048319], [0.99991924, 0.5048319, 0.99989676, 0.507079, 0.999859, 0.50933975, 0.99980557, 0.5116331]], [[0.98792845, 0.48864663, 0.9880025, 0.4918338, 0.99012876, 0.49497336, 0.99424195, 0.4952603], [0.994242, 0.4952603, 1.0001363, 0.49567145, 1.0001363, 0.5043288, 0.994242, 0.50473994], [0.99424183, 0.50473994, 0.9901289, 0.5050268, 0.9880026, 0.50816596, 0.9879282, 0.5113529]], [[0.99994314, 0.5, 0.99994314, 0.50384563, 0.9998973, 0.50769114, 0.99980557, 0.5116331]], [[0.99866265, 0.5000001, 0.99866265, 0.50226724, 0.99718916, 0.50453436, 0.99424183, 0.50473994], [0.99424183, 0.50473994, 0.9860157, 0.5053137, 0.9857367, 0.51729715, 0.9939274, 0.518253]]], "136": [1, 0.5000221, 0.5, 0.50016755, 0.5, [[0.9998452, 0.48845157, 0.999897, 0.4906921, 0.99993354, 0.49294412, 0.999955, 0.49520096], [0.999955, 0.49520096, 0.99998534, 0.49839634, 0.9999854, 0.50160134, 0.999955, 0.5047967], [0.999955, 0.5047967, 0.9999336, 0.50705427, 0.999897, 0.50930715, 0.9998452, 0.5115484]], [[0.988042, 0.48872766, 0.98811495, 0.4918931, 0.99022675, 0.49501157, 0.99431294, 0.4952945], [0.99431324, 0.4952945, 1.0001678, 0.49569988, 1.0001678, 0.50430006, 0.99431324, 0.5047054], [0.99431324, 0.5047054, 0.99022686, 0.5049883, 0.9881151, 0.508107, 0.98804224, 0.51127255]], [[0.9999779, 0.5, 0.9999779, 0.50386065, 0.9999336, 0.5077213, 0.99984527, 0.5115484]], [[0.9987042, 0.49999997, 0.9987042, 0.5022514, 0.99724054, 0.5045028, 0.99431324, 0.5047054], [0.99431324, 0.5047054, 0.98614115, 0.50527126, 0.98586607, 0.5171783, 0.9940033, 0.5181209]]], "137": [1, 0.4999984, 0.5, 0.50014824, 0.5000001, [[0.99981, 0.4885367, 0.9998622, 0.49081266, 0.9998992, 0.49304172, 0.9999212, 0.49525124], [0.9999212, 0.49525124, 0.9999526, 0.49843442, 0.99995255, 0.5015769, 0.99992096, 0.5047601], [0.99992096, 0.5047601, 0.99989915, 0.5069659, 0.99986213, 0.5091913, 0.99981004, 0.5114633]], [[0.98808885, 0.48880932, 0.9881611, 0.49195284, 0.99025846, 0.4950499, 0.9943174, 0.49532884], [0.9943174, 0.49532893, 1.0001323, 0.4957286, 1.0001323, 0.5042717, 0.9943174, 0.50467134], [0.99431723, 0.5046714, 0.9902581, 0.5049504, 0.9881607, 0.50804776, 0.9880888, 0.5111915]], [[0.9999448, 0.5, 0.99994475, 0.50377494, 0.99989986, 0.5075499, 0.9998101, 0.5114637]], [[0.9986786, 0.5000001, 0.99867857, 0.50223583, 0.99722487, 0.50447154, 0.99431723, 0.5046714], [0.99431723, 0.5046714, 0.9861992, 0.5052294, 0.9859279, 0.5170601, 0.9940118, 0.5179898]]], "138": [1, 0.5000216, 0.5, 0.5001625, 0.5, [[0.99987066, 0.48861822, 0.9999211, 0.49083436, 0.99995685, 0.49305317, 0.9999777, 0.49527305], [0.9999777, 0.49527305, 1.0000074, 0.49842343, 1.0000074, 0.50157607, 0.99997777, 0.5047264], [0.99997777, 0.5047264, 0.99995685, 0.5069465, 0.9999211, 0.50916547, 0.99987066, 0.5113818]], [[0.9882313, 0.48888677, 0.98830223, 0.49200958, 0.99038565, 0.4950867, 0.9944188, 0.4953619], [0.9944188, 0.4953619, 1.0001954, 0.49575606, 1.0001954, 0.50424397, 0.9944188, 0.50463814], [0.99441856, 0.50463814, 0.9903853, 0.50491333, 0.9883019, 0.50799066, 0.98823106, 0.5111136]], [[1, 0.5, 1, 0.5037965, 0.9999569, 0.50759304, 0.99987054, 0.5113818]], [[0.9987512, 0.5, 0.9987512, 0.5022205, 0.99730706, 0.504441, 0.99441856, 0.50463814], [0.99441856, 0.50463814, 0.9863526, 0.5051885, 0.98608494, 0.5169456, 0.9941176, 0.51786256]]], "139": [1, 0.49999815, 0.5, 0.5001439, 0.4999999, [[0.99981487, 0.48870236, 0.9998658, 0.49095297, 0.99990195, 0.4931491, 0.99992335, 0.49532244], [0.99992335, 0.49532244, 0.9999541, 0.49846137, 0.999954, 0.5015527, 0.9999231, 0.5046918], [0.9999231, 0.5046918, 0.9999017, 0.5068605, 0.99986565, 0.509052, 0.99981487, 0.51129764]], [[0.988245, 0.48896748, 0.9883156, 0.49206844, 0.9903848, 0.4951239, 0.99439067, 0.4953953], [0.9943908, 0.49539527, 1.0001285, 0.49578393, 1.0001285, 0.50421584, 0.9943908, 0.5046045], [0.99439025, 0.5046045, 0.99038446, 0.5048759, 0.9883153, 0.50793123, 0.9882446, 0.51103216]], [[0.99994624, 0.5, 0.99994624, 0.5037121, 0.9999024, 0.50742424, 0.99981487, 0.5112978]], [[0.9986941, 0.4999999, 0.99869406, 0.502205, 0.9972596, 0.50441015, 0.99439025, 0.5046045], [0.99439025, 0.5046045, 0.9863775, 0.50514734, 0.98611337, 0.5168293, 0.9940938, 0.5177337]]], "140": [1, 0.500021, 0.49999994, 0.5001578, 0.49999997, [[0.99985313, 0.4887819, 0.99990225, 0.49096727, 0.9999369, 0.49315417, 0.99995726, 0.49534163], [0.99995726, 0.49534163, 0.9999862, 0.4984467, 0.99998623, 0.50155306, 0.99995726, 0.5046581], [0.99995726, 0.5046581, 0.99993694, 0.5068456, 0.9999022, 0.50903255, 0.99985313, 0.51121795]], [[0.98835236, 0.48904362, 0.9884218, 0.4921242, 0.9904773, 0.49516007, 0.9944578, 0.49542785], [0.9944578, 0.49542788, 1.0001576, 0.49581122, 1.0001576, 0.5041887, 0.9944578, 0.5045721], [0.99445754, 0.50457215, 0.99047685, 0.5048399, 0.9884214, 0.50787604, 0.9883522, 0.51095676]], [[0.999979, 0.5, 0.999979, 0.5037408, 0.99993706, 0.5074816, 0.9998532, 0.5112182]], [[0.9987326, 0.49999997, 0.9987326, 0.5021902, 0.99730766, 0.5043804, 0.99445754, 0.50457215], [0.99445754, 0.50457215, 0.9864961, 0.50510764, 0.98623556, 0.5167169, 0.99416524, 0.5176091]]], "141": [1, 0.500062, 0.5, 0.5001396, 0.4999999, [[0.999969, 0.48886034, 0.99996895, 0.49103194, 0.99996895, 0.49320358, 0.9999689, 0.4953752], [0.9999689, 0.4953752, 0.9999689, 0.49845856, 0.9999689, 0.501542, 0.9999688, 0.5046254], [0.9999688, 0.5046254, 0.9999689, 0.50679684, 0.9999689, 0.50896823, 0.9999689, 0.5111397]], [[0.9883963, 0.4891205, 0.98846495, 0.49218035, 0.99050677, 0.49519596, 0.99446136, 0.4954601], [0.9944615, 0.4954601, 1.0001239, 0.49583825, 1.0001239, 0.5041616, 0.9944615, 0.5045398], [0.9944615, 0.5045398, 0.990507, 0.5048039, 0.98846525, 0.50781924, 0.9883964, 0.5108789]], [[0.99996895, 0.50000006, 0.9999689, 0.50371325, 0.9999689, 0.5074265, 0.9999689, 0.51114005]], [[0.99870825, 0.4999999, 0.99870825, 0.50217533, 0.99729264, 0.50435066, 0.9944615, 0.5045398], [0.9944615, 0.5045398, 0.9865513, 0.5050681, 0.98629415, 0.51660484, 0.9941733, 0.517485]]], "142": [1, 0.5, 0.5, 0.5001533, 0.5, [[0.9998777, 0.48893943, 0.9998777, 0.4910956, 0.9998777, 0.49325174, 0.9998777, 0.4954079], [0.9998777, 0.4954079, 0.9998777, 0.4984694, 0.9998777, 0.5015309, 0.99987775, 0.5045924], [0.99987775, 0.5045924, 0.9998777, 0.50674844, 0.9998777, 0.5089045, 0.9998777, 0.5110606]], [[0.98853195, 0.48919445, 0.9885997, 0.49223447, 0.99062836, 0.49523073, 0.9945582, 0.49549136], [0.99455833, 0.4954914, 1.0001844, 0.4958645, 1.0001844, 0.50413543, 0.99455833, 0.50450855], [0.9945582, 0.50450855, 0.99062777, 0.5047692, 0.98859924, 0.5077663, 0.98853195, 0.51080674]], [[0.9998777, 0.5, 0.9998777, 0.5036869, 0.9998777, 0.5073737, 0.9998777, 0.5110612]], [[0.99877787, 0.49999997, 0.99877787, 0.50216097, 0.9973714, 0.504322, 0.9945582, 0.50450855], [0.9945582, 0.50450855, 0.9866975, 0.50502986, 0.9864438, 0.51649654, 0.9942738, 0.51736504]]], "143": [1, 0.5000603, 0.5, 0.50013554, 0.5000001, [[0.99996984, 0.48901582, 0.99996984, 0.49115723, 0.99996984, 0.4932987, 0.9999699, 0.49544013], [0.9999699, 0.49544013, 0.99996984, 0.49848008, 0.99996984, 0.5015201, 0.99996984, 0.50456], [0.99996984, 0.50456, 0.99996984, 0.5067014, 0.99996984, 0.5088428, 0.99996984, 0.5109842]], [[0.98854476, 0.48926884, 0.9886112, 0.49228892, 0.99062634, 0.49526614, 0.99453133, 0.49552327], [0.99453133, 0.49552333, 1.0001203, 0.4958914, 1.0001203, 0.50410897, 0.99453133, 0.50447696], [0.99453104, 0.504477, 0.990626, 0.50473416, 0.9886108, 0.50771147, 0.9885444, 0.51073164]], [[0.99996984, 0.5, 0.99996984, 0.5036614, 0.99996984, 0.5073228, 0.99996984, 0.5109842]], [[0.9987231, 0.5000002, 0.9987231, 0.5021466, 0.9973258, 0.50429296, 0.99453104, 0.504477], [0.99453104, 0.504477, 0.9867208, 0.50499135, 0.98647034, 0.5163865, 0.9942511, 0.5172435]]], "144": [1, 0.5, 0.5, 0.50014865, 0.4999999, [[1, 0.48908973, 1, 0.4912169, 1, 0.4933441, 0.99999994, 0.4954713], [0.99999994, 0.4954713, 0.9999999, 0.4984906, 0.9999999, 0.5015099, 0.99999994, 0.5045291], [0.99999994, 0.5045291, 1, 0.5066562, 1, 0.5087832, 1, 0.5109103]], [[0.98864704, 0.4893407, 0.9887123, 0.49234143, 0.9907145, 0.4953, 0.9945953, 0.4955538], [0.9945953, 0.4955538, 1.0001484, 0.49591696, 1.0001485, 0.5040829, 0.9945953, 0.5044461], [0.994595, 0.50444615, 0.9907141, 0.50469995, 0.98871195, 0.5076585, 0.98864657, 0.5106593]], [[0.99999994, 0.5, 0.99999994, 0.5036368, 1, 0.50727355, 0.99999994, 0.51091045]], [[0.9987602, 0.49999994, 0.99876016, 0.50213224, 0.9973719, 0.5042645, 0.994595, 0.50444615], [0.994595, 0.50444615, 0.9868335, 0.5049537, 0.9865864, 0.51627964, 0.994319, 0.51712537]]], "145": [1, 0.50005865, 0.5, 0.500132, 0.5000002, [[0.99997056, 0.489167, 0.99997056, 0.49127924, 0.9999706, 0.49339145, 0.99997056, 0.49550372], [0.99997056, 0.49550372, 0.9999706, 0.49850148, 0.99997056, 0.50149924, 0.99997056, 0.50449705], [0.99997056, 0.50449705, 0.99997056, 0.506609, 0.99997056, 0.508721, 0.99997056, 0.510833]], [[0.9886892, 0.48941314, 0.9887537, 0.4923944, 0.9907429, 0.49533397, 0.9945994, 0.49558443], [0.99459964, 0.49558446, 1.0001172, 0.4959428, 1.0001172, 0.50405747, 0.99459964, 0.5044158], [0.9945995, 0.5044158, 0.9907433, 0.50466627, 0.9887541, 0.5076055, 0.9886893, 0.51058656]], [[0.99997056, 0.5, 0.99997056, 0.503611, 0.99997056, 0.50722206, 0.99997056, 0.5108331]], [[0.99873775, 0.5000002, 0.99873775, 0.5021184, 0.99735844, 0.50423664, 0.9945995, 0.5044158], [0.9945995, 0.5044158, 0.9868867, 0.5049167, 0.9866427, 0.5161738, 0.99432683, 0.51700836]]], "146": [1, 0.5, 0.5, 0.50014454, 0.5, [[0.99988425, 0.4892416, 0.99988425, 0.4913394, 0.9998842, 0.49343708, 0.9998842, 0.49553484], [0.9998842, 0.49553484, 0.9998842, 0.4985117, 0.9998842, 0.50148857, 0.9998842, 0.50446546], [0.9998842, 0.50446546, 0.99988425, 0.5065631, 0.99988425, 0.5086608, 0.99988425, 0.5107584]], [[0.9888172, 0.48948288, 0.98888075, 0.49244532, 0.9908574, 0.49536675, 0.9946904, 0.495614], [0.9946904, 0.495614, 1.0001733, 0.49596766, 1.0001733, 0.5040324, 0.9946904, 0.50438607], [0.9946903, 0.50438607, 0.9908575, 0.5046333, 0.9888809, 0.5075544, 0.988817, 0.5105167]], [[0.99988425, 0.5, 0.99988425, 0.5035861, 0.99988425, 0.5071722, 0.99988425, 0.51075906]], [[0.9988026, 0.5, 0.9988026, 0.50210464, 0.9974319, 0.5042092, 0.9946903, 0.50438607], [0.9946903, 0.50438607, 0.9870246, 0.50488055, 0.98678374, 0.51607066, 0.99442154, 0.51689446]]], "147": [1, 0.50005704, 0.5, 0.5001285, 0.50000006, [[0.99997145, 0.48931563, 0.99997145, 0.49139893, 0.99997145, 0.49348217, 0.99997145, 0.49556544], [0.99997145, 0.49556544, 0.99997145, 0.49852204, 0.99997145, 0.5014786, 0.99997145, 0.5044352], [0.99997145, 0.5044352, 0.99997145, 0.50651824, 0.99997145, 0.5086013, 0.99997145, 0.5106844]], [[0.9888306, 0.48955634, 0.9888944, 0.4924988, 0.9908583, 0.4954, 0.9946662, 0.49564397], [0.9946662, 0.49564397, 1.0001141, 0.49599302, 1.0001141, 0.5040071, 0.9946662, 0.50435615], [0.9946659, 0.50435615, 0.9908576, 0.5046001, 0.9888937, 0.50750184, 0.98883027, 0.51044464]], [[0.99997145, 0.5, 0.99997145, 0.50356144, 0.99997145, 0.5071229, 0.9999714, 0.51068556]], [[0.9987521, 0.50000006, 0.9987521, 0.5020908, 0.99739015, 0.5041816, 0.9946659, 0.50435615], [0.9946659, 0.50435615, 0.98704815, 0.5048441, 0.98681045, 0.5159663, 0.9944008, 0.51677936]]], "148": [1, 0.5, 0.50000006, 0.5001405, 0.49999994, [[0.99999994, 0.48938504, 0.9999999, 0.4914549, 0.9999999, 0.4935248, 0.9999999, 0.49559462], [0.9999999, 0.49559462, 0.9999999, 0.49853164, 0.9999999, 0.5014686, 0.99999994, 0.5044056], [0.99999994, 0.5044056, 0.9999999, 0.50647545, 0.9999999, 0.5085453, 0.99999994, 0.51061505]], [[0.9889273, 0.4896231, 0.98898935, 0.49254766, 0.9909409, 0.49543208, 0.9947264, 0.49567297], [0.9947264, 0.49567294, 1.0001403, 0.49601746, 1.0001403, 0.5039825, 0.9947264, 0.50432694], [0.9947262, 0.50432694, 0.9909407, 0.50456786, 0.98898923, 0.50745213, 0.9889269, 0.5103766]], [[0.99999994, 0.5, 0.99999994, 0.50353837, 0.99999994, 0.50707674, 0.99999994, 0.5106151]], [[0.9987868, 0.49999994, 0.99878687, 0.50207734, 0.99743336, 0.5041547, 0.9947262, 0.50432694], [0.9947262, 0.50432694, 0.9871549, 0.5048087, 0.9869202, 0.51586497, 0.99446416, 0.5166676]]], "149": [1, 0.50005555, 0.49999997, 0.5001251, 0.50000006, [[0.9999722, 0.48945826, 0.9999722, 0.49151403, 0.9999722, 0.49356985, 0.9999722, 0.49562562], [0.9999722, 0.49562562, 0.9999722, 0.4985421, 0.9999722, 0.5014586, 0.9999722, 0.5043751], [0.9999722, 0.5043751, 0.99997216, 0.5064306, 0.9999721, 0.50848615, 0.9999721, 0.5105417]], [[0.9889679, 0.48969218, 0.98902947, 0.49259812, 0.99096864, 0.49546427, 0.9947309, 0.49570206], [0.9947309, 0.49570203, 1.0001109, 0.49604204, 1.0001109, 0.50395817, 0.9947309, 0.5042982], [0.9947309, 0.5042982, 0.9909687, 0.504536, 0.9890295, 0.50740206, 0.98896796, 0.5103079]], [[0.9999722, 0.49999997, 0.99997216, 0.5035139, 0.9999721, 0.50702775, 0.9999721, 0.5105422]], [[0.9987659, 0.5000001, 0.9987659, 0.5020641, 0.9974209, 0.5041282, 0.9947309, 0.5042982], [0.9947309, 0.5042982, 0.9872059, 0.5047738, 0.9869741, 0.5157642, 0.9944725, 0.5165567]]], "150": [1, 0.5, 0.5, 0.50013703, 0.49999985, [[0.9998903, 0.48952913, 0.9998903, 0.4915711, 0.9998903, 0.49361306, 0.9998903, 0.495655], [0.9998903, 0.495655, 0.9998903, 0.49855173, 0.9998903, 0.5014485, 0.9998904, 0.50434524], [0.9998904, 0.50434524, 0.9998903, 0.5063871, 0.9998903, 0.508429, 0.9998903, 0.51047087]], [[0.98908883, 0.48975843, 0.9891496, 0.4926464, 0.9910768, 0.49549502, 0.9948165, 0.49572983], [0.9948168, 0.49572983, 1.0001639, 0.49606553, 1.0001639, 0.5039342, 0.9948168, 0.5042699], [0.9948168, 0.5042699, 0.991077, 0.5045047, 0.98914975, 0.5073535, 0.9890891, 0.51024145]], [[0.9998903, 0.5, 0.9998903, 0.50349027, 0.9998903, 0.50698054, 0.9998904, 0.51047087]], [[0.9988271, 0.49999985, 0.9988271, 0.50205094, 0.99749035, 0.50410205, 0.9948168, 0.5042699], [0.9948168, 0.5042699, 0.9873368, 0.5047395, 0.9871079, 0.5156661, 0.99456173, 0.5164486]]], "151": [1, 0.5000541, 0.49999997, 0.5001216, 0.5000002, [[0.9999729, 0.489598, 0.9999729, 0.4916266, 0.9999728, 0.49365517, 0.9999729, 0.49568376], [0.9999729, 0.49568376, 0.9999729, 0.49856144, 0.99997294, 0.50143915, 0.99997294, 0.5043169], [0.99997294, 0.5043169, 0.99997294, 0.5063453, 0.99997294, 0.5083736, 0.99997294, 0.51040196]], [[0.9891023, 0.48982644, 0.98916245, 0.49269608, 0.9910774, 0.49552685, 0.9947942, 0.49575862], [0.9947942, 0.49575865, 1.0001079, 0.49609002, 1.0001079, 0.5039104, 0.9947942, 0.5042418], [0.99479365, 0.5042418, 0.9910769, 0.5044736, 0.9891618, 0.5073044, 0.98910165, 0.51017404]], [[0.9999729, 0.49999997, 0.99997294, 0.5034673, 0.99997294, 0.50693464, 0.99997294, 0.51040244]], [[0.9987795, 0.50000024, 0.9987795, 0.5020382, 0.99745107, 0.5040761, 0.99479365, 0.5042418], [0.99479365, 0.5042418, 0.9873593, 0.5047055, 0.9871332, 0.5155673, 0.99454254, 0.51633984]]], "152": [1, 0.5, 0.5, 0.5001331, 0.50000024, [[1, 0.48966467, 1, 0.4916802, 1, 0.4936958, 0.99999994, 0.49571133], [0.99999994, 0.49571133, 0.9999999, 0.49857026, 0.9999999, 0.5014292, 0.9999999, 0.50428814], [0.9999999, 0.50428814, 0.99999994, 0.50630385, 1, 0.5083196, 1, 0.5103353]], [[0.9891939, 0.48989135, 0.98925316, 0.49274346, 0.99115646, 0.49555725, 0.9948513, 0.49578616], [0.9948513, 0.49578613, 1.0001327, 0.49611336, 1.0001327, 0.5038871, 0.9948513, 0.50421435], [0.9948511, 0.5042143, 0.99115616, 0.5044433, 0.98925287, 0.50725734, 0.98919374, 0.51010954]], [[0.99999994, 0.5, 0.99999994, 0.50344515, 1, 0.50689024, 1, 0.51033604]], [[0.9988123, 0.50000024, 0.9988124, 0.5020255, 0.99749196, 0.50405073, 0.9948511, 0.5042143], [0.9948511, 0.5042143, 0.98746103, 0.5046722, 0.9872378, 0.51547104, 0.9946027, 0.516234]]], "153": [1, 0.5000527, 0.5, 0.5001184, 0.49999976, [[0.99997365, 0.4897343, 0.99997365, 0.4917364, 0.99997365, 0.4937385, 0.99997365, 0.49574062], [0.99997365, 0.49574062, 0.99997365, 0.49858034, 0.99997365, 0.5014201, 0.99997365, 0.50425977], [0.99997365, 0.50425977, 0.99997365, 0.50626177, 0.99997365, 0.50826377, 0.99997365, 0.51026577]], [[0.989233, 0.4899564, 0.98929167, 0.49279073, 0.9911833, 0.4955871, 0.99485576, 0.49581316], [0.99485576, 0.4958132, 1.0001049, 0.4961363, 1.0001049, 0.5038633, 0.99485576, 0.5041864], [0.9948557, 0.50418645, 0.9911834, 0.5044125, 0.9892918, 0.5072087, 0.989233, 0.5100429]], [[0.99997365, 0.5, 0.99997365, 0.50342196, 0.99997365, 0.50684386, 0.9999736, 0.5102665]], [[0.99879265, 0.4999998, 0.99879265, 0.5020123, 0.99748033, 0.50402486, 0.9948557, 0.50418645], [0.9948557, 0.50418645, 0.98750985, 0.5046386, 0.9872893, 0.51537466, 0.9946109, 0.5161281]]], "154": [1, 0.5, 0.5, 0.5001297, 0.50000006, [[0.999896, 0.48980072, 0.999896, 0.49179, 0.999896, 0.4937793, 0.99989593, 0.4957686], [0.99989593, 0.4957686, 0.999896, 0.49858958, 0.99989593, 0.50141054, 0.99989605, 0.5042316], [0.99989605, 0.5042316, 0.99989605, 0.50622076, 0.99989605, 0.50821006, 0.999896, 0.51019925]], [[0.98934805, 0.49001887, 0.98940575, 0.49283645, 0.9912859, 0.49561673, 0.99493736, 0.49584004], [0.99493736, 0.49584007, 1.0001552, 0.49615914, 1.0001552, 0.503841, 0.99493736, 0.50416005], [0.9949371, 0.5041601, 0.99128556, 0.50438344, 0.98940533, 0.5071638, 0.9893478, 0.50998145]], [[0.99989593, 0.49999997, 0.999896, 0.5033997, 0.999896, 0.50679946, 0.999896, 0.5101994]], [[0.99885076, 0.50000006, 0.99885076, 0.50200033, 0.9975463, 0.50400054, 0.9949371, 0.5041601], [0.9949371, 0.5041601, 0.987634, 0.5046067, 0.9874162, 0.51528186, 0.9946952, 0.516026]]], "155": [1, 0.5000513, 0.5, 0.5001152, 0.5000001, [[0.9999743, 0.48986697, 0.99997425, 0.4918434, 0.9999742, 0.49381977, 0.99997425, 0.49579617], [0.99997425, 0.49579617, 0.99997425, 0.498599, 0.99997425, 0.5014018, 0.99997425, 0.5042046], [0.99997425, 0.5042046, 0.99997425, 0.5061807, 0.99997425, 0.5081569, 0.9999743, 0.510133]], [[0.98936075, 0.49008432, 0.98941827, 0.49288404, 0.991287, 0.49564654, 0.9949161, 0.49586704], [0.9949161, 0.49586704, 1.0001022, 0.49618217, 1.0001022, 0.50381804, 0.9949161, 0.50413316], [0.99491584, 0.5041331, 0.99128675, 0.50435364, 0.9894181, 0.5071162, 0.98936063, 0.509916]], [[0.99997425, 0.5, 0.99997425, 0.5033777, 0.99997425, 0.50675535, 0.9999743, 0.5101342]], [[0.99880564, 0.5000001, 0.99880564, 0.5019879, 0.9975091, 0.50397563, 0.99491584, 0.5041331], [0.99491584, 0.5041331, 0.9876563, 0.5045743, 0.98744106, 0.5151875, 0.9946774, 0.5159225]]], "156": [1, 0.5, 0.49999997, 0.5001263, 0.4999998, [[1, 0.48992938, 1, 0.4918937, 0.99999994, 0.4938581, 1, 0.49582243], [1, 0.49582243, 0.99999994, 0.49860758, 1, 0.5013927, 1, 0.5041778], [1, 0.5041778, 1, 0.506142, 1, 0.50810623, 1, 0.5100705]], [[0.98944867, 0.4901444, 0.9895048, 0.49292785, 0.99136233, 0.495675, 0.9949709, 0.49589285], [0.9949714, 0.49589288, 1.0001266, 0.4962041, 1.0001266, 0.50379544, 0.9949714, 0.50410664], [0.9949713, 0.50410664, 0.991363, 0.5043245, 0.9895055, 0.50707114, 0.9894491, 0.5098543]], [[1, 0.49999997, 1, 0.5033568, 1, 0.5067136, 0.99999994, 0.5100705]], [[0.9988378, 0.49999976, 0.9988378, 0.5019754, 0.997549, 0.5039511, 0.9949713, 0.50410664], [0.9949713, 0.50410664, 0.98775387, 0.5045424, 0.9875413, 0.51509565, 0.99473536, 0.51582164]]], "157": [1, 0.50005, 0.49999997, 0.50011235, 0.5000002, [[0.9999749, 0.48999518, 0.99997485, 0.49194676, 0.99997485, 0.49389833, 0.99997485, 0.49584988], [0.99997485, 0.49584988, 0.99997485, 0.4986167, 0.99997485, 0.5013836, 0.99997485, 0.5041504], [0.99997485, 0.5041504, 0.9999749, 0.5061019, 0.9999749, 0.5080533, 0.9999749, 0.51000476]], [[0.9894856, 0.49020675, 0.98954105, 0.49297348, 0.99138737, 0.4957043, 0.9949749, 0.49591947], [0.9949749, 0.49591944, 1.0000993, 0.49622685, 1.0000993, 0.5037736, 0.9949749, 0.504081], [0.99497473, 0.504081, 0.99138725, 0.50429624, 0.98954093, 0.50702685, 0.9894854, 0.50979346]], [[0.9999749, 0.49999997, 0.9999749, 0.5033349, 0.9999749, 0.5066699, 0.99997497, 0.5100054]], [[0.9988183, 0.50000024, 0.9988182, 0.5019638, 0.99753714, 0.50392735, 0.99497473, 0.504081], [0.99497473, 0.504081, 0.98779935, 0.5045115, 0.9875894, 0.5150047, 0.99474186, 0.5157219]]], "158": [1, 0.5, 0.49999997, 0.5001231, 0.5000001, [[0.9999012, 0.49005938, 0.9999012, 0.4919985, 0.9999012, 0.4939376, 0.9999012, 0.4958767], [0.9999012, 0.4958767, 0.9999012, 0.49862552, 0.9999012, 0.50137436, 0.9999011, 0.50412315], [0.9999011, 0.50412315, 0.9999012, 0.5060624, 0.9999012, 0.50800145, 0.9999012, 0.50994056]], [[0.9895954, 0.4902676, 0.98965055, 0.49301767, 0.991486, 0.49573204, 0.9950527, 0.49594465], [0.99505305, 0.49594465, 1.0001477, 0.49624836, 1.0001477, 0.50375193, 0.99505305, 0.5040556], [0.9950525, 0.5040556, 0.9914857, 0.5042683, 0.9896503, 0.5069827, 0.9895952, 0.50973284]], [[0.9999012, 0.49999994, 0.9999012, 0.5033135, 0.9999012, 0.506627, 0.99990106, 0.509942]], [[0.99887407, 0.5000001, 0.998874, 0.50195193, 0.9976004, 0.50390375, 0.9950525, 0.5040556], [0.9950525, 0.5040556, 0.98791814, 0.50448096, 0.9877106, 0.5149159, 0.9948226, 0.5156245]]], "159": [1, 0.50004876, 0.5, 0.5001096, 0.5000001, [[0.99997556, 0.4901206, 0.99997556, 0.4920479, 0.9999755, 0.49397525, 0.9999755, 0.49590263], [0.9999755, 0.49590263, 0.9999755, 0.49863428, 0.99997556, 0.50136596, 0.99997556, 0.50409764], [0.99997556, 0.50409764, 0.99997556, 0.5060249, 0.99997556, 0.50795215, 0.99997556, 0.5098794]], [[0.98960817, 0.49032658, 0.98966193, 0.49306077, 0.99148643, 0.49576014, 0.99503314, 0.49597025], [0.9950333, 0.4959702, 1.0000978, 0.49627015, 1.0000978, 0.50373006, 0.9950333, 0.50403005], [0.995033, 0.50403005, 0.9914863, 0.50424016, 0.9896618, 0.50693953, 0.98960805, 0.5096738]], [[0.99997556, 0.50000006, 0.99997556, 0.50329316, 0.99997556, 0.5065863, 0.99997556, 0.50987965]], [[0.9988316, 0.5000001, 0.9988316, 0.5019401, 0.9975655, 0.50388, 0.995033, 0.50403005], [0.995033, 0.50403005, 0.9879402, 0.5044502, 0.9877351, 0.51482606, 0.9948059, 0.5155261]]], "160": [1, 0.5, 0.5, 0.5001198, 0.49999994, [[1, 0.49018124, 1, 0.49209675, 0.99999994, 0.49401227, 1, 0.49592778], [1, 0.49592778, 0.99999994, 0.49864247, 1, 0.5013572, 1, 0.50407183], [1, 0.50407183, 1, 0.5059875, 1, 0.5079031, 1, 0.50981873]], [[0.9896912, 0.49038655, 0.9897449, 0.49310437, 0.9915587, 0.49578744, 0.9950847, 0.49599501], [0.99508476, 0.49599496, 1.0001196, 0.49629137, 1.0001196, 0.5037086, 0.99508476, 0.50400496], [0.9950845, 0.50400496, 0.99155825, 0.5042125, 0.9897444, 0.5068959, 0.98969096, 0.5096138]], [[0.99999994, 0.5, 0.99999994, 0.50327295, 1, 0.50654584, 0.99999994, 0.50981873]], [[0.99886084, 0.49999997, 0.99886084, 0.5019284, 0.99760216, 0.5038568, 0.9950845, 0.50400496], [0.9950845, 0.50400496, 0.9880319, 0.5044201, 0.98782927, 0.5147385, 0.9948606, 0.5154302]]], "161": [1, 0.5000475, 0.5, 0.5001068, 0.50000006, [[0.9999761, 0.49024418, 0.99997604, 0.49214733, 0.9999761, 0.49405044, 0.9999761, 0.49595362], [0.9999761, 0.49595362, 0.9999761, 0.49865118, 0.99997616, 0.50134873, 0.9999761, 0.5040463], [0.9999761, 0.5040463, 0.99997616, 0.5059495, 0.99997616, 0.5078526, 0.99997616, 0.5097558]], [[0.9897265, 0.4904461, 0.9897797, 0.49314767, 0.9915829, 0.4958147, 0.9950885, 0.49601978], [0.9950887, 0.49601978, 1.0000943, 0.49631262, 1.0000943, 0.50368744, 0.9950887, 0.5039803], [0.9950887, 0.5039802, 0.99158293, 0.5041853, 0.9897798, 0.5068525, 0.98972666, 0.5095542]], [[0.99997616, 0.5, 0.99997616, 0.50325197, 0.99997616, 0.5065039, 0.99997616, 0.50975615]], [[0.99884284, 0.50000006, 0.99884284, 0.50191694, 0.9975915, 0.5038339, 0.9950887, 0.5039802], [0.9950887, 0.5039802, 0.9880763, 0.5043905, 0.98787606, 0.5146516, 0.99486715, 0.5153351]]], "162": [1, 0.5, 0.5, 0.5001168, 0.5000002, [[0.99990606, 0.49030492, 0.99990606, 0.49219635, 0.99990594, 0.4940878, 0.999906, 0.49597925], [0.999906, 0.49597925, 0.99990594, 0.4986597, 0.999906, 0.50134015, 0.99990594, 0.5040206], [0.99990594, 0.5040206, 0.99990606, 0.5059121, 0.99990606, 0.5078036, 0.99990606, 0.5096951]], [[0.9898309, 0.49050352, 0.9898835, 0.4931895, 0.9916763, 0.49584144, 0.9951623, 0.4960441], [0.9951623, 0.49604413, 1.0001394, 0.4963335, 1.0001394, 0.50366694, 0.9951623, 0.5039563], [0.99516195, 0.5039563, 0.99167585, 0.50415903, 0.98988307, 0.5068111, 0.9898305, 0.50949717]], [[0.999906, 0.5, 0.99990606, 0.5032317, 0.99990606, 0.5064634, 0.99990606, 0.5096953]], [[0.9988951, 0.50000024, 0.9988951, 0.5019059, 0.99765086, 0.5038116, 0.99516195, 0.5039563], [0.99516195, 0.5039563, 0.9881888, 0.5043618, 0.9879908, 0.5145671, 0.9949434, 0.51524264]]], "163": [1, 0.5000464, 0.5, 0.5001037, 0.49999982, [[0.99997675, 0.49036378, 0.99997675, 0.4922438, 0.99997675, 0.49412382, 0.99997663, 0.4960038], [0.99997663, 0.4960038, 0.9999767, 0.49866807, 0.99997675, 0.5013323, 0.99997675, 0.50399655], [0.99997675, 0.50399655, 0.99997675, 0.5058764, 0.99997675, 0.50775635, 0.99997675, 0.5096362]], [[0.9898427, 0.4905605, 0.98989457, 0.49323094, 0.9916768, 0.49586785, 0.9951433, 0.49606818], [0.9951433, 0.49606812, 1.0000914, 0.49635407, 1.0000914, 0.5036457, 0.9951433, 0.50393164], [0.9951431, 0.50393164, 0.9916769, 0.5041319, 0.98989457, 0.50676847, 0.9898425, 0.50943875]], [[0.99997675, 0.50000006, 0.99997675, 0.5032121, 0.99997675, 0.5064242, 0.99997675, 0.5096367]], [[0.9988544, 0.49999988, 0.9988544, 0.5018943, 0.99761736, 0.5037887, 0.9951431, 0.50393164], [0.9951431, 0.50393164, 0.9882095, 0.5043323, 0.98801386, 0.51448107, 0.9949271, 0.51514864]]], "164": [1, 0.5, 0.5, 0.50011414, 0.5000001, [[1, 0.49042147, 1, 0.49229026, 0.99999994, 0.49415907, 0.99999994, 0.49602792], [0.99999994, 0.49602792, 0.9999999, 0.498676, 0.9999999, 0.5013242, 0.9999999, 0.5039723], [0.9999999, 0.5039723, 1, 0.5058411, 1, 0.5077098, 1, 0.5095785]], [[0.9899233, 0.49061722, 0.9899746, 0.4932723, 0.99174666, 0.49589413, 0.9951938, 0.4960921], [0.9951938, 0.49609208, 1.0001138, 0.49637467, 1.0001138, 0.50362563, 0.9951938, 0.5039082], [0.99519336, 0.5039082, 0.9917463, 0.50410616, 0.9899742, 0.506728, 0.9899229, 0.50938296]], [[0.99999994, 0.5, 0.99999994, 0.50319284, 1, 0.5063857, 1, 0.50957876]], [[0.9988838, 0.5000002, 0.9988838, 0.5018835, 0.99765384, 0.5037669, 0.99519336, 0.5039082], [0.99519336, 0.5039082, 0.98829836, 0.50430423, 0.988105, 0.514398, 0.9949799, 0.5150578]]], "165": [1, 0.5000453, 0.5, 0.50010175, 0.49999994, [[0.99997735, 0.49048066, 0.99997735, 0.49233797, 0.99997735, 0.49419534, 0.99997735, 0.49605268], [0.99997735, 0.49605268, 0.99997735, 0.49868432, 0.99997735, 0.50131595, 0.99997735, 0.50394756], [0.99997735, 0.50394756, 0.99997735, 0.50580484, 0.99997735, 0.50766206, 0.99997735, 0.50951934]], [[0.98995733, 0.49067336, 0.9900081, 0.4933131, 0.99177, 0.49591988, 0.9951977, 0.49611554], [0.99519783, 0.4961155, 1.00009, 0.49639478, 1.00009, 0.5036052, 0.99519783, 0.50388443], [0.9951976, 0.50388443, 0.9917694, 0.5040802, 0.9900074, 0.5066876, 0.9899571, 0.5093277]], [[0.99997735, 0.5, 0.99997735, 0.5031731, 0.99997735, 0.5063462, 0.99997735, 0.5095198]], [[0.9988669, 0.5, 0.9988669, 0.5018724, 0.99764395, 0.50374484, 0.9951976, 0.50388443], [0.9951976, 0.50388443, 0.988341, 0.50427586, 0.9881498, 0.5143147, 0.9949868, 0.5149669]]], "166": [1, 0.5, 0.5, 0.50011104, 0.5, [[0.9999105, 0.4905389, 0.9999105, 0.4923849, 0.9999105, 0.49423093, 0.9999105, 0.49607694], [0.9999105, 0.49607694, 0.9999105, 0.4986924, 0.9999105, 0.5013078, 0.99991053, 0.5039233], [0.99991053, 0.5039233, 0.9999105, 0.5057692, 0.9999105, 0.50761515, 0.9999105, 0.5094611]], [[0.990056, 0.49072865, 0.9901066, 0.4933533, 0.9918586, 0.49594507, 0.9952673, 0.49613848], [0.9952675, 0.4961385, 1.0001323, 0.49641454, 1.0001323, 0.50358546, 0.9952675, 0.50386155], [0.9952675, 0.50386155, 0.9918581, 0.504055, 0.9901061, 0.5066478, 0.9900562, 0.50927305]], [[0.9999105, 0.49999997, 0.9999105, 0.5031537, 0.9999105, 0.50630736, 0.9999105, 0.5094626]], [[0.9989161, 0.5, 0.99891615, 0.50186175, 0.9976999, 0.5037235, 0.9952675, 0.50386155], [0.9952675, 0.50386155, 0.9884483, 0.5042485, 0.9882594, 0.51423395, 0.99505985, 0.5148787]]], "167": [1, 0.5000442, 0.49999997, 0.50009936, 0.49999985, [[0.9999779, 0.49059507, 0.99997795, 0.4924302, 0.99997795, 0.4942653, 0.99997795, 0.4961004], [0.99997795, 0.4961004, 0.99997795, 0.49870014, 0.999978, 0.5013, 0.9999779, 0.5038998], [0.9999779, 0.5038998, 0.99997795, 0.5057348, 0.99997795, 0.5075699, 0.9999779, 0.5094049]], [[0.9900688, 0.49078327, 0.9901185, 0.49339297, 0.9918605, 0.4959703, 0.99525046, 0.49616152], [0.995251, 0.49616152, 1.0000882, 0.49643433, 1.0000882, 0.5035654, 0.995251, 0.5038382], [0.9952503, 0.5038382, 0.9918599, 0.5040294, 0.9901179, 0.5066074, 0.99006844, 0.50921744]], [[0.99997795, 0.49999997, 0.9999779, 0.50313497, 0.9999779, 0.50626993, 0.9999778, 0.5094063]], [[0.9988789, 0.49999988, 0.9988789, 0.50185084, 0.9976696, 0.5037018, 0.9952503, 0.5038382], [0.9952503, 0.5038382, 0.988469, 0.50422066, 0.98828214, 0.51415205, 0.9950444, 0.51478934]]], "168": [1, 0.5, 0.5, 0.5001081, 0.50000006, [[1, 0.4906493, 1, 0.49247405, 0.99999994, 0.49429876, 0.9999999, 0.49612346], [0.9999999, 0.49612346, 0.9999999, 0.498708, 1, 0.5012926, 1, 0.50387716], [1, 0.50387716, 1, 0.50570166, 1, 0.50752616, 1, 0.50935066]], [[0.99014467, 0.49083546, 0.99019325, 0.49343115, 0.9919255, 0.49599534, 0.9952977, 0.49618444], [0.9952977, 0.4961844, 1.0001081, 0.4964541, 1.0001081, 0.5035461, 0.99529773, 0.5038158], [0.9952972, 0.5038158, 0.9919254, 0.50400484, 0.9901932, 0.50656843, 0.9901442, 0.5091638]], [[1, 0.5, 1, 0.5031169, 1, 0.5062338, 1, 0.50935066]], [[0.9989055, 0.50000006, 0.9989055, 0.50184053, 0.99770296, 0.50368094, 0.9952972, 0.5038158], [0.9952972, 0.5038158, 0.9885528, 0.50419396, 0.9883681, 0.51407266, 0.9950939, 0.5147027]]], "169": [1, 0.5000432, 0.5, 0.5000969, 0.4999999, [[0.9999783, 0.4907051, 0.9999783, 0.49251896, 0.9999783, 0.49433288, 0.9999783, 0.49614674], [0.9999783, 0.49614674, 0.9999783, 0.49871558, 0.9999783, 0.5012844, 0.9999783, 0.5038533], [0.9999783, 0.5038533, 0.9999783, 0.5056672, 0.9999783, 0.50748104, 0.9999783, 0.5092949]], [[0.9901774, 0.4908887, 0.9902254, 0.49346983, 0.991948, 0.49601978, 0.9953018, 0.49620673], [0.9953018, 0.4962067, 1.0000854, 0.4964733, 1.0000854, 0.50352657, 0.9953018, 0.5037932], [0.9953016, 0.5037932, 0.99194753, 0.50398016, 0.990225, 0.5065304, 0.9901772, 0.50911176]], [[0.9999783, 0.5, 0.9999783, 0.5030983, 0.9999783, 0.5061966, 0.9999783, 0.5092949]], [[0.99888945, 0.49999994, 0.99888945, 0.5018299, 0.99769354, 0.50365984, 0.9953016, 0.5037932], [0.9953016, 0.5037932, 0.988594, 0.504167, 0.9884113, 0.51399314, 0.9951008, 0.5146161]]], "170": [1, 0.5, 0.5, 0.50010574, 0.5000001, [[0.9999147, 0.49076083, 0.9999147, 0.4925639, 0.9999147, 0.49436697, 0.9999147, 0.49617004], [0.9999147, 0.49617004, 0.9999147, 0.49872357, 0.9999147, 0.5012771, 0.9999147, 0.50383055], [0.9999147, 0.50383055, 0.9999147, 0.5056334, 0.9999147, 0.5074363, 0.9999147, 0.50923914]], [[0.9902722, 0.49094135, 0.99031985, 0.4935081, 0.992033, 0.49604398, 0.99536866, 0.49622878], [0.99536866, 0.49622884, 1.0001261, 0.49649245, 1.0001261, 0.5035078, 0.99536866, 0.5037714], [0.9953682, 0.5037715, 0.99203265, 0.5039563, 0.9903195, 0.50649196, 0.9902718, 0.50905865]], [[0.9999147, 0.5, 0.9999147, 0.5030797, 0.9999147, 0.5061594, 0.9999147, 0.50923944]], [[0.9989367, 0.5000001, 0.9989368, 0.50181985, 0.9977474, 0.5036396, 0.9953682, 0.5037715], [0.9953682, 0.5037715, 0.98869646, 0.50414115, 0.98851573, 0.513916, 0.99517, 0.514532]]], "171": [1, 0.5000422, 0.5, 0.5000946, 0.50000036, [[0.9999789, 0.4908144, 0.9999789, 0.49260706, 0.99997884, 0.49439967, 0.99997896, 0.4961924], [0.99997896, 0.4961924, 0.9999789, 0.49873102, 0.9999789, 0.50126964, 0.9999789, 0.50380826], [0.9999789, 0.50380826, 0.9999789, 0.5056007, 0.9999789, 0.5073931, 0.9999789, 0.5091856]], [[0.99028414, 0.49099407, 0.99033123, 0.4935465, 0.9920348, 0.49606833, 0.9953523, 0.49625108], [0.9953527, 0.49625114, 1.0000838, 0.49651176, 1.0000838, 0.5034889, 0.9953527, 0.50374955], [0.995352, 0.50374955, 0.99203455, 0.5039323, 0.99033093, 0.50645405, 0.9902838, 0.5090064]], [[0.9999789, 0.50000006, 0.9999789, 0.5030619, 0.9999789, 0.5061238, 0.99997896, 0.5091856]], [[0.998901, 0.5000003, 0.998901, 0.5018098, 0.9977182, 0.5036192, 0.995352, 0.50374955], [0.995352, 0.50374955, 0.9887165, 0.50411505, 0.9885378, 0.5138381, 0.9951555, 0.51444715]]], "172": [1, 0.5, 0.50000006, 0.50010324, 0.50000006, [[1, 0.49086615, 1, 0.49264878, 1, 0.4944314, 1, 0.49621403], [1, 0.49621403, 1, 0.4987381, 1, 0.50126225, 1, 0.5037863], [1, 0.5037863, 1, 0.50556886, 1, 0.5073514, 1, 0.50913393]], [[0.9903571, 0.4910442, 0.9904033, 0.4935829, 0.9920975, 0.4960916, 0.9953977, 0.49627236], [0.99539787, 0.49627244, 1.0001032, 0.49653012, 1.0001032, 0.50347, 0.99539787, 0.5037277], [0.9953975, 0.5037278, 0.99209726, 0.5039085, 0.99040306, 0.5064173, 0.99035686, 0.5089561]], [[1, 0.50000006, 1, 0.50304466, 1, 0.5060893, 0.99999994, 0.509134]], [[0.99892694, 0.5000001, 0.9989269, 0.50179946, 0.9977505, 0.5035988, 0.9953975, 0.5037278], [0.9953975, 0.5037278, 0.98879737, 0.50408924, 0.98862076, 0.51376176, 0.9952033, 0.51436406]]], "173": [1, 0.50004125, 0.5, 0.50009197, 0.5, [[0.9999794, 0.49091995, 0.9999794, 0.49269217, 0.9999794, 0.49446434, 0.9999794, 0.49623653], [0.9999794, 0.49623653, 0.9999794, 0.49874574, 0.9999794, 0.5012549, 0.9999794, 0.5037641], [0.9999794, 0.5037641, 0.9999794, 0.5055361, 0.9999794, 0.507308, 0.9999794, 0.50908]], [[0.99038804, 0.4910949, 0.99043363, 0.49361977, 0.99211854, 0.4961151, 0.9954013, 0.49629384], [0.9954013, 0.49629384, 1.0000812, 0.49654862, 1.0000812, 0.5034514, 0.9954013, 0.5037062], [0.99540067, 0.50370616, 0.99211824, 0.5038849, 0.99043334, 0.5063797, 0.99038744, 0.5089044]], [[0.9999794, 0.5, 0.9999794, 0.50302666, 0.9999794, 0.5060533, 0.9999794, 0.50908]], [[0.99891126, 0.5, 0.99891126, 0.50178945, 0.9977412, 0.5035788, 0.99540067, 0.50370616], [0.99540067, 0.50370616, 0.98883575, 0.50406367, 0.988661, 0.51368576, 0.9952092, 0.5142814]]], "174": [1, 0.5, 0.5, 0.500101, 0.5000004, [[0.9999186, 0.49097303, 0.9999186, 0.4927348, 0.9999186, 0.4944965, 0.99991846, 0.49625823], [0.99991846, 0.49625823, 0.9999185, 0.49875274, 0.9999186, 0.5012472, 0.9999186, 0.50374174], [0.9999186, 0.50374174, 0.9999186, 0.50550354, 0.9999186, 0.50726527, 0.9999186, 0.509027]], [[0.9904786, 0.4911459, 0.9905241, 0.49365687, 0.99219996, 0.49613833, 0.99546516, 0.49631506], [0.99546516, 0.49631512, 1.00012, 0.4965671, 1.00012, 0.5034337, 0.99546516, 0.50368565], [0.9954649, 0.5036857, 0.99219966, 0.5038625, 0.9905238, 0.506344, 0.9904784, 0.508855]], [[0.9999186, 0.5, 0.9999186, 0.503009, 0.9999186, 0.50601804, 0.9999186, 0.5090276]], [[0.9989563, 0.50000036, 0.9989563, 0.50178003, 0.9977926, 0.5035597, 0.9954649, 0.5036857], [0.9954649, 0.5036857, 0.98893434, 0.5040393, 0.9887615, 0.5136122, 0.9952752, 0.5142014]]], "175": [1, 0.50004023, 0.5, 0.5000902, 0.5, [[0.9999798, 0.4910242, 0.9999798, 0.49277604, 0.99997985, 0.4945279, 0.9999798, 0.49627975], [0.9999798, 0.49627975, 0.99997985, 0.49875998, 0.99997985, 0.5012402, 0.9999798, 0.5037204], [0.9999798, 0.5037204, 0.99997985, 0.5054722, 0.99997973, 0.50722396, 0.9999798, 0.5089758]], [[0.9904906, 0.4911956, 0.99053556, 0.4936929, 0.9922023, 0.49616104, 0.99545014, 0.49633583], [0.99545014, 0.49633586, 1.0000798, 0.4965851, 1.0000798, 0.5034149, 0.99545014, 0.5036642], [0.99545, 0.5036642, 0.99220204, 0.503839, 0.9905353, 0.50630724, 0.99049056, 0.50880456]], [[0.99997985, 0.49999997, 0.9999798, 0.5029919, 0.9999798, 0.5059838, 0.99997973, 0.50897646]], [[0.99892235, 0.5, 0.99892235, 0.5017698, 0.99776495, 0.50353956, 0.99545, 0.5036642], [0.99545, 0.5036642, 0.9889541, 0.50401384, 0.9887832, 0.5135371, 0.9952626, 0.51411974]]], "176": [1, 0.50000006, 0.5, 0.5000985, 0.5, [[1, 0.49107385, 1, 0.49281618, 1, 0.49455845, 1, 0.49630082], [1, 0.49630082, 1, 0.49876714, 1, 0.50123346, 1, 0.5036998], [1, 0.5036998, 1, 0.50544184, 1, 0.50718397, 1, 0.5089261]], [[0.9905602, 0.49124384, 0.99060434, 0.49372804, 0.9922621, 0.49618354, 0.9954934, 0.49635646], [0.9954934, 0.49635643, 1.0000985, 0.49660295, 1.0000985, 0.5033971, 0.9954934, 0.5036436], [0.99549335, 0.5036436, 0.99226236, 0.5038165, 0.9906046, 0.50627166, 0.99056023, 0.5087556]], [[1, 0.49999997, 1, 0.50297534, 1, 0.5059507, 1, 0.5089261]], [[0.9989472, 0.5, 0.9989472, 0.5017602, 0.99779594, 0.50352037, 0.99549335, 0.5036436], [0.99549335, 0.5036436, 0.9890314, 0.50398946, 0.98886216, 0.5134642, 0.995308, 0.5140405]]], "177": [1, 0.50003934, 0.49999997, 0.50008816, 0.4999999, [[0.9999803, 0.4911258, 0.9999803, 0.4928579, 0.9999802, 0.49459004, 0.9999802, 0.4963221], [0.9999802, 0.4963221, 0.9999802, 0.49877414, 0.9999802, 0.5012262, 0.9999802, 0.50367814], [0.9999802, 0.50367814, 0.9999802, 0.50541013, 0.9999802, 0.5071421, 0.9999803, 0.5088741]], [[0.99059004, 0.49129397, 0.99063426, 0.4937643, 0.99228317, 0.4962059, 0.9954969, 0.4963769], [0.99549687, 0.49637693, 1.0000774, 0.49662063, 1.0000774, 0.5033792, 0.9954969, 0.50362295], [0.9954965, 0.503623, 0.99228275, 0.5037941, 0.9906339, 0.5062357, 0.99058974, 0.50870603]], [[0.9999803, 0.49999997, 0.9999802, 0.502958, 0.9999802, 0.50591606, 0.9999803, 0.50887585]], [[0.99893224, 0.49999994, 0.9989323, 0.5017505, 0.9977871, 0.50350106, 0.9954965, 0.503623], [0.9954965, 0.503623, 0.9890683, 0.50396514, 0.9889011, 0.51339144, 0.9953137, 0.51396155]]], "178": [1, 0.5, 0.49999997, 0.5000964, 0.5000001, [[0.99992216, 0.49117553, 0.99992216, 0.492898, 0.9999222, 0.49462044, 0.9999223, 0.49634293], [0.9999223, 0.49634293, 0.9999222, 0.49878097, 0.9999223, 0.50121903, 0.9999223, 0.5036571], [0.9999223, 0.5036571, 0.99992216, 0.50537956, 0.99992216, 0.50710195, 0.99992216, 0.5088244]], [[0.9906772, 0.49134085, 0.9907206, 0.4937984, 0.99236083, 0.49622777, 0.9955584, 0.49639702], [0.9955586, 0.49639705, 1.0001152, 0.49663818, 1.0001152, 0.503362, 0.9955586, 0.50360316], [0.9955583, 0.5036032, 0.99236083, 0.5037724, 0.9907206, 0.50620157, 0.99067706, 0.5086591]], [[0.99992216, 0.49999994, 0.99992216, 0.5029414, 0.99992216, 0.5058829, 0.9999221, 0.5088244]], [[0.998976, 0.50000006, 0.998976, 0.50174135, 0.9978369, 0.5034826, 0.9955583, 0.5036032], [0.9955583, 0.5036032, 0.98916304, 0.5039416, 0.98899746, 0.5133209, 0.99537694, 0.51388484]]], "179": [1, 0.5000385, 0.5, 0.50008607, 0.49999997, [[0.9999807, 0.49122375, 0.9999807, 0.4929369, 0.99998075, 0.49465007, 0.99998087, 0.49636328], [0.99998087, 0.49636328, 0.9999808, 0.49878767, 0.9999808, 0.50121206, 0.9999807, 0.50363654], [0.9999807, 0.50363654, 0.9999808, 0.50534976, 0.9999807, 0.50706303, 0.9999807, 0.5087763]], [[0.99068797, 0.49138767, 0.99073046, 0.49383247, 0.9923619, 0.49624974, 0.9955433, 0.4964172], [0.9955433, 0.49641716, 1.0000757, 0.49665564, 1.0000757, 0.50334436, 0.9955433, 0.5035829], [0.99554306, 0.5035829, 0.9923616, 0.5037503, 0.99073017, 0.50616753, 0.9906877, 0.5086124]], [[0.9999807, 0.5, 0.99998075, 0.50292546, 0.9999807, 0.5058509, 0.9999807, 0.50877637]], [[0.9989426, 0.5, 0.99894255, 0.5017318, 0.9978095, 0.5034636, 0.99554306, 0.5035829], [0.99554306, 0.5035829, 0.98918116, 0.50391763, 0.9890173, 0.51324916, 0.99536407, 0.51380706]]], "180": [1, 0.5, 0.50000006, 0.5000943, 0.5, [[0.99999994, 0.49127263, 0.9999999, 0.49297637, 0.9999999, 0.49468005, 0.99999994, 0.4963838], [0.99999994, 0.4963838, 0.9999999, 0.49879485, 0.9999999, 0.5012059, 0.9999999, 0.503617], [0.9999999, 0.503617, 0.9999999, 0.5053205, 0.9999999, 0.50702393, 0.99999994, 0.50872743]], [[0.9907552, 0.49143556, 0.9907977, 0.49386716, 0.99242055, 0.49627113, 0.99558526, 0.49643677], [0.9955856, 0.49643674, 1.0000944, 0.49667272, 1.0000944, 0.50332725, 0.9955856, 0.50356317], [0.9955854, 0.50356317, 0.992421, 0.50372875, 0.9907981, 0.5061323, 0.9907552, 0.50856364]], [[0.99999994, 0.50000006, 0.99999994, 0.5029092, 0.99999994, 0.5058183, 0.99999994, 0.50872856]], [[0.9989672, 0.49999997, 0.99896723, 0.5017226, 0.99784005, 0.5034452, 0.9955854, 0.50356317], [0.9955854, 0.50356317, 0.98925585, 0.50389445, 0.9890938, 0.5131794, 0.99540794, 0.51373136]]], "181": [1, 0.50003767, 0.5, 0.50008434, 0.5, [[0.99998116, 0.49132094, 0.99998116, 0.49301523, 0.9999811, 0.4947095, 0.999981, 0.4964038], [0.999981, 0.4964038, 0.99998105, 0.4988013, 0.9999811, 0.50119877, 0.99998116, 0.5035963], [0.99998116, 0.5035963, 0.9999811, 0.5052905, 0.99998116, 0.5069848, 0.99998116, 0.50867903]], [[0.9907835, 0.49148142, 0.99082536, 0.4939005, 0.9924397, 0.4962924, 0.9955885, 0.49645633], [0.9955893, 0.49645638, 1.0000746, 0.4966899, 1.0000746, 0.50331014, 0.9955893, 0.50354356], [0.9955888, 0.5035436, 0.9924396, 0.5037075, 0.9908252, 0.50610006, 0.99078393, 0.5085194]], [[0.99998116, 0.5, 0.99998116, 0.502893, 0.99998116, 0.50578606, 0.99998116, 0.5086794]], [[0.9989533, 0.5, 0.9989533, 0.50171345, 0.99783194, 0.50342685, 0.9955888, 0.5035436], [0.9955888, 0.5035436, 0.9892918, 0.5038714, 0.98913133, 0.5131098, 0.9954132, 0.51365596]]], "182": [1, 0.5, 0.5, 0.5000919, 0.5, [[0.9999255, 0.4913701, 0.9999255, 0.49305475, 0.9999255, 0.49473935, 0.9999255, 0.49642393], [0.9999255, 0.49642393, 0.9999255, 0.4988081, 0.9999255, 0.5011923, 0.9999255, 0.5035764], [0.9999255, 0.5035764, 0.9999255, 0.50526094, 0.9999255, 0.50694543, 0.9999255, 0.5086299]], [[0.99086666, 0.49152866, 0.9909087, 0.4939347, 0.9925147, 0.49631342, 0.9956471, 0.49647555], [0.99564743, 0.49647546, 1.0001098, 0.49670643, 1.0001098, 0.5032935, 0.99564743, 0.5035245], [0.99564743, 0.5035244, 0.99251515, 0.50368655, 0.9909091, 0.5060652, 0.9908671, 0.50847125]], [[0.9999255, 0.5, 0.9999255, 0.50287664, 0.9999255, 0.5057533, 0.9999255, 0.5086299]], [[0.99899423, 0.49999997, 0.99899423, 0.5017045, 0.9978786, 0.503409, 0.99564743, 0.5035244], [0.99564743, 0.5035244, 0.9893819, 0.5038487, 0.9892232, 0.51304203, 0.9954738, 0.5135823]]], "183": [1, 0.5000369, 0.49999997, 0.5000823, 0.49999982, [[0.9999816, 0.49141678, 0.9999815, 0.49309236, 0.9999815, 0.4947679, 0.9999815, 0.49644348], [0.9999815, 0.49644348, 0.9999815, 0.49881455, 0.9999815, 0.50118566, 0.9999816, 0.5035568], [0.9999816, 0.5035568, 0.9999815, 0.5052323, 0.9999815, 0.50690776, 0.9999816, 0.5085832]], [[0.9908783, 0.49157467, 0.9909198, 0.493968, 0.9925175, 0.4963343, 0.9956337, 0.49649474], [0.9956337, 0.49649474, 1.0000727, 0.49672323, 1.0000727, 0.5032764, 0.9956337, 0.50350493], [0.9956332, 0.503505, 0.99251676, 0.50366545, 0.9909192, 0.506032, 0.99087775, 0.50842553]], [[0.9999816, 0.49999994, 0.9999816, 0.502861, 0.9999816, 0.5057221, 0.9999816, 0.50858325]], [[0.99896294, 0.49999985, 0.998963, 0.5016953, 0.9978532, 0.50339067, 0.9956332, 0.503505], [0.9956332, 0.503505, 0.98939973, 0.5038259, 0.98924273, 0.5129732, 0.9954615, 0.51350784]]], "184": [1, 0.49999997, 0.5, 0.5000903, 0.49999994, [[1, 0.4914627, 1, 0.4931293, 1, 0.49479598, 1, 0.49646258], [1, 0.49646258, 1, 0.498821, 1, 0.5011794, 1, 0.5035378], [1, 0.5035378, 1, 0.5052043, 1, 0.50687075, 1, 0.5085373]], [[0.9909422, 0.49161905, 0.99098307, 0.49400032, 0.99257255, 0.49635488, 0.99567336, 0.4965136], [0.99567413, 0.4965136, 1.0000907, 0.4967397, 1.0000907, 0.50326014, 0.99567413, 0.5034863], [0.9956732, 0.5034862, 0.9925728, 0.50364494, 0.9909833, 0.5059989, 0.990942, 0.5083798]], [[1, 0.5, 1, 0.50284576, 1, 0.5056915, 0.99999994, 0.5085376]], [[0.9989866, 0.49999994, 0.9989866, 0.5016866, 0.9978824, 0.5033732, 0.9956732, 0.5034862], [0.9956732, 0.5034862, 0.9894709, 0.50380373, 0.98931545, 0.5129064, 0.99550354, 0.5134354]]], "185": [1, 0.500036, 0.50000006, 0.5000803, 0.5000001, [[0.999982, 0.4915103, 0.999982, 0.49316764, 0.999982, 0.49482498, 0.99998194, 0.4964823], [0.99998194, 0.4964823, 0.999982, 0.49882758, 0.999982, 0.50117284, 0.999982, 0.5035181], [0.999982, 0.5035181, 0.999982, 0.50517535, 0.999982, 0.5068326, 0.999982, 0.50848985]], [[0.99096984, 0.49166486, 0.9910106, 0.49403355, 0.99259186, 0.49637568, 0.9956767, 0.49653274], [0.99567664, 0.49653277, 1.0000706, 0.49675643, 1.0000706, 0.50324386, 0.9956767, 0.5034676], [0.99567616, 0.5034677, 0.99259096, 0.5036248, 0.9910097, 0.5059673, 0.9909691, 0.5083362]], [[0.999982, 0.5000001, 0.999982, 0.50283, 0.999982, 0.50565994, 0.99998194, 0.5084903]], [[0.99897206, 0.5000002, 0.9989721, 0.50167793, 0.99787366, 0.50335574, 0.99567616, 0.5034677], [0.99567616, 0.5034677, 0.9895051, 0.5037819, 0.9893513, 0.51283973, 0.9955089, 0.5133634]]], "186": [1, 0.49999994, 0.49999997, 0.5000881, 0.5000001, [[0.9999287, 0.49155557, 0.9999287, 0.49320412, 0.9999287, 0.4948527, 0.9999287, 0.49650127], [0.9999287, 0.49650127, 0.9999287, 0.49883384, 0.9999287, 0.5011664, 0.9999287, 0.50349903], [0.9999287, 0.50349903, 0.9999287, 0.50514746, 0.9999287, 0.50679594, 0.9999287, 0.50844437]], [[0.99104935, 0.49170786, 0.9910896, 0.49406478, 0.9926628, 0.49639553, 0.9957327, 0.496551], [0.9957327, 0.49655095, 1.0001047, 0.4967724, 1.0001047, 0.5032279, 0.9957327, 0.5034493], [0.9957325, 0.50344926, 0.99266225, 0.50360477, 0.991089, 0.5059358, 0.99104893, 0.50829285]], [[0.9999287, 0.49999994, 0.9999287, 0.50281477, 0.9999287, 0.50562954, 0.99992865, 0.5084451]], [[0.9990117, 0.5000001, 0.9990117, 0.5016694, 0.9979187, 0.5033386, 0.9957325, 0.50344926], [0.9957325, 0.50344926, 0.98959166, 0.5037603, 0.98943937, 0.5127746, 0.99556667, 0.51329285]]], "187": [1, 0.5000352, 0.49999997, 0.500079, 0.50000006, [[0.9999823, 0.4916003, 0.9999823, 0.49324018, 0.99998224, 0.49488, 0.9999823, 0.49651986], [0.9999823, 0.49651986, 0.99998224, 0.49884003, 0.99998224, 0.5011602, 0.9999823, 0.5034804], [0.9999823, 0.5034804, 0.99998224, 0.50512016, 0.9999823, 0.5067599, 0.9999823, 0.5083996]], [[0.9910598, 0.49175122, 0.9910995, 0.49409622, 0.9926647, 0.49641538, 0.9957195, 0.49656928], [0.99572015, 0.49656934, 1.0000699, 0.4967884, 1.0000699, 0.50321156, 0.99572015, 0.5034307], [0.9957195, 0.5034308, 0.9926651, 0.5035846, 0.99109995, 0.50590324, 0.99105984, 0.50824785]], [[0.9999823, 0.49999994, 0.9999823, 0.50279987, 0.9999823, 0.50559974, 0.9999823, 0.5083996]], [[0.9989824, 0.5, 0.9989824, 0.5016606, 0.997895, 0.5033212, 0.9957195, 0.5034308], [0.9957195, 0.5034308, 0.9896095, 0.5037386, 0.9894588, 0.5127087, 0.99555504, 0.5132217]]], "188": [1, 0.49999997, 0.49999997, 0.5000862, 0.49999982, [[1, 0.49164456, 1, 0.49327582, 0.99999994, 0.49490708, 0.99999994, 0.49653837], [0.99999994, 0.49653837, 0.9999999, 0.49884623, 0.99999994, 0.50115407, 0.9999999, 0.5034619], [0.9999999, 0.5034619, 1, 0.50509304, 0.99999994, 0.50672424, 0.99999994, 0.5083554]], [[0.991122, 0.49179488, 0.9911615, 0.49412775, 0.9927188, 0.49643493, 0.99575835, 0.49658722], [0.99575883, 0.49658722, 1.0000867, 0.4968041, 1.0000867, 0.5031956, 0.99575883, 0.5034125], [0.9957582, 0.5034125, 0.9927187, 0.5035648, 0.99116147, 0.5058719, 0.9911218, 0.50820476]], [[1, 0.49999997, 1, 0.5027851, 1, 0.5055703, 0.99999994, 0.5083556]], [[0.9990047, 0.49999985, 0.99900466, 0.50165194, 0.9979228, 0.503304, 0.9957582, 0.5034125], [0.9957582, 0.5034125, 0.98967814, 0.5037171, 0.98952895, 0.5126443, 0.9955954, 0.51315194]]], "189": [1, 0.5000346, 0.50000006, 0.5000769, 0.49999994, [[0.9999828, 0.49168903, 0.9999828, 0.49331167, 0.9999827, 0.4949343, 0.9999828, 0.49655697], [0.9999828, 0.49655697, 0.9999827, 0.49885228, 0.9999827, 0.5011476, 0.9999827, 0.50344306], [0.9999827, 0.50344306, 0.9999828, 0.5050657, 0.9999828, 0.50668836, 0.9999828, 0.50831103]], [[0.99114865, 0.49183697, 0.9911874, 0.4941584, 0.9927368, 0.49645457, 0.99576163, 0.49660534], [0.99576163, 0.49660537, 1.0000678, 0.49681997, 1.0000678, 0.50317997, 0.99576163, 0.50339454], [0.9957612, 0.5033946, 0.9927362, 0.5035454, 0.9911868, 0.50584173, 0.99114805, 0.50816315]], [[0.9999827, 0.5, 0.9999827, 0.50277036, 0.9999827, 0.5055407, 0.9999828, 0.50831103]], [[0.9989914, 0.49999997, 0.9989913, 0.5016436, 0.99791473, 0.50328726, 0.9957612, 0.5033946], [0.9957612, 0.5033946, 0.9897111, 0.50369614, 0.98956335, 0.51258034, 0.99560034, 0.51308286]]], "190": [1, 0.5, 0.5, 0.5000843, 0.50000036, [[0.99993175, 0.4917343, 0.9999317, 0.493348, 0.9999317, 0.4949617, 0.99993163, 0.4965754], [0.99993163, 0.4965754, 0.9999317, 0.49885854, 0.9999317, 0.50114167, 0.9999317, 0.5034249], [0.9999317, 0.5034249, 0.9999317, 0.50503844, 0.9999317, 0.50665206, 0.99993175, 0.5082657]], [[0.99122435, 0.4918806, 0.99126315, 0.49419004, 0.9928049, 0.49647415, 0.9958146, 0.49662337], [0.9958146, 0.4966234, 1.0000997, 0.4968359, 1.0000997, 0.50316495, 0.9958146, 0.50337744], [0.99581397, 0.50337744, 0.9928044, 0.5035266, 0.9912627, 0.50581056, 0.9912236, 0.50811994]], [[0.99993175, 0.5, 0.99993175, 0.5027552, 0.99993175, 0.50551045, 0.9999317, 0.5082674]], [[0.9990284, 0.5000004, 0.9990284, 0.5016358, 0.9979571, 0.5032712, 0.99581397, 0.50337744], [0.99581397, 0.50337744, 0.9897931, 0.50367594, 0.98964685, 0.51251817, 0.9956555, 0.5130156]]], "191": [1, 0.5000338, 0.49999997, 0.5000754, 0.49999985, [[0.999983, 0.49177647, 0.99998295, 0.493382, 0.999983, 0.49498755, 0.99998295, 0.4965931], [0.99998295, 0.4965931, 0.9999831, 0.49886438, 0.9999831, 0.5011357, 0.9999831, 0.5034069], [0.9999831, 0.5034069, 0.9999831, 0.50501245, 0.9999831, 0.50661796, 0.9999831, 0.5082235]], [[0.9912349, 0.4919215, 0.99127316, 0.4942196, 0.99280727, 0.4964927, 0.99580246, 0.49664044], [0.99580264, 0.4966405, 1.0000663, 0.4968508, 1.0000663, 0.5031489, 0.99580264, 0.5033592], [0.99580246, 0.50335926, 0.99280685, 0.503507, 0.99127275, 0.50578076, 0.9912349, 0.5080791]], [[0.9999831, 0.5, 0.9999831, 0.50274116, 0.9999831, 0.5054823, 0.99998313, 0.50822484]], [[0.99900043, 0.49999988, 0.9990004, 0.50162697, 0.99793446, 0.50325406, 0.99580246, 0.50335926], [0.99580246, 0.50335926, 0.98981106, 0.5036548, 0.9896663, 0.5124545, 0.99564475, 0.51294696]]], "192": [1, 0.50000006, 0.5, 0.50008243, 0.50000024, [[1, 0.49181786, 1, 0.49341556, 1, 0.49501327, 1, 0.496611], [1, 0.496611, 1, 0.49887052, 1, 0.50113, 1, 0.5033896], [1, 0.5033896, 1, 0.50498706, 1, 0.5065846, 1, 0.5081821]], [[0.9912943, 0.49196222, 0.9913318, 0.49424928, 0.9928583, 0.49651194, 0.9958394, 0.4966582], [0.9958397, 0.49665824, 1.0000824, 0.4968664, 1.0000824, 0.5031341, 0.9958397, 0.5033423], [0.9958394, 0.5033423, 0.9928582, 0.50348854, 0.9913317, 0.5057513, 0.99129426, 0.5080384]], [[1, 0.5, 1, 0.5027274, 1, 0.5054548, 1, 0.5081823]], [[0.99902165, 0.50000024, 0.99902165, 0.5016192, 0.99796104, 0.5032382, 0.9958394, 0.5033423], [0.9958394, 0.5033423, 0.98987687, 0.50363487, 0.9897336, 0.5123932, 0.9956836, 0.51288074]]], "193": [1, 0.5000331, 0.50000006, 0.5000738, 0.49999985, [[0.9999833, 0.49186128, 0.9999833, 0.49345046, 0.9999833, 0.49503967, 0.9999834, 0.49662888], [0.9999834, 0.49662888, 0.9999833, 0.4988764, 0.9999834, 0.50112396, 0.9999833, 0.5033715], [0.9999833, 0.5033715, 0.9999833, 0.5049606, 0.9999833, 0.50654966, 0.9999833, 0.5081388]], [[0.99132, 0.49200335, 0.99135727, 0.49427894, 0.9928762, 0.49653026, 0.9958428, 0.49667507], [0.9958428, 0.49667513, 1.0000647, 0.49688116, 1.0000647, 0.5031186, 0.9958428, 0.5033246], [0.9958428, 0.5033247, 0.99287575, 0.50346947, 0.99135685, 0.50572145, 0.99131995, 0.50799733]], [[0.9999833, 0.50000006, 0.9999833, 0.50271297, 0.9999833, 0.5054259, 0.9999834, 0.508139]], [[0.99900925, 0.49999988, 0.99900925, 0.50161076, 0.9979538, 0.50322163, 0.9958428, 0.5033247], [0.9958428, 0.5033247, 0.98990905, 0.5036143, 0.98976713, 0.5123313, 0.99568874, 0.5128139]]], "194": [1, 0.5, 0.5, 0.5000805, 0.5000001, [[0.99993443, 0.4919037, 0.99993443, 0.4934847, 0.99993443, 0.49506572, 0.9999344, 0.49664676], [0.9999344, 0.49664676, 0.99993443, 0.4988825, 0.99993443, 0.5011183, 0.99993443, 0.503354], [0.99993443, 0.503354, 0.99993443, 0.5049348, 0.99993443, 0.5065155, 0.99993443, 0.5080963]], [[0.9913933, 0.49204314, 0.9914299, 0.49430794, 0.9929415, 0.49654886, 0.9958944, 0.49669227], [0.9958944, 0.49669224, 1.000096, 0.49689627, 1.000096, 0.503104, 0.9958944, 0.503308], [0.99589366, 0.503308, 0.99294114, 0.50345135, 0.99142957, 0.50569177, 0.9913925, 0.50795627]], [[0.99993443, 0.5, 0.99993443, 0.5026988, 0.99993443, 0.50539756, 0.99993443, 0.5080963]], [[0.9990456, 0.5000001, 0.9990456, 0.50160307, 0.99799514, 0.503206, 0.99589366, 0.503308], [0.99589366, 0.503308, 0.9899879, 0.5035948, 0.98984736, 0.51227146, 0.99574125, 0.5127493]]], "195": [1, 0.50003237, 0.49999994, 0.5000722, 0.49999997, [[0.99998367, 0.49194485, 0.9999836, 0.4935178, 0.9999836, 0.49509072, 0.9999836, 0.49666363], [0.9999836, 0.49666363, 0.9999836, 0.49888793, 0.99998355, 0.5011123, 0.99998367, 0.5033366], [0.99998367, 0.5033366, 0.9999836, 0.5049094, 0.9999836, 0.50648224, 0.99998367, 0.50805503]], [[0.991403, 0.49208426, 0.9914396, 0.49433762, 0.9929437, 0.4965671, 0.99588203, 0.49670905], [0.9958824, 0.49670908, 1.0000633, 0.49691108, 1.0000633, 0.50308883, 0.9958824, 0.50329083], [0.99588215, 0.50329095, 0.9929439, 0.50343287, 0.9914398, 0.50566226, 0.99140316, 0.5079155]], [[0.99998367, 0.4999999, 0.99998367, 0.50268495, 0.99998367, 0.50537, 0.9999837, 0.5080553]], [[0.9990181, 0.49999997, 0.9990181, 0.5015949, 0.99797285, 0.5031898, 0.99588215, 0.50329095], [0.99588215, 0.50329095, 0.9900049, 0.50357485, 0.98986584, 0.51221055, 0.99573076, 0.51268375]]], "196": [1, 0.5, 0.50000006, 0.5000787, 0.5000004, [[1, 0.49198607, 1, 0.49355093, 1.0000001, 0.4951158, 1.0000001, 0.4966807], [1.0000001, 0.4966807, 1.0000001, 0.49889374, 1, 0.50110674, 1, 0.5033198], [1, 0.5033198, 1, 0.5048845, 1, 0.5064493, 1, 0.508014]], [[0.9914602, 0.49212494, 0.9914967, 0.49436718, 0.9929934, 0.49658558, 0.99591756, 0.49672616], [0.99591756, 0.49672619, 1.0000784, 0.49692616, 1.0000784, 0.50307465, 0.99591756, 0.5032747], [0.9959171, 0.50327474, 0.9929931, 0.5034152, 0.9914963, 0.50563335, 0.9914596, 0.5078755]], [[1, 0.50000006, 1, 0.50267136, 1, 0.5053427, 1, 0.5080152]], [[0.9990382, 0.50000036, 0.9990382, 0.5015875, 0.997998, 0.50317466, 0.9959171, 0.50327474], [0.9959171, 0.50327474, 0.9900676, 0.50355583, 0.98992985, 0.51215166, 0.9957679, 0.5126202]]], "197": [1, 0.5000318, 0.5, 0.5000709, 0.49999973, [[0.999984, 0.49202627, 0.999984, 0.49358338, 0.99998397, 0.4951405, 0.999984, 0.49669763], [0.999984, 0.49669763, 0.99998397, 0.49889928, 0.999984, 0.5011009, 0.999984, 0.5033026], [0.999984, 0.5033026, 0.999984, 0.5048596, 0.999984, 0.5064167, 0.999984, 0.50797373]], [[0.9914853, 0.49216223, 0.9915208, 0.49439406, 0.9930104, 0.49660277, 0.9959214, 0.49674198], [0.9959216, 0.49674198, 1.0000625, 0.49694, 1.0000625, 0.5030595, 0.9959216, 0.50325745], [0.9959212, 0.50325745, 0.9930101, 0.50339663, 0.9915205, 0.50560546, 0.99148506, 0.5078374]], [[0.999984, 0.49999997, 0.999984, 0.5026579, 0.999984, 0.5053158, 0.999984, 0.50797373]], [[0.99902725, 0.49999973, 0.99902725, 0.5015791, 0.99799204, 0.50315845, 0.9959212, 0.50325745], [0.9959212, 0.50325745, 0.9900993, 0.50353587, 0.9899629, 0.5120919, 0.9957731, 0.51255584]]], "198": [1, 0.5, 0.5, 0.5000774, 0.5000002, [[0.9999371, 0.492067, 0.9999371, 0.4936162, 0.9999371, 0.4951654, 0.9999372, 0.49671462], [0.9999372, 0.49671462, 0.9999372, 0.49890488, 0.9999371, 0.5010952, 0.9999371, 0.5032855], [0.9999371, 0.5032855, 0.9999371, 0.50483465, 0.9999371, 0.50638384, 0.9999371, 0.507933]], [[0.99155486, 0.49220198, 0.99159026, 0.49442294, 0.99307275, 0.49662077, 0.99596983, 0.49675864], [0.99596983, 0.4967587, 1.0000911, 0.49695483, 1.0000911, 0.5030456, 0.99596983, 0.5032417], [0.99596983, 0.5032418, 0.99307245, 0.50337964, 0.99159, 0.5055779, 0.99155486, 0.5077991]], [[0.9999371, 0.5, 0.9999371, 0.50264436, 0.9999371, 0.5052887, 0.9999371, 0.50793374]], [[0.99906075, 0.50000024, 0.99906075, 0.50157195, 0.9980304, 0.50314367, 0.99596983, 0.5032418], [0.99596983, 0.5032418, 0.9901752, 0.5035175, 0.99004006, 0.5120345, 0.99582356, 0.51249397]]], "199": [1, 0.5000311, 0.49999997, 0.5000695, 0.50000024, [[0.9999844, 0.4921071, 0.9999844, 0.49364835, 0.9999844, 0.4951896, 0.9999844, 0.49673086], [0.9999844, 0.49673086, 0.9999844, 0.49891013, 0.9999844, 0.50108945, 0.9999843, 0.5032687], [0.9999843, 0.5032687, 0.9999844, 0.5048101, 0.9999844, 0.5063515, 0.9999844, 0.50789285]], [[0.9915651, 0.49224204, 0.9916008, 0.49445194, 0.9930761, 0.49663854, 0.9959591, 0.49677503], [0.99595976, 0.49677503, 1.0000613, 0.4969692, 1.0000613, 0.50303125, 0.99595976, 0.50322545], [0.99595976, 0.50322545, 0.99307644, 0.50336194, 0.99160117, 0.505549, 0.9915658, 0.5077591]], [[0.9999844, 0.49999994, 0.9999844, 0.5026309, 0.9999844, 0.5052619, 0.9999844, 0.5078933]], [[0.9990359, 0.50000024, 0.9990359, 0.50156426, 0.9980105, 0.50312835, 0.99595976, 0.50322545], [0.99595976, 0.50322545, 0.99019235, 0.5034985, 0.9900585, 0.51197624, 0.99581444, 0.5124312]]], "200": [1, 0.49999997, 0.5, 0.50007576, 0.50000036, [[1, 0.49214563, 1, 0.49367952, 1, 0.49521342, 1, 0.49674737], [1, 0.49674737, 1, 0.49891597, 1, 0.50108457, 1, 0.50325316], [1, 0.50325316, 1, 0.5047869, 1, 0.5063206, 1, 0.50785434]], [[0.9916197, 0.49227944, 0.99165463, 0.4944791, 0.99312294, 0.49665594, 0.99599284, 0.49679115], [0.99599284, 0.49679115, 1.000075, 0.49698344, 1.000075, 0.50301737, 0.99599284, 0.5032096], [0.9959924, 0.5032096, 0.99312216, 0.5033448, 0.99165386, 0.50552213, 0.9916193, 0.507722]], [[1, 0.5, 1, 0.5026181, 1, 0.5052362, 1, 0.5078549]], [[0.99905443, 0.50000036, 0.9990545, 0.50155693, 0.9980339, 0.5031135, 0.9959924, 0.5032096], [0.9959924, 0.5032096, 0.9902518, 0.50348, 0.9901193, 0.51191926, 0.99584913, 0.5123699]]], "201": [1, 0.5000305, 0.5, 0.5000681, 0.50000036, [[0.99998474, 0.4921857, 0.99998474, 0.4937117, 0.99998474, 0.49523774, 0.99998474, 0.49676377], [0.99998474, 0.49676377, 0.99998474, 0.4989212, 0.99998474, 0.5010786, 0.99998474, 0.50323606], [0.99998474, 0.50323606, 0.99998474, 0.5047621, 0.99998474, 0.5062882, 0.99998474, 0.5078143]], [[0.99164414, 0.49231753, 0.99167883, 0.4945067, 0.9931401, 0.4966732, 0.9959967, 0.4968071], [0.9959967, 0.4968071, 1.0000596, 0.49699748, 1.0000596, 0.50300324, 0.9959967, 0.50319374], [0.99599636, 0.50319374, 0.99313986, 0.5033276, 0.9916785, 0.505494, 0.9916438, 0.5076831]], [[0.99998474, 0.5, 0.99998474, 0.5026047, 0.99998474, 0.5052095, 0.99998474, 0.50781435]], [[0.9990438, 0.50000036, 0.9990439, 0.5015494, 0.99802816, 0.5030985, 0.99599636, 0.50319374], [0.99599636, 0.50319374, 0.9902823, 0.50346154, 0.99015105, 0.51186234, 0.99585384, 0.5123086]]], "202": [1, 0.5, 0.5, 0.5000743, 0.50000024, [[0.99993956, 0.49222475, 0.99993956, 0.49374324, 0.99993956, 0.49526173, 0.99993956, 0.49678025], [0.99993956, 0.49678025, 0.99993956, 0.4989267, 0.99993956, 0.5010732, 0.99993956, 0.50321966], [0.99993956, 0.50321966, 0.9999397, 0.5047382, 0.9999397, 0.50625676, 0.9999396, 0.50777525]], [[0.9917121, 0.4923549, 0.99174654, 0.49453366, 0.99320096, 0.49668998, 0.99604434, 0.4968226], [0.99604434, 0.49682257, 1.0000883, 0.49701118, 1.0000883, 0.5029894, 0.99604434, 0.503178], [0.9960437, 0.503178, 0.99319977, 0.50331056, 0.99174523, 0.50546765, 0.99171126, 0.5076468]], [[0.99993956, 0.5, 0.9999396, 0.5025917, 0.9999396, 0.50518346, 0.9999396, 0.5077761]], [[0.9990773, 0.5000003, 0.9990774, 0.501542, 0.9980663, 0.5030837, 0.9960437, 0.503178], [0.9960437, 0.503178, 0.99035573, 0.50344324, 0.9902256, 0.51180655, 0.995903, 0.5122486]]], "203": [1, 0.5000299, 0.50000006, 0.50006694, 0.5, [[0.9999851, 0.49226204, 0.9999851, 0.4937733, 0.9999851, 0.49528462, 0.99998504, 0.49679586], [0.99998504, 0.49679586, 0.9999851, 0.498932, 0.9999851, 0.50106823, 0.9999851, 0.5032044], [0.9999851, 0.5032044, 0.9999851, 0.5047156, 0.9999851, 0.50622684, 0.9999851, 0.50773805]], [[0.99172175, 0.49239096, 0.99175555, 0.49455976, 0.99320304, 0.49670655, 0.99603367, 0.49683794], [0.99603397, 0.49683794, 1.0000589, 0.49702471, 1.0000589, 0.5029753, 0.99603397, 0.5031621], [0.99603355, 0.50316215, 0.99320257, 0.5032936, 0.99175495, 0.50544095, 0.99172163, 0.5076101]], [[0.9999851, 0.5, 0.9999851, 0.50257933, 0.9999851, 0.50515866, 0.9999851, 0.50773835]], [[0.9990527, 0.5, 0.99905264, 0.50153434, 0.9980464, 0.5030687, 0.99603355, 0.50316215], [0.99603355, 0.50316215, 0.99037206, 0.50342494, 0.99024326, 0.5117501, 0.99589384, 0.512188]]], "204": [1, 0.49999997, 0.49999997, 0.5000731, 0.5, [[0.99999994, 0.49229944, 0.99999994, 0.49380338, 1, 0.4953073, 1, 0.49681127], [1, 0.49681127, 1, 0.498937, 1.0000001, 0.50106275, 1, 0.50318855], [1, 0.50318855, 1, 0.50469255, 1, 0.5061965, 1, 0.5077005]], [[0.9917745, 0.4924282, 0.9918082, 0.4945867, 0.993249, 0.49672323, 0.9960665, 0.49685335], [0.9960667, 0.4968533, 1.0000731, 0.49703828, 1.0000731, 0.50296175, 0.9960667, 0.50314677], [0.9960664, 0.5031467, 0.9932484, 0.5032768, 0.9918075, 0.5054141, 0.9917744, 0.507573]], [[1, 0.49999994, 1, 0.5025668, 1, 0.5051336, 1, 0.5077008]], [[0.9990715, 0.5, 0.9990715, 0.50152713, 0.9980699, 0.50305426, 0.9960664, 0.5031467], [0.9960664, 0.5031467, 0.9904306, 0.503407, 0.9903029, 0.5116952, 0.99592805, 0.5121289]]], "205": [1, 0.5000294, 0.50000006, 0.5000654, 0.50000024, [[0.9999853, 0.49233723, 0.9999852, 0.4938339, 0.9999853, 0.4953306, 0.9999853, 0.49682727], [0.9999853, 0.49682727, 0.9999852, 0.4989425, 0.9999852, 0.50105774, 0.99998534, 0.5031729], [0.99998534, 0.5031729, 0.9999852, 0.50466955, 0.9999852, 0.50616616, 0.9999853, 0.5076628]], [[0.99179757, 0.4924634, 0.9918303, 0.4946123, 0.99326444, 0.4967399, 0.9960697, 0.49686882], [0.9960697, 0.4968688, 1.0000575, 0.49705204, 1.0000575, 0.5029484, 0.9960697, 0.5031317], [0.99606943, 0.5031317, 0.9932642, 0.5032606, 0.9918301, 0.5053881, 0.9917973, 0.50753695]], [[0.9999853, 0.5, 0.9999853, 0.5025543, 0.9999853, 0.50510854, 0.99998534, 0.50766283]], [[0.9990605, 0.50000024, 0.9990605, 0.50152016, 0.99806356, 0.5030401, 0.99606943, 0.5031317], [0.99606943, 0.5031317, 0.9904593, 0.50338954, 0.9903329, 0.5116406, 0.99593246, 0.51207024]]], "206": [1, 0.5, 0.5, 0.50007147, 0.5000002, [[0.99994195, 0.4923756, 0.9999419, 0.49386463, 0.9999418, 0.4953536, 0.9999418, 0.49684265], [0.9999418, 0.49684265, 0.9999418, 0.49894744, 0.9999418, 0.50105226, 0.9999419, 0.5031571], [0.9999419, 0.5031571, 0.99994195, 0.5046462, 0.99994195, 0.5061353, 0.99994195, 0.5076244]], [[0.9918628, 0.4925008, 0.99189585, 0.49463925, 0.99332345, 0.49675602, 0.9961153, 0.49688366], [0.9961158, 0.49688366, 1.0000855, 0.49706525, 1.0000855, 0.5029351, 0.9961158, 0.5031166], [0.99611527, 0.5031166, 0.9933231, 0.50324434, 0.99189556, 0.50536156, 0.99186265, 0.5075002]], [[0.99994195, 0.5, 0.99994195, 0.5025415, 0.99994195, 0.50508296, 0.99994195, 0.50762445]], [[0.99909306, 0.5000001, 0.99909306, 0.501513, 0.99810064, 0.5030259, 0.99611527, 0.5031166], [0.99611527, 0.5031166, 0.99053043, 0.5033721, 0.9904051, 0.51158696, 0.9959796, 0.51201254]]], "207": [1, 0.5000288, 0.49999997, 0.50006425, 0.5, [[0.9999856, 0.49241164, 0.9999856, 0.49389374, 0.9999856, 0.4953758, 0.9999856, 0.49685788], [0.9999856, 0.49685788, 0.9999856, 0.4989525, 0.9999856, 0.50104713, 0.9999856, 0.50314176], [0.9999856, 0.50314176, 0.9999856, 0.50462395, 0.9999856, 0.50610614, 0.9999856, 0.5075883]], [[0.99187154, 0.49253574, 0.9919039, 0.49466455, 0.9933249, 0.49677214, 0.9961044, 0.49689865], [0.99610496, 0.49689862, 1.0000563, 0.49707845, 1.0000563, 0.5029216, 0.99610496, 0.5031014], [0.99610424, 0.5031014, 0.9933244, 0.50322795, 0.99190354, 0.5053358, 0.9918713, 0.50746477]], [[0.9999856, 0.49999997, 0.9999856, 0.5025294, 0.9999856, 0.5050589, 0.9999856, 0.50758874]], [[0.9990685, 0.5, 0.99906844, 0.50150573, 0.9980806, 0.50301147, 0.99610424, 0.5031014], [0.99610424, 0.5031014, 0.99054474, 0.50335443, 0.9904207, 0.51153266, 0.99597013, 0.51195437]]], "208": [1, 0.5, 0.5, 0.5000698, 0.5, [[1, 0.49244732, 1, 0.49392262, 1, 0.49539796, 0.99999994, 0.49687326], [0.99999994, 0.49687326, 1, 0.49895793, 1, 0.50104266, 1, 0.50312734], [1, 0.50312734, 1, 0.50460243, 1, 0.5060776, 1, 0.5075527]], [[0.9919227, 0.49257016, 0.99195445, 0.49468946, 0.99336886, 0.49678808, 0.99613637, 0.4969134], [0.99613637, 0.4969134, 1.0000696, 0.49709156, 1.0000697, 0.5029084, 0.99613637, 0.5030866], [0.99613595, 0.5030866, 0.99336827, 0.503212, 0.9919538, 0.50531083, 0.99192214, 0.50743026]], [[1, 0.5, 1, 0.5025176, 1, 0.50503516, 1, 0.5075529]], [[0.9990863, 0.5, 0.9990864, 0.50149876, 0.998103, 0.5029975, 0.99613595, 0.5030866], [0.99613595, 0.5030866, 0.9906013, 0.5033373, 0.9904783, 0.51147974, 0.9960041, 0.5118975]]], "209": [1, 0.50002825, 0.5, 0.50006276, 0.5000001, [[0.9999858, 0.4924838, 0.9999858, 0.49395216, 0.9999858, 0.49542052, 0.9999858, 0.49688882], [0.9999858, 0.49688882, 0.9999858, 0.49896324, 0.9999858, 0.50103766, 0.9999858, 0.5031121], [0.9999858, 0.5031121, 0.9999858, 0.5045801, 0.9999858, 0.50604814, 0.9999858, 0.5075162]], [[0.99194443, 0.4926056, 0.991976, 0.49471512, 0.99338394, 0.4968041, 0.996139, 0.49692827], [0.9961391, 0.49692827, 1.0000545, 0.4971048, 1.0000545, 0.50289553, 0.9961391, 0.503072], [0.9961391, 0.503072, 0.9933839, 0.50319624, 0.99197596, 0.5052855, 0.99194455, 0.5073952]], [[0.9999858, 0.5, 0.9999858, 0.50250536, 0.9999858, 0.5050108, 0.9999858, 0.50751644]], [[0.99907565, 0.5000001, 0.99907565, 0.50149196, 0.9980968, 0.5029838, 0.9961391, 0.503072], [0.9961391, 0.503072, 0.9906293, 0.5033204, 0.9905074, 0.511427, 0.9960078, 0.51184094]]], "210": [1, 0.5, 0.5, 0.50006837, 0.5000002, [[0.99994403, 0.49251992, 0.99994403, 0.49398112, 0.99994403, 0.49544233, 0.99994403, 0.49690354], [0.99994403, 0.49690354, 0.99994403, 0.498968, 0.99994403, 0.5010325, 0.999944, 0.50309694], [0.999944, 0.50309694, 0.99994403, 0.50455797, 0.99994403, 0.506019, 0.99994403, 0.5074801]], [[0.99200726, 0.49264014, 0.9920385, 0.49474013, 0.99344003, 0.49681967, 0.9961829, 0.49694273], [0.9961829, 0.49694285, 1.0000807, 0.49711767, 1.0000807, 0.50288284, 0.9961829, 0.50305766], [0.9961823, 0.5030578, 0.99343944, 0.50318086, 0.99203795, 0.50526047, 0.99200666, 0.5073604]], [[0.99994403, 0.5, 0.99994403, 0.5024934, 0.99994403, 0.50498676, 0.9999441, 0.5074802]], [[0.9991063, 0.50000024, 0.9991063, 0.5014852, 0.9981318, 0.5029702, 0.9961823, 0.5030578], [0.9961823, 0.5030578, 0.99069685, 0.5033039, 0.9905761, 0.5113754, 0.9960523, 0.5117856]]], "211": [1, 0.50002766, 0.5, 0.50006205, 0.5000003, [[0.99998605, 0.49255607, 0.99998605, 0.49401006, 0.99998605, 0.49546403, 0.99998605, 0.49691802], [0.99998605, 0.49691802, 0.99998605, 0.4989727, 0.99998605, 0.50102746, 0.99998605, 0.50308216], [0.99998605, 0.50308216, 0.99998605, 0.50453603, 0.99998605, 0.50598997, 0.99998605, 0.5074439]], [[0.99201703, 0.492676, 0.99204856, 0.49476603, 0.9934437, 0.49683547, 0.9961738, 0.49695736], [0.99617434, 0.49695733, 1.0000546, 0.4971306, 1.0000546, 0.50287, 0.99617434, 0.5030433], [0.9961737, 0.50304323, 0.9934436, 0.5031652, 0.9920484, 0.5052345, 0.9920168, 0.5073245]], [[0.9999861, 0.5, 0.99998605, 0.5024813, 0.99998605, 0.50496256, 0.9999862, 0.50744545]], [[0.99908453, 0.5000003, 0.99908453, 0.5014785, 0.99811447, 0.5029566, 0.9961737, 0.50304323], [0.9961737, 0.50304323, 0.9907125, 0.50328714, 0.99059296, 0.5113234, 0.99604446, 0.5117298]]], "212": [1, 0.5, 0.50000006, 0.5000671, 0.50000036, [[0.99999994, 0.4925901, 0.9999999, 0.49403757, 0.9999999, 0.49548507, 0.9999999, 0.49693254], [0.9999999, 0.49693254, 0.9999999, 0.49897763, 0.9999999, 0.50102276, 0.9999999, 0.50306785], [0.9999999, 0.50306785, 0.9999999, 0.50451523, 0.9999999, 0.5059626, 0.99999994, 0.50740993]], [[0.9920659, 0.49270886, 0.99209654, 0.49478987, 0.99348545, 0.49685088, 0.9962041, 0.4969717], [0.9962041, 0.4969717, 1.0000669, 0.49714336, 1.0000669, 0.50285745, 0.9962041, 0.5030291], [0.9962035, 0.50302917, 0.993485, 0.50315, 0.99209607, 0.50521064, 0.9920652, 0.5072916]], [[0.99999994, 0.50000006, 0.99999994, 0.50247, 0.99999994, 0.50494, 0.99999994, 0.507411]], [[0.9991012, 0.50000036, 0.9991012, 0.5014719, 0.99813545, 0.5029433, 0.9962035, 0.50302917], [0.9962035, 0.50302917, 0.99076635, 0.50327075, 0.99064785, 0.5112725, 0.99607587, 0.5116751]]], "213": [1, 0.5000272, 0.50000006, 0.5000606, 0.49999994, [[0.9999863, 0.49262497, 0.99998623, 0.49406573, 0.99998623, 0.49550647, 0.9999861, 0.49694717], [0.9999861, 0.49694717, 0.9999862, 0.49898258, 0.99998623, 0.5010179, 0.9999862, 0.50305325], [0.9999862, 0.50305325, 0.9999863, 0.5044939, 0.9999863, 0.5059345, 0.9999863, 0.50737506]], [[0.9920875, 0.49274176, 0.99211776, 0.4948136, 0.9935005, 0.49686557, 0.99620724, 0.49698532], [0.99620837, 0.4969853, 1.000054, 0.4971554, 1.000054, 0.50284445, 0.99620837, 0.50301456], [0.9962076, 0.5030145, 0.9935007, 0.50313425, 0.99211794, 0.5051863, 0.9920877, 0.5072582]], [[0.9999863, 0.50000006, 0.9999863, 0.5024584, 0.9999863, 0.5049167, 0.9999863, 0.50737506]], [[0.9990926, 0.49999994, 0.99909264, 0.5014647, 0.99813116, 0.5029295, 0.9962076, 0.5030145], [0.9962076, 0.5030145, 0.99079436, 0.50325394, 0.9906768, 0.5112212, 0.99608076, 0.51162016]]], "214": [1, 0.5, 0.5, 0.5000656, 0.5000003, [[0.9999461, 0.49265954, 0.9999461, 0.49409354, 0.9999461, 0.4955275, 0.9999461, 0.49696147], [0.9999461, 0.49696147, 0.9999461, 0.49898714, 0.9999461, 0.50101286, 0.9999461, 0.5030385], [0.9999461, 0.5030385, 0.9999461, 0.5044725, 0.9999461, 0.50590646, 0.9999461, 0.50734043]], [[0.9921471, 0.49277478, 0.99217695, 0.49483755, 0.9935535, 0.4968809, 0.9962488, 0.49699956], [0.9962488, 0.49699956, 1.0000775, 0.49716812, 1.0000775, 0.5028324, 0.9962488, 0.503001], [0.9962488, 0.503001, 0.9935535, 0.50311965, 0.992177, 0.5051629, 0.9921471, 0.5072257]], [[0.9999461, 0.5, 0.9999461, 0.50244683, 0.9999461, 0.50489366, 0.99994606, 0.5073409]], [[0.9991203, 0.50000024, 0.9991203, 0.50145847, 0.9981631, 0.5029167, 0.9962488, 0.503001], [0.9962488, 0.503001, 0.9908591, 0.5032383, 0.9907426, 0.51117164, 0.9961231, 0.51156706]]], "215": [1, 0.5000267, 0.5, 0.50005955, 0.50000006, [[0.9999867, 0.49269393, 0.9999867, 0.4941212, 0.9999867, 0.4955485, 0.9999867, 0.49697578], [0.9999867, 0.49697578, 0.99998665, 0.498992, 0.99998665, 0.5010082, 0.9999867, 0.50302446], [0.9999867, 0.50302446, 0.99998665, 0.50445163, 0.99998665, 0.50587887, 0.9999867, 0.5073061]], [[0.9921573, 0.4928088, 0.9921872, 0.49486205, 0.9935576, 0.4968958, 0.9962407, 0.49701336], [0.99624103, 0.49701336, 1.0000526, 0.49718037, 1.0000526, 0.5028198, 0.99624103, 0.5029868], [0.99624103, 0.5029868, 0.9935578, 0.5031043, 0.9921874, 0.5051382, 0.9921576, 0.5071915]], [[0.99998665, 0.5, 0.99998665, 0.5024354, 0.99998665, 0.5048708, 0.9999867, 0.5073069]], [[0.99909973, 0.50000006, 0.99909973, 0.5014517, 0.9981468, 0.5029033, 0.99624103, 0.5029868], [0.99624103, 0.5029868, 0.99087495, 0.5032219, 0.99075943, 0.51112115, 0.99611646, 0.511513]]], "216": [1, 0.5, 0.5, 0.5000648, 0.5000002, [[1, 0.49272677, 1, 0.49414778, 0.99999994, 0.49556878, 1, 0.49698982], [1, 0.49698982, 0.99999994, 0.4989968, 1, 0.50100386, 1, 0.50301087], [1, 0.50301087, 1, 0.50443166, 1, 0.50585246, 1, 0.50727326]], [[0.9922042, 0.49284127, 0.9922337, 0.49488562, 0.993598, 0.4969107, 0.9962697, 0.49702722], [0.9962697, 0.49702716, 1.0000646, 0.4971927, 1.0000646, 0.5028077, 0.9962697, 0.50297326], [0.9962694, 0.5029732, 0.9935977, 0.5030898, 0.99223334, 0.5051148, 0.99220383, 0.5071591]], [[1, 0.5, 1, 0.5024244, 1, 0.50484884, 1, 0.50727403]], [[0.9991159, 0.5000002, 0.9991159, 0.50144535, 0.99816716, 0.50289047, 0.9962694, 0.5029732], [0.9962694, 0.5029732, 0.9909264, 0.50320625, 0.990812, 0.5110721, 0.9961461, 0.5114604]]], "217": [1, 0.5000262, 0.5, 0.5000582, 0.49999946, [[0.9999869, 0.49276155, 0.9999869, 0.4941757, 0.9999869, 0.49558988, 0.9999869, 0.49700406], [0.9999869, 0.49700406, 0.9999869, 0.49900147, 0.9999869, 0.50099885, 0.9999869, 0.50299627], [0.9999869, 0.50299627, 0.9999869, 0.5044104, 0.9999869, 0.50582445, 0.9999869, 0.5072385]], [[0.9922255, 0.4928742, 0.99225515, 0.4949091, 0.9936135, 0.49692464, 0.99627316, 0.49704012], [0.99627316, 0.49704015, 1.0000513, 0.49720418, 1.0000513, 0.5027948, 0.99627316, 0.50295883], [0.9962726, 0.50295883, 0.9936127, 0.50307435, 0.99225444, 0.50509024, 0.99222505, 0.5071254]], [[0.9999869, 0.5, 0.9999869, 0.50241286, 0.9999869, 0.5048257, 0.9999869, 0.50723916]], [[0.99910676, 0.4999995, 0.99910676, 0.50143814, 0.9981622, 0.5028768, 0.9962726, 0.50295883], [0.9962726, 0.50295883, 0.9909529, 0.50318986, 0.99083954, 0.51102215, 0.9961509, 0.51140714]]], "218": [1, 0.5, 0.5, 0.50006366, 0.5, [[0.9999481, 0.49279472, 0.9999481, 0.49420238, 0.999948, 0.49560997, 0.99994814, 0.49701765], [0.99994814, 0.49701765, 0.999948, 0.49900597, 0.99994814, 0.5009943, 0.99994814, 0.50298274], [0.99994814, 0.50298274, 0.999948, 0.50439024, 0.9999481, 0.5057978, 0.9999481, 0.5072053]], [[0.9922842, 0.49290615, 0.9923134, 0.4949324, 0.9936657, 0.4969396, 0.99631435, 0.4970541], [0.99631435, 0.497054, 1.0000762, 0.4972166, 1.0000762, 0.5027834, 0.99631435, 0.502946], [0.9963141, 0.50294596, 0.9936659, 0.5030604, 0.9923135, 0.50506717, 0.992284, 0.50709313]], [[0.9999481, 0.5, 0.9999481, 0.50240177, 0.9999481, 0.50480354, 0.9999481, 0.5072057]], [[0.9991357, 0.5, 0.9991357, 0.50143236, 0.9981953, 0.5028647, 0.9963141, 0.50294596], [0.9963141, 0.50294596, 0.99101704, 0.5031749, 0.99090457, 0.51097465, 0.9961931, 0.5113561]]], "219": [1, 0.50002575, 0.5, 0.50005734, 0.49999997, [[0.9999871, 0.49282768, 0.9999871, 0.49422887, 0.9999871, 0.49563006, 0.999987, 0.4970312], [0.999987, 0.4970312, 0.9999871, 0.4990105, 0.9999871, 0.5009898, 0.9999871, 0.5029691], [0.9999871, 0.5029691, 0.9999871, 0.5043702, 0.9999871, 0.5057713, 0.9999871, 0.50717235]], [[0.9922925, 0.49293903, 0.9923218, 0.49495614, 0.9936682, 0.49695414, 0.99630505, 0.49706757], [0.99630505, 0.49706742, 1.0000505, 0.4972286, 1.0000505, 0.5027714, 0.99630505, 0.50293255], [0.9963049, 0.5029324, 0.9936682, 0.50304586, 0.9923217, 0.5050437, 0.99229234, 0.50706065]], [[0.99998707, 0.5, 0.9999871, 0.5023908, 0.9999871, 0.5047816, 0.9999871, 0.5071733]], [[0.99911416, 0.5, 0.99911416, 0.501426, 0.99817777, 0.50285196, 0.9963049, 0.5029324], [0.9963049, 0.5029324, 0.9910305, 0.50315934, 0.9909191, 0.5109262, 0.9961852, 0.5113042]]], "220": [1, 0.5, 0.5, 0.50006187, 0.5000006, [[1, 0.49285913, 1, 0.4942543, 1, 0.49564952, 1.0000001, 0.4970447], [1.0000001, 0.4970447, 1, 0.49901503, 1, 0.5009853, 1, 0.5029556], [1, 0.5029556, 1, 0.5043507, 1, 0.50574577, 1, 0.5071409]], [[0.9923373, 0.49296972, 0.9923656, 0.49497852, 0.99370617, 0.49696887, 0.99633247, 0.49708137], [0.99633247, 0.49708137, 1.0000618, 0.49724105, 1.0000618, 0.5027602, 0.99633247, 0.5029199], [0.99633205, 0.50292, 0.99370563, 0.50303245, 0.992365, 0.5050229, 0.99233675, 0.50703186]], [[1, 0.5, 1, 0.5023803, 1, 0.5047606, 1, 0.507141]], [[0.9991295, 0.5000006, 0.9991294, 0.5014203, 0.9981971, 0.50284004, 0.99633205, 0.50292], [0.99633205, 0.50292, 0.9910801, 0.50314486, 0.9909697, 0.51087916, 0.99621385, 0.511254]]], "221": [1, 0.5000252, 0.50000006, 0.500056, 0.5, [[0.9999873, 0.492892, 0.99998724, 0.49428082, 0.99998724, 0.4956696, 0.99998724, 0.49705842], [0.99998724, 0.49705842, 0.99998724, 0.49901965, 0.99998724, 0.50098085, 0.99998724, 0.5029421], [0.99998724, 0.5029421, 0.99998724, 0.50433075, 0.99998724, 0.5057194, 0.9999873, 0.5071081]], [[0.99235845, 0.49300033, 0.9923864, 0.49500048, 0.9937211, 0.4969824, 0.9963364, 0.4970939], [0.996337, 0.49709386, 1.0000502, 0.49725217, 1.0000502, 0.50274783, 0.996337, 0.50290614], [0.99633604, 0.50290614, 0.99372125, 0.5030176, 0.9923864, 0.5049989, 0.9923579, 0.5069987]], [[0.9999873, 0.50000006, 0.9999873, 0.5023694, 0.9999873, 0.50473875, 0.99998724, 0.50710815]], [[0.9991219, 0.5, 0.9991219, 0.50141346, 0.9981936, 0.502827, 0.99633604, 0.50290614], [0.99633604, 0.50290614, 0.9911064, 0.50312907, 0.99099684, 0.51083124, 0.99621826, 0.5112027]]], "222": [1, 0.5, 0.5, 0.50006115, 0.49999994, [[0.99994993, 0.49292457, 0.99994993, 0.49430698, 0.9999499, 0.4956894, 0.9999498, 0.4970718], [0.9999498, 0.4970718, 0.9999499, 0.49902403, 0.99994993, 0.5009763, 0.99994993, 0.50292856], [0.99994993, 0.50292856, 0.99994993, 0.50431085, 0.99994993, 0.50569314, 0.99994993, 0.5070754]], [[0.99241334, 0.49303272, 0.9924418, 0.4950238, 0.99377084, 0.49699622, 0.9963744, 0.49710673], [0.99637455, 0.4971068, 1.0000719, 0.49726367, 1.0000719, 0.5027363, 0.99637455, 0.5028932], [0.99637455, 0.5028932, 0.99377084, 0.5030037, 0.99244183, 0.5049764, 0.9924135, 0.50696754]], [[0.99994993, 0.5, 0.99994993, 0.5023585, 0.99994993, 0.504717, 0.99994993, 0.5070765]], [[0.99914753, 0.49999997, 0.99914753, 0.5014074, 0.9982232, 0.50281477, 0.99637455, 0.5028932], [0.99637455, 0.5028932, 0.9911669, 0.5031142, 0.99105835, 0.5107846, 0.996258, 0.511153]]], "223": [1, 0.5000248, 0.49999997, 0.5000549, 0.5, [[0.9999876, 0.4929561, 0.9999876, 0.4943323, 0.99998754, 0.49570855, 0.9999876, 0.49708477], [0.9999876, 0.49708477, 0.9999876, 0.4990282, 0.9999876, 0.5009717, 0.9999876, 0.5029151], [0.9999876, 0.5029151, 0.9999876, 0.50429136, 0.9999876, 0.50566757, 0.9999876, 0.50704384]], [[0.99242246, 0.49306333, 0.9924506, 0.49504596, 0.9937739, 0.4970102, 0.99636656, 0.49711975], [0.9963669, 0.49711972, 1.0000484, 0.4972753, 1.0000484, 0.5027247, 0.9963669, 0.5028803], [0.9963669, 0.5028802, 0.9937742, 0.50298977, 0.99245083, 0.5049541, 0.99242276, 0.50693667]], [[0.99998754, 0.49999997, 0.99998754, 0.50234795, 0.9999876, 0.5046959, 0.9999875, 0.50704384]], [[0.99912804, 0.5, 0.99912804, 0.50140125, 0.9982077, 0.5028025, 0.9963669, 0.5028802], [0.9963669, 0.5028802, 0.9911812, 0.5030993, 0.9910736, 0.51073796, 0.99625105, 0.511103]]], "224": [1, 0.49999997, 0.50000006, 0.5000601, 0.50000036, [[0.99999994, 0.49298686, 0.9999999, 0.49435705, 0.99999994, 0.49572724, 0.99999994, 0.49709743], [0.99999994, 0.49709743, 0.9999999, 0.49903232, 1, 0.5009672, 0.99999994, 0.50290203], [0.99999994, 0.50290203, 0.99999994, 0.50427246, 0.99999994, 0.50564283, 0.99999994, 0.5070132]], [[0.99246657, 0.49309438, 0.99249446, 0.49506846, 0.9938121, 0.4970243, 0.996394, 0.49713287], [0.9963945, 0.4971328, 1.0000604, 0.49728703, 1.0000604, 0.5027137, 0.9963945, 0.5028679], [0.99639416, 0.5028678, 0.9938121, 0.5029764, 0.99249434, 0.50493264, 0.99246675, 0.5069069]], [[1, 0.50000006, 1, 0.50233775, 1, 0.5046755, 0.99999994, 0.50701326]], [[0.99914396, 0.50000036, 0.99914396, 0.5013956, 0.9982275, 0.5027908, 0.99639416, 0.5028678], [0.99639416, 0.5028678, 0.9912301, 0.503085, 0.9911234, 0.5106924, 0.9962794, 0.5110543]]], "225": [1, 0.50002444, 0.50000006, 0.500054, 0.50000006, [[0.9999878, 0.4930186, 0.99998784, 0.49438274, 0.99998784, 0.49574688, 0.9999879, 0.49711102], [0.9999879, 0.49711102, 0.9999879, 0.49903697, 0.99998784, 0.500963, 0.99998784, 0.5028889], [0.99998784, 0.5028889, 0.99998784, 0.5042531, 0.99998784, 0.50561726, 0.9999878, 0.50698143]], [[0.9924865, 0.49312392, 0.9925138, 0.49508974, 0.99382585, 0.49703774, 0.99639714, 0.4971454], [0.99639714, 0.49714535, 1.0000473, 0.4972982, 1.0000473, 0.50270206, 0.99639714, 0.5028549], [0.9963964, 0.5028549, 0.9938251, 0.5029626, 0.992513, 0.5049106, 0.9924857, 0.5068765]], [[0.9999877, 0.5, 0.9999878, 0.50232714, 0.9999878, 0.5046543, 0.9999878, 0.50698155]], [[0.9991348, 0.5000001, 0.9991348, 0.5013893, 0.99822223, 0.5027785, 0.9963964, 0.5028549], [0.9963964, 0.5028549, 0.99125403, 0.5030702, 0.99114823, 0.5106462, 0.9962831, 0.5110051]]], "226": [1, 0.5, 0.49999997, 0.5000587, 0.50000006, [[0.9999517, 0.49305013, 0.9999517, 0.49440798, 0.9999517, 0.4957658, 0.9999517, 0.49712366], [0.9999517, 0.49712366, 0.9999517, 0.49904114, 0.9999517, 0.50095856, 0.99995166, 0.50287604], [0.99995166, 0.50287604, 0.9999517, 0.50423396, 0.9999517, 0.50559187, 0.9999517, 0.50694984]], [[0.99253976, 0.49315473, 0.99256736, 0.4951119, 0.99387383, 0.49705106, 0.99643403, 0.49715778], [0.99643403, 0.4971578, 1.0000691, 0.49730933, 1.0000691, 0.50269085, 0.99643403, 0.50284237], [0.9964334, 0.5028424, 0.993873, 0.5029491, 0.99256647, 0.50488853, 0.992539, 0.5068459]], [[0.9999517, 0.5, 0.9999517, 0.5023166, 0.9999517, 0.5046332, 0.9999517, 0.5069499]], [[0.9991604, 0.5000001, 0.99916035, 0.50138336, 0.99825156, 0.5027666, 0.9964334, 0.5028424], [0.9964334, 0.5028424, 0.99131215, 0.5030559, 0.9912073, 0.51060134, 0.99632114, 0.5109571]]], "227": [1, 0.5000239, 0.50000006, 0.5000533, 0.4999997, [[0.999988, 0.49308115, 0.9999881, 0.49443293, 0.9999881, 0.4957847, 0.9999882, 0.49713647], [0.9999882, 0.49713647, 0.99998814, 0.49904543, 0.9999881, 0.50095445, 0.9999881, 0.5028634], [0.9999881, 0.5028634, 0.9999881, 0.50421524, 0.999988, 0.5055671, 0.999988, 0.5069189]], [[0.9925486, 0.49318486, 0.99257624, 0.49513352, 0.99387705, 0.49706402, 0.9964263, 0.49716982], [0.99642694, 0.49716994, 1.0000466, 0.49732015, 1.0000466, 0.5026792, 0.99642694, 0.50282943], [0.99642694, 0.50282955, 0.99387777, 0.50293535, 0.9925768, 0.5048659, 0.9925491, 0.5068145]], [[0.999988, 0.50000006, 0.999988, 0.50230634, 0.999988, 0.5046126, 0.999988, 0.5069207]], [[0.9991417, 0.4999997, 0.9991417, 0.501377, 0.9982368, 0.50275433, 0.99642694, 0.50282955], [0.99642694, 0.50282955, 0.9913271, 0.5030412, 0.9912231, 0.5105557, 0.9963154, 0.5109085]]], "228": [1, 0.5, 0.5, 0.5000585, 0.49999994, [[1, 0.49311087, 1, 0.49445683, 1, 0.49580282, 0.99999994, 0.49714875], [0.99999994, 0.49714875, 1, 0.49904972, 1, 0.5009506, 1, 0.5028515], [1, 0.5028515, 1, 0.50419736, 1, 0.50554323, 1, 0.50688916]], [[0.9925914, 0.49321452, 0.9926188, 0.495155, 0.9939143, 0.49707764, 0.99645317, 0.49718255], [0.9964534, 0.49718246, 1.000058, 0.4973314, 1.000058, 0.5026685, 0.9964534, 0.5028175], [0.99645287, 0.5028174, 0.9939141, 0.5029223, 0.9926186, 0.50484484, 0.9925912, 0.5067854]], [[1, 0.5, 1, 0.5022964, 1, 0.5045928, 1, 0.50689065]], [[0.99915683, 0.5, 0.99915683, 0.5013715, 0.9982557, 0.502743, 0.99645287, 0.5028174], [0.99645287, 0.5028174, 0.99137396, 0.50302726, 0.99127084, 0.51051164, 0.9963424, 0.51086134]]], "229": [1, 0.50002354, 0.49999997, 0.5000523, 0.5000003, [[0.9999882, 0.49313956, 0.9999882, 0.49448037, 0.9999883, 0.49582115, 0.99998826, 0.4971619], [0.99998826, 0.4971619, 0.9999883, 0.49905413, 0.99998826, 0.5009464, 0.9999882, 0.5028386], [0.9999882, 0.5028386, 0.9999882, 0.50417924, 0.9999882, 0.50551975, 0.9999882, 0.5068604]], [[0.9926094, 0.49324155, 0.99263537, 0.49517477, 0.99392545, 0.49709105, 0.99645495, 0.49719512], [0.9964554, 0.49719507, 1.000045, 0.49734277, 1.000045, 0.50265783, 0.9964554, 0.50280553], [0.9964554, 0.50280553, 0.9939259, 0.50290966, 0.9926358, 0.50482583, 0.99260974, 0.50675905]], [[0.9999882, 0.49999994, 0.9999882, 0.5022868, 0.9999882, 0.5045736, 0.9999882, 0.5068604]], [[0.99914753, 0.5000003, 0.9991476, 0.50136596, 0.9982501, 0.5027317, 0.9964554, 0.50280553], [0.9964554, 0.50280553, 0.9913974, 0.5030137, 0.99129504, 0.51046765, 0.99634546, 0.5108144]]], "230": [1, 0.5, 0.5, 0.50005746, 0.5000005, [[0.9999533, 0.49316967, 0.9999534, 0.4945045, 0.9999533, 0.49583936, 0.9999533, 0.4971742], [0.9999533, 0.4971742, 0.9999534, 0.4990582, 0.9999534, 0.5009422, 0.9999533, 0.50282615], [0.9999533, 0.50282615, 0.9999533, 0.5041609, 0.9999534, 0.5054956, 0.9999533, 0.50683033]], [[0.9926627, 0.49327078, 0.9926887, 0.49519593, 0.9939734, 0.49710414, 0.9964925, 0.4972073], [0.99649286, 0.49720734, 1.0000676, 0.49735382, 1.0000676, 0.5026473, 0.99649286, 0.5027937], [0.99649197, 0.5027937, 0.99397266, 0.5028969, 0.99268794, 0.50480545, 0.9926622, 0.50673074]], [[0.9999533, 0.5, 0.9999533, 0.5022768, 0.9999533, 0.50455356, 0.9999534, 0.50683045]], [[0.9991739, 0.50000054, 0.9991739, 0.50136054, 0.9982802, 0.5027205, 0.99649197, 0.5027937], [0.99649197, 0.5027937, 0.9914545, 0.5030001, 0.9913531, 0.51042444, 0.9963832, 0.5107684]]], "231": [1, 0.5000231, 0.5, 0.5000515, 0.5000004, [[0.99998844, 0.49319988, 0.99998844, 0.49452868, 0.99998844, 0.49585748, 0.99998856, 0.49718633], [0.99998856, 0.49718633, 0.99998856, 0.4990621, 0.99998856, 0.50093794, 0.9999885, 0.5028137], [0.9999885, 0.5028137, 0.99998856, 0.5041425, 0.99998856, 0.50547135, 0.9999885, 0.5068001]], [[0.99267185, 0.4933009, 0.99269813, 0.49521762, 0.9939775, 0.49711713, 0.99648577, 0.49721944], [0.99648577, 0.49721935, 1.0000458, 0.49736452, 1.0000458, 0.5026364, 0.99648577, 0.50278157], [0.99648476, 0.5027815, 0.99397624, 0.5028838, 0.9926969, 0.50478387, 0.99267083, 0.50670075]], [[0.99998844, 0.5, 0.9999885, 0.5022667, 0.9999885, 0.5045334, 0.9999885, 0.5068008]], [[0.99915576, 0.5000004, 0.99915576, 0.5013547, 0.99826574, 0.502709, 0.99648476, 0.5027815], [0.99648476, 0.5027815, 0.99146795, 0.50298613, 0.9913673, 0.5103806, 0.99637693, 0.5107217]]], "232": [1, 0.49999997, 0.5, 0.5000562, 0.50000024, [[0.99999994, 0.493229, 0.9999999, 0.49455214, 0.99999994, 0.49587527, 0.99999994, 0.49719837], [0.99999994, 0.49719837, 0.9999999, 0.4990663, 1, 0.50093424, 0.99999994, 0.5028022], [0.99999994, 0.5028022, 1, 0.5041251, 1, 0.50544804, 1, 0.50677097]], [[0.99271226, 0.49332917, 0.9927383, 0.49523795, 0.99401236, 0.49712965, 0.9965105, 0.4972311], [0.9965105, 0.4972311, 1.0000559, 0.497375, 1.0000559, 0.50262547, 0.9965105, 0.5027695], [0.99650955, 0.5027695, 0.99401116, 0.5028709, 0.9927371, 0.5047631, 0.99271137, 0.50667214]], [[0.99999994, 0.5, 1, 0.502257, 1, 0.504514, 0.99999994, 0.5067714]], [[0.9991696, 0.50000024, 0.9991696, 0.50134885, 0.9982832, 0.50269747, 0.99650955, 0.5027695], [0.99650955, 0.5027695, 0.99151295, 0.5029724, 0.9914133, 0.51033753, 0.9964027, 0.5106757]]], "233": [1, 0.5000227, 0.5, 0.5000502, 0.5000002, [[0.9999886, 0.49325836, 0.99998856, 0.49457577, 0.99998856, 0.49589315, 0.9999885, 0.49721056], [0.9999885, 0.49721056, 0.99998856, 0.49907023, 0.99998856, 0.5009299, 0.99998856, 0.50278956], [0.99998856, 0.50278956, 0.99998856, 0.50410694, 0.99998856, 0.50542426, 0.9999886, 0.50674164]], [[0.9927303, 0.49335682, 0.992756, 0.4952579, 0.9940249, 0.49714231, 0.9965131, 0.49724296], [0.9965131, 0.49724284, 1.000044, 0.49738562, 1.000044, 0.5026148, 0.9965131, 0.5027576], [0.9965128, 0.50275755, 0.99402463, 0.50285816, 0.9927558, 0.5047423, 0.99272996, 0.5066433]], [[0.9999886, 0.5, 0.9999886, 0.5022472, 0.9999886, 0.5044944, 0.99998856, 0.5067421]], [[0.99916136, 0.50000024, 0.9991613, 0.5013432, 0.99827856, 0.5026862, 0.9965128, 0.50275755], [0.9965128, 0.50275755, 0.9915363, 0.5029588, 0.9914374, 0.5102947, 0.99640656, 0.51063]]], "234": [1, 0.5, 0.5, 0.5000548, 0.5000003, [[0.99995494, 0.49328628, 0.99995494, 0.4945983, 0.99995494, 0.49591035, 0.99995494, 0.49722233], [0.99995494, 0.49722233, 0.99995494, 0.49907386, 0.99995494, 0.5009254, 0.99995494, 0.502777], [0.99995494, 0.502777, 0.99995494, 0.50408924, 0.99995494, 0.5054015, 0.99995494, 0.5067137]], [[0.9927811, 0.49338388, 0.9928062, 0.49527746, 0.9940699, 0.4971547, 0.99654853, 0.4972545], [0.99654853, 0.49725455, 1.000065, 0.49739617, 1.000065, 0.50260437, 0.99654853, 0.502746], [0.9965481, 0.50274605, 0.99406886, 0.5028459, 0.99280524, 0.50472397, 0.99278075, 0.5066181]], [[0.99995494, 0.49999997, 0.9999549, 0.5022379, 0.99995494, 0.50447583, 0.99995494, 0.5067137]], [[0.9991859, 0.5000003, 0.9991859, 0.50133777, 0.99830675, 0.5026752, 0.9965481, 0.50274605], [0.9965481, 0.50274605, 0.9915916, 0.50294566, 0.9914935, 0.5102527, 0.9964435, 0.51058537]]], "235": [1, 0.5000223, 0.49999994, 0.5000496, 0.50000006, [[0.9999888, 0.49331602, 0.9999888, 0.49462223, 0.9999888, 0.49592838, 0.99998885, 0.4972346], [0.99998885, 0.4972346, 0.9999888, 0.49907833, 0.99998873, 0.500922, 0.99998873, 0.5027657], [0.99998873, 0.5027657, 0.99998873, 0.5040718, 0.9999888, 0.50537777, 0.9999888, 0.5066838]], [[0.9927892, 0.4934131, 0.9928147, 0.49529842, 0.99407315, 0.4971671, 0.9965412, 0.49726605], [0.9965425, 0.497266, 1.0000447, 0.49740642, 1.0000447, 0.50259376, 0.9965425, 0.5027341], [0.9965409, 0.50273407, 0.9940728, 0.502833, 0.99281436, 0.5047018, 0.992789, 0.50658715]], [[0.9999888, 0.49999994, 0.9999888, 0.5022279, 0.9999888, 0.50445586, 0.9999888, 0.5066847]], [[0.9991691, 0.50000006, 0.9991691, 0.50133204, 0.99829364, 0.50266397, 0.9965409, 0.50273407], [0.9965409, 0.50273407, 0.9916043, 0.502932, 0.99150705, 0.5102103, 0.99643713, 0.51054007]]], "236": [1, 0.5, 0.5, 0.50005406, 0.5000001, [[1, 0.49334353, 1, 0.49464446, 1, 0.4959454, 1, 0.4972463], [1, 0.4972463, 1, 0.4990822, 1, 0.5009182, 0.99999994, 0.50275415], [0.99999994, 0.50275415, 1, 0.50405496, 1, 0.5053557, 1, 0.50665647]], [[0.9928287, 0.4934399, 0.9928537, 0.49531782, 0.99410707, 0.49717942, 0.9965656, 0.4972776], [0.9965658, 0.4972776, 1.0000539, 0.49741682, 1.0000539, 0.5025834, 0.9965658, 0.5027226], [0.99656475, 0.5027226, 0.9941063, 0.50282073, 0.9928529, 0.5046823, 0.99282795, 0.5065602]], [[1, 0.49999997, 1, 0.5022188, 1, 0.5044376, 0.99999994, 0.50665784]], [[0.99918187, 0.5000001, 0.99918187, 0.50132656, 0.99830985, 0.502653, 0.99656475, 0.5027226], [0.99656475, 0.5027226, 0.9916478, 0.50291896, 0.9915513, 0.5101688, 0.99646163, 0.5104959]]], "237": [1, 0.500022, 0.49999997, 0.5000488, 0.5, [[0.99998903, 0.493372, 0.99998903, 0.4946673, 0.999989, 0.49596268, 0.999989, 0.49725795], [0.999989, 0.49725795, 0.99998903, 0.49908605, 0.9999889, 0.5009142, 0.99998903, 0.50274235], [0.99998903, 0.50274235, 0.9999889, 0.5040375, 0.99998903, 0.5053327, 0.999989, 0.5066279]], [[0.9928477, 0.493467, 0.99287224, 0.4953373, 0.9941206, 0.49719155, 0.9965694, 0.49728894], [0.9965697, 0.4972889, 1.0000436, 0.49742702, 1.0000436, 0.502573, 0.9965697, 0.5027111], [0.99656916, 0.5027112, 0.99412024, 0.5028086, 0.992872, 0.5046629, 0.99284744, 0.50653327]], [[0.999989, 0.5, 0.99998903, 0.5022093, 0.999989, 0.5044186, 0.9999889, 0.50662863]], [[0.99917513, 0.50000006, 0.99917513, 0.501321, 0.99830663, 0.50264204, 0.99656916, 0.5027112], [0.99656916, 0.5027112, 0.9916718, 0.50290585, 0.9915761, 0.51012725, 0.9964665, 0.51045173]]], "238": [1, 0.49999997, 0.5, 0.5000532, 0.49999997, [[0.9999565, 0.49339992, 0.9999565, 0.4946897, 0.9999565, 0.4959795, 0.9999564, 0.4972693], [0.9999564, 0.4972693, 0.9999565, 0.4990896, 0.9999565, 0.5009099, 0.9999565, 0.50273025], [0.9999565, 0.50273025, 0.9999565, 0.5040202, 0.9999565, 0.5053102, 0.9999565, 0.5066001]], [[0.99289525, 0.49349448, 0.9929199, 0.4953571, 0.9941632, 0.49720353, 0.9966021, 0.49730006], [0.99660283, 0.49730006, 1.0000631, 0.49743703, 1.0000631, 0.5025629, 0.99660283, 0.50269985], [0.9966025, 0.50269985, 0.99416316, 0.5027964, 0.9929199, 0.5046434, 0.9928954, 0.5065063]], [[0.9999565, 0.49999997, 0.9999565, 0.5022, 0.9999565, 0.5044, 0.99995637, 0.5066001]], [[0.9991981, 0.49999994, 0.999198, 0.50131565, 0.998333, 0.50263137, 0.9966025, 0.50269985], [0.9966025, 0.50269985, 0.99172425, 0.502893, 0.9916293, 0.51008666, 0.99650097, 0.51040834]]], "239": [1, 0.5000216, 0.49999997, 0.50004745, 0.49999982, [[0.99998915, 0.4934274, 0.99998915, 0.49471188, 0.99998915, 0.49599636, 0.9999891, 0.49728078], [0.9999891, 0.49728078, 0.9999891, 0.49909356, 0.99998915, 0.50090635, 0.99998915, 0.5027191], [0.99998915, 0.5027191, 0.99998915, 0.5040036, 0.99998915, 0.505288, 0.99998915, 0.5065725]], [[0.9929031, 0.4935214, 0.99292773, 0.49537647, 0.9941659, 0.49721557, 0.99659514, 0.49731132], [0.99659514, 0.49731135, 1.0000412, 0.4974472, 1.0000414, 0.5025525, 0.99659514, 0.5026884], [0.9965946, 0.5026884, 0.99416506, 0.50278413, 0.99292684, 0.5046236, 0.9929025, 0.5064789]], [[0.99998915, 0.49999997, 0.99998915, 0.5021908, 0.99998915, 0.50438166, 0.9999892, 0.50657254]], [[0.9991797, 0.49999985, 0.9991798, 0.50131017, 0.99831825, 0.50262046, 0.9965946, 0.5026884], [0.9965946, 0.5026884, 0.99173576, 0.5028799, 0.9916416, 0.51004547, 0.996494, 0.51036465]]], "240": [1, 0.5, 0.50000006, 0.5000526, 0.5000001, [[1, 0.4934556, 1, 0.49473453, 0.99999994, 0.4960134, 0.9999999, 0.49729228], [0.9999999, 0.49729228, 0.9999999, 0.49909753, 0.9999999, 0.5009028, 0.9999999, 0.502708], [0.9999999, 0.502708, 0.99999994, 0.50398684, 1, 0.50526565, 1, 0.5065445]], [[0.99294215, 0.49354962, 0.9929671, 0.4953968, 0.99420035, 0.49722767, 0.99661946, 0.49732268], [0.9966205, 0.49732265, 1.0000529, 0.49745739, 1.0000529, 0.5025428, 0.9966205, 0.50267756], [0.9966195, 0.50267756, 0.99420047, 0.5027725, 0.9929671, 0.50460327, 0.99294215, 0.50645053]], [[0.99999994, 0.50000006, 0.99999994, 0.50218153, 1, 0.504363, 0.99999994, 0.50654453]], [[0.9991948, 0.5000001, 0.9991948, 0.5013051, 0.9983367, 0.5026102, 0.9966195, 0.50267756], [0.9966195, 0.50267756, 0.99177974, 0.5028675, 0.9916863, 0.51000553, 0.99651945, 0.51032215]]], "241": [1, 0.50002116, 0.49999997, 0.5000471, 0.5000003, [[0.9999893, 0.49348247, 0.9999893, 0.49475622, 0.9999892, 0.49602994, 0.9999893, 0.49730366], [0.9999893, 0.49730366, 0.9999893, 0.4991013, 0.9999893, 0.500899, 0.9999893, 0.50269663], [0.9999893, 0.50269663, 0.9999893, 0.50397027, 0.9999893, 0.5052439, 0.9999893, 0.50651747]], [[0.9929587, 0.49357447, 0.99298275, 0.4954149, 0.9942111, 0.49723968, 0.9966215, 0.4973339], [0.9966215, 0.4973339, 1.0000404, 0.49746758, 1.0000404, 0.50253296, 0.9966215, 0.50266665], [0.9966215, 0.50266665, 0.99421144, 0.5027608, 0.992983, 0.5045851, 0.9929587, 0.50642526]], [[0.9999893, 0.49999994, 0.9999893, 0.50217247, 0.9999893, 0.50434494, 0.9999893, 0.506518]], [[0.9991857, 0.50000024, 0.9991857, 0.50130004, 0.99833095, 0.50259984, 0.9966215, 0.50266665], [0.9966215, 0.50266665, 0.99180067, 0.50285506, 0.9917079, 0.5099656, 0.9965226, 0.51027966]]], "242": [1, 0.5, 0.5, 0.5000518, 0.5000001, [[0.9999579, 0.49350998, 0.9999579, 0.4947783, 0.99995786, 0.49604666, 0.9999579, 0.49731493], [0.9999579, 0.49731493, 0.99995786, 0.49910504, 0.9999579, 0.50089514, 0.99995786, 0.5026853], [0.99995786, 0.5026853, 0.9999579, 0.5039536, 0.99995786, 0.5052218, 0.99995786, 0.50649005]], [[0.9930072, 0.4936018, 0.9930316, 0.49543446, 0.9942551, 0.4972511, 0.9966555, 0.49734455], [0.9966566, 0.49734467, 1.000062, 0.49747723, 1.000062, 0.50252295, 0.9966566, 0.50265557], [0.9966552, 0.5026556, 0.9942546, 0.5027491, 0.993031, 0.50456613, 0.9930068, 0.50639904]], [[0.9999579, 0.5, 0.99995786, 0.50216335, 0.99995786, 0.5043267, 0.99995786, 0.50649095]], [[0.9992106, 0.5000001, 0.99921066, 0.5012947, 0.9983593, 0.5025892, 0.9966552, 0.5026556], [0.9966552, 0.5026556, 0.9918531, 0.5028426, 0.9917611, 0.509926, 0.9965568, 0.51023763]]], "243": [1, 0.50002086, 0.49999997, 0.5000466, 0.5000002, [[0.9999895, 0.49353668, 0.9999895, 0.49479967, 0.9999895, 0.4960627, 0.9999895, 0.49732566], [0.9999895, 0.49732566, 0.9999895, 0.4991085, 0.9999895, 0.5008913, 0.9999895, 0.5026741], [0.9999895, 0.5026741, 0.9999895, 0.5039372, 0.9999895, 0.5052002, 0.9999895, 0.5064632]], [[0.99301505, 0.49362797, 0.99303937, 0.49545342, 0.9942579, 0.49726295, 0.996649, 0.49735564], [0.996649, 0.49735564, 1.0000411, 0.49748716, 1.0000411, 0.50251323, 0.996649, 0.5026448], [0.996649, 0.5026448, 0.99425787, 0.50273746, 0.9930392, 0.5045471, 0.99301505, 0.5063726]], [[0.9999895, 0.49999997, 0.9999895, 0.5021544, 0.9999895, 0.5043088, 0.9999895, 0.5064632]], [[0.9991931, 0.50000024, 0.99919313, 0.5012896, 0.9983451, 0.502579, 0.996649, 0.5026448], [0.996649, 0.5026448, 0.99186563, 0.5028302, 0.9917744, 0.5098865, 0.99655163, 0.5101956]]], "244": [1, 0.5, 0.5, 0.500051, 0.49999994, [[0.99999994, 0.4935629, 0.99999994, 0.4948209, 1, 0.49607885, 1, 0.49733683], [1, 0.49733683, 1, 0.49911225, 1, 0.50088763, 0.9999999, 0.5026631], [0.9999999, 0.5026631, 0.99999994, 0.50392103, 0.9999999, 0.50517905, 0.99999994, 0.5064371]], [[0.9930518, 0.4936539, 0.99307597, 0.49547195, 0.9942899, 0.49727416, 0.9966715, 0.49736613], [0.99667287, 0.49736613, 1.0000517, 0.49749658, 1.0000517, 0.5025033, 0.99667287, 0.50263375], [0.9966716, 0.5026337, 0.9942896, 0.5027257, 0.99307567, 0.5045284, 0.9930519, 0.5063469]], [[0.99999994, 0.5, 0.99999994, 0.5021457, 0.99999994, 0.5042914, 0.9999999, 0.5064372]], [[0.999207, 0.4999999, 0.999207, 0.50128424, 0.9983623, 0.5025685, 0.9966716, 0.5026337], [0.9966716, 0.5026337, 0.99190664, 0.50281775, 0.9918161, 0.50984734, 0.9965748, 0.51015395]]], "245": [1, 0.5000205, 0.50000006, 0.5000461, 0.4999997, [[0.99998975, 0.49358958, 0.99998975, 0.49484247, 0.99998975, 0.49609533, 0.9999897, 0.4973482], [0.9999897, 0.4973482, 0.99998975, 0.49911636, 0.9999897, 0.50088453, 0.99998975, 0.5026527], [0.99998975, 0.5026527, 0.99998975, 0.5039053, 0.99998975, 0.5051579, 0.99998975, 0.5064105]], [[0.99306846, 0.49367896, 0.9930923, 0.49548998, 0.9943014, 0.4972853, 0.996674, 0.4973766], [0.9966754, 0.49737653, 1.000041, 0.49750596, 1.000041, 0.5024934, 0.9966754, 0.50262284], [0.9966743, 0.50262284, 0.994302, 0.50271404, 0.99309283, 0.504509, 0.9930687, 0.50631976]], [[0.99998975, 0.50000006, 0.99998975, 0.5021368, 0.99998975, 0.50427365, 0.9999897, 0.50641054]], [[0.9991996, 0.49999967, 0.9991996, 0.5012789, 0.9983582, 0.5025581, 0.9966743, 0.50262284], [0.9966743, 0.50262284, 0.9919277, 0.5028053, 0.991838, 0.50980824, 0.99657863, 0.51011246]]], "246": [1, 0.5, 0.5, 0.5000497, 0.49999943, [[0.99995923, 0.49361548, 0.99995923, 0.4948632, 0.99995923, 0.49611098, 0.99995923, 0.49735874], [0.99995923, 0.49735874, 0.99995923, 0.49911952, 0.99995923, 0.50088036, 0.9999593, 0.50264114], [0.9999593, 0.50264114, 0.99995923, 0.50388896, 0.99995923, 0.5051367, 0.99995923, 0.50638455]], [[0.99311423, 0.49370393, 0.99313796, 0.49550796, 0.9943423, 0.49729636, 0.99670583, 0.49738687], [0.99670583, 0.49738693, 1.0000583, 0.49751532, 1.0000583, 0.50248355, 0.99670583, 0.502612], [0.9967057, 0.50261205, 0.99434185, 0.5027026, 0.9931375, 0.5044913, 0.99311393, 0.50629556]], [[0.99995923, 0.5, 0.99995923, 0.5021282, 0.99995923, 0.50425637, 0.99995923, 0.5063846]], [[0.99922025, 0.49999946, 0.9992202, 0.50127363, 0.9983821, 0.50254774, 0.9967057, 0.50261205], [0.9967057, 0.50261205, 0.99197716, 0.50279313, 0.99188805, 0.5097698, 0.99661034, 0.51007164]]], "247": [1, 0.5000202, 0.49999997, 0.5000448, 0.4999997, [[0.9999899, 0.49364156, 0.9999899, 0.4948842, 0.99998987, 0.49612683, 0.99998987, 0.49736947], [0.99998987, 0.49736947, 0.99998987, 0.49912322, 0.99998987, 0.5008769, 0.99998987, 0.50263065], [0.99998987, 0.50263065, 0.9999899, 0.5038732, 0.99999, 0.5051158, 0.9999899, 0.5063584]], [[0.99312234, 0.49372935, 0.9931459, 0.49552634, 0.99434555, 0.49730796, 0.9967001, 0.49739775], [0.9967001, 0.49739772, 1.0000396, 0.49752513, 1.0000396, 0.50247425, 0.9967001, 0.5026017], [0.9966994, 0.5026017, 0.99434483, 0.5026915, 0.99314517, 0.5044731, 0.9931216, 0.50627005]], [[0.9999899, 0.5, 0.9999899, 0.5021195, 0.9999899, 0.50423896, 0.99998987, 0.5063593]], [[0.99920475, 0.49999967, 0.9992047, 0.5012688, 0.9983698, 0.50253797, 0.9966994, 0.5026017], [0.9966994, 0.5026017, 0.991989, 0.50278133, 0.9919007, 0.5097317, 0.9966049, 0.51003104]]], "248": [1, 0.5, 0.5, 0.5000479, 0.49999964, [[0.99999994, 0.49366647, 0.9999999, 0.4949043, 0.9999999, 0.49614218, 0.99999994, 0.49738005], [0.99999994, 0.49738005, 0.9999999, 0.49912673, 0.9999999, 0.5008734, 0.9999999, 0.5026201], [0.9999999, 0.5026201, 0.9999999, 0.5038579, 0.9999999, 0.5050957, 0.99999994, 0.5063336]], [[0.993158, 0.4937545, 0.99318147, 0.49554443, 0.9943765, 0.49731898, 0.9967219, 0.4974081], [0.9967219, 0.4974081, 1.0000485, 0.49753448, 1.0000485, 0.50246483, 0.9967219, 0.5025912], [0.9967213, 0.50259125, 0.99437547, 0.50268036, 0.9931804, 0.50445557, 0.9931573, 0.50624573]], [[0.99999994, 0.5, 0.99999994, 0.5021112, 0.99999994, 0.5042224, 1, 0.50633395]], [[0.99921685, 0.49999964, 0.99921685, 0.50126386, 0.9983852, 0.502528, 0.9967213, 0.50259125], [0.9967213, 0.50259125, 0.9920289, 0.50276953, 0.9919412, 0.50969386, 0.9966287, 0.50999093]]], "249": [1, 0.50001985, 0.5, 0.5000443, 0.5000001, [[0.99999, 0.49369225, 0.99999, 0.49492502, 0.9999899, 0.4961578, 0.99999, 0.4973906], [0.99999, 0.4973906, 0.99999, 0.49913007, 0.9999899, 0.5008696, 0.9999899, 0.502609], [0.9999899, 0.502609, 0.99999, 0.503842, 0.99999, 0.50507486, 0.99999, 0.5063078]], [[0.99317443, 0.4937792, 0.99319744, 0.4955624, 0.99438787, 0.49733058, 0.99672467, 0.497419], [0.9967249, 0.49741894, 1.0000386, 0.49754438, 1.0000386, 0.5024559, 0.9967249, 0.50258136], [0.99672484, 0.50258136, 0.9943881, 0.5026698, 0.9931977, 0.50443786, 0.9931747, 0.50622106]], [[0.99999, 0.5, 0.99999, 0.5021026, 0.99999, 0.5042052, 0.99999, 0.5063078]], [[0.99921024, 0.5000001, 0.9992102, 0.5012594, 0.99838173, 0.50251865, 0.99672484, 0.50258136], [0.99672484, 0.50258136, 0.9920503, 0.50275826, 0.99196327, 0.50965667, 0.9966319, 0.5099515]]], "250": [1, 0.5, 0.5, 0.5000481, 0.4999997, [[0.9999606, 0.49371833, 0.99996054, 0.49494594, 0.99996054, 0.49617356, 0.99996054, 0.4974012], [0.99996054, 0.4974012, 0.99996054, 0.49913394, 0.99996054, 0.50086665, 0.9999605, 0.50259936], [0.9999605, 0.50259936, 0.99996054, 0.5038268, 0.99996054, 0.50505424, 0.9999606, 0.5062817]], [[0.99321896, 0.4938046, 0.9932424, 0.4955805, 0.9944282, 0.497341, 0.99675566, 0.49742875], [0.99675566, 0.49742872, 1.000057, 0.49755308, 1.000057, 0.5024463, 0.99675566, 0.5025707], [0.9967555, 0.5025707, 0.9944277, 0.5026584, 0.9932418, 0.50441957, 0.99321866, 0.5061958]], [[0.9999606, 0.50000006, 0.9999606, 0.5020939, 0.9999606, 0.5041878, 0.99996066, 0.50628215]], [[0.99923164, 0.4999997, 0.99923164, 0.5012541, 0.9984063, 0.5025085, 0.9967555, 0.5025707], [0.9967555, 0.5025707, 0.9920984, 0.5027462, 0.9920119, 0.5096193, 0.9966632, 0.50991184]]], "251": [1, 0.50001955, 0.5, 0.5000434, 0.5000004, [[0.9999902, 0.4937434, 0.9999902, 0.49496606, 0.99999017, 0.49618876, 0.9999902, 0.4974114], [0.9999902, 0.4974114, 0.99999017, 0.49913704, 0.9999901, 0.50086266, 0.9999902, 0.5025883], [0.9999902, 0.5025883, 0.99999017, 0.50381106, 0.9999901, 0.50503385, 0.99999017, 0.50625664]], [[0.99322647, 0.4938297, 0.99324965, 0.49559876, 0.9944309, 0.49735266, 0.9967496, 0.49743968], [0.99675, 0.49743965, 1.0000385, 0.4975631, 1.0000385, 0.5024377, 0.99675, 0.50256115], [0.99674916, 0.5025612, 0.9944303, 0.50264823, 0.99324906, 0.5044024, 0.9932261, 0.50617164]], [[0.99999017, 0.5, 0.99999017, 0.50208557, 0.99999017, 0.50417113, 0.9999902, 0.50625724]], [[0.9992163, 0.5000004, 0.9992163, 0.5012499, 0.99839425, 0.50249946, 0.99674916, 0.5025612], [0.99674916, 0.5025612, 0.99210984, 0.5027354, 0.99202406, 0.50958276, 0.9966577, 0.50987303]]], "252": [1, 0.5, 0.49999997, 0.50004727, 0.49999994, [[1, 0.49376693, 1, 0.4949852, 1, 0.49620345, 0.99999994, 0.49742168], [0.99999994, 0.49742168, 0.9999999, 0.49914056, 0.99999994, 0.50085944, 0.9999999, 0.50257826], [0.9999999, 0.50257826, 1, 0.50379646, 0.99999994, 0.5050148, 0.99999994, 0.506233]], [[0.9932615, 0.49385187, 0.99328387, 0.49561468, 0.99446064, 0.49736285, 0.9967713, 0.49744922], [0.9967713, 0.49744925, 1.0000473, 0.4975718, 1.0000473, 0.50242805, 0.9967713, 0.5025506], [0.99677086, 0.50255066, 0.9944602, 0.502637, 0.9932835, 0.5043851, 0.99326104, 0.506148]], [[1, 0.49999997, 1, 0.50207764, 1, 0.5041553, 0.99999994, 0.5062333]], [[0.99922836, 0.49999994, 0.99922836, 0.50124466, 0.9984093, 0.5024893, 0.99677086, 0.50255066], [0.99677086, 0.50255066, 0.99214876, 0.50272346, 0.99206376, 0.5095457, 0.9966801, 0.50983375]]], "253": [1, 0.5000192, 0.50000006, 0.50004274, 0.5000001, [[0.99999034, 0.49379236, 0.99999034, 0.49500567, 0.99999034, 0.49621898, 0.99999046, 0.49743232], [0.99999046, 0.49743232, 0.99999046, 0.49914432, 0.99999046, 0.50085634, 0.9999904, 0.5025683], [0.9999904, 0.5025683, 0.99999034, 0.50378144, 0.99999034, 0.5049946, 0.99999034, 0.5062077]], [[0.9932759, 0.49387679, 0.99329835, 0.49563265, 0.9944706, 0.49737376, 0.9967722, 0.49745947], [0.9967722, 0.4974596, 1.0000359, 0.4975811, 1.0000359, 0.5024192, 0.9967722, 0.50254065], [0.99677205, 0.5025408, 0.99447024, 0.50262654, 0.99329793, 0.5043679, 0.9932757, 0.50612396]], [[0.99999034, 0.50000006, 0.99999034, 0.5020693, 0.99999034, 0.50413847, 0.99999034, 0.50620896]], [[0.99922, 0.5000001, 0.99922, 0.50124, 0.998404, 0.5024799, 0.99677205, 0.5025408], [0.99677205, 0.5025408, 0.9921674, 0.5027123, 0.99208295, 0.50950927, 0.9966837, 0.5097952]]], "254": [1, 0.49999997, 0.5, 0.5000461, 0.49999976, [[0.99996185, 0.4938169, 0.99996185, 0.49502546, 0.9999618, 0.496234, 0.99996173, 0.4974425], [0.99996173, 0.4974425, 0.9999618, 0.49914774, 0.99996185, 0.50085294, 0.99996185, 0.50255823], [0.99996185, 0.50255823, 0.99996185, 0.50376654, 0.99996185, 0.5049748, 0.9999618, 0.5061831]], [[0.99331963, 0.49389997, 0.99334204, 0.49564928, 0.9945098, 0.49738392, 0.99680305, 0.497469], [0.99680305, 0.49746907, 1.0000546, 0.49758962, 1.0000546, 0.5024099, 0.99680305, 0.50253046], [0.9968027, 0.5025305, 0.99450934, 0.5026156, 0.99334145, 0.5043504, 0.9933193, 0.50609976]], [[0.99996185, 0.5, 0.99996185, 0.502061, 0.99996185, 0.504122, 0.9999618, 0.50618446]], [[0.9992417, 0.49999976, 0.9992417, 0.50123495, 0.9984288, 0.50247014, 0.9968027, 0.5025305], [0.9968027, 0.5025305, 0.99221486, 0.5027007, 0.99213105, 0.50947315, 0.9967141, 0.5097568]]], "255": [1, 0.500019, 0.5, 0.5000418, 0.5, [[0.9999905, 0.49384108, 0.9999906, 0.4950448, 0.99999046, 0.49624848, 0.99999046, 0.4974522], [0.99999046, 0.4974522, 0.99999046, 0.49915063, 0.9999905, 0.50084907, 0.9999906, 0.5025475], [0.9999906, 0.5025475, 0.9999906, 0.5037513, 0.9999906, 0.5049551, 0.9999905, 0.5061589]], [[0.99332684, 0.49392483, 0.9933493, 0.49566722, 0.99451274, 0.4973949, 0.9967971, 0.4974793], [0.99679714, 0.4974792, 1.0000364, 0.49759892, 1.0000364, 0.5024011, 0.99679714, 0.5025208], [0.9967965, 0.5025208, 0.9945114, 0.50260526, 0.993348, 0.504334, 0.9933262, 0.50607693]], [[0.9999905, 0.5, 0.9999905, 0.50205296, 0.9999905, 0.5041059, 0.9999905, 0.5061596]], [[0.99922657, 0.5, 0.99922657, 0.5012305, 0.9984168, 0.50246096, 0.9967965, 0.5025208], [0.9967965, 0.5025208, 0.9922258, 0.5026897, 0.9921426, 0.50943726, 0.9967089, 0.5097187]]], "256": [1, 0.5, 0.5, 0.500045, 0.49999967, [[0.99999994, 0.49386472, 0.9999999, 0.49506402, 0.99999994, 0.49626327, 0.9999999, 0.49746257], [0.9999999, 0.49746257, 0.9999999, 0.49915433, 0.99999994, 0.50084615, 1, 0.5025379], [1, 0.5025379, 0.9999999, 0.50373703, 0.9999999, 0.5049361, 0.99999994, 0.5061353]], [[0.99336004, 0.49394715, 0.9933821, 0.49568325, 0.99454117, 0.49740484, 0.99681735, 0.49748865], [0.99681735, 0.49748865, 1.0000445, 0.49760738, 1.0000445, 0.50239193, 0.99681735, 0.5025107], [0.99681735, 0.5025107, 0.9945407, 0.50259453, 0.9933816, 0.5043168, 0.99336004, 0.50605327]], [[0.99999994, 0.5, 0.99999994, 0.5020451, 0.99999994, 0.5040902, 1, 0.5061356]], [[0.9992378, 0.49999967, 0.9992377, 0.5012255, 0.9984309, 0.5024513, 0.99681735, 0.5025107], [0.99681735, 0.5025107, 0.99226356, 0.50267833, 0.992181, 0.50940144, 0.99673134, 0.50968075]]] };
 
 // src/components/progress-indicator-path.js
-var f10 = Math.fround;
+var f18 = Math.fround;
 var mix2 = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
 function split2(points, t) {
   const a = mix2(points[0], points[1], t), b = mix2(points[1], points[2], t), c = mix2(points[2], points[3], t);
@@ -6457,7 +8943,7 @@ function split2(points, t) {
 }
 function rotate(cubics, angle, cx = 0, cy = 0) {
   const cos = Math.cos(angle), sin = Math.sin(angle);
-  return cubics.map((c) => c.map((v, i) => i % 2 ? f10(cy + (c[i - 1] - cx) * sin + (v - cy) * cos) : f10(cx + (v - cx) * cos - (c[i + 1] - cy) * sin)));
+  return cubics.map((c) => c.map((v, i) => i % 2 ? f18(cy + (c[i - 1] - cx) * sin + (v - cy) * cos) : f18(cx + (v - cx) * cos - (c[i + 1] - cy) * sin)));
 }
 function expand(wedge, n, cx, cy, compressed) {
   if (!compressed) return wedge;
@@ -6474,7 +8960,7 @@ function circularProgressCubics(n, amplitude, morph = false, track = false) {
     pivot = [sx, sy];
   } else {
     const a = expand(from, n, cx, cy, compressed), b = expand(to, n, sx, sy, compressed);
-    cubics = a.map((c, i) => c.map((v, j) => f10(f10(f10(1 - amplitude) * v) + f10(amplitude * b[i][j]))));
+    cubics = a.map((c, i) => c.map((v, j) => f18(f18(f18(1 - amplitude) * v) + f18(amplitude * b[i][j]))));
     pivot = [0.5, 0.5];
   }
   const angle = 1.5 * Math.PI - Math.atan2(cubics[0][1] - pivot[1], cubics[0][0] - pivot[0]);
@@ -6490,7 +8976,7 @@ function centerProgressCubics(cubics, size, stroke) {
     maxY = Math.max(maxY, c[i + 1]);
   }
   const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-  return cubics.map((c) => c.map((v, i) => f10((v - (i % 2 ? cy : cx)) * scale2 + size / 2)));
+  return cubics.map((c) => c.map((v, i) => f18((v - (i % 2 ? cy : cx)) * scale2 + size / 2)));
 }
 function measureProgressPath(cubics) {
   let total = 0;
@@ -6555,7 +9041,7 @@ var defaultStyle12 = `
   .color-probe { position:absolute; width:0; height:0; visibility:hidden; pointer-events:none; }
 `;
 var sheet = createComponentSheet(defaultStyle12);
-var clamp3 = (x) => Math.max(0, Math.min(1, x));
+var clamp6 = (x) => Math.max(0, Math.min(1, x));
 var finite2 = (value, fallback, valid2 = () => true) => Number.isFinite(value) && valid2(value) ? value : fallback;
 var MdProgressIndicator = class extends HTMLElement {
   static get observedAttributes() {
@@ -6680,7 +9166,7 @@ var MdProgressIndicator = class extends HTMLElement {
     this.toggleAttribute("indeterminate", !!v);
   }
   get fraction() {
-    return this.indeterminate ? 0 : clamp3(this.value / this.max);
+    return this.indeterminate ? 0 : clamp6(this.value / this.max);
   }
   get strokeWidth() {
     return finite2(parseFloat(this.getAttribute("stroke-width")), 4, (v) => v > 0);
@@ -6723,7 +9209,7 @@ var MdProgressIndicator = class extends HTMLElement {
   /** A fraction of available wave height, matching the native amplitude parameter. */
   get amplitude() {
     const value = parseFloat(this.getAttribute("amplitude"));
-    return Number.isFinite(value) ? clamp3(value) : null;
+    return Number.isFinite(value) ? clamp6(value) : null;
   }
   set amplitude(v) {
     this._optional("amplitude", v);
@@ -6808,7 +9294,7 @@ var MdProgressIndicator = class extends HTMLElement {
       return this._animatedAmplitude = target;
     }
     if (this._amplitudeRun) {
-      const run = this._amplitudeRun, t = clamp3((now - run.start) / 500);
+      const run = this._amplitudeRun, t = clamp6((now - run.start) / 500);
       this._animatedAmplitude = run.from + (run.to - run.from) * cubicBezier(...run.to > run.from ? [0.2, 0, 0, 1] : [0.3, 0, 0.8, 0.15], t);
       if (t < 1) return this._animatedAmplitude;
       this._animatedAmplitude = run.to;
@@ -6885,12 +9371,12 @@ var MdProgressIndicator = class extends HTMLElement {
         const layout = linearWavyLayout({ width: w, height: h, stroke: sw, trackStroke: ts, fractions: fractions || [0, p], gap: this.gapSize, stop: this.stopSize, cap: this.strokeCap, trackCap: this.trackStrokeCap });
         this._lastLayout = layout;
         this._lines(ctx, layout.tracks, this._trackColor, ts, this.trackStrokeCap, h / 2);
-        const offset = this._offsetAt(amplitude, now);
+        const offset2 = this._offsetAt(amplitude, now);
         ctx.strokeStyle = this._activeColor;
         ctx.lineWidth = sw;
         ctx.lineCap = this.strokeCap;
         for (const [start, end] of layout.active) {
-          const segments = linearWaveSegments(start, end, { height: h, stroke: sw, wavelength: this.wavelength, amplitude, offset });
+          const segments = linearWaveSegments(start, end, { height: h, stroke: sw, wavelength: this.wavelength, amplitude, offset: offset2 });
           if (!segments.length) continue;
           ctx.beginPath();
           ctx.moveTo(...segments[0][0]);
@@ -6959,8 +9445,8 @@ var MdProgressIndicator = class extends HTMLElement {
     const { progress, track } = this._circleCache, state = this.indeterminate ? circularIndeterminateState(elapsed) : { progress: this.fraction, rotation: 0 };
     const stop = state.progress * progress.length, cap = this.strokeCap === "butt" && this.trackStrokeCap === "butt" ? 0 : Math.max(sw / 2, ts / 2);
     const spacing = 2 * Math.min(stop, cap) + Math.min(stop, this.gapSize);
-    const offset = amplitude > 0 ? this._offsetAt(amplitude, now, vertices) : 0;
-    this._lastLayout = { vertices, amplitude, offset, progress: state.progress, spacing };
+    const offset2 = amplitude > 0 ? this._offsetAt(amplitude, now, vertices) : 0;
+    this._lastLayout = { vertices, amplitude, offset: offset2, progress: state.progress, spacing };
     if (this.indeterminate) {
       ctx.translate(size / 2, size / 2);
       ctx.rotate((state.rotation + 90) * Math.PI / 180);
@@ -6969,9 +9455,9 @@ var MdProgressIndicator = class extends HTMLElement {
     this._cubics(ctx, progressPathSegment(track, state.progress * track.length + spacing, track.length - spacing), this._trackColor, ts, this.trackStrokeCap);
     ctx.save();
     ctx.translate(size / 2, size / 2);
-    ctx.rotate(-offset * 2 * Math.PI);
+    ctx.rotate(-offset2 * 2 * Math.PI);
     ctx.translate(-size / 2, -size / 2);
-    this._cubics(ctx, progressPathSegment(progress, offset * progress.length, (offset + state.progress) * progress.length), this._activeColor, sw, this.strokeCap);
+    this._cubics(ctx, progressPathSegment(progress, offset2 * progress.length, (offset2 + state.progress) * progress.length), this._activeColor, sw, this.strokeCap);
     ctx.restore();
   }
   _cubics(ctx, segments, color, width, cap) {
@@ -7599,17 +10085,17 @@ var MdBottomSheet = class extends HTMLElement {
   }
   close() {
     if (!this.open) return;
-    const sheet8 = this.shadowRoot.querySelector(".sheet");
+    const sheet10 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
-    if (sheet8 && scrim) {
-      sheet8.style.transition = "transform 260ms cubic-bezier(0.3, 0, 0, 1)";
-      sheet8.style.transform = "translateY(100%)";
+    if (sheet10 && scrim) {
+      sheet10.style.transition = "transform 260ms cubic-bezier(0.3, 0, 0, 1)";
+      sheet10.style.transform = "translateY(100%)";
       scrim.style.transition = "opacity 260ms linear";
       scrim.style.opacity = "0";
       setTimeout(() => {
         this.open = false;
-        sheet8.style.transform = "";
-        sheet8.style.transition = "";
+        sheet10.style.transform = "";
+        sheet10.style.transition = "";
         scrim.style.opacity = "";
         scrim.style.transition = "";
         this.dispatchEvent(new CustomEvent("close", { bubbles: true, composed: true }));
@@ -7653,28 +10139,28 @@ var MdBottomSheet = class extends HTMLElement {
   _activate() {
     document.addEventListener("keydown", this._onKeydown);
     document.body.style.overflow = "hidden";
-    const sheet8 = this.shadowRoot.querySelector(".sheet");
+    const sheet10 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
     if (scrim) {
       scrim.style.opacity = "0";
       scrim.style.transition = "opacity 250ms ease";
     }
-    if (sheet8) {
-      sheet8.style.transform = "translateY(100%)";
-      sheet8.style.transition = "none";
-      void sheet8.offsetHeight;
+    if (sheet10) {
+      sheet10.style.transform = "translateY(100%)";
+      sheet10.style.transition = "none";
+      void sheet10.offsetHeight;
       requestAnimationFrame(() => {
-        sheet8.style.transition = "transform 380ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.3, 0.64, 1))";
-        sheet8.style.transform = "translateY(0)";
+        sheet10.style.transition = "transform 380ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.3, 0.64, 1))";
+        sheet10.style.transform = "translateY(0)";
         if (scrim) scrim.style.opacity = "0.4";
       });
       setTimeout(() => {
-        sheet8.style.transition = "";
+        sheet10.style.transition = "";
         if (scrim) scrim.style.transition = "";
       }, 380);
     }
-    const f22 = this._focusable();
-    if (f22.length) f22[0].focus({ preventScroll: true });
+    const f30 = this._focusable();
+    if (f30.length) f30[0].focus({ preventScroll: true });
   }
   _deactivate() {
     document.removeEventListener("keydown", this._onKeydown);
@@ -7688,9 +10174,9 @@ var MdBottomSheet = class extends HTMLElement {
       return;
     }
     if (e.key === "Tab") {
-      const f22 = this._focusable();
-      if (!f22.length) return;
-      const first = f22[0], last = f22[f22.length - 1];
+      const f30 = this._focusable();
+      if (!f30.length) return;
+      const first = f30[0], last = f30[f30.length - 1];
       const active = this.shadowRoot.activeElement;
       if (e.shiftKey && active === first) {
         e.preventDefault();
@@ -7715,8 +10201,8 @@ var MdBottomSheet = class extends HTMLElement {
       scrim.addEventListener("click", onScrimDismiss, { signal });
     }
     const handleArea = this.shadowRoot.querySelector(".handle-area");
-    const sheet8 = this.shadowRoot.querySelector(".sheet");
-    if (!handleArea || !sheet8) return;
+    const sheet10 = this.shadowRoot.querySelector(".sheet");
+    if (!handleArea || !sheet10) return;
     let isDragging = false;
     let startY = 0;
     let currentY = 0;
@@ -7728,7 +10214,7 @@ var MdBottomSheet = class extends HTMLElement {
       startTime = performance.now();
       handleArea.setPointerCapture?.(e.pointerId);
       handleArea.classList.add("pressed");
-      sheet8.style.transition = "none";
+      sheet10.style.transition = "none";
       if (scrim) scrim.style.transition = "none";
     };
     const onPointerMove = (e) => {
@@ -7736,15 +10222,15 @@ var MdBottomSheet = class extends HTMLElement {
       currentY = e.clientY;
       const deltaY = currentY - startY;
       if (deltaY > 0) {
-        sheet8.style.transform = `translateY(${deltaY}px)`;
+        sheet10.style.transform = `translateY(${deltaY}px)`;
         if (scrim) {
-          const sheetHeight = sheet8.offsetHeight || 300;
+          const sheetHeight = sheet10.offsetHeight || 300;
           const opacity = Math.max(0, 0.4 * (1 - deltaY / sheetHeight));
           scrim.style.opacity = String(opacity);
         }
       } else {
         const rubberBand = deltaY * 0.35;
-        sheet8.style.transform = `translateY(${rubberBand}px)`;
+        sheet10.style.transform = `translateY(${rubberBand}px)`;
         if (scrim) scrim.style.opacity = "0.4";
       }
     };
@@ -7756,16 +10242,16 @@ var MdBottomSheet = class extends HTMLElement {
       const elapsed = performance.now() - startTime || 1;
       const velocityY = deltaY / elapsed;
       if (deltaY > 80 || velocityY > 0.4) {
-        sheet8.style.transition = "transform 0.22s cubic-bezier(0.3, 0, 0, 1)";
-        sheet8.style.transform = "translateY(100%)";
+        sheet10.style.transition = "transform 0.22s cubic-bezier(0.3, 0, 0, 1)";
+        sheet10.style.transform = "translateY(100%)";
         if (scrim) {
           scrim.style.transition = "opacity 0.22s linear";
           scrim.style.opacity = "0";
         }
         setTimeout(() => {
           this.open = false;
-          sheet8.style.transform = "";
-          sheet8.style.transition = "";
+          sheet10.style.transform = "";
+          sheet10.style.transition = "";
           if (scrim) {
             scrim.style.opacity = "";
             scrim.style.transition = "";
@@ -7773,14 +10259,14 @@ var MdBottomSheet = class extends HTMLElement {
           this.dispatchEvent(new CustomEvent("close", { bubbles: true, composed: true }));
         }, 220);
       } else {
-        sheet8.style.transition = "transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1)";
-        sheet8.style.transform = "translateY(0px)";
+        sheet10.style.transition = "transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1)";
+        sheet10.style.transform = "translateY(0px)";
         if (scrim) {
           scrim.style.transition = "opacity 0.32s ease";
           scrim.style.opacity = "0.4";
         }
         setTimeout(() => {
-          sheet8.style.transition = "";
+          sheet10.style.transition = "";
           if (scrim) {
             scrim.style.transition = "";
             scrim.style.opacity = "";
@@ -7798,600 +10284,1914 @@ if (!customElements.get("md-bottom-sheet")) {
   customElements.define("md-bottom-sheet", MdBottomSheet);
 }
 
-// src/components/md-snackbar.js
-var defaultStyle15 = `
-  :host {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none; outline: none; display: contents; }
-  :host(:not([open])) .snackbar { display: none; }
-
-  .snackbar {
-    box-sizing: border-box;
-    position: fixed;
-    bottom: 24px;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    width: fit-content;
-    max-width: min(672px, calc(100vw - 32px));
-    z-index: 2002;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 48px;
-    min-width: min(344px, calc(100vw - 32px));
-    padding: 4px 8px 4px 16px;
-    border-radius: var(--md-sys-shape-corner-extra-small, 4px);
-    background-color: var(--md-sys-color-inverse-surface, #322F35);
-    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-    box-shadow: var(--md-sys-elevation-level-3, 0 1px 3px rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
-  }
-
-  @media (max-width: 599px) {
-    .snackbar {
-      bottom: calc(80px + 16px) !important;
-      max-width: calc(100vw - 32px) !important;
-      min-width: 0 !important;
-      width: fit-content !important;
-      margin: 0 auto !important;
-    }
-  }
-  :host([two-line]) .snackbar {
-    min-height: 68px;
-    align-items: flex-start;
-    padding-top: 12px;
-  }
-
-  .message {
-    flex: 1 1 auto;
-    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-  }
-
-  .action {
-    flex: 0 0 auto;
-    min-width: 48px; min-height: 48px;
-    padding: 0 12px;
-    border: none;
-    background-color: transparent;
-    color: var(--md-sys-color-inverse-primary, #D0BCFF);
-    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-    cursor: pointer;
-    outline: none;
-    border-radius: var(--md-sys-shape-corner-full, 9999px);
-    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-  }
-  .action[hidden] { display: none; }
-  .action:hover { background-color: color-mix(in srgb, var(--md-sys-color-inverse-primary, #D0BCFF) 8%, transparent); }
-  .action.pressed { background-color: color-mix(in srgb, var(--md-sys-color-inverse-primary, #D0BCFF) 12%, transparent); }
-  .action:focus-visible {
-    outline: 3px solid var(--md-sys-color-inverse-primary, #D0BCFF);
-    outline-offset: 2px;
-  }
-
-  .close {
-    flex: 0 0 auto;
-    width: 48px; height: 48px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border: none; background: transparent; cursor: pointer; outline: none;
-    border-radius: var(--md-sys-shape-corner-full, 9999px);
-    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-    transition: background-color var(--md-sys-motion-duration-short2, 100ms)
-      var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1));
-  }
-  .close:hover { background-color: color-mix(in srgb, var(--md-sys-color-inverse-on-surface, #F5EFF7) 8%, transparent); }
-  .close.pressed { background-color: color-mix(in srgb, var(--md-sys-color-inverse-on-surface, #F5EFF7) 12%, transparent); }
-  .close:focus-visible {
-    outline: 3px solid var(--md-sys-color-inverse-primary, #D0BCFF);
-    outline-offset: 2px;
-  }
-
-  .material-symbols-rounded {
-    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-    font-size: 24px;
-    line-height: 1;
-  }
-`;
-var snackbarSheet = createComponentSheet(defaultStyle15);
-var MdSnackbar = class extends HTMLElement {
-  static get observedAttributes() {
-    return [
-      "open",
-      "message",
-      "action-label",
-      "timeout",
-      "two-line",
-      "action-on-new-line",
-      "container-color",
-      "content-color",
-      "action-content-color",
-      "dismiss-action-content-color"
-    ];
-  }
+// src/components/snackbar-host-state.js
+var durations = /* @__PURE__ */ new Set(["short", "long", "indefinite"]);
+function snackbarVisuals(message, actionLabel = null, withDismissAction = false, duration) {
+  const input = typeof message === "object" && message !== null ? message : { message, actionLabel, withDismissAction, duration };
+  const label = input.actionLabel == null ? null : String(input.actionLabel);
+  const value = input.duration ?? (label === null ? "short" : "indefinite");
+  if (!durations.has(value)) throw new RangeError("Snackbar duration must be short, long or indefinite");
+  return Object.freeze({ message: String(input.message ?? ""), actionLabel: label, withDismissAction: !!input.withDismissAction, duration: value });
+}
+function snackbarTimeoutMillis(duration) {
+  if (!durations.has(duration)) throw new RangeError("Snackbar duration must be short, long or indefinite");
+  return duration === "indefinite" ? Infinity : duration === "long" ? 1e4 : 4e3;
+}
+var SnackbarHostState = class {
   constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, snackbarSheet);
-    this._rendered = false;
-    this._timer = null;
-    this._onKeydown = this._onKeydown.bind(this);
-    this._abortController = null;
+    this._current = null;
+    this._queue = [];
+    this._listeners = /* @__PURE__ */ new Set();
   }
-  get open() {
-    return this.hasAttribute("open");
+  get currentSnackbarData() {
+    return this._current?.data ?? null;
   }
-  set open(v) {
-    v ? this.setAttribute("open", "") : this.removeAttribute("open");
+  subscribe(listener) {
+    this._listeners.add(listener);
+    return () => this._listeners.delete(listener);
   }
-  get timeout() {
-    return parseInt(this.getAttribute("timeout") || "4000", 10);
+  _notify() {
+    for (const listener of [...this._listeners]) listener(this.currentSnackbarData);
   }
-  get actionOnNewLine() {
-    return this.hasAttribute("action-on-new-line");
+  _advance() {
+    if (this._current || !this._queue.length) return;
+    this._current = this._queue.shift();
+    this._notify();
   }
-  set actionOnNewLine(v) {
-    if (v) this.setAttribute("action-on-new-line", "");
-    else this.removeAttribute("action-on-new-line");
-  }
-  get containerColor() {
-    return this.getAttribute("container-color") || "";
-  }
-  set containerColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("container-color");
-    else this.setAttribute("container-color", v);
-  }
-  get contentColor() {
-    return this.getAttribute("content-color") || "";
-  }
-  set contentColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("content-color");
-    else this.setAttribute("content-color", v);
-  }
-  get actionContentColor() {
-    return this.getAttribute("action-content-color") || "";
-  }
-  set actionContentColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("action-content-color");
-    else this.setAttribute("action-content-color", v);
-  }
-  get dismissActionContentColor() {
-    return this.getAttribute("dismiss-action-content-color") || "";
-  }
-  set dismissActionContentColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("dismiss-action-content-color");
-    else this.setAttribute("dismiss-action-content-color", v);
-  }
-  connectedCallback() {
-    if (!this._rendered) {
-      this.render();
-      this._rendered = true;
-    }
-    this.setupInteractions();
-    if (this.open) this._activate();
-  }
-  disconnectedCallback() {
-    this._deactivate();
-    this._abortController?.abort();
-    this._abortController = null;
-  }
-  attributeChangedCallback(name, oldV, newV) {
-    if (!this._rendered || oldV === newV) return;
-    if (name === "open") {
-      this.open ? this._activate() : this._deactivate();
-    } else if (name === "message") {
-      const m = this.shadowRoot.querySelector(".message");
-      if (m) m.textContent = newV || "";
-    } else if (name === "action-label") {
-      const a = this.shadowRoot.querySelector(".action");
-      if (a) {
-        a.textContent = newV || "";
-        a.hidden = !newV;
+  showSnackbar(message, actionLabel = null, withDismissAction = false, duration, options = {}) {
+    const visuals = snackbarVisuals(message, actionLabel, withDismissAction, duration);
+    const { signal } = typeof message === "object" && actionLabel && typeof actionLabel === "object" ? actionLabel : options;
+    return new Promise((resolve, reject) => {
+      const entry = { resolve, reject, signal, finished: false };
+      entry.data = Object.freeze({ visuals, performAction: () => this._finish(entry, "action-performed"), dismiss: () => this._finish(entry, "dismissed") });
+      entry.abort = () => this._finish(entry, null, signal.reason ?? new DOMException("Snackbar cancelled", "AbortError"));
+      if (signal?.aborted) {
+        entry.abort();
+        return;
       }
+      signal?.addEventListener("abort", entry.abort, { once: true });
+      this._queue.push(entry);
+      this._advance();
+    });
+  }
+  _finish(entry, result, error) {
+    if (entry.finished) return;
+    entry.finished = true;
+    entry.signal?.removeEventListener("abort", entry.abort);
+    this._queue = this._queue.filter((item) => item !== entry);
+    if (this._current === entry) {
+      this._current = null;
+      this._notify();
+      this._advance();
     }
-  }
-  show(message) {
-    if (message != null) {
-      this.setAttribute("message", message);
-      const m = this.shadowRoot?.querySelector(".message");
-      if (m) m.textContent = message;
-    }
-    this.open = true;
-    this._activate();
-  }
-  close(reason = "timeout") {
-    this.open = false;
-    this.dispatchEvent(new CustomEvent("close", { detail: { reason }, bubbles: true, composed: true }));
-  }
-  render() {
-    const actionLabel = this.getAttribute("action-label") || "";
-    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle15}</style>`}
-      <div class="snackbar" role="status" aria-live="polite">
-        <span class="message">${escapeHtml(this.getAttribute("message"))}</span>
-        <button class="action" type="button" ${actionLabel ? "" : "hidden"}
-          aria-label="${escapeHtml(actionLabel || "Action")}">${escapeHtml(actionLabel)}</button>
-        <button class="close" type="button" aria-label="Dismiss">
-          <span class="material-symbols-rounded">close</span>
-        </button>
-      </div>
-    `;
-  }
-  _activate() {
-    document.removeEventListener("keydown", this._onKeydown);
-    document.addEventListener("keydown", this._onKeydown);
-    const bar = this.shadowRoot.querySelector(".snackbar");
-    if (bar) SpringPhysics.animateProperty(bar, "scale", 0.9, 1, "expressiveSpatialMedium");
-    if (this._timer) clearTimeout(this._timer);
-    if (this.timeout > 0) this._timer = setTimeout(() => this.close("timeout"), this.timeout);
-  }
-  _deactivate() {
-    document.removeEventListener("keydown", this._onKeydown);
-    if (this._timer) {
-      clearTimeout(this._timer);
-      this._timer = null;
-    }
-  }
-  _onKeydown(e) {
-    if (!this.open) return;
-    if (e.key === "Escape") {
-      e.preventDefault();
-      this.close("escape");
-    }
-  }
-  setupInteractions() {
-    this._abortController?.abort();
-    this._abortController = new AbortController();
-    const { signal } = this._abortController;
-    const action = this.shadowRoot.querySelector(".action");
-    const close = this.shadowRoot.querySelector(".close");
-    if (action) {
-      bindPress(action, {
-        onPress: () => pressScale(action, 0.93, "expressiveSpatialFast"),
-        onRelease: () => releaseScale(action, 0.93, "expressiveSpatialMedium"),
-        onActivate: () => {
-          this.dispatchEvent(new CustomEvent("action", { bubbles: true, composed: true }));
-          this.close("action");
-        },
-        signal
-      });
-    }
-    if (close) {
-      bindPress(close, {
-        onPress: () => pressScale(close, 0.93, "expressiveSpatialFast"),
-        onRelease: () => releaseScale(close, 0.93, "expressiveSpatialMedium"),
-        onActivate: () => this.close("dismiss"),
-        signal
-      });
-    }
+    if (error !== void 0) entry.reject(error);
+    else entry.resolve(result);
   }
 };
-if (!customElements.get("md-snackbar")) {
-  customElements.define("md-snackbar", MdSnackbar);
+
+// src/components/snackbar-layout.js
+var INF5 = 2147483647;
+var UNSPECIFIED = -2147483648;
+var clamp7 = (value, min, max) => Math.max(min, Math.min(max, value));
+var div = (value) => Math.trunc(value / 2) || 0;
+var bounds2 = (c) => ({ minWidth: 0, maxWidth: INF5, minHeight: 0, maxHeight: INF5, ...c });
+var relative2 = (x, node, width, rtl) => rtl && width !== 0 ? width - node.size.width - x : x;
+function placements(node, x = 0, y2 = 0, out = {}) {
+  x = x + node.offset.x | 0;
+  y2 = y2 + node.offset.y | 0;
+  out[node.id] = { x, y: y2, ...node.requested };
+  for (const child of node.children) placements(child.node, x + child.x | 0, y2 + child.y | 0, out);
+  return out;
+}
+function leaf(id, input, c) {
+  const requested = input.required ? { width: input.width, height: input.height } : { width: clamp7(input.width, c.minWidth, c.maxWidth), height: clamp7(input.height, c.minHeight, c.maxHeight) };
+  return layoutPlaceable(id, requested, c, [], { first: input.first ?? UNSPECIFIED, last: input.last ?? UNSPECIFIED });
+}
+function legacySnackbarRow({ constraints, text, action = null, dismiss = null, rtl = false }) {
+  const c = bounds2(constraints), width = Math.min(c.maxWidth, 600);
+  const a = action ? leaf("action", action, c) : null, d = dismiss ? leaf("dismiss", dismiss, c) : null;
+  const aw = a?.size.width ?? 0, ah = a?.size.height ?? 0, dw = d?.size.width ?? 0, dh = d?.size.height ?? 0;
+  const textConstraints = { ...c, minHeight: 0, maxWidth: Math.max(c.minWidth, width - aw - dw - (dw === 0 ? 8 : 0)) };
+  const t = leaf("text", text, textConstraints), first = t.first, last = t.last;
+  const oneLine = first === last || first === UNSPECIFIED || last === UNSPECIFIED;
+  let height, ty, ay;
+  if (oneLine) {
+    height = Math.max(48, ah, dh);
+    ty = div(height - t.size.height);
+    ay = a && a.first !== UNSPECIFIED ? ty + first - a.first | 0 : 0;
+  } else {
+    ty = 30 - first;
+    height = Math.max(68, ty + t.size.height);
+    ay = a ? div(height - a.size.height) : 0;
+  }
+  const children = [{ node: t, x: relative2(0, t, width, rtl), y: ty }];
+  if (a) children.push({ node: a, x: relative2(width - dw - aw, a, width, rtl), y: ay });
+  if (d) children.push({ node: d, x: relative2(width - dw, d, width, rtl), y: div(height - d.size.height) });
+  const root = layoutPlaceable("row", { width, height }, c, children);
+  return { node: root, size: root.size, requested: root.requested, placements: placements(root), textConstraints, oneLine };
+}
+function legacySnackbarNewLine({ constraints, text, action, dismiss = null, rtl = false }) {
+  const c = bounds2(constraints);
+  const lineLeaf = (id, input, incoming) => {
+    const node = leaf(id, input, incoming);
+    for (const name of ["first", "last"]) node[name] = node[name] === UNSPECIFIED ? UNSPECIFIED : node[name] + node.offset.y | 0;
+    return node;
+  };
+  const wrap = (id, requested, incoming, child, x, y2) => {
+    const node = layoutPlaceable(id, requested, incoming, [{ node: child, x, y: y2 }]);
+    for (const name of ["first", "last"]) node[name] = child[name] === UNSPECIFIED || child[name] === void 0 ? UNSPECIFIED : child[name] + y2 + child.offset.y + node.offset.y | 0;
+    return node;
+  };
+  const padding2 = (id, incoming, start, end, bottom, measure) => {
+    const dx = start + end, dy = bottom;
+    const inner = { minWidth: Math.max(0, incoming.minWidth - dx), maxWidth: incoming.maxWidth === INF5 ? INF5 : Math.max(0, incoming.maxWidth - dx), minHeight: Math.max(0, incoming.minHeight - dy), maxHeight: incoming.maxHeight === INF5 ? INF5 : Math.max(0, incoming.maxHeight - dy) };
+    const child = measure(inner);
+    return wrap(id, { width: clamp7(child.size.width + dx, incoming.minWidth, incoming.maxWidth), height: clamp7(child.size.height + dy, incoming.minHeight, incoming.maxHeight) }, incoming, child, rtl ? end : start, 0);
+  };
+  const baseline = (id, incoming, first, measure) => {
+    const child = measure({ ...incoming, minHeight: 0 }), line = child[first ? "first" : "last"];
+    const position = line === UNSPECIFIED ? 0 : line;
+    const top = clamp7((first ? 30 : 0) - position, 0, incoming.maxHeight - child.size.height);
+    const bottom = clamp7((first ? 0 : 12) - child.size.height + position, 0, incoming.maxHeight - child.size.height - top);
+    const requested = { width: child.size.width, height: Math.max(top + child.size.height + bottom, incoming.minHeight) };
+    return wrap(id, requested, incoming, child, relative2(0, child, requested.width, rtl), first ? top : requested.height - bottom - child.size.height);
+  };
+  const limited = { ...c, minWidth: clamp7(0, c.minWidth, c.maxWidth), maxWidth: clamp7(600, c.minWidth, c.maxWidth) };
+  const filled = limited.maxWidth === INF5 ? limited : { ...limited, minWidth: limited.maxWidth };
+  const content = padding2("outer-padding", filled, 16, 0, 2, (inner) => measureRowColumn({ id: "column", vertical: true, rtl, minMain: inner.minHeight, maxMain: inner.maxHeight, minCross: inner.minWidth, maxCross: inner.maxWidth, crossAlignment: "start", children: [{ id: "text" }, { id: "controls", align: "end" }] }, (input, childConstraints) => {
+    if (input.id === "text") return baseline("first-padding", childConstraints, true, (afterFirst) => baseline("last-padding", afterFirst, false, (afterLast) => padding2("text-end", afterLast, 0, 8, 0, (inside) => lineLeaf("text", text, inside))));
+    return padding2("action-end", childConstraints, 0, dismiss === null ? 8 : 0, 0, (inside) => measureRowColumn({ id: "action-row", rtl, minMain: inside.minWidth, maxMain: inside.maxWidth, minCross: inside.minHeight, maxCross: inside.maxHeight, crossAlignment: "start", children: [...action ? [{ id: "action", input: action }] : [], ...dismiss ? [{ id: "dismiss", input: dismiss }] : []] }, (control, b) => leaf(control.id, control.input, b)));
+  }));
+  const fill2 = layoutPlaceable("fill", content.size, limited, [{ node: content, x: 0, y: 0 }]);
+  const root = layoutPlaceable("snackbar", fill2.size, c, [{ node: fill2, x: 0, y: 0 }]);
+  return { node: root, size: root.size, requested: root.requested, placements: placements(root) };
+}
+function snackbarPresenterLayout({ constraints, text, action = null, dismiss = null, newLine = false, rtl = false }) {
+  const c = bounds2(constraints);
+  const pad = (id, incoming, start, end, top, bottom, measure) => {
+    const dx = start + end, dy = top + bottom;
+    const inner = { minWidth: Math.max(0, incoming.minWidth - dx), maxWidth: incoming.maxWidth === INF5 ? INF5 : Math.max(0, incoming.maxWidth - dx), minHeight: Math.max(0, incoming.minHeight - dy), maxHeight: incoming.maxHeight === INF5 ? INF5 : Math.max(0, incoming.maxHeight - dy) };
+    const child = measure(inner), requested = { width: clamp7(child.size.width + dx, incoming.minWidth, incoming.maxWidth), height: clamp7(child.size.height + dy, incoming.minHeight, incoming.maxHeight) };
+    return layoutPlaceable(id, requested, incoming, [{ node: child, x: rtl ? end : start, y: top }]);
+  };
+  const root = pad("presentation", c, 12, 12, 12, 12, (incoming) => newLine && action !== null ? legacySnackbarNewLine({ constraints: incoming, text, action, dismiss, rtl }).node : pad("snackbar", incoming, 16, dismiss === null ? 8 : 0, 0, 0, (inner) => legacySnackbarRow({ constraints: inner, text, action, dismiss, rtl }).node));
+  return { node: root, size: root.size, requested: root.requested, placements: placements(root) };
 }
 
+// src/shapes/outline-shadow.js
+var ns = "http://www.w3.org/2000/svg";
+var nextId = 0;
+var element = (name) => document.createElementNS(ns, name);
+var attributes = (node, values) => {
+  for (const [key, value] of Object.entries(values)) {
+    const text = String(value);
+    if (node.getAttribute(key) !== text) node.setAttribute(key, text);
+  }
+};
+var parseBoxShadow = (text) => [...text.matchAll(/(rgba?\([^)]*\))\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px\s+(-?[\d.]+)px/g)].map((match) => {
+  const color = match[1].match(/[\d.]+/g).map(Number);
+  return [...match.slice(2).map(Number), ...color.slice(0, 3), color[3] ?? 1];
+});
+var OutlineShadow = class {
+  constructor(parent2) {
+    this.layer = element("svg");
+    attributes(this.layer, { class: "shape-shadow", "aria-hidden": true, focusable: false });
+    const defs = element("defs");
+    this.filter = element("filter");
+    const id = `md-outline-shadow-${++nextId}`;
+    attributes(this.filter, { id, filterUnits: "userSpaceOnUse", "color-interpolation-filters": "sRGB" });
+    defs.append(this.filter);
+    this.path = element("path");
+    attributes(this.path, { fill: "black", filter: `url(#${id})` });
+    this.layer.append(defs, this.path);
+    this.hide();
+    parent2.prepend(this.layer);
+  }
+  hide() {
+    this.layer.style.display = "none";
+  }
+  draw(outline, box3, shadows) {
+    if (!shadows.length || box3.width <= 0 || box3.height <= 0) {
+      this.hide();
+      return;
+    }
+    this.layer.style.display = "block";
+    this.layer.style.left = box3.x + "px";
+    this.layer.style.top = box3.y + "px";
+    attributes(this.layer, { width: box3.width, height: box3.height, viewBox: `0 0 ${box3.width} ${box3.height}` });
+    attributes(this.path, { d: outline.path ?? `M${outline.points.map((p) => p.join(" ")).join("L")}Z` });
+    const margin = Math.ceil(Math.max(...shadows.map((s) => s[2] + Math.abs(s[3]) + Math.max(Math.abs(s[0]), Math.abs(s[1])))) + 2 + (outline.extension ?? 0));
+    attributes(this.filter, { x: -margin, y: -margin, width: box3.width + 2 * margin, height: box3.height + 2 * margin });
+    if (this.parts?.length !== shadows.length) {
+      this.filter.replaceChildren();
+      this.parts = shadows.map((_, i) => {
+        const spread = element("feMorphology"), blur = element("feGaussianBlur"), offset2 = element("feOffset");
+        const color = element("feFlood"), composite = element("feComposite");
+        attributes(spread, { in: "SourceAlpha", result: `spread${i}` });
+        attributes(blur, { in: `spread${i}`, result: `blur${i}` });
+        attributes(offset2, { in: `blur${i}`, result: `offset${i}` });
+        attributes(color, { result: `color${i}` });
+        attributes(composite, { in: `color${i}`, in2: `offset${i}`, operator: "in", result: `shadow${i}` });
+        this.filter.append(spread, blur, offset2, color, composite);
+        return { spread, blur, offset: offset2, color };
+      });
+      const merge = element("feMerge");
+      for (let i = shadows.length - 1; i >= 0; i--) {
+        const layer = element("feMergeNode");
+        attributes(layer, { in: `shadow${i}` });
+        merge.append(layer);
+      }
+      this.filter.append(merge);
+    }
+    shadows.forEach(([x, y2, blur, spread, r, g, b, alpha], i) => {
+      const part = this.parts[i];
+      attributes(part.spread, { radius: Math.abs(spread), operator: spread < 0 ? "erode" : "dilate" });
+      attributes(part.blur, { stdDeviation: Math.max(0, blur) / 2 });
+      attributes(part.offset, { dx: x, dy: y2 });
+      attributes(part.color, { "flood-color": `rgb(${r},${g},${b})`, "flood-opacity": alpha });
+    });
+  }
+};
+
+// src/components/tooltip-state.js
+var priorities = { "default": 0, "user-input": 1, "prevent-user-input": 2 };
+var abortError = (message) => new DOMException(message, "AbortError");
+var TooltipMutatorMutex = class {
+  constructor() {
+    this.current = null;
+  }
+  acquire(job) {
+    if (this.current && job.priority < this.current.priority) return false;
+    const previous = this.current;
+    this.current = job;
+    previous?.end(abortError("Mutation interrupted"));
+    return true;
+  }
+  release(job) {
+    if (this.current === job) this.current = null;
+  }
+};
+var defaultMutex = new TooltipMutatorMutex();
+var TooltipState = class {
+  constructor({ initialIsVisible = false, isPersistent = false, mutatorMutex = defaultMutex, clock = globalThis } = {}) {
+    this.isPersistent = !!isPersistent;
+    this.mutatorMutex = mutatorMutex;
+    this.clock = clock;
+    this._current = !!initialIsVisible;
+    this._target = !!initialIsVisible;
+    this._listeners = /* @__PURE__ */ new Set();
+    this._job = null;
+    const owner = this;
+    this.transition = {
+      get currentState() {
+        return owner._current;
+      },
+      get targetState() {
+        return owner._target;
+      },
+      set targetState(value) {
+        owner._setTarget(!!value);
+      },
+      get isIdle() {
+        return owner._current === owner._target;
+      }
+    };
+  }
+  get isVisible() {
+    return this._current || this._target;
+  }
+  subscribe(listener) {
+    this._listeners.add(listener);
+    listener(this);
+    return () => this._listeners.delete(listener);
+  }
+  _notify() {
+    for (const listener of [...this._listeners]) listener(this);
+  }
+  _setTarget(value) {
+    if (this._target !== value) {
+      this._target = value;
+      this._notify();
+    }
+  }
+  completeTransition(value = this._target) {
+    if (this._current !== value) {
+      this._current = !!value;
+      this._notify();
+    }
+  }
+  show(priority = "default", { signal } = {}) {
+    if (!(priority in priorities)) throw new TypeError("Unknown tooltip mutation priority");
+    if (signal?.aborted) return Promise.reject(signal.reason ?? abortError("Tooltip request aborted"));
+    return new Promise((resolve, reject) => {
+      const job = { priority: priorities[priority], timer: null, ended: false };
+      const onAbort = () => job.end(signal.reason ?? abortError("Tooltip request aborted"));
+      job.end = (error) => {
+        if (job.ended) return;
+        job.ended = true;
+        if (job.timer !== null) this.clock.clearTimeout(job.timer);
+        signal?.removeEventListener("abort", onAbort);
+        if (priority !== "prevent-user-input") this._setTarget(false);
+        this.mutatorMutex.release(job);
+        if (this._job === job) this._job = null;
+        error ? reject(error) : resolve();
+      };
+      if (!this.mutatorMutex.acquire(job)) {
+        reject(abortError("Current mutation had a higher priority"));
+        return;
+      }
+      this._job = job;
+      if (!this.isPersistent && priority !== "user-input") job.timer = this.clock.setTimeout(() => job.end(new DOMException("Tooltip duration elapsed", "TimeoutError")), 1500);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      this._setTarget(true);
+    });
+  }
+  dismiss() {
+    this._setTarget(false);
+    if (this.isPersistent) this._job?.end(abortError("Tooltip dismissed"));
+  }
+  onDispose() {
+    this._job?.end(abortError("Tooltip disposed"));
+  }
+};
+
+// src/components/tooltip-position.js
+var add = (a, b) => a + b | 0;
+var sub = (a, b) => a - b | 0;
+var half = (value) => Math.trunc(value / 2) || 0;
+var clamp8 = (value, maximum) => Math.max(0, Math.min(Math.max(0, maximum), value));
+function tooltipPosition({ anchor, popup, window: windowSize, placement = "top", spacing = 4, rtl = false }) {
+  if (placement === "start") placement = rtl ? "right" : "left";
+  if (placement === "end") placement = rtl ? "left" : "right";
+  let x, y2;
+  if (placement === "left" || placement === "right") {
+    if (placement === "left") {
+      x = sub(anchor.left, add(popup.width, spacing));
+      if (x < 0) x = add(anchor.right, spacing);
+    } else {
+      x = add(anchor.right, spacing);
+      if (add(x, popup.width) > windowSize.width) x = sub(anchor.left, add(popup.width, spacing));
+    }
+    y2 = half(sub(add(anchor.top, anchor.bottom), popup.height));
+  } else {
+    x = add(anchor.left, half(sub(sub(anchor.right, anchor.left), popup.width)));
+    if (placement === "bottom" || placement === "below") {
+      y2 = add(anchor.bottom, spacing);
+      if (add(y2, popup.height) > windowSize.height) y2 = sub(sub(anchor.top, popup.height), spacing);
+    } else {
+      y2 = sub(sub(anchor.top, popup.height), spacing);
+      if (y2 < 0) y2 = add(anchor.bottom, spacing);
+    }
+  }
+  return { x: clamp8(x, sub(windowSize.width, popup.width)), y: clamp8(y2, sub(windowSize.height, popup.height)) };
+}
+function tooltipCaretX(width, screenWidth, anchor) {
+  const f30 = Math.fround, left = f30(anchor.left), right = f30(anchor.right), mid = f30(f30(left + right) / 2);
+  width = f30(width);
+  if (width >= screenWidth) return mid;
+  if (f30(mid - f30(width / 2)) < 0) return f30(mid + Math.max(f30(width - screenWidth), -left));
+  if (f30(mid + f30(width / 2)) > screenWidth) return f30(mid + Math.min(f30(width - right), 0));
+  return f30(width / 2);
+}
+
+// src/components/tooltip-shape.js
+function tooltipOutlinePath(outline, width, height) {
+  if (outline.type === "generic") return `M${outline.points.map((p) => p.join(" ")).join("L")}Z`;
+  if (outline.type !== "rounded") return `M0 0H${width}V${height}H0Z`;
+  const [tl, tr, br, bl] = outline.radii;
+  const arc = (r, x, y2) => r[0] && r[1] ? `A${r[0]} ${r[1]} 0 0 1 ${x} ${y2}` : `L${x} ${y2}`;
+  return `M${tl[0]} 0H${width - tr[0]}${arc(tr, width, tr[1])}V${height - br[1]}${arc(br, width - br[0], height)}H${bl[0]}${arc(bl, 0, height - bl[1])}V${tl[1]}${arc(tl, tl[0], 0)}Z`;
+}
+function tooltipCaretPath(x, y2, side2) {
+  if (side2 === "left") return `M${x} ${y2 + 8}L${x - 8} ${y2}L${x} ${y2 - 8}Z`;
+  if (side2 === "right") return `M${x} ${y2 - 8}L${x + 8} ${y2}L${x} ${y2 + 8}Z`;
+  if (side2 === "top") return `M${x - 8} ${y2}L${x} ${y2 - 8}L${x + 8} ${y2}Z`;
+  return `M${x + 8} ${y2}L${x} ${y2 + 8}L${x - 8} ${y2}Z`;
+}
+
+// src/components/material-strings.js
+var strings = {
+  en: { snackbarDismiss: "Dismiss", tooltip: "Tooltip", showTooltip: "Show tooltip" },
+  tr: { snackbarDismiss: "Kapat", tooltip: "\u0130pucu", showTooltip: "Ara\xE7 ipucunu g\xF6ster" }
+};
+function materialString(element2, name) {
+  let node = element2, language;
+  while (node) {
+    language = node.getAttribute?.("lang");
+    if (language) break;
+    node = node.assignedSlot || node.parentElement || node.getRootNode?.().host;
+  }
+  const tag = (language || element2.ownerDocument?.documentElement.lang || "en").toLowerCase().split("-")[0];
+  return (strings[tag] || strings.en)[name];
+}
+
+// src/components/tooltip-focus.js
+var owners = /* @__PURE__ */ new WeakMap();
+function composedContains(parent2, node) {
+  for (let current = node; current; current = current.assignedSlot ?? current.parentNode ?? current.host) {
+    if (current === parent2) return true;
+  }
+  return false;
+}
+function deepActiveElement(document2) {
+  let element2 = document2.activeElement;
+  while (element2?.shadowRoot?.activeElement) element2 = element2.shadowRoot.activeElement;
+  return element2;
+}
+function tooltipFocusStops(root) {
+  const stops = [], seen = /* @__PURE__ */ new Set();
+  const visit = (node) => {
+    if (!node || seen.has(node)) return;
+    seen.add(node);
+    if (node.nodeType !== 1) {
+      for (const child of node.children ?? []) visit(child);
+      return;
+    }
+    if (node.hidden || node.inert || node.disabled || node.matches(":disabled")) return;
+    const style3 = getComputedStyle(node);
+    if (style3.display === "none" || style3.visibility === "hidden" || style3.visibility === "collapse") return;
+    if (node.tabIndex >= 0 && node.getClientRects().length) stops.push(node);
+    if (node.localName === "slot") {
+      const assigned = node.assignedElements({ flatten: true });
+      for (const child of assigned.length ? assigned : node.children) visit(child);
+    } else {
+      for (const child of node.shadowRoot?.children ?? node.children) visit(child);
+    }
+  };
+  visit(root);
+  return stops.filter((node) => !node.shadowRoot?.delegatesFocus || !stops.some((child) => child !== node && composedContains(node, child))).filter((node) => {
+    if (node.localName !== "input" || node.type !== "radio" || !node.name || node.checked) return true;
+    return !stops.some((other) => other !== node && other.localName === "input" && other.type === "radio" && other.name === node.name && other.form === node.form && other.getRootNode() === node.getRootNode() && other.checked);
+  }).sort((a, b) => (a.tabIndex > 0 ? a.tabIndex : Infinity) - (b.tabIndex > 0 ? b.tabIndex : Infinity));
+}
+var TooltipFocusScope = class {
+  constructor(popup, restore) {
+    this.popup = popup;
+    this.restore = restore;
+  }
+  get isTop() {
+    if (!this.active || owners.get(this.popup.ownerDocument)?.at(-1) !== this) return false;
+    for (let node = deepActiveElement(this.popup.ownerDocument); node; node = node.assignedSlot ?? node.parentNode ?? node.host) {
+      if (node.localName === "dialog" && node.matches(":modal") && !composedContains(node, this.popup)) return false;
+    }
+    return true;
+  }
+  contains(node) {
+    return composedContains(this.popup, node);
+  }
+  activate() {
+    if (this.active) return;
+    const document2 = this.popup.ownerDocument, stack = owners.get(document2) ?? [];
+    this.returnTo = deepActiveElement(document2);
+    this.active = true;
+    stack.push(this);
+    owners.set(document2, stack);
+    this.focusFirst();
+  }
+  deactivate() {
+    if (!this.active) return;
+    const document2 = this.popup.ownerDocument, stack = owners.get(document2), top = this.isTop;
+    const focused = deepActiveElement(document2), restore = top && (this.contains(focused) || !this.popup.isConnected && focused === document2.body && this.lastFocused);
+    this.active = false;
+    for (const owner of stack) if (owner !== this && this.contains(owner.returnTo)) owner.returnTo = this.returnTo;
+    stack.splice(stack.indexOf(this), 1);
+    if (!stack.length) owners.delete(document2);
+    if (restore) {
+      const previous = stack.at(-1), target = this.returnTo;
+      this.restore(() => {
+        if (previous) previous.focusFirst();
+        else if (target?.isConnected && !target.inert && !target.disabled) target.focus({ preventScroll: true });
+      });
+    }
+    this.returnTo = null;
+  }
+  focusFirst() {
+    if (!this.isTop) return;
+    (tooltipFocusStops(this.popup)[0] ?? this.popup).focus({ preventScroll: true });
+    this.lastFocused = this.contains(deepActiveElement(this.popup.ownerDocument));
+  }
+  ensureFocus() {
+    if (!this.isTop) return;
+    const active = deepActiveElement(this.popup.ownerDocument);
+    if (active !== this.popup && !tooltipFocusStops(this.popup).includes(active)) this.focusFirst();
+    else this.lastFocused = true;
+  }
+  tab(backwards) {
+    if (!this.isTop) return;
+    const stops = tooltipFocusStops(this.popup), active = deepActiveElement(this.popup.ownerDocument), index = stops.indexOf(active);
+    const next = index < 0 ? backwards ? stops.length - 1 : 0 : (index + (backwards ? -1 : 1) + stops.length) % stops.length;
+    (stops[next] ?? this.popup).focus({ preventScroll: true });
+  }
+};
+function consumeTooltipOutsidePointer(event) {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const document2 = event.target.ownerDocument ?? event.target, id = event.pointerId, controller = new AbortController();
+  let timer;
+  const stop = () => {
+    clearTimeout(timer);
+    controller.abort();
+  };
+  const consume = (e) => {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
+  const options = { capture: true, signal: controller.signal };
+  document2.addEventListener("pointerdown", (e) => {
+    if (e !== event && e.pointerId === id) stop();
+  }, options);
+  document2.addEventListener("pointerup", (e) => {
+    if (e.pointerId === id) {
+      consume(e);
+      timer = setTimeout(stop, 1e3);
+    }
+  }, options);
+  document2.addEventListener("pointercancel", (e) => {
+    if (e.pointerId === id) stop();
+  }, options);
+  document2.defaultView.addEventListener("blur", stop, { signal: controller.signal });
+  document2.addEventListener("visibilitychange", () => {
+    if (document2.hidden) stop();
+  }, { signal: controller.signal });
+  document2.addEventListener("click", (e) => {
+    if (e.detail > 0 && (e.pointerId == null || e.pointerId === id)) {
+      consume(e);
+      stop();
+    }
+  }, options);
+}
+
+// src/components/tooltip-layout.js
+var INF6 = 2147483647;
+var NONE = -2147483648;
+var clamp9 = (v, min, max) => Math.max(min, Math.min(max, v));
+var bounds3 = (c) => ({ minWidth: 0, maxWidth: INF6, minHeight: 0, maxHeight: INF6, ...c });
+var relative3 = (x, node, width, rtl) => rtl && width !== 0 ? width - node.size.width - x : x;
+var coordinate = (value, offset2) => value === NONE ? NONE : value + offset2 | 0;
+function positions(node, x = 0, y2 = 0, out = {}) {
+  x = x + node.offset.x | 0;
+  y2 = y2 + node.offset.y | 0;
+  out[node.id] = { x, y: y2, ...node.requested };
+  for (const child of node.children) positions(child.node, x + child.x | 0, y2 + child.y | 0, out);
+  return out;
+}
+function tooltipLayout({ rich = false, rtl = false, constraints, maxWidth = rich ? 320 : 200, title = null, text = [], action = null }, measureLeaf = (id, input) => input) {
+  const c = bounds3(constraints), maximum = Math.max(0, Math.round(maxWidth));
+  const leaf3 = (id, input, incoming) => {
+    const measured = measureLeaf(id, input, incoming);
+    const requested = measured.required ? { width: measured.width, height: measured.height } : { width: clamp9(measured.width, incoming.minWidth, incoming.maxWidth), height: clamp9(measured.height, incoming.minHeight, incoming.maxHeight) };
+    const node = layoutPlaceable(id, requested, incoming, [], { geometryFirst: measured.first ?? NONE, geometryLast: measured.last ?? measured.first ?? NONE });
+    node.first = coordinate(node.geometryFirst, node.offset.y);
+    node.last = coordinate(node.geometryLast, node.offset.y);
+    return node;
+  };
+  const inherited = (node) => {
+    node.geometryFirst = NONE;
+    node.geometryLast = NONE;
+    for (const child of node.children) for (const [name, merge] of [["geometryFirst", Math.min], ["geometryLast", Math.max]]) {
+      const line = coordinate(child.node[name], child.y + child.node.offset.y);
+      if (line !== NONE) node[name] = node[name] === NONE ? line : merge(node[name], line);
+    }
+    node.first = coordinate(node.geometryFirst, node.offset.y);
+    node.last = coordinate(node.geometryLast, node.offset.y);
+    return node;
+  };
+  const wrap = (id, requested, incoming, child, x = 0, y2 = 0) => {
+    const node = layoutPlaceable(id, requested, incoming, [{ node: child, x, y: y2 }]);
+    for (const name of ["geometryFirst", "geometryLast"]) node[name] = coordinate(child[name], y2 + child.offset.y);
+    node.first = coordinate(child.first, y2 + child.offset.y + node.offset.y);
+    node.last = coordinate(child.last, y2 + child.offset.y + node.offset.y);
+    return node;
+  };
+  const box3 = (id, incoming, items, propagate = false) => {
+    const inner = propagate ? incoming : { ...incoming, minWidth: 0, minHeight: 0 };
+    const nodes = items.map((measure) => measure(inner));
+    const width = Math.max(incoming.minWidth, ...nodes.map((n) => n.size.width)), height = Math.max(incoming.minHeight, ...nodes.map((n) => n.size.height));
+    return inherited(layoutPlaceable(id, { width, height }, incoming, nodes.map((node) => ({ node, x: relative3(0, node, width, rtl), y: 0 }))));
+  };
+  const padding2 = (id, incoming, horizontal, top, bottom, measure) => {
+    const dx = horizontal * 2, dy = top + bottom, inner = { minWidth: Math.max(0, incoming.minWidth - dx), maxWidth: incoming.maxWidth === INF6 ? INF6 : Math.max(0, incoming.maxWidth - dx), minHeight: Math.max(0, incoming.minHeight - dy), maxHeight: incoming.maxHeight === INF6 ? INF6 : Math.max(0, incoming.maxHeight - dy) };
+    const child = measure(inner), requested = { width: clamp9(child.size.width + dx, incoming.minWidth, incoming.maxWidth), height: clamp9(child.size.height + dy, incoming.minHeight, incoming.maxHeight) };
+    return wrap(id, requested, incoming, child, horizontal, top);
+  };
+  const sized = (id, incoming, minWidth, maxWidth2, minHeight, enforce, measure) => {
+    const target = { minWidth: Math.min(minWidth ?? 0, maxWidth2 ?? INF6), maxWidth: maxWidth2 ?? INF6, minHeight: minHeight ?? 0, maxHeight: INF6 };
+    const inner = enforce ? { minWidth: clamp9(target.minWidth, incoming.minWidth, incoming.maxWidth), maxWidth: clamp9(target.maxWidth, incoming.minWidth, incoming.maxWidth), minHeight: clamp9(target.minHeight, incoming.minHeight, incoming.maxHeight), maxHeight: clamp9(target.maxHeight, incoming.minHeight, incoming.maxHeight) } : { minWidth: minWidth === null ? Math.min(incoming.minWidth, target.maxWidth) : target.minWidth, maxWidth: maxWidth2 === null ? Math.max(incoming.maxWidth, target.minWidth) : target.maxWidth, minHeight: minHeight === null ? incoming.minHeight : target.minHeight, maxHeight: Math.max(incoming.maxHeight, target.minHeight) };
+    const child = measure(inner);
+    return wrap(id, child.size, incoming, child, relative3(0, child, child.size.width, rtl), 0);
+  };
+  const baseline = (id, incoming, top, measure) => {
+    const child = measure({ ...incoming, minHeight: 0 }), line = child.first === NONE ? 0 : child.first;
+    const before = clamp9(top - line, 0, incoming.maxHeight - child.size.height);
+    const requested = { width: child.size.width, height: Math.max(before + child.size.height, incoming.minHeight) };
+    return wrap(id, requested, incoming, child, relative3(0, child, requested.width, rtl), before);
+  };
+  const leaves = (id, inputs) => inputs.map((input, index) => (incoming) => leaf3(`${id}-${index}`, input, incoming));
+  let root;
+  if (!rich) {
+    root = box3("surface", c, [(incoming) => sized("body-size-0", incoming, 40, maximum, 24, true, (limited) => padding2("body-padding-1", limited, 8, 4, 4, (inside) => box3("body-box", inside, leaves("body", text))))], true);
+  } else {
+    root = sized("tooltip", c, 40, maximum, 24, true, (limited) => box3("surface", limited, [(incoming) => padding2("column-padding-0", incoming, 16, 0, 0, (inner) => {
+      const entries = [];
+      if (title !== null) entries.push({ id: "title", measure: (child) => baseline("title-baseline-0", child, 28, (inside) => box3("title-box", inside, leaves("title", title))) });
+      entries.push({ id: "body", measure: (child) => title === null && action === null ? padding2("body-padding-0", child, 0, 4, 4, (inside) => box3("body-box", inside, leaves("body", text))) : baseline("body-baseline-0", child, 24, (inside) => padding2("body-padding-1", inside, 0, 0, 16, (within) => box3("body-box", within, leaves("body", text)))) });
+      if (action !== null) entries.push({ id: "action", measure: (child) => sized("action-required-size-0", child, null, null, 36, false, (inside) => padding2("action-padding-1", inside, 0, 0, 8, (within) => box3("action-box", within, leaves("action", action)))) });
+      return inherited(measureRowColumn({ id: "column", vertical: true, rtl, minMain: inner.minHeight, maxMain: inner.maxHeight, minCross: inner.minWidth, maxCross: inner.maxWidth, crossAlignment: "start", children: entries }, (input, child) => input.measure(child)));
+    })], true));
+  }
+  return { node: root, size: root.size, requested: root.requested, placements: positions(root) };
+}
+
+// src/components/tooltip-dom-layout.js
+var write3 = (element2, name, value) => {
+  if (element2.style[name] !== value) element2.style[name] = value;
+};
+var dimension2 = (element2, name) => Math.ceil(parseFloat(getComputedStyle(element2)[name]) || (name === "width" ? element2.offsetWidth : element2.offsetHeight));
+var properties2 = ["position", "left", "right", "top", "bottom", "width", "height", "min-width", "max-width", "min-height", "max-height", "box-sizing", "margin"];
+var rect2 = (element2, placement, parent2 = { x: 0, y: 0 }) => {
+  write3(element2, "left", `${placement.x - parent2.x}px`);
+  write3(element2, "top", `${placement.y - parent2.y}px`);
+  write3(element2, "width", `${placement.width}px`);
+  write3(element2, "height", `${placement.height}px`);
+};
+var TooltipDOMLayout = class {
+  constructor(host) {
+    this.host = host;
+    this.owned = /* @__PURE__ */ new Map();
+  }
+  restore(element2) {
+    const entry = this.owned.get(element2);
+    if (!entry) return;
+    for (const [name, data] of entry) {
+      if (element2.style.getPropertyValue(name) === data.applied && element2.style.getPropertyPriority(name) === data.appliedPriority) {
+        data.value ? element2.style.setProperty(name, data.value, data.priority) : element2.style.removeProperty(name);
+      } else {
+        data.value = element2.style.getPropertyValue(name);
+        data.priority = element2.style.getPropertyPriority(name);
+      }
+      data.applied = null;
+    }
+  }
+  own(element2, values) {
+    let entry = this.owned.get(element2);
+    if (!entry) {
+      entry = new Map(properties2.map((name) => [name, { value: element2.style.getPropertyValue(name), priority: element2.style.getPropertyPriority(name) }]));
+      this.owned.set(element2, entry);
+    }
+    for (const [name, value] of Object.entries(values)) {
+      const data = entry.get(name);
+      if (data.applied != null && (element2.style.getPropertyValue(name) !== data.applied || element2.style.getPropertyPriority(name) !== data.appliedPriority)) {
+        data.value = element2.style.getPropertyValue(name);
+        data.priority = element2.style.getPropertyPriority(name);
+      }
+      if (element2.style.getPropertyValue(name) !== value || element2.style.getPropertyPriority(name) !== "") element2.style.setProperty(name, value);
+      data.applied = value;
+      data.appliedPriority = "";
+    }
+  }
+  release() {
+    for (const element2 of this.owned.keys()) this.restore(element2);
+    this.owned.clear();
+  }
+  text(value, style3, constraints) {
+    const probe = this.host._measureProbe;
+    for (const name of ["font", "letterSpacing", "direction", "textAlign", "whiteSpace", "overflowWrap", "wordBreak"]) write3(probe, name, style3[name]);
+    probe.querySelector(".measure-text").textContent = value;
+    write3(probe, "width", "max-content");
+    write3(probe, "maxWidth", `${constraints.maxWidth}px`);
+    write3(probe, "minWidth", `${constraints.minWidth}px`);
+    write3(probe, "height", "auto");
+    const result = { width: dimension2(probe, "width"), height: Math.min(dimension2(probe, "height"), constraints.maxHeight), first: probe.querySelector(".first").offsetTop, last: probe.querySelector(".last").offsetTop };
+    return result;
+  }
+  element(element2, constraints) {
+    this.restore(element2);
+    const stage = element2.slot === "action" ? this.host._actions : this.host._body;
+    write3(stage, "width", `${constraints.maxWidth}px`);
+    write3(stage, "height", `${constraints.maxHeight}px`);
+    const naturalStyle = getComputedStyle(element2), minWidth = Math.min(constraints.maxWidth, Math.max(constraints.minWidth, parseFloat(naturalStyle.minWidth) || 0)), minHeight = Math.min(constraints.maxHeight, Math.max(constraints.minHeight, parseFloat(naturalStyle.minHeight) || 0));
+    this.own(element2, { position: "absolute", left: "0px", right: "auto", top: "0px", bottom: "auto", "box-sizing": "border-box", margin: "0px", "min-width": `${minWidth}px`, "max-width": `${constraints.maxWidth}px`, "min-height": `${minHeight}px`, "max-height": `${constraints.maxHeight}px` });
+    const result = { width: dimension2(element2, "width"), height: dimension2(element2, "height") };
+    const marker = element2.querySelector("[data-tooltip-baseline]");
+    if (marker) {
+      let y2 = marker.offsetTop, parent2 = marker.offsetParent;
+      while (parent2 && parent2 !== element2) {
+        y2 += parent2.offsetTop;
+        parent2 = parent2.offsetParent;
+      }
+      result.first = result.last = y2;
+    }
+    const button = element2.localName === "md-button" ? element2.shadowRoot?.querySelector(".btn") : null;
+    if (button) {
+      const label = button.querySelector(".lbl"), font = getComputedStyle(button);
+      const baseline = this.text("Mg", font, { minWidth: 0, maxWidth: constraints.maxWidth, minHeight: 0, maxHeight: 2147483647 }).first;
+      result.first = result.last = Math.round((result.height - button.offsetHeight) / 2 + (label?.offsetTop ?? 0) + baseline);
+    }
+    return result;
+  }
+  measure(windowSize, rtl) {
+    const h = this.host, rich = h.variant === "rich", bodySlot = h.shadowRoot.querySelector("slot:not([name])"), actionSlot = h.shadowRoot.querySelector('slot[name="action"]');
+    write3(h._measureProbe, "width", "2147483647px");
+    write3(h._measureProbe, "minWidth", "0px");
+    write3(h._measureProbe, "maxWidth", CSS.supports("max-width", h.maxWidth) ? h.maxWidth : rich ? "320px" : "200px");
+    h._resolvedMaxWidth = h._measureProbe.offsetWidth;
+    const bodyElements = bodySlot.assignedElements(), actionElements = rich ? actionSlot.assignedElements() : [];
+    const active = /* @__PURE__ */ new Set([...bodyElements, ...actionElements]);
+    for (const element2 of this.owned.keys()) if (!active.has(element2)) {
+      this.restore(element2);
+      this.owned.delete(element2);
+      h._resize?.unobserve(element2);
+    }
+    for (const element2 of active) h._resize?.observe(element2);
+    const rawText = bodySlot.assignedNodes().filter((n) => n.nodeType === 3).map((n) => n.textContent).join("");
+    const sources = { body: [], title: [], action: [] };
+    if (h.hasAttribute("text") || !bodyElements.length && !rawText.trim()) sources.body.push({ element: h._textLeaf, value: h.text, style: getComputedStyle(h._body) });
+    if (rawText.trim()) sources.body.push({ element: bodySlot, value: rawText, style: getComputedStyle(h._body) });
+    sources.body.push(...bodyElements.map((element2) => ({ element: element2 })));
+    if (rich && h.headline !== null) sources.title.push({ element: h._titleLeaf, value: h.headline, style: getComputedStyle(h._head) });
+    sources.action.push(...actionElements.map((element2) => ({ element: element2 })));
+    h._textLeaf.hidden = !sources.body.some((s) => s.element === h._textLeaf);
+    const input = { rich, rtl, constraints: { minWidth: 0, maxWidth: windowSize.width, minHeight: 0, maxHeight: windowSize.height }, maxWidth: Number.isFinite(h._resolvedMaxWidth) ? h._resolvedMaxWidth : windowSize.width, title: rich && h.headline !== null ? [] : null, text: [], action: rich && actionElements.length ? [] : null };
+    for (const [name, key] of [["body", "text"], ["title", "title"], ["action", "action"]]) if (input[key] !== null) input[key] = sources[name].map(() => ({ width: 0, height: 0 }));
+    const measurements = [];
+    const layout = tooltipLayout(input, (id, _, constraints) => {
+      const split3 = id.lastIndexOf("-"), name = id.slice(0, split3), index = Number(id.slice(split3 + 1)), source = sources[name][index];
+      const measured = source.value !== void 0 ? this.text(source.value, source.style, constraints) : this.element(source.element, constraints);
+      input[name === "body" ? "text" : name][index] = measured;
+      measurements.push({ id, constraints: { ...constraints } });
+      return measured;
+    });
+    const p = layout.placements, surface = p.surface;
+    write3(h._tip, "minWidth", "0px");
+    write3(h._tip, "minHeight", "0px");
+    write3(h._tip, "maxWidth", "none");
+    write3(h._tip, "maxHeight", "none");
+    write3(h._tip, "width", `${layout.size.width}px`);
+    write3(h._tip, "height", `${layout.size.height}px`);
+    rect2(h._surface, surface);
+    rect2(h._bodyBox, p["body-box"], surface);
+    rect2(h._body, { x: 0, y: 0, width: p["body-box"].width, height: p["body-box"].height });
+    if (input.title !== null) rect2(h._head, p["title-box"], surface);
+    if (input.action !== null) rect2(h._actions, p["action-box"], surface);
+    for (const name of ["title", "body", "action"]) for (let i = 0; i < sources[name].length; i++) {
+      const source = sources[name][i], placement = p[`${name}-${i}`], parent2 = p[`${name}-box`];
+      if (source.value !== void 0) {
+        if (source.element !== bodySlot) rect2(source.element, placement, parent2);
+      } else this.own(source.element, { position: "absolute", left: `${placement.x - parent2.x}px`, right: "auto", top: `${placement.y - parent2.y}px`, bottom: "auto", width: `${placement.width}px`, height: `${placement.height}px` });
+    }
+    h._layoutInput = input;
+    h._layoutMeasurements = measurements;
+    h._contentLayout = layout;
+    return layout;
+  }
+};
+
 // src/components/md-tooltip.js
-var defaultStyle16 = `
-  :host {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    display: contents;
-  }
-
-  .tip {
-    box-sizing: border-box;
-    position: fixed;
-    top: 0;
-    left: 0;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    z-index: 10000;
-    font-family: var(--md-sys-typescale-font-family, Roboto, sans-serif);
-    transition:
-      opacity var(--md-sys-motion-duration-short1, 100ms) cubic-bezier(0.4, 0, 1, 1),
-      transform var(--md-sys-motion-duration-short1, 100ms) cubic-bezier(0.4, 0, 1, 1),
-      visibility var(--md-sys-motion-duration-short1, 100ms);
-    will-change: opacity, transform;
-  }
-
-  .tip.top {
-    transform-origin: center bottom;
-    transform: translate(-50%, calc(-100% + 4px)) scale(0.92);
-  }
-
-  .tip.bottom {
-    transform-origin: center top;
-    transform: translate(-50%, -4px) scale(0.92);
-  }
-
-  .tip.open {
-    opacity: 1;
-    visibility: visible;
-    transition:
-      opacity var(--md-sys-motion-duration-short2, 150ms) var(--md-sys-motion-easing-expressive-effects, cubic-bezier(0.2, 0, 0, 1)),
-      transform var(--md-sys-motion-duration-short2, 150ms) var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1)),
-      visibility var(--md-sys-motion-duration-short2, 150ms);
-  }
-
-  .tip.top.open {
-    transform: translate(-50%, -100%) scale(1);
-  }
-
-  .tip.bottom.open {
-    transform: translate(-50%, 0) scale(1);
-  }
-
-  /* Plain Tooltip */
-  .tip.plain {
-    background-color: var(--md-sys-color-inverse-surface, #322F35);
-    color: var(--md-sys-color-inverse-on-surface, #F5EFF7);
-    border-radius: var(--md-sys-shape-corner-extra-small, 4px);
-    font: var(--md-sys-typescale-body-small, 400 12px/16px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
-    padding: 4px 8px;
-    white-space: nowrap;
-    box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,0.15));
-  }
-
-  /* Rich Tooltip */
-  .tip.rich {
-    background-color: var(--md-sys-color-surface-container, #F3EDF7);
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    border-radius: var(--md-sys-shape-corner-medium, 12px);
-    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
-    padding: 12px 16px;
-    max-width: 320px;
-    white-space: normal;
-    box-shadow: var(--md-sys-elevation-level-2, 0 2px 6px 2px rgba(0,0,0,0.15));
-  }
-
-  .headline {
-    font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-title-small-tracking, 0.1px);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    margin-bottom: 4px;
-  }
-
-  /* Caret Arrow */
-  .tip.has-caret::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-  }
-  .tip.has-caret.top::after {
-    top: 100%;
-    border-top-color: var(--md-sys-color-inverse-surface, #322F35);
-  }
-  .tip.rich.has-caret.top::after {
-    border-top-color: var(--md-sys-color-surface-container, #F3EDF7);
-  }
-  .tip.has-caret.bottom::after {
-    bottom: 100%;
-    border-bottom-color: var(--md-sys-color-inverse-surface, #322F35);
-  }
-  .tip.rich.has-caret.bottom::after {
-    border-bottom-color: var(--md-sys-color-surface-container, #F3EDF7);
-  }
-
-  .actions {
-    margin-top: 8px;
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-  }
+var css = `
+  :host {display:contents; outline:none; -webkit-tap-highlight-color:transparent;}
+  .tip {position:fixed; inset:auto; box-sizing:border-box; margin:0; padding:0; border:0; outline:none; width:max-content; min-width:40px; max-width:200px; min-height:24px; overflow:visible; background:transparent; color:var(--_tooltip-content); transform-origin:center; z-index:10000;}
+  .tip[hidden] {display:none;}
+  .tip.rich {max-width:320px;}
+  .tip::backdrop {background:transparent; pointer-events:none;}
+  .tip[data-focusable]::backdrop {pointer-events:auto; touch-action:none;}
+  .surface {position:absolute; box-sizing:border-box; padding:0; overflow:hidden; background:var(--_tooltip-container); color:inherit; border-radius:var(--md-sys-shape-corner-extra-small); box-shadow:none;}
+  .rich .surface {border-radius:var(--md-sys-shape-corner-medium); box-shadow:var(--md-sys-elevation-level-2);}
+  .body-box, .body {position:absolute; display:block; padding:0; margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font:var(--md-sys-typescale-body-small); letter-spacing:var(--md-sys-typescale-body-small-tracking);}
+  .rich .body {font:var(--md-sys-typescale-body-medium); letter-spacing:var(--md-sys-typescale-body-medium-tracking);}
+  .headline {position:absolute; font:var(--md-sys-typescale-title-small); letter-spacing:var(--md-sys-typescale-title-small-tracking); color:var(--_tooltip-title); white-space:pre-wrap; overflow-wrap:anywhere;}
+  .actions {position:absolute; box-sizing:border-box; padding:0; font:var(--md-sys-typescale-label-large); letter-spacing:var(--md-sys-typescale-label-large-tracking); color:var(--_tooltip-action);}
+  .text-leaf, .title-leaf {position:absolute; display:block; box-sizing:border-box; overflow:hidden; white-space:pre-wrap; overflow-wrap:anywhere;}
+  slot {display:contents;}
+  .headline[hidden], .actions[hidden], .text-leaf[hidden] {display:none;}
+  .actions ::slotted(md-button) {display:inline-flex; align-items:center; justify-content:center; min-height:48px;}
+  .baseline {display:inline-block; width:0; height:0; padding:0; border:0; vertical-align:baseline;}
+  .shape-shadow, .background {position:absolute; inset:0; overflow:visible; pointer-events:none;}
+  .color-probe {position:absolute; width:0; height:0; visibility:hidden; pointer-events:none;}
+  .measure-probe {position:fixed; inset:0 auto auto 0; visibility:hidden; pointer-events:none; contain:layout; padding:0; margin:0; border:0; white-space:pre-wrap; overflow-wrap:anywhere;}
 `;
-var tooltipSheet = createComponentSheet(defaultStyle16);
+var sheet2 = createComponentSheet(css);
+var nextId2 = 0;
+var colorNames = ["container-color", "content-color", "title-content-color", "action-content-color"];
+var reflect = (element2, name, value) => value == null ? element2.removeAttribute(name) : element2.setAttribute(name, value);
 var MdTooltip = class extends HTMLElement {
   static get observedAttributes() {
-    return [
-      "variant",
-      "text",
-      "headline",
-      "open",
-      "for",
-      "placement",
-      "caret",
-      "focusable",
-      "enable-user-input",
-      "has-action",
-      "max-width",
-      "content-color",
-      "container-color"
-    ];
+    return ["variant", "text", "headline", "open", "for", "placement", "caret", "focusable", "force-focusable-for-a11y", "enable-user-input", "has-action", "max-width", "is-persistent", "shape", "pane-title", ...colorNames];
   }
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, tooltipSheet);
-    this._rendered = false;
-    this._target = null;
-    this._boundHandlers = null;
-  }
-  connectedCallback() {
-    if (!this._rendered) {
-      this.render();
-      this._rendered = true;
-    }
-    this._bindTarget();
-  }
-  disconnectedCallback() {
-    this._unbindTarget();
-  }
-  attributeChangedCallback(name, oldVal, newVal) {
-    if (!this._rendered || oldVal === newVal) return;
-    if (name === "for") {
-      this._unbindTarget();
-      this._bindTarget();
-    } else if (name === "container-color" || name === "content-color" || name === "max-width" || name === "variant") {
-      this.render();
-    }
-    this._sync();
+    adoptSheet(this.shadowRoot, sheet2);
+    this._ownedState = new TooltipState();
+    this._state = this._ownedState;
+    this._reposition = () => {
+      if (this._state.isVisible) this._layout();
+    };
+    this._contentChanged = () => {
+      this._layoutDirty = true;
+      this._reposition();
+    };
   }
   get variant() {
-    return sanitizeAttribute(this.getAttribute("variant") || "plain");
+    return this.getAttribute("variant") === "rich" ? "rich" : "plain";
   }
-  // 'plain' | 'rich'
+  set variant(v) {
+    reflect(this, "variant", v);
+  }
   get text() {
-    return this.getAttribute("text") || "";
+    return this.getAttribute("text") ?? "";
+  }
+  set text(v) {
+    reflect(this, "text", v);
+  }
+  get headline() {
+    return this.getAttribute("headline");
+  }
+  set headline(v) {
+    reflect(this, "headline", v);
   }
   get placement() {
-    return sanitizeAttribute(this.getAttribute("placement") || "top");
+    return this.getAttribute("placement") ?? "top";
   }
-  // 'top' | 'bottom'
+  set placement(v) {
+    reflect(this, "placement", v);
+  }
+  get position() {
+    return this.placement;
+  }
+  set position(v) {
+    this.placement = v;
+  }
   get open() {
     return this.hasAttribute("open");
   }
   set open(v) {
-    if (v) {
-      this._position();
-      this.setAttribute("open", "");
-    } else {
-      this.removeAttribute("open");
-    }
-  }
-  get headline() {
-    return this.getAttribute("headline") || "";
-  }
-  set headline(v) {
-    this.setAttribute("headline", v);
+    this.toggleAttribute("open", !!v);
   }
   get caret() {
     return this.hasAttribute("caret");
   }
   set caret(v) {
-    if (v) this.setAttribute("caret", "");
-    else this.removeAttribute("caret");
+    this.toggleAttribute("caret", !!v);
   }
   get focusable() {
     return this.hasAttribute("focusable");
   }
   set focusable(v) {
-    if (v) this.setAttribute("focusable", "");
-    else this.removeAttribute("focusable");
+    this.toggleAttribute("focusable", !!v);
+  }
+  get forceFocusableForA11y() {
+    return this.hasAttribute("force-focusable-for-a11y");
+  }
+  set forceFocusableForA11y(v) {
+    this.toggleAttribute("force-focusable-for-a11y", !!v);
   }
   get enableUserInput() {
     return this.getAttribute("enable-user-input") !== "false";
   }
   set enableUserInput(v) {
-    if (v) this.setAttribute("enable-user-input", "true");
-    else this.setAttribute("enable-user-input", "false");
+    this.setAttribute("enable-user-input", String(!!v));
   }
   get hasAction() {
     return this.hasAttribute("has-action");
   }
   set hasAction(v) {
-    if (v) this.setAttribute("has-action", "");
-    else this.removeAttribute("has-action");
+    this.toggleAttribute("has-action", !!v);
+  }
+  get isPersistent() {
+    return this.hasAttribute("is-persistent");
+  }
+  set isPersistent(v) {
+    this.toggleAttribute("is-persistent", !!v);
   }
   get maxWidth() {
-    return this.getAttribute("max-width") || "200px";
+    return this.getAttribute("max-width") ?? (this.variant === "rich" ? "320px" : "200px");
   }
   set maxWidth(v) {
-    if (v === null || v === void 0) this.removeAttribute("max-width");
-    else this.setAttribute("max-width", v);
-  }
-  get contentColor() {
-    return this.getAttribute("content-color") || "";
-  }
-  set contentColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("content-color");
-    else this.setAttribute("content-color", v);
+    reflect(this, "max-width", typeof v === "number" ? `${v}px` : v);
   }
   get containerColor() {
-    return this.getAttribute("container-color") || "";
+    return this.getAttribute("container-color") ?? "";
   }
   set containerColor(v) {
-    if (v === null || v === void 0) this.removeAttribute("container-color");
-    else this.setAttribute("container-color", v);
+    reflect(this, "container-color", v);
+  }
+  get contentColor() {
+    return this.getAttribute("content-color") ?? "";
+  }
+  set contentColor(v) {
+    reflect(this, "content-color", v);
+  }
+  get titleContentColor() {
+    return this.getAttribute("title-content-color") ?? "";
+  }
+  set titleContentColor(v) {
+    reflect(this, "title-content-color", v);
+  }
+  get actionContentColor() {
+    return this.getAttribute("action-content-color") ?? "";
+  }
+  set actionContentColor(v) {
+    reflect(this, "action-content-color", v);
+  }
+  get shape() {
+    const text = this.getAttribute("shape");
+    if (text === null) return null;
+    if (this._shapeCache?.text === text) return this._shapeCache.value;
+    let value = null;
+    try {
+      value = normalizeCornerShape(text);
+    } catch {
+    }
+    this._shapeCache = { text, value };
+    return value;
+  }
+  set shape(v) {
+    reflect(this, "shape", v == null ? null : JSON.stringify(normalizeCornerShape(v)));
+  }
+  get target() {
+    return this._target ?? null;
+  }
+  set target(v) {
+    this._explicitTarget = v;
+    if (this.isConnected) this._bindTarget();
+  }
+  get state() {
+    return this._state;
+  }
+  set state(v) {
+    const state = v ?? this._ownedState;
+    if (!state || typeof state.show !== "function" || typeof state.subscribe !== "function") throw new TypeError("state must be a TooltipState");
+    if (state === this._state) return;
+    this._unsubscribe?.();
+    this._focusScope?.deactivate();
+    this._forceFocusable = false;
+    this._state.onDispose();
+    this._state.completeTransition();
+    this._cancelFinishFrame();
+    this._motion?.dispose();
+    this._motion = null;
+    this._state = state;
+    this._lastTarget = void 0;
+    if (this.isConnected) this._bindState();
+  }
+  connectedCallback() {
+    const initiallyOpen = this.open;
+    this._render();
+    this._bindTarget();
+    this._sync();
+    this._bindState();
+    this._lifetime?.abort();
+    this._lifetime = new AbortController();
+    const signal = this._lifetime.signal;
+    this.ownerDocument.addEventListener("scroll", this._reposition, { capture: true, passive: true, signal });
+    this.ownerDocument.defaultView.addEventListener("resize", this._reposition, { signal });
+    this.ownerDocument.fonts?.addEventListener("loadingdone", this._contentChanged, { signal });
+    this._stopTheme?.();
+    this._stopTheme = observeThemeContext(this, () => {
+      this._sync();
+      this._reposition();
+    });
+    this._resize?.disconnect();
+    this._resize = new ResizeObserver((entries) => {
+      if (entries.some((e) => e.target !== this._tip && e.target !== this._target)) this._layoutDirty = true;
+      this._reposition();
+    });
+    this._resize.observe(this._tip);
+    if (this._target) this._resize.observe(this._target);
+    for (const element2 of this._domLayout.owned.keys()) this._resize.observe(element2);
+    this._contentObserver?.disconnect();
+    this._contentObserver = new MutationObserver(() => {
+      this._sync();
+      this._reposition();
+      this._focusScope.ensureFocus();
+    });
+    this._contentObserver.observe(this, { subtree: true, childList: true, characterData: true, attributes: true });
+    if (initiallyOpen && !this._state.transition.targetState) this._request("default");
+  }
+  disconnectedCallback() {
+    this._unsubscribe?.();
+    this._unsubscribe = null;
+    this._focusScope?.deactivate();
+    this._forceFocusable = false;
+    this._stopPositionTracking();
+    this._unbindTarget();
+    this._lifetime?.abort();
+    this._stopTheme?.();
+    this._resize?.disconnect();
+    this._contentObserver?.disconnect();
+    this._state.onDispose();
+    this._cancelFinishFrame();
+    this._motion?.dispose();
+    this._motion = null;
+    this._lastTarget = void 0;
+    this._state.completeTransition();
+    this._reflecting = true;
+    this.toggleAttribute("open", this._state.transition.targetState);
+    this._reflecting = false;
+    this._tip?.hidePopover?.();
+    if (this._tip) this._tip.hidden = true;
+    this._domLayout?.release();
+    this._layoutDirty = true;
+  }
+  attributeChangedCallback(name, oldValue, value) {
+    if (oldValue === value || !this._tip || this._reflecting) return;
+    if (name === "open") {
+      this.open ? this._request("default") : this.dismiss();
+      return;
+    }
+    if (name === "is-persistent") {
+      const previous = this._ownedState;
+      this._ownedState = new TooltipState({ initialIsVisible: previous.transition.targetState, isPersistent: this.isPersistent });
+      if (this._state === previous) this.state = this._ownedState;
+    }
+    if (name === "for" || name === "enable-user-input") this._bindTarget();
+    this._sync();
+    this._reposition();
+  }
+  show(priority = "default", options) {
+    return this._state.show(priority, options);
+  }
+  dismiss() {
+    this._state.dismiss();
+  }
+  _dismissRequest() {
+    if (typeof this.onDismissRequest === "function") this.onDismissRequest();
+    else {
+      this.dismiss();
+      this._forceFocusable = false;
+      this._syncPopupFocus();
+    }
+  }
+  _request(priority, options) {
+    this.show(priority, options).catch(() => {
+    });
+  }
+  _bindState() {
+    this._unsubscribe?.();
+    this._lastTarget = void 0;
+    this._unsubscribe = this._state.subscribe(() => this._syncState());
+  }
+  _syncState() {
+    if (!this.isConnected || !this._tip) return;
+    const target = this._state.transition.targetState;
+    this._reflecting = true;
+    this.toggleAttribute("open", target);
+    this._reflecting = false;
+    this._syncAvailability();
+    if (target === this._lastTarget) return;
+    this._cancelFinishFrame();
+    const previousTarget = this._lastTarget;
+    this._lastTarget = target;
+    if (previousTarget !== void 0) this._state.completeTransition(previousTarget);
+    if (target) {
+      this._tip.hidden = false;
+      this._tip.showPopover?.();
+      this._layout();
+    }
+    this._syncAvailability();
+    if (!this._motion || this._motion.disposed) {
+      const initial = this._state.transition.currentState;
+      this._motion = new SelectionMotion(this, { scale: initial ? 1 : Math.fround(0.8), alpha: initial ? 1 : 0 }, (v) => {
+        this._tip.style.transform = `scale(${v.scale})`;
+        this._tip.style.opacity = Math.max(0, Math.min(1, v.alpha));
+        if (this._motion && Object.values(this._motion.channels).every((c) => !c.animation)) {
+          if (this._settingMotion && !this._motion.media?.matches && this._state.transition.currentState !== this._state.transition.targetState) {
+            this._finishFrame = requestAnimationFrame((time) => {
+              this._finishFrame = null;
+              this._motion?.tick(time);
+            });
+            return;
+          }
+          this._cancelFinishFrame();
+          this._state.completeTransition();
+          if (!this._state.transition.targetState) {
+            this._tip.hidePopover?.();
+            this._tip.hidden = true;
+            this._domLayout.release();
+            this._layoutDirty = true;
+            this._contentObserver?.takeRecords();
+          }
+        }
+      });
+    }
+    this._settingMotion = true;
+    try {
+      this._motion.set({ scale: { value: target ? 1 : Math.fround(0.8), role: "expressiveSpatialFast" }, alpha: { value: target ? 1 : 0, role: "expressiveEffectFast" } });
+    } finally {
+      this._settingMotion = false;
+    }
+  }
+  _cancelFinishFrame() {
+    if (this._finishFrame != null) cancelAnimationFrame(this._finishFrame);
+    this._finishFrame = null;
+  }
+  _syncAvailability() {
+    const visible2 = this._state.isVisible;
+    if (!visible2) {
+      this._forceFocusable = false;
+      this._syncPopupFocus();
+    }
+    this._tip.inert = !visible2;
+    this._tip.setAttribute("aria-hidden", String(!visible2));
+    this._tip.style.pointerEvents = visible2 ? "auto" : "none";
+    if (visible2) this._syncPopupFocus();
+    if (visible2 && !this._tip.hidden && this._target) this._startPositionTracking();
+    else this._stopPositionTracking();
+  }
+  _syncPopupFocus() {
+    if (!this._tip) return;
+    const focusable = this._state.isVisible && !this._tip.hidden && (this.focusable || this.hasAction && (this._forceFocusable || this.forceFocusableForA11y));
+    this._tip.toggleAttribute("data-focusable", !!focusable);
+    if (focusable) this._focusScope.activate();
+    else this._focusScope.deactivate();
+  }
+  _startPositionTracking() {
+    if (this._positionFrame != null) return;
+    this._positionFrame = requestAnimationFrame(() => {
+      this._positionFrame = null;
+      if (!this.isConnected || !this._state.isVisible || this._tip.hidden || !this._target) return;
+      const rect6 = this._target.getBoundingClientRect(), view = this.ownerDocument.defaultView;
+      const bounds4 = [rect6.left, rect6.top, rect6.right, rect6.bottom, view.innerWidth, view.innerHeight];
+      if (bounds4.some((value, index) => value !== this._lastAnchorBounds?.[index])) this._layout();
+      this._startPositionTracking();
+    });
+  }
+  _stopPositionTracking() {
+    if (this._positionFrame != null) cancelAnimationFrame(this._positionFrame);
+    this._positionFrame = null;
+  }
+  _keyDown(e) {
+    if (e.defaultPrevented || !this._state.isVisible) return;
+    if (this._focusScope.isTop) {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        e.stopPropagation();
+        this._focusScope.tab(e.shiftKey);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!e.repeat) this._popupEscape = true;
+      }
+      return;
+    }
+    if (!this.enableUserInput || !composedContains(this._target, deepActiveElement(this.ownerDocument))) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      this._receivedFocus = false;
+      this.dismiss();
+    } else if (this.hasAction && e.key === "Tab") {
+      e.preventDefault();
+      e.stopPropagation();
+      this._forceFocusable = true;
+      this._syncPopupFocus();
+    }
+  }
+  _keyUp(e) {
+    if (e.key !== "Escape" || !this._popupEscape) return;
+    this._popupEscape = false;
+    e.preventDefault();
+    e.stopPropagation();
+    if (this._state.isVisible && this._focusScope.isTop) this._dismissRequest();
   }
   _unbindTarget() {
-    if (!this._target || !this._boundHandlers) return;
-    this._target.removeEventListener("pointerenter", this._boundHandlers.show);
-    this._target.removeEventListener("pointerleave", this._boundHandlers.hide);
-    this._target.removeEventListener("mouseenter", this._boundHandlers.show);
-    this._target.removeEventListener("mouseleave", this._boundHandlers.hide);
-    this._target.removeEventListener("focusin", this._boundHandlers.show);
-    this._target.removeEventListener("focusout", this._boundHandlers.hide);
-    window.removeEventListener("keydown", this._boundHandlers.onKey);
+    this._inputs?.abort();
+    this._cancelPress();
+    this._focusScope?.deactivate();
+    this._forceFocusable = false;
+    this._popupEscape = false;
+    this._stopPositionTracking();
+    if (this._target) {
+      this._receivedFocus = false;
+      const tokens = (this._target.getAttribute("aria-describedby") ?? "").split(/\s+/).filter((t) => t && t !== this.id);
+      tokens.length ? this._target.setAttribute("aria-describedby", tokens.join(" ")) : this._target.removeAttribute("aria-describedby");
+      this._resize?.unobserve(this._target);
+    }
     this._target = null;
   }
   _bindTarget() {
-    const id = this.getAttribute("for");
-    const rootNode = this.getRootNode();
-    this._target = id ? rootNode.getElementById ? rootNode.getElementById(id) : document.getElementById(id) : this.previousElementSibling;
+    this._unbindTarget();
+    const root = this.getRootNode(), id = this.getAttribute("for");
+    this._target = this._explicitTarget ?? (id ? root.getElementById?.(id) : this.previousElementSibling);
     if (!this._target) return;
-    const show = () => {
-      this.open = true;
-    };
-    const hide = () => {
-      this.open = false;
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape" && this.open) {
-        this.open = false;
+    if (!this.id) this.id = `md-tooltip-${++nextId2}`;
+    const descriptions = new Set((this._target.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean));
+    descriptions.add(this.id);
+    this._target.setAttribute("aria-describedby", [...descriptions].join(" "));
+    this._resize?.observe(this._target);
+    this._inputs = new AbortController();
+    const signal = this._inputs.signal, target = this._target;
+    if (this.enableUserInput) {
+      target.addEventListener("pointerenter", (e) => {
+        if (e.pointerType === "mouse") this._request("user-input", { signal });
+      }, { signal });
+      target.addEventListener("pointerleave", (e) => {
+        if (e.pointerType === "mouse" && !this._state.isPersistent) this.dismiss();
+      }, { signal });
+      target.addEventListener("focusin", () => {
+        if (this._restoringFocus) return;
+        this._receivedFocus = true;
+        this._request("prevent-user-input", { signal });
+      }, { signal });
+      target.addEventListener("focusout", (e) => {
+        const next = e.relatedTarget;
+        if (composedContains(this._tip, next) || this._focusScope.active || this._restoringFocus) return;
+        if (this._receivedFocus) {
+          this._receivedFocus = false;
+          this.dismiss();
+        }
+      }, { signal });
+      target.addEventListener("pointerdown", (e) => this._press(e), { capture: true, signal });
+      for (const type of ["pointerup", "pointercancel"]) this.ownerDocument.addEventListener(type, (e) => this._release(e), { capture: true, signal });
+      target.addEventListener("click", (e) => {
+        if (this._suppressClick && e.detail !== 0) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this._suppressClick = false;
+        }
+      }, { capture: true, signal });
+    }
+    this.ownerDocument.addEventListener("keydown", (e) => this._keyDown(e), { capture: true, signal });
+    this.ownerDocument.addEventListener("keyup", (e) => this._keyUp(e), { capture: true, signal });
+    this.ownerDocument.addEventListener("focusin", () => this._focusScope.ensureFocus(), { signal });
+    this.ownerDocument.addEventListener("pointerdown", (e) => {
+      if (!this._state.isVisible) return;
+      const path = e.composedPath();
+      const rect6 = this._tip.getBoundingClientRect(), onBackdrop = path[0] === this._tip && (e.clientX < rect6.left || e.clientX >= rect6.right || e.clientY < rect6.top || e.clientY >= rect6.bottom);
+      if (!path.includes(this._tip) || onBackdrop) {
+        if (this._focusScope.isTop) consumeTooltipOutsidePointer(e);
+        this._dismissRequest();
       }
-    };
-    this._boundHandlers = { show, hide, onKey };
-    this._target.addEventListener("pointerenter", show);
-    this._target.addEventListener("pointerleave", hide);
-    this._target.addEventListener("mouseenter", show);
-    this._target.addEventListener("mouseleave", hide);
-    this._target.addEventListener("focusin", show);
-    this._target.addEventListener("focusout", hide);
-    window.addEventListener("keydown", onKey);
-    const tooltipId = this.id || (this.id = "tt-" + Math.random().toString(36).slice(2, 9));
-    this._target.setAttribute("aria-describedby", tooltipId);
+    }, { capture: true, signal });
+    this._reposition();
+    this._syncAvailability();
   }
-  _position() {
-    if (!this._target) return;
-    const tip = this.shadowRoot.querySelector(".tip");
-    if (!tip) return;
-    const rect4 = this._target.getBoundingClientRect();
-    const isBottom = this.placement === "bottom";
-    const top = isBottom ? rect4.bottom + 8 : rect4.top - 8;
-    const left = rect4.left + rect4.width / 2;
-    tip.style.position = "fixed";
-    tip.style.top = `${top}px`;
-    tip.style.left = `${left}px`;
+  _press(e) {
+    if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+    if (this._pressInfo) return;
+    this._suppressClick = false;
+    const press = { id: e.pointerId, held: true, shown: false, elapsed: false };
+    this._pressInfo = press;
+    press.timer = setTimeout(() => {
+      if (this._pressInfo !== press) return;
+      press.shown = true;
+      this._suppressClick = true;
+      this.show("prevent-user-input").catch(() => {
+      }).finally(() => {
+        press.elapsed = true;
+        if (this.isConnected && !press.held && this._state.isVisible) this.dismiss();
+      });
+    }, this.longPressTimeoutMillis ?? 500);
+  }
+  _release(e) {
+    const press = this._pressInfo;
+    if (!press || press.id !== e.pointerId) return;
+    press.held = false;
+    clearTimeout(press.timer);
+    if (press.shown) {
+      e.preventDefault();
+      if (press.elapsed) this.dismiss();
+    }
+    this._pressInfo = null;
+  }
+  _cancelPress() {
+    if (this._pressInfo) {
+      clearTimeout(this._pressInfo.timer);
+      this._pressInfo.held = false;
+      this._pressInfo = null;
+    }
+    this._suppressClick = false;
+  }
+  _render() {
+    if (this._tip) return;
+    const adopted = !!this.shadowRoot.adoptedStyleSheets?.length;
+    this.shadowRoot.innerHTML = `${adopted ? "" : `<style>${css}</style>`}<span class="color-probe" aria-hidden="true"></span><div class="measure-probe" aria-hidden="true"><span class="baseline first"></span><span class="measure-text"></span><span class="baseline last"></span></div><div class="tip" part="tooltip" popover="manual" role="tooltip" aria-live="assertive" tabindex="-1" hidden><svg class="background" aria-hidden="true" focusable="false"><path></path></svg><div class="surface" part="container"><div class="headline" part="headline"><span class="title-leaf"><span class="baseline first" aria-hidden="true"></span><span class="title-text"></span><span class="baseline last" aria-hidden="true"></span></span></div><div class="body-box"><div class="body" part="text"><span class="text-leaf"><span class="baseline first" aria-hidden="true"></span><span class="text"></span><span class="baseline last" aria-hidden="true"></span></span><slot></slot></div></div><div class="actions" part="action"><slot name="action"></slot></div></div></div>`;
+    const q = (selector) => this.shadowRoot.querySelector(selector);
+    this._tip = q(".tip");
+    this._surface = q(".surface");
+    this._body = q(".body");
+    this._bodyBox = q(".body-box");
+    this._head = q(".headline");
+    this._actions = q(".actions");
+    this._probe = q(".color-probe");
+    this._background = q(".background");
+    this._path = q(".background path");
+    this._measureProbe = q(".measure-probe");
+    this._textLeaf = q(".text-leaf");
+    this._titleLeaf = q(".title-leaf");
+    this._domLayout = new TooltipDOMLayout(this);
+    this._layoutDirty = true;
+    this._shadow = new OutlineShadow(this._tip);
+    this._focusScope = new TooltipFocusScope(this._tip, (restore) => {
+      this._restoringFocus = true;
+      try {
+        restore();
+      } finally {
+        this._restoringFocus = false;
+      }
+    });
+    for (const slot of this.shadowRoot.querySelectorAll("slot")) slot.addEventListener("slotchange", () => {
+      this._sync();
+      this._reposition();
+    });
+    if (this.isPersistent) this._ownedState.isPersistent = true;
   }
   _sync() {
-    const tip = this.shadowRoot.querySelector(".tip");
-    const txt = this.shadowRoot.querySelector(".txt");
-    const headEl = this.shadowRoot.querySelector(".headline");
-    if (!tip) return;
-    tip.className = `tip ${this.variant}${this.open ? " open" : ""}${this.caret ? " has-caret" : ""} ${this.placement}`;
-    if (txt && this.text) txt.textContent = this.text;
-    if (headEl && this.headline) headEl.textContent = this.headline;
-    if (this.open) {
-      this._position();
+    if (!this._tip) return;
+    this._layoutDirty = true;
+    const rich = this.variant === "rich";
+    this._tip.classList.toggle("rich", rich);
+    this.shadowRoot.querySelector(".text").textContent = this.text;
+    this.shadowRoot.querySelector(".title-text").textContent = this.headline ?? "";
+    this._head.hidden = !rich || this.headline === null;
+    this._actions.hidden = !rich || !this.shadowRoot.querySelector('slot[name="action"]').assignedElements().length;
+    this._tip.setAttribute("aria-label", this.getAttribute("pane-title") ?? materialString(this, "tooltip"));
+    const valid2 = (v, fallback) => v && CSS.supports("color", v) ? v : fallback;
+    const colors = resolveSurfaceColors(this, this._probe, { container: valid2(this.containerColor, rich ? "var(--md-sys-color-surface-container)" : "var(--md-sys-color-inverse-surface)"), content: valid2(this.contentColor, rich ? "var(--md-sys-color-on-surface-variant)" : "var(--md-sys-color-inverse-on-surface)"), elevation: 0 });
+    this._tip.style.setProperty("--_tooltip-container", colors.container);
+    this._tip.style.setProperty("--_tooltip-content", colors.content);
+    this._tip.style.setProperty("--md-absolute-tonal-elevation", String(colors.total));
+    this._tip.style.setProperty("--_tooltip-title", valid2(this.titleContentColor, "var(--md-sys-color-on-surface-variant)"));
+    this._tip.style.setProperty("--_tooltip-action", valid2(this.actionContentColor, "var(--md-sys-color-primary)"));
+    this._container = colors.container;
+    this._syncPopupFocus();
+  }
+  _layout({ measureContent = true } = {}) {
+    if (!this._target || this._tip.hidden || this._measuring) return;
+    this._measuring = true;
+    try {
+      const win = this.ownerDocument.defaultView, windowSize = { width: win.innerWidth, height: win.innerHeight }, rtl = getComputedStyle(this).direction === "rtl";
+      const signature = [windowSize.width, windowSize.height, rtl];
+      if (measureContent && (this._layoutDirty || signature.some((v, i) => v !== this._layoutSignature?.[i]))) {
+        this._domLayout.measure(windowSize, rtl);
+        this._layoutDirty = false;
+        this._layoutSignature = signature;
+        this._contentObserver?.takeRecords();
+      }
+      const rect6 = this._target.getBoundingClientRect(), anchor = { left: Math.round(rect6.left), top: Math.round(rect6.top), right: Math.round(rect6.right), bottom: Math.round(rect6.bottom) };
+      const popup = { width: this._tip.offsetWidth, height: this._tip.offsetHeight };
+      this._lastAnchorBounds = [rect6.left, rect6.top, rect6.right, rect6.bottom, win.innerWidth, win.innerHeight];
+      const position = tooltipPosition({ anchor, popup, window: windowSize, placement: this.placement, rtl });
+      this._positionInput = { anchor, popup, window: windowSize, placement: this.placement, rtl };
+      this._positionResult = position;
+      this._tip.style.left = `${position.x}px`;
+      this._tip.style.top = `${position.y}px`;
+      this._drawOutline(popup, rect6, position, windowSize, rtl);
+    } finally {
+      this._measuring = false;
     }
   }
-  render() {
-    const hasHead = !!this.headline;
-    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle16}</style>`}
-      <div class="tip ${escapeHtml(this.variant)}" role="tooltip" id="${escapeHtml(this.id)}">
-        ${hasHead ? `<div class="headline">${escapeHtml(this.headline)}</div>` : ""}
-        <span class="txt">${escapeHtml(this.text)}</span>
-        <slot></slot>
-        <div class="actions"><slot name="action"></slot></div>
-      </div>
-    `;
-    this._sync();
+  _drawOutline(popup, anchor, position, windowSize, rtl) {
+    const surface = this._surface;
+    surface.style.borderRadius = "";
+    surface.style.boxShadow = "";
+    let outline;
+    if (this.shape) outline = cornerShapeOutline(this.shape, popup.width, popup.height, rtl);
+    else {
+      const s = getComputedStyle(surface), pair = (name) => {
+        const v = s[name].split(" ").map(parseFloat);
+        return [v[0], v[1] ?? v[0]];
+      };
+      const radii = ["borderTopLeftRadius", "borderTopRightRadius", "borderBottomRightRadius", "borderBottomLeftRadius"].map(pair);
+      outline = cornerShapeOutline(normalizeCornerShape({ type: "rounded", absolute: true, corners: radii.map((r) => r[0]) }), popup.width, popup.height);
+    }
+    let path = tooltipOutlinePath(outline, popup.width, popup.height);
+    if (this.caret) {
+      let physical = this.placement;
+      if (physical === "start") physical = rtl ? "right" : "left";
+      if (physical === "end") physical = rtl ? "left" : "right";
+      if (physical === "left" || physical === "right") {
+        const right = position.x > anchor.left;
+        path += tooltipCaretPath(right ? 0 : popup.width, popup.height / 2, right ? "left" : "right");
+      } else {
+        const below = position.y > anchor.top;
+        path += tooltipCaretPath(tooltipCaretX(popup.width, windowSize.width, anchor), below ? 0 : popup.height, below ? "top" : "bottom");
+      }
+    }
+    this._background.setAttribute("width", popup.width);
+    this._background.setAttribute("height", popup.height);
+    this._background.setAttribute("viewBox", `0 0 ${popup.width} ${popup.height}`);
+    this._path.setAttribute("d", path);
+    this._path.setAttribute("fill", this._container);
+    const shadows = parseBoxShadow(getComputedStyle(surface).boxShadow);
+    surface.style.boxShadow = "none";
+    surface.style.background = "transparent";
+    this._shadow.draw({ path, extension: this.caret ? 8 : 0 }, { x: 0, y: 0, ...popup }, shadows);
+    surface.style.borderRadius = outline.type === "rounded" ? `${outline.radii.map((r) => r[0] + "px").join(" ")} / ${outline.radii.map((r) => r[1] + "px").join(" ")}` : "0px";
+    surface.style.clipPath = outline.type === "generic" ? `polygon(${outline.points.map((p) => p.map((v) => v + "px").join(" ")).join(",")})` : "";
+    surface.style.overflow = "hidden";
   }
 };
-if (!customElements.get("md-tooltip")) {
-  customElements.define("md-tooltip", MdTooltip);
-}
+if (!customElements.get("md-tooltip")) customElements.define("md-tooltip", MdTooltip);
+
+// src/components/md-snackbar.js
+if (!customElements.get("md-button")) customElements.define("md-button", MdButton);
+if (!customElements.get("md-icon-button")) customElements.define("md-icon-button", MdIconButton);
+var defaultStyle15 = `
+  :host { display: contents; outline: none; -webkit-tap-highlight-color: transparent; }
+  .stack { position: fixed; top: auto; inset-inline-start: var(--md-snackbar-inline-start, 16px); inset-inline-end: var(--md-snackbar-inline-end, 16px); bottom: var(--md-snackbar-bottom, 24px); z-index: 2002; margin: 0 auto; width: auto; height: auto; max-width: 648px; padding: 0; border: 0; background: transparent; color: inherit; display: grid; align-items: end; justify-items: center; overflow: visible; pointer-events: none; }
+  .stack[hidden] { display: none; }
+  .presentation { grid-area: 1/1; position: relative; box-sizing: border-box; padding: 12px; width: 100%; pointer-events: none; transform-origin: center; }
+  .shape-shadow { position: absolute; overflow: visible; pointer-events: none; }
+  .snackbar { box-sizing: border-box; position: relative; width: 100%; padding: 0; pointer-events: auto; overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-extra-small); background: var(--_snackbar-container, var(--md-sys-color-inverse-surface)); color: var(--_snackbar-content, var(--md-sys-color-inverse-on-surface)); box-shadow: var(--md-sys-elevation-level-3); }
+  .snackbar[hidden] { display: none; }
+  .message { position: absolute; display: block; min-width: 0; padding: 0; overflow-wrap: anywhere; white-space: pre-wrap; font: var(--md-sys-typescale-body-medium); letter-spacing: var(--md-sys-typescale-body-medium-tracking); color: inherit; }
+  .baseline { display: inline-block; width: 0; height: 0; padding: 0; border: 0; vertical-align: baseline; }
+  .action { position: absolute; min-height: 48px; align-items: center; color: var(--_snackbar-action-content, var(--md-sys-color-inverse-primary)); --md-toolbar-icon-transition: 0ms; --md-toolbar-button-container: transparent; --md-toolbar-button-content: var(--_snackbar-action-color, var(--md-sys-color-inverse-primary)); --md-toolbar-button-state-color: var(--_snackbar-action-color, var(--md-sys-color-inverse-primary)); }
+  .close { position: absolute; --md-icon-button-content-color: var(--_snackbar-dismiss, var(--md-sys-color-inverse-on-surface)); --md-toolbar-icon-container: transparent; --md-toolbar-icon-state-color: var(--_snackbar-dismiss, var(--md-sys-color-inverse-on-surface)); }
+  .action[hidden], .close[hidden] { display: none; }
+  .action-probe { position: absolute; visibility: hidden; pointer-events: none; white-space: nowrap; }
+  .color-probe { position: absolute; width: 0; height: 0; visibility: hidden; pointer-events: none; }
+`;
+var sheet3 = createComponentSheet(defaultStyle15);
+var colorAttrs = { "container-color": "--_snackbar-container", "content-color": "--_snackbar-content", "action-color": "--_snackbar-action-color", "action-content-color": "--_snackbar-action-content", "dismiss-action-content-color": "--_snackbar-dismiss" };
+var MdSnackbar = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["open", "message", "action-label", "duration", "timeout", "with-dismiss-action", "two-line", "action-on-new-line", "shape", "dismiss-label", "lang", ...Object.keys(colorAttrs)];
+  }
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    adoptSheet(this.shadowRoot, sheet3);
+    this._ownedState = new SnackbarHostState();
+    this._state = this._ownedState;
+    this._records = /* @__PURE__ */ new Map();
+    this._attributeRequests = /* @__PURE__ */ new WeakSet();
+    this._timer = null;
+    this._timerEpoch = 0;
+    this._reflecting = false;
+    this._keydown = (e) => {
+      if (!e.defaultPrevented && e.key === "Escape" && this._current) {
+        e.preventDefault();
+        this.close("escape");
+      }
+    };
+    this._layoutAll = () => {
+      for (const record of this._records.values()) this._syncLayout(record);
+    };
+  }
+  get open() {
+    return this.hasAttribute("open");
+  }
+  set open(value) {
+    this.toggleAttribute("open", !!value);
+  }
+  get message() {
+    return this.getAttribute("message") ?? "";
+  }
+  set message(value) {
+    this.setAttribute("message", value ?? "");
+  }
+  get actionLabel() {
+    return this.getAttribute("action-label");
+  }
+  set actionLabel(value) {
+    value == null ? this.removeAttribute("action-label") : this.setAttribute("action-label", value);
+  }
+  get duration() {
+    const value = this.getAttribute("duration");
+    return ["short", "long", "indefinite"].includes(value) ? value : this.actionLabel === null ? "short" : "indefinite";
+  }
+  set duration(value) {
+    if (value == null) this.removeAttribute("duration");
+    else {
+      snackbarTimeoutMillis(value);
+      this.setAttribute("duration", value);
+    }
+  }
+  get timeout() {
+    const value = Number(this.getAttribute("timeout"));
+    return this.hasAttribute("timeout") && Number.isFinite(value) ? Math.max(0, value) : snackbarTimeoutMillis(this.duration);
+  }
+  set timeout(value) {
+    if (value == null) this.removeAttribute("timeout");
+    else {
+      if (!Number.isFinite(value) || value < 0) throw new RangeError("Snackbar timeout must be finite and nonnegative");
+      this.setAttribute("timeout", value);
+    }
+  }
+  get withDismissAction() {
+    return this.hasAttribute("with-dismiss-action");
+  }
+  set withDismissAction(value) {
+    this.toggleAttribute("with-dismiss-action", !!value);
+  }
+  get actionOnNewLine() {
+    return this.hasAttribute("action-on-new-line");
+  }
+  set actionOnNewLine(value) {
+    this.toggleAttribute("action-on-new-line", !!value);
+  }
+  get twoLine() {
+    return this.hasAttribute("two-line");
+  }
+  set twoLine(value) {
+    this.toggleAttribute("two-line", !!value);
+  }
+  get containerColor() {
+    return this.getAttribute("container-color") ?? "";
+  }
+  set containerColor(value) {
+    this._color("container-color", value);
+  }
+  get contentColor() {
+    return this.getAttribute("content-color") ?? "";
+  }
+  set contentColor(value) {
+    this._color("content-color", value);
+  }
+  get actionContentColor() {
+    return this.getAttribute("action-content-color") ?? "";
+  }
+  set actionContentColor(value) {
+    this._color("action-content-color", value);
+  }
+  get actionColor() {
+    return this.getAttribute("action-color") ?? "";
+  }
+  set actionColor(value) {
+    this._color("action-color", value);
+  }
+  get dismissActionContentColor() {
+    return this.getAttribute("dismiss-action-content-color") ?? "";
+  }
+  set dismissActionContentColor(value) {
+    this._color("dismiss-action-content-color", value);
+  }
+  get dismissLabel() {
+    return this.getAttribute("dismiss-label") ?? materialString(this, "snackbarDismiss");
+  }
+  set dismissLabel(value) {
+    this._color("dismiss-label", value);
+  }
+  _color(name, value) {
+    value == null ? this.removeAttribute(name) : this.setAttribute(name, value);
+  }
+  get shape() {
+    const text = this.getAttribute("shape");
+    if (text === null) return null;
+    if (this._shapeCache?.text === text) return this._shapeCache.value;
+    let value = null;
+    try {
+      value = normalizeCornerShape(text);
+    } catch {
+    }
+    this._shapeCache = { text, value };
+    return value;
+  }
+  set shape(value) {
+    value == null ? this.removeAttribute("shape") : this.setAttribute("shape", JSON.stringify(normalizeCornerShape(value)));
+  }
+  get hostState() {
+    return this._state;
+  }
+  set hostState(value) {
+    const state = value ?? this._ownedState;
+    if (!state || typeof state.subscribe !== "function" || typeof state.showSnackbar !== "function") throw new TypeError("hostState must be a SnackbarHostState");
+    if (state === this._state) return;
+    this._unsubscribe?.();
+    this._state = state;
+    if (this.isConnected) this._bindState();
+  }
+  connectedCallback() {
+    if (!this._stack) {
+      const adopted = !!this.shadowRoot.adoptedStyleSheets?.length;
+      this.shadowRoot.innerHTML = `${adopted ? "" : `<style>${defaultStyle15}</style>`}<span class="color-probe" aria-hidden="true"></span><div class="stack" part="host" popover="manual" hidden></div>`;
+      this._stack = this.shadowRoot.querySelector(".stack");
+      this._colorProbe = this.shadowRoot.querySelector(".color-probe");
+    }
+    this._abort?.abort();
+    this._abort = new AbortController();
+    this.ownerDocument.addEventListener("keydown", this._keydown, { signal: this._abort.signal });
+    this.ownerDocument.fonts?.addEventListener("loadingdone", this._layoutAll, { signal: this._abort.signal });
+    this._stopTheme?.();
+    this._stopTheme = observeThemeContext(this, () => {
+      this._syncColors();
+      this._layoutAll();
+    });
+    this._hostResize?.disconnect();
+    this._hostResize = new ResizeObserver(this._layoutAll);
+    this._hostResize.observe(this._stack);
+    const initiallyOpen = this.open;
+    this._bindState();
+    if (initiallyOpen && !this._current) this.show();
+  }
+  disconnectedCallback() {
+    this._unsubscribe?.();
+    this._unsubscribe = null;
+    this._abort?.abort();
+    this._stopTheme?.();
+    this._stopTheme = null;
+    this._hostResize?.disconnect();
+    this._clearTimer();
+    for (const [data, record] of this._records) {
+      record.motion?.dispose();
+      record.resize?.disconnect();
+      if (data !== this._current) {
+        record.presentation.remove();
+        this._records.delete(data);
+      }
+    }
+  }
+  attributeChangedCallback(name, oldValue, value) {
+    if (oldValue === value || !this._stack || this._reflecting) return;
+    if (name === "open") {
+      if (this.open) {
+        if (!this._current) this.show();
+      } else this.close("dismiss");
+      return;
+    }
+    if (name in colorAttrs) {
+      this._syncColors();
+      return;
+    }
+    if (name === "dismiss-label" || name === "lang") {
+      for (const record of this._records.values()) this._syncDismissLabel(record);
+      return;
+    }
+    if (this._current && this._attributeRequests.has(this._current)) {
+      this._syncRecord(this._records.get(this._current), this._legacyVisuals());
+      if (["timeout", "duration", "action-label"].includes(name)) this._startTimer(this._current);
+    } else {
+      for (const record of this._records.values()) this._syncLayout(record);
+      if (name === "timeout" && this._current) this._startTimer(this._current);
+    }
+  }
+  _legacyVisuals() {
+    return { message: this.message, actionLabel: this.actionLabel, withDismissAction: this.withDismissAction, duration: this.duration };
+  }
+  show(message, actionLabel, duration) {
+    if (message != null) this.message = message;
+    if (actionLabel !== void 0) this.actionLabel = actionLabel;
+    if (duration !== void 0) {
+      if (typeof duration === "number") this.timeout = duration;
+      else this.duration = duration;
+    }
+    const current = this._state.currentSnackbarData;
+    if (current && this._state === this._ownedState) {
+      this._attributeRequests.add(current);
+      this._syncRecord(this._records.get(current), this._legacyVisuals());
+      this._startTimer(current);
+      return;
+    }
+    this._state.showSnackbar(this._legacyVisuals());
+    if (this._state === this._ownedState && this._state.currentSnackbarData) this._attributeRequests.add(this._state.currentSnackbarData);
+  }
+  showSnackbar(...args) {
+    return this._state.showSnackbar(...args);
+  }
+  close(reason = "dismiss") {
+    if (!this._current) return;
+    const current = this._current;
+    current.dismiss();
+    this.dispatchEvent(new CustomEvent("close", { detail: { reason }, bubbles: true, composed: true }));
+  }
+  _bindState() {
+    this._unsubscribe?.();
+    this._unsubscribe = this._state.subscribe((current) => this._setCurrent(current));
+    this._setCurrent(this._state.currentSnackbarData);
+  }
+  _setCurrent(current) {
+    this._current = current;
+    this._clearTimer();
+    this._reflecting = true;
+    this.toggleAttribute("open", !!current);
+    this._reflecting = false;
+    if (current) {
+      this._stack.hidden = false;
+      this._stack.showPopover?.();
+    }
+    if (current && !this._records.has(current)) this._createRecord(current);
+    for (const [data, record] of this._records) {
+      const visible2 = data === current;
+      record.node.inert = !visible2;
+      record.node.setAttribute("aria-hidden", String(!visible2));
+      if (!visible2) record.tooltip.dismiss();
+      if (visible2) {
+        this._observeRecord(record);
+        this._syncLayout(record);
+      }
+      record.node.setAttribute("aria-live", visible2 ? "polite" : "off");
+      if (visible2) record.node.setAttribute("role", "status");
+      else record.node.removeAttribute("role");
+      if (!record.motion || record.motion.disposed) this._makeMotion(record, visible2 ? 0.8 : 1, visible2 ? 0 : 1);
+      record.motion.set({ scale: { value: visible2 ? 1 : Math.fround(0.8), role: "expressiveSpatialFast" }, alpha: { value: visible2 ? 1 : 0, role: "expressiveEffectFast" } });
+    }
+    this._syncColors();
+    if (current) this._startTimer(current);
+  }
+  _createRecord(data) {
+    const presentation = this.ownerDocument.createElement("div");
+    presentation.className = "presentation";
+    presentation.setAttribute("part", "presentation");
+    const node = this.ownerDocument.createElement("div");
+    node.className = "snackbar";
+    node.setAttribute("part", "snackbar");
+    const message = this.ownerDocument.createElement("span");
+    message.className = "message";
+    message.setAttribute("part", "message");
+    const first = this.ownerDocument.createElement("span"), last = this.ownerDocument.createElement("span");
+    for (const marker of [first, last]) {
+      marker.className = "baseline";
+      marker.setAttribute("aria-hidden", "true");
+    }
+    const text = this.ownerDocument.createTextNode("");
+    message.append(first, text, last);
+    const action = this.ownerDocument.createElement("md-button");
+    action.className = "action";
+    action.setAttribute("variant", "text");
+    action.setAttribute("part", "action");
+    const dismiss = this.ownerDocument.createElement("md-icon-button");
+    dismiss.className = "close";
+    dismiss.setAttribute("icon", "close");
+    dismiss.setAttribute("aria-label", this.dismissLabel);
+    dismiss.setAttribute("part", "dismiss");
+    const tooltip = this.ownerDocument.createElement("md-tooltip");
+    tooltip.target = dismiss;
+    const probe = this.ownerDocument.createElement("span");
+    probe.className = "action-probe";
+    probe.setAttribute("aria-hidden", "true");
+    probe.inert = true;
+    const baseline = first.cloneNode();
+    probe.append(this.ownerDocument.createTextNode("Mg"), baseline);
+    node.append(message, action, dismiss, tooltip, probe);
+    presentation.append(node);
+    this._stack.append(presentation);
+    const record = { data, presentation, node, message, text, first, last, probe, baseline, action, dismiss, tooltip, shadow: new OutlineShadow(presentation), motion: null };
+    this._records.set(data, record);
+    this._syncRecord(record, this._attributeRequests.has(data) ? this._legacyVisuals() : data.visuals);
+    record.resize = new ResizeObserver(() => this._syncLayout(record));
+    this._observeRecord(record);
+    action.addEventListener("click", (e) => {
+      if (data !== this._current || action.hidden) return;
+      e.stopPropagation();
+      this.dispatchEvent(new CustomEvent("action", { bubbles: true, composed: true }));
+      if (data !== this._current) return;
+      data.performAction();
+      this.dispatchEvent(new CustomEvent("close", { detail: { reason: "action" }, bubbles: true, composed: true }));
+    });
+    dismiss.addEventListener("click", (e) => {
+      if (data === this._current && !dismiss.hidden) {
+        e.stopPropagation();
+        this.close("dismiss");
+      }
+    });
+  }
+  _syncRecord(record, visuals) {
+    if (!record) return;
+    record.visuals = visuals;
+    record.text.data = visuals.message;
+    record.action.hidden = visuals.actionLabel === null;
+    record.action.setAttribute("label", visuals.actionLabel ?? "");
+    record.dismiss.hidden = !visuals.withDismissAction;
+    this._syncDismissLabel(record);
+    this._syncLayout(record);
+  }
+  _syncDismissLabel(record) {
+    record.dismiss.setAttribute("aria-label", this.dismissLabel);
+    record.tooltip.text = this.dismissLabel;
+    record.tooltip.setAttribute("pane-title", this.dismissLabel);
+  }
+  _syncLayout(record) {
+    if (!this.isConnected || !record?.node.isConnected || !record.visuals || record.measuring || this._stack.hidden) return;
+    record.measuring = true;
+    try {
+      record.node.classList.toggle("with-dismiss", !!record.visuals.withDismissAction);
+      const newLine = this.actionOnNewLine && record.visuals.actionLabel !== null;
+      record.node.classList.toggle("new-line", newLine);
+      const rtl = getComputedStyle(this).direction === "rtl", width = Math.min(Math.max(0, this._stack.clientWidth - 24), newLine ? 600 : record.visuals.withDismissAction ? 616 : 624);
+      const innerWidth2 = Math.max(0, width - 16 - (newLine || record.visuals.withDismissAction ? 0 : 8));
+      const write7 = (element2, property, value) => {
+        if (element2.style[property] !== value) element2.style[property] = value;
+      };
+      write7(record.node, "width", `${width}px`);
+      write7(record.presentation, "width", `${width + 24}px`);
+      const control = (element2, withBaseline) => {
+        if (element2.hidden) return null;
+        const measured = { width: element2.offsetWidth, height: element2.offsetHeight };
+        if (withBaseline) {
+          const button = element2.shadowRoot.querySelector(".btn"), label = button?.querySelector(".lbl");
+          if (button && label) {
+            const style3 = getComputedStyle(button);
+            write7(record.probe, "font", style3.font);
+            write7(record.probe, "letterSpacing", style3.letterSpacing);
+            measured.first = Math.round((element2.offsetHeight - button.offsetHeight) / 2 + label.offsetTop + record.baseline.offsetTop);
+            measured.last = measured.first;
+          }
+        }
+        return measured;
+      };
+      const action = control(record.action, true), dismiss = control(record.dismiss, false);
+      const textWidth = Math.max(0, Math.min(600, innerWidth2) - (newLine ? 8 : (action?.width ?? 0) + (dismiss?.width ?? 0) + ((dismiss?.width ?? 0) === 0 ? 8 : 0)));
+      write7(record.message, "width", `${textWidth}px`);
+      const text = { width: textWidth, height: record.message.offsetHeight, first: record.first.offsetTop, last: record.last.offsetTop };
+      const place3 = (element2, x, y2) => {
+        write7(element2, "left", `${x}px`);
+        write7(element2, "top", `${y2}px`);
+      };
+      const input = { constraints: { maxWidth: this._stack.clientWidth }, text: newLine ? text : { ...text, height: text.height + 12, first: text.first + 6, last: text.last + 6 }, action, dismiss, newLine, rtl };
+      const layout = snackbarPresenterLayout(input), p = layout.placements, surface = p.snackbar;
+      const height = !newLine && this.twoLine ? Math.max(68, surface.height) : surface.height;
+      const minimumOffset = Math.trunc((height - surface.height) / 2);
+      place3(record.message, p.text.x - surface.x, p.text.y - surface.y + (newLine ? 0 : 6) + minimumOffset);
+      if (action) place3(record.action, p.action.x - surface.x, p.action.y - surface.y + minimumOffset);
+      if (dismiss) place3(record.dismiss, p.dismiss.x - surface.x, p.dismiss.y - surface.y + minimumOffset);
+      record.layoutInput = { width, availableWidth: this._stack.clientWidth, ...input };
+      record.node.classList.toggle("two-line", this.twoLine || text.first !== text.last);
+      write7(record.node, "height", `${height}px`);
+      this._syncShape(record, rtl);
+    } finally {
+      record.measuring = false;
+    }
+  }
+  _observeRecord(record) {
+    for (const element2 of [record.message, record.action, record.dismiss]) record.resize?.observe(element2);
+  }
+  _syncShape(record, rtl = getComputedStyle(this).direction === "rtl") {
+    const node = record.node, shape2 = this.shape;
+    if (shape2 === null) {
+      node.style.borderRadius = "";
+      node.style.clipPath = "";
+      node.style.boxShadow = "";
+      record.shadow.hide();
+      return;
+    }
+    const outline = cornerShapeOutline(shape2, node.offsetWidth, node.offsetHeight, rtl);
+    record.outline = outline;
+    node.style.borderRadius = outline.type === "rounded" ? `${outline.radii.map((r) => r[0] + "px").join(" ")} / ${outline.radii.map((r) => r[1] + "px").join(" ")}` : "0px";
+    node.style.clipPath = outline.type === "generic" ? `polygon(${outline.points.map((p) => p.map((v) => v + "px").join(" ")).join(",")})` : "";
+    node.style.boxShadow = "";
+    if (outline.type === "generic") {
+      const shadows = parseBoxShadow(getComputedStyle(node).boxShadow);
+      node.style.boxShadow = "none";
+      record.shadow.draw(outline, { x: node.offsetLeft, y: node.offsetTop, width: node.offsetWidth, height: node.offsetHeight }, shadows);
+    } else record.shadow.hide();
+  }
+  _syncColors() {
+    if (!this._colorProbe || !this.isConnected) return;
+    const valid2 = (value, fallback) => value && CSS.supports("color", value) ? value : fallback;
+    const colors = resolveSurfaceColors(this, this._colorProbe, { container: valid2(this.containerColor, "var(--md-sys-color-inverse-surface)"), content: valid2(this.contentColor, "var(--md-sys-color-inverse-on-surface)"), elevation: 0 });
+    for (const record of this._records.values()) {
+      record.node.style.setProperty("--_snackbar-container", colors.container);
+      record.node.style.setProperty("--_snackbar-content", colors.content);
+      record.node.style.setProperty("--md-absolute-tonal-elevation", String(colors.total));
+      this._syncDismissLabel(record);
+      for (const attr of ["action-color", "action-content-color", "dismiss-action-content-color"]) {
+        const property = colorAttrs[attr];
+        record.node.style.removeProperty(property);
+        const value = this.getAttribute(attr);
+        if (value && CSS.supports("color", value)) record.node.style.setProperty(property, value);
+      }
+      this._syncShape(record);
+    }
+  }
+  _makeMotion(record, scale2, alpha) {
+    record.motion = new SelectionMotion(this, { scale: Math.fround(scale2), alpha }, (values) => {
+      if (!this.isConnected) return;
+      record.presentation.style.transform = `scale(${values.scale})`;
+      record.presentation.style.opacity = Math.max(0, Math.min(1, values.alpha));
+      if (record.motion && record.data !== this._current && !record.motion.channels.alpha.animation) {
+        record.motion.dispose();
+        record.resize?.disconnect();
+        record.presentation.remove();
+        this._records.delete(record.data);
+        if (!this._records.size) {
+          this._stack.hidePopover?.();
+          this._stack.hidden = true;
+        }
+      }
+    });
+  }
+  _clearTimer() {
+    this._timerEpoch++;
+    if (this._timer !== null) clearTimeout(this._timer);
+    this._timer = null;
+  }
+  _startTimer(data) {
+    this._clearTimer();
+    if (!this.isConnected || data !== this._current) return;
+    let timeout = snackbarTimeoutMillis(this._records.get(data).visuals.duration);
+    if (this.hasAttribute("timeout")) timeout = this.timeout || Infinity;
+    if (this.recommendedTimeoutMillis) timeout = this.recommendedTimeoutMillis(timeout, { containsIcons: true, containsText: true, containsControls: this._records.get(data).visuals.actionLabel !== null });
+    if (Number.isFinite(timeout)) {
+      const deadline = Date.now() + Math.max(0, timeout), epoch = this._timerEpoch;
+      const schedule = () => {
+        this._timer = setTimeout(() => {
+          if (!this.isConnected || this._current !== data || this._timerEpoch !== epoch) return;
+          this._timer = null;
+          if (Date.now() < deadline) schedule();
+          else this.close("timeout");
+        }, Math.min(2147483647, Math.max(0, deadline - Date.now())));
+      };
+      schedule();
+    }
+  }
+};
+if (!customElements.get("md-snackbar")) customElements.define("md-snackbar", MdSnackbar);
 
 // src/components/md-badge.js
-var defaultStyle17 = `
+var defaultStyle16 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -8428,7 +12228,7 @@ var defaultStyle17 = `
     padding: 0 4px;
   }
 `;
-var badgeSheet = createComponentSheet(defaultStyle17);
+var badgeSheet = createComponentSheet(defaultStyle16);
 var MdBadge = class extends HTMLElement {
   static get observedAttributes() {
     return ["label", "max", "container-color", "content-color"];
@@ -8504,7 +12304,7 @@ var MdBadge = class extends HTMLElement {
     const isNumeric = Boolean(this.label);
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle17}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle16}</style>`}
       <span class="badge ${isNumeric ? "numeric" : "dot"}" role="status" aria-label="${escapeHtml(isNumeric ? this.label + " notifications" : "New notification")}">
         <span class="txt">${escapeHtml(this._displayText())}</span>
       </span>
@@ -8514,119 +12314,6 @@ var MdBadge = class extends HTMLElement {
 if (!customElements.get("md-badge")) {
   customElements.define("md-badge", MdBadge);
 }
-
-// src/motion/color-motion.js
-var clamp4 = (value, min, max) => Math.max(min, Math.min(max, value));
-var ColorSpringVector = class {
-  constructor(value) {
-    this.value = this.target = value.map(Math.fround);
-    this.animation = null;
-  }
-  sample(now) {
-    const animation = this.animation;
-    if (!animation) return { value: [...this.value], velocity: [0, 0, 0, 0] };
-    const elapsed = Math.max(0, now - animation.start);
-    if (elapsed >= animation.duration) {
-      this.finish();
-      return this.sample(now);
-    }
-    const states = animation.channels.map((channel2) => SpringPhysics.solve({
-      ...channel2,
-      from: Math.fround(channel2.from - channel2.to),
-      to: 0,
-      time: Math.floor(elapsed) / 1e3
-    }));
-    return {
-      value: states.map((state, index) => Math.fround(state.position + animation.channels[index].to)),
-      velocity: states.map((state) => Math.fround(state.velocity))
-    };
-  }
-  to(value, spec, { now = performance.now(), snap = false } = {}) {
-    const target = value.map(Math.fround);
-    if (target.every((component, index) => component === this.target[index])) return;
-    const current = this.sample(now);
-    this.target = target;
-    if (snap) {
-      this.finish();
-      return;
-    }
-    const channels = target.map((to, index) => ({
-      from: current.value[index],
-      to,
-      velocity: current.velocity[index],
-      stiffness: Math.fround(spec.stiffness),
-      dampingRatio: Math.fround(spec.dampingRatio)
-    }));
-    this.animation = { channels, start: now, duration: Math.max(...channels.map((channel2) => springDuration(channel2))) };
-  }
-  finish() {
-    this.value = [...this.target];
-    this.animation = null;
-  }
-};
-function colorVector(probe, color) {
-  probe.style.color = `oklab(from ${color} l a b / alpha)`;
-  const resolved = getComputedStyle(probe).color;
-  const match = /^oklab\(\s*([\d.e+-]+)%?\s+([\d.e+-]+)\s+([\d.e+-]+)(?:\s*\/\s*([\d.e+-]+)%?)?\s*\)$/.exec(resolved);
-  if (!match) throw new TypeError(`Cannot resolve an Oklab color: ${resolved}`);
-  const components = match.slice(1).map(Number);
-  return [match[4] === void 0 ? 1 : components[3], components[0], components[1], components[2]].map(Math.fround);
-}
-function vectorColor([alpha, l, a, b]) {
-  return `oklab(${clamp4(l, 0, 1)} ${clamp4(a, -0.5, 0.5)} ${clamp4(b, -0.5, 0.5)} / ${clamp4(alpha, 0, 1)})`;
-}
-var ColorMotion = class {
-  constructor(element2, probe, color, draw, { role = "expressiveEffectMedium" } = {}) {
-    this.element = element2;
-    this.probe = probe;
-    this.color = color;
-    this.draw = draw;
-    this.role = role;
-    this.vector = new ColorSpringVector(colorVector(probe, color));
-    this.raf = null;
-    this.disposed = false;
-    this.media = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
-    this.onPreference = () => {
-      if (this.media.matches) this.finish();
-    };
-    this.media?.addEventListener("change", this.onPreference);
-    this.render(performance.now());
-  }
-  set(color, { snap = false } = {}) {
-    if (this.disposed) return;
-    if (color === this.color) return;
-    this.color = color;
-    this.vector.to(
-      colorVector(this.probe, color),
-      SpringPhysics.getPreset(this.role, this.element),
-      { snap: snap || this.media?.matches }
-    );
-    this.tick(performance.now());
-  }
-  render(now) {
-    if (this.disposed) return;
-    const state = this.vector.sample(now);
-    this.draw(this.vector.animation ? vectorColor(state.value) : this.color);
-  }
-  tick(now) {
-    if (this.disposed) return;
-    if (this.raf !== null) cancelAnimationFrame(this.raf);
-    this.raf = null;
-    this.render(now);
-    if (this.vector.animation) this.raf = requestAnimationFrame((time) => this.tick(time));
-  }
-  finish() {
-    if (this.disposed) return;
-    this.vector.finish();
-    this.tick(performance.now());
-  }
-  dispose() {
-    this.disposed = true;
-    if (this.raf !== null) cancelAnimationFrame(this.raf);
-    this.raf = null;
-    this.media?.removeEventListener("change", this.onPreference);
-  }
-};
 
 // src/components/toolbar-padding.js
 var side = (value) => {
@@ -8663,41 +12350,41 @@ function resolveToolbarPadding(value = 8, rtl = false) {
 }
 
 // src/components/top-app-bar-layout.js
-var INF2 = 2147483647;
-var f11 = Math.fround;
-var round2 = (v) => Math.max(-2147483648, Math.min(INF2, Math.round(f11(v)))) || 0;
-var half = (v) => Math.trunc(v / 2) || 0;
-var clamp5 = (v, a, b) => Math.max(a, Math.min(b, v));
+var INF7 = 2147483647;
+var f19 = Math.fround;
+var round3 = (v) => Math.max(-2147483648, Math.min(INF7, Math.round(f19(v)))) || 0;
+var half2 = (v) => Math.trunc(v / 2) || 0;
+var clamp10 = (v, a, b) => Math.max(a, Math.min(b, v));
 function measureTopAppBar(o, measure = (name, c) => {
   const input = o[name] || { width: 0, height: 0 };
-  const size = { width: clamp5(input.width, c.minWidth, c.maxWidth), height: clamp5(input.height, c.minHeight, c.maxHeight) };
+  const size = { width: clamp10(input.width, c.minWidth, c.maxWidth), height: clamp10(input.height, c.minHeight, c.maxHeight) };
   return layoutPlaceable(name, size, c, [], { line: input.baseline ?? null });
 }) {
-  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF2, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF2 };
+  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF7, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF7 };
   const rtl = !!o.rtl, p = resolveToolbarPadding(o.contentPadding ?? 0, rtl), startPadding = rtl ? p.right : p.left, endPadding = rtl ? p.left : p.right;
   const childConstraints = { ...c, minWidth: 0 };
   const navigation = measure("navigationIcon", childConstraints), actions = measure("actionIcons", childConstraints);
   const start = Math.max(12, navigation.size.width), end = actions.size.width;
-  const maxTitleWidth = c.maxWidth === INF2 ? INF2 : Math.max(0, c.maxWidth - start - end - startPadding - endPadding);
+  const maxTitleWidth = c.maxWidth === INF7 ? INF7 : Math.max(0, c.maxWidth - start - end - startPadding - endPadding);
   const title = measure("title", { ...childConstraints, maxWidth: maxTitleWidth });
-  const offset = Number.isNaN(o.scrolledOffset) ? 0 : round2(o.scrolledOffset ?? 0);
-  const maximumHeight = Math.max(round2(o.height ?? 64), title.size.height) + p.top + p.bottom;
-  const height = c.maxHeight === INF2 ? maximumHeight : Math.max(0, maximumHeight + offset);
+  const offset2 = Number.isNaN(o.scrolledOffset) ? 0 : round3(o.scrolledOffset ?? 0);
+  const maximumHeight = Math.max(round3(o.height ?? 64), title.size.height) + p.top + p.bottom;
+  const height = c.maxHeight === INF7 ? maximumHeight : Math.max(0, maximumHeight + offset2);
   const contentHeight = height + p.top - p.bottom;
-  let titleX = o.alignment === "center" ? round2(f11(f11(c.maxWidth - title.size.width) * 0.5)) : o.alignment === "end" ? c.maxWidth - title.size.width : 0;
+  let titleX = o.alignment === "center" ? round3(f19(f19(c.maxWidth - title.size.width) * 0.5)) : o.alignment === "end" ? c.maxWidth - title.size.width : 0;
   if (titleX < start) titleX += startPadding + start - titleX;
   else if (titleX + title.size.width > c.maxWidth - end) titleX += startPadding + c.maxWidth - end - titleX - title.size.width;
-  let titleY = half(contentHeight - title.size.height);
+  let titleY = half2(contentHeight - title.size.height);
   if (o.vertical === "bottom") {
     const baseline = title.line ?? 0, padding2 = o.titleBottomPadding ?? 0;
     const bottom = padding2 - (title.size.height - baseline), adjusted = bottom + title.size.height > maximumHeight ? maximumHeight - title.size.height : bottom;
     titleY = contentHeight - title.size.height - (padding2 === 0 ? 0 : Math.max(0, adjusted));
   } else if (o.vertical === "top") titleY = 0;
-  const relative = (node, x, y2) => ({ node, x: rtl && c.maxWidth !== 0 ? c.maxWidth - node.size.width - x : x, y: y2 });
+  const relative4 = (node, x, y2) => ({ node, x: rtl && c.maxWidth !== 0 ? c.maxWidth - node.size.width - x : x, y: y2 });
   return layoutPlaceable(o.id || "row", { width: c.maxWidth, height }, c, [
-    relative(navigation, startPadding, half(contentHeight - navigation.size.height)),
-    relative(title, titleX, titleY),
-    relative(actions, c.maxWidth - actions.size.width - endPadding, half(contentHeight - actions.size.height))
+    relative4(navigation, startPadding, half2(contentHeight - navigation.size.height)),
+    relative4(title, titleX, titleY),
+    relative4(actions, c.maxWidth - actions.size.width - endPadding, half2(contentHeight - actions.size.height))
   ], { maximumHeight, maxTitleWidth });
 }
 function topAppBarLayout(o, measure) {
@@ -8706,7 +12393,7 @@ function topAppBarLayout(o, measure) {
 }
 function paddingBox(id, c, start, end, rtl, measure) {
   const horizontal = start + end, inner = { ...c, minWidth: Math.max(0, c.minWidth - horizontal), maxWidth: Math.max(0, c.maxWidth - horizontal) };
-  const child = measure(inner), width = clamp5(child.size.width + horizontal, c.minWidth, c.maxWidth), height = clamp5(child.size.height, c.minHeight, c.maxHeight);
+  const child = measure(inner), width = clamp10(child.size.width + horizontal, c.minWidth, c.maxWidth), height = clamp10(child.size.height, c.minHeight, c.maxHeight);
   const x = rtl ? end : start;
   return layoutPlaceable(id, { width, height }, c, [{ node: child, x, y: 0 }], { line: child.line === null || child.line === void 0 ? null : child.line + child.offset.y });
 }
@@ -8737,24 +12424,24 @@ function topAppBarContentLayout(o) {
 }
 
 // src/motion/top-app-bar-motion.js
-var f12 = Math.fround;
+var f20 = Math.fround;
 var valid = (r) => {
   const s = Math.max(0, Math.min(1, r));
-  return Math.abs(f12(s - r)) > f12(105e-8) ? NaN : s;
+  return Math.abs(f20(s - r)) > f20(105e-8) ? NaN : s;
 };
 function transform(fraction, x1, y1, x2, y2) {
-  fraction = f12(fraction);
+  fraction = f20(fraction);
   if (!(fraction > 0 && fraction < 1)) return fraction;
-  const progress = Math.max(fraction, f12(11920929e-14)), p0 = f12(-progress), p12 = f12(f12(x1) - progress), p22 = f12(f12(x2) - progress), p3 = f12(1 - progress);
-  let a = 3 * (p0 - 2 * p12 + p22), b = 3 * f12(p12 - p0), c = p0;
-  const divisor = -p0 + 3 * f12(p12 - p22) + p3;
+  const progress = Math.max(fraction, f20(11920929e-14)), p0 = f20(-progress), p12 = f20(f20(x1) - progress), p22 = f20(f20(x2) - progress), p3 = f20(1 - progress);
+  let a = 3 * (p0 - 2 * p12 + p22), b = 3 * f20(p12 - p0), c = p0;
+  const divisor = -p0 + 3 * f20(p12 - p22) + p3;
   let t;
   if (Math.abs(divisor) < 1e-7) {
-    if (Math.abs(a) < 1e-7) t = Math.abs(b) < 1e-7 ? NaN : valid(f12(-c / b));
+    if (Math.abs(a) < 1e-7) t = Math.abs(b) < 1e-7 ? NaN : valid(f20(-c / b));
     else {
       const root = Math.sqrt(b * b - 4 * a * c);
-      t = valid(f12((root - b) / (2 * a)));
-      if (Number.isNaN(t)) t = valid(f12((-b - root) / (2 * a)));
+      t = valid(f20((root - b) / (2 * a)));
+      if (Number.isNaN(t)) t = valid(f20((-b - root) / (2 * a)));
     }
   } else {
     a /= divisor;
@@ -8762,32 +12449,32 @@ function transform(fraction, x1, y1, x2, y2) {
     c /= divisor;
     const o3 = (3 * b - a * a) / 9, q2 = (2 * a * a * a - 9 * a * b + 27 * c) / 54, discriminant = q2 * q2 + o3 * o3 * o3, a3 = a / 3;
     if (discriminant < 0) {
-      const r = Math.sqrt(-(o3 * o3 * o3)), phi = Math.acos(Math.max(-1, Math.min(1, -q2 / r))), t1 = f12(2 * fastCbrt(f12(r)));
+      const r = Math.sqrt(-(o3 * o3 * o3)), phi = Math.acos(Math.max(-1, Math.min(1, -q2 / r))), t1 = f20(2 * fastCbrt(f20(r)));
       for (const angle of [phi, phi + 2 * Math.PI, phi + 4 * Math.PI]) {
-        t = valid(f12(t1 * Math.cos(angle / 3) - a3));
+        t = valid(f20(t1 * Math.cos(angle / 3) - a3));
         if (!Number.isNaN(t)) break;
       }
     } else if (discriminant === 0) {
-      const u = -fastCbrt(f12(q2));
-      t = valid(f12(f12(2 * u) - f12(a3)));
-      if (Number.isNaN(t)) t = valid(f12(-u - f12(a3)));
+      const u = -fastCbrt(f20(q2));
+      t = valid(f20(f20(2 * u) - f20(a3)));
+      if (Number.isNaN(t)) t = valid(f20(-u - f20(a3)));
     } else {
       const sd = Math.sqrt(discriminant);
-      t = valid(f12(f12(fastCbrt(f12(-q2 + sd)) - fastCbrt(f12(q2 + sd))) - a3));
+      t = valid(f20(f20(fastCbrt(f20(-q2 + sd)) - fastCbrt(f20(q2 + sd))) - a3));
     }
   }
   if (Number.isNaN(t)) throw new RangeError("Top app bar easing has no solution");
-  const aY = f12(f12(1 / 3) + f12(f12(y1) - f12(y2))), bY = f12(f12(y2) - f12(2 * f12(y1)));
-  return Math.max(0, Math.min(1, f12(f12(3 * f12(f12(f12(aY * t) + bY) * t + f12(y1))) * t)));
+  const aY = f20(f20(1 / 3) + f20(f20(y1) - f20(y2))), bY = f20(f20(y2) - f20(2 * f20(y1)));
+  return Math.max(0, Math.min(1, f20(f20(3 * f20(f20(f20(aY * t) + bY) * t + f20(y1))) * t)));
 }
 var topAppBarTitleAlpha = (fraction) => transform(fraction, 0.8, 0, 0.8, 0.15);
 var topAppBarColorFraction = (fraction) => transform(fraction, 0.4, 0, 1, 1);
 
 // src/motion/velocity-tracker.js
-var f13 = Math.fround;
+var f21 = Math.fround;
 var dot = (a, b) => {
   let result = 0;
-  for (let i = 0; i < a.length; i++) result = f13(result + f13(a[i] * b[i]));
+  for (let i = 0; i < a.length; i++) result = f21(result + f21(a[i] * b[i]));
   return result;
 };
 function leastSquaresVelocity(samples, maximum = 8e3) {
@@ -8795,10 +12482,10 @@ function leastSquaresVelocity(samples, maximum = 8e3) {
   if (!newest) return 0;
   let previous = newest;
   for (let i = samples.length - 1; i >= 0 && points.length < 20; i--) {
-    const sample = samples[i], age = f13(newest.time - sample.time), gap = f13(Math.abs(sample.time - previous.time));
+    const sample = samples[i], age = f21(newest.time - sample.time), gap = f21(Math.abs(sample.time - previous.time));
     previous = sample;
     if (age > 100 || gap > 40) break;
-    points.push(f13(sample.position));
+    points.push(f21(sample.position));
     times2.push(-age);
   }
   if (points.length < 2) return 0;
@@ -8808,26 +12495,26 @@ function leastSquaresVelocity(samples, maximum = 8e3) {
   const r = Array.from({ length: n }, () => new Float32Array(n));
   for (let h = 0; h < count; h++) {
     a[0][h] = 1;
-    for (let i = 1; i < n; i++) a[i][h] = f13(a[i - 1][h] * times2[h]);
+    for (let i = 1; i < n; i++) a[i][h] = f21(a[i - 1][h] * times2[h]);
   }
   for (let j = 0; j < n; j++) {
     const w = q[j];
     w.set(a[j]);
     for (let i = 0; i < j; i++) {
       const z = q[i], projection = dot(w, z);
-      for (let h = 0; h < count; h++) w[h] = f13(w[h] - f13(projection * z[h]));
+      for (let h = 0; h < count; h++) w[h] = f21(w[h] - f21(projection * z[h]));
     }
-    const inverse = f13(1 / Math.max(f13(Math.sqrt(dot(w, w))), f13(1e-6)));
-    for (let h = 0; h < count; h++) w[h] = f13(w[h] * inverse);
+    const inverse = f21(1 / Math.max(f21(Math.sqrt(dot(w, w))), f21(1e-6)));
+    for (let h = 0; h < count; h++) w[h] = f21(w[h] * inverse);
     for (let i = 0; i < n; i++) r[j][i] = i < j ? 0 : dot(w, a[i]);
   }
   const coefficients = new Float32Array(n);
   for (let i = n - 1; i >= 0; i--) {
     let value = dot(q[i], points);
-    for (let j = n - 1; j > i; j--) value = f13(value - f13(r[i][j] * coefficients[j]));
-    coefficients[i] = f13(value / r[i][i]);
+    for (let j = n - 1; j > i; j--) value = f21(value - f21(r[i][j] * coefficients[j]));
+    coefficients[i] = f21(value / r[i][i]);
   }
-  const velocity = f13(coefficients[1] * 1e3);
+  const velocity = f21(coefficients[1] * 1e3);
   return Number.isNaN(velocity) ? 0 : Math.max(-maximum, Math.min(maximum, velocity));
 }
 var PointerVelocityTracker = class {
@@ -8836,7 +12523,7 @@ var PointerVelocityTracker = class {
     this.lastMove = 0;
   }
   add(time, position) {
-    this.samples.push({ time: Math.floor(time), position: f13(position) });
+    this.samples.push({ time: Math.floor(time), position: f21(position) });
     if (this.samples.length > 20) this.samples.shift();
   }
   down(time, position) {
@@ -8851,6 +12538,45 @@ var PointerVelocityTracker = class {
   up(time, maximum = 8e3) {
     if (Math.floor(time) - this.lastMove > 40) this.samples = [];
     return leastSquaresVelocity(this.samples, maximum);
+  }
+};
+
+// src/motion/scroll-position.js
+var ScrollPosition = class {
+  constructor(target) {
+    this.target = target;
+    this.last = this.element?.scrollTop ?? 0;
+    this.pending = false;
+  }
+  get element() {
+    return this.target === globalThis.window ? document.scrollingElement : this.target;
+  }
+  consume() {
+    const current = this.element?.scrollTop ?? 0, delta = Math.fround(this.last - current);
+    this.last = current;
+    if (delta) this.pending = true;
+    return delta;
+  }
+  commit() {
+    this.last = this.element?.scrollTop ?? 0;
+  }
+  begin() {
+    this.pending = true;
+  }
+  end() {
+    const pending = this.pending;
+    this.pending = false;
+    return pending;
+  }
+  captureLayout() {
+    const element2 = this.element;
+    return element2 ? { element: element2, top: element2.scrollTop } : null;
+  }
+  restoreLayout(before) {
+    if (!before || before.element !== this.element) return;
+    const element2 = before.element, maximum = Math.max(0, element2.scrollHeight - element2.clientHeight), wanted = Math.min(maximum, Math.max(-maximum, before.top));
+    if (element2.scrollTop !== wanted) element2.scrollTop = wanted;
+    this.last += element2.scrollTop - before.top;
   }
 };
 
@@ -8878,21 +12604,21 @@ var style = `
  .color-probe{position:absolute;visibility:hidden;pointer-events:none}
  [hidden]{display:none!important}
 `;
-var sheet2 = createComponentSheet(style);
-var INF3 = 2147483647;
-var f14 = Math.fround;
+var sheet4 = createComponentSheet(style);
+var INF8 = 2147483647;
+var f22 = Math.fround;
 var variants = ["small", "center-aligned", "medium", "large", "medium-flexible", "large-flexible"];
-var make = (tag, name, parent) => {
+var make = (tag, name, parent2) => {
   const n = document.createElement(tag);
   n.className = name;
-  parent.append(n);
+  parent2.append(n);
   return n;
 };
-var write2 = (n, key, value) => {
+var write4 = (n, key, value) => {
   if (n.style[key] !== value) n.style[key] = value;
 };
-var rect = (n, p) => {
-  for (const [key, value] of Object.entries({ left: p.x, top: p.y, width: p.width, height: p.height })) write2(n, key, value + "px");
+var rect3 = (n, p) => {
+  for (const [key, value] of Object.entries({ left: p.x, top: p.y, width: p.width, height: p.height })) write4(n, key, value + "px");
 };
 var find = (n, id) => n.id === id ? n : n.children.map((p) => find(p.node, id)).find(Boolean);
 var validColor = (value, fallback) => value && CSS.supports("color", value) ? value : fallback;
@@ -8903,7 +12629,7 @@ var MdTopAppBar = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet2);
+    adoptSheet(this.shadowRoot, sheet4);
     this._rendered = false;
     this._queued = false;
     this._scrollBehavior = null;
@@ -8948,7 +12674,7 @@ var MdTopAppBar = class extends HTMLElement {
     return (!this.twoRows || this._flexible) && (this.hasAttribute("subtitle") || !!this.querySelector('[slot="subtitle"]'));
   }
   _height(name, fallback) {
-    const raw = this.getAttribute(name), n = f14(Number(raw));
+    const raw = this.getAttribute(name), n = f22(Number(raw));
     return raw !== null && Number.isFinite(n) ? n : fallback;
   }
   get _defaultExpandedHeight() {
@@ -8958,7 +12684,7 @@ var MdTopAppBar = class extends HTMLElement {
     return Math.max(this.twoRows ? this.collapsedHeight : -Infinity, this._height("expanded-height", this._defaultExpandedHeight));
   }
   set expandedHeight(v) {
-    if (v != null && !Number.isNaN(Number(v)) && Number(v) !== Infinity && (!Number.isFinite(f14(Number(v))) || this.twoRows && Number(v) < this.collapsedHeight)) throw new RangeError("Expanded height must be finite and at least the collapsed height");
+    if (v != null && !Number.isNaN(Number(v)) && Number(v) !== Infinity && (!Number.isFinite(f22(Number(v))) || this.twoRows && Number(v) < this.collapsedHeight)) throw new RangeError("Expanded height must be finite and at least the collapsed height");
     this._set("expanded-height", v);
   }
   get collapsedHeight() {
@@ -8966,14 +12692,14 @@ var MdTopAppBar = class extends HTMLElement {
   }
   set collapsedHeight(v) {
     if (v != null && !Number.isNaN(Number(v)) && Number(v) !== Infinity) {
-      const n = f14(Number(v));
+      const n = f22(Number(v));
       if (!Number.isFinite(n) || this.twoRows && n > this._height("expanded-height", this._defaultExpandedHeight)) throw new RangeError("Collapsed height must be finite and at most the expanded height");
     }
     this._set("collapsed-height", v);
   }
   get heightOffset() {
     if (this._scrollBehavior) return this._scrollBehavior.state.heightOffset;
-    const n = f14(Number(this.getAttribute("height-offset")));
+    const n = f22(Number(this.getAttribute("height-offset")));
     return Number.isFinite(n) ? Math.max(this.heightOffsetLimit, Math.min(0, n)) : 0;
   }
   set heightOffset(v) {
@@ -8984,12 +12710,12 @@ var MdTopAppBar = class extends HTMLElement {
     return this._scrollBehavior?.state.heightOffsetLimit ?? -(this.twoRows ? this.expandedHeight - this.collapsedHeight : Math.max(0, this.expandedHeight));
   }
   get collapsedFraction() {
-    return this.heightOffsetLimit === 0 ? 0 : f14(this.heightOffset / this.heightOffsetLimit);
+    return this.heightOffsetLimit === 0 ? 0 : f22(this.heightOffset / this.heightOffsetLimit);
   }
   get overlappedFraction() {
     if (this.scrolled) return 1;
     if (this._scrollBehavior) return this._scrollBehavior.state.overlappedFraction;
-    const n = f14(Number(this.getAttribute("overlapped-fraction")));
+    const n = f22(Number(this.getAttribute("overlapped-fraction")));
     return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
   }
   set overlappedFraction(v) {
@@ -9133,16 +12859,16 @@ var MdTopAppBar = class extends HTMLElement {
     this._bottom = make("div", "row expanded", this._viewport);
     this._leading = make("div", "group leading", this._top);
     this._trailing = make("div", "group trailing", this._top);
-    const slot = (name, parent) => {
-      const n = make("slot", "", parent);
+    const slot = (name, parent2) => {
+      const n = make("slot", "", parent2);
       n.name = name;
       return n;
     };
     this._navigation = slot("leading", this._leading);
     this._actions = slot("trailing", this._trailing);
     this._titles = {};
-    for (const [name, parent] of [["top", this._top], ["bottom", this._bottom]]) {
-      const group = make("div", "titles", parent), records = [];
+    for (const [name, parent2] of [["top", this._top], ["bottom", this._bottom]]) {
+      const group = make("div", "titles", parent2), records = [];
       for (const kind of ["headline", "subtitle"]) {
         const line = make("div", "line " + kind + "-line", group), s = slot(name === "top" ? kind === "headline" ? "collapsed-title" : "collapsed-subtitle" : kind === "headline" ? "title" : "subtitle", line);
         const label = make("span", kind, s), text = document.createTextNode("");
@@ -9163,6 +12889,7 @@ var MdTopAppBar = class extends HTMLElement {
     if (this._queued || !this.isConnected) return;
     this._queued = true;
     queueMicrotask(() => {
+      if (!this._queued) return;
       this._queued = false;
       if (this.isConnected) this._sync();
     });
@@ -9171,74 +12898,80 @@ var MdTopAppBar = class extends HTMLElement {
     while (this._sizes.sheet.cssRules.length > 1) this._sizes.sheet.deleteRule(1);
   }
   _sync() {
+    this._queued = false;
     if (!this._rendered || !this.isConnected) return;
-    this._bottom.className = "row expanded " + this.variant;
-    this._bottom.hidden = !this.twoRows;
-    this._bar.setAttribute("aria-label", this.getAttribute("aria-label") || "Top app bar");
-    const subtitle = this._subtitleProvided;
-    for (const [name, title] of Object.entries(this._titles)) for (const record of title.records) {
-      const value = record.kind === "headline" ? this.headline : this.subtitle;
-      if (record.text.data !== value) record.text.data = value;
-      record.line.hidden = record.kind === "subtitle" && !subtitle;
-      const slotName = !this.twoRows && name === "top" ? record.kind === "headline" ? "title" : "subtitle" : name === "top" ? record.kind === "headline" ? "collapsed-title" : "collapsed-subtitle" : record.kind === "headline" ? "title" : "subtitle";
-      if (record.slot.name !== slotName) record.slot.name = slotName;
-      if (name === "bottom" && !this.twoRows) record.slot.name = "unused-" + record.kind;
+    const position = this._scrollPosition, before = position?.captureLayout();
+    try {
+      this._bottom.className = "row expanded " + this.variant;
+      this._bottom.hidden = !this.twoRows;
+      this._bar.setAttribute("aria-label", this.getAttribute("aria-label") || "Top app bar");
+      const subtitle = this._subtitleProvided;
+      for (const [name, title] of Object.entries(this._titles)) for (const record of title.records) {
+        const value = record.kind === "headline" ? this.headline : this.subtitle;
+        if (record.text.data !== value) record.text.data = value;
+        record.line.hidden = record.kind === "subtitle" && !subtitle;
+        const slotName = !this.twoRows && name === "top" ? record.kind === "headline" ? "title" : "subtitle" : name === "top" ? record.kind === "headline" ? "collapsed-title" : "collapsed-subtitle" : record.kind === "headline" ? "title" : "subtitle";
+        if (record.slot.name !== slotName) record.slot.name = slotName;
+        if (name === "bottom" && !this.twoRows) record.slot.name = "unused-" + record.kind;
+      }
+      this._layout();
+      this._colors();
+    } finally {
+      if (position === this._scrollPosition) position?.restoreLayout(before);
     }
-    this._layout();
-    this._colors();
   }
   _colors() {
-    const css = getComputedStyle(this), resolve = (value, fallback) => {
+    const css2 = getComputedStyle(this), resolve = (value, fallback) => {
       this._probe.style.color = validColor(value, fallback);
       return getComputedStyle(this._probe).color;
     };
-    const role = (name) => css.getPropertyValue("--md-sys-color-" + name).trim();
+    const role = (name) => css2.getPropertyValue("--md-sys-color-" + name).trim();
     const container = resolve(this.containerColor, role("surface")), scrolled = resolve(this.scrolledContainerColor, role("surface-container"));
     for (const [node, value, fallback] of [[this._leading, this.navigationIconContentColor, "on-surface"], [this._trailing, this.actionIconContentColor, "on-surface-variant"]]) {
       const color = resolve(value, validColor(this.contentColor, role(fallback)));
-      write2(node, "color", color);
+      write4(node, "color", color);
       node.style.setProperty("--md-icon-button-content-color", color);
       node.style.setProperty("--md-icon-button-outline-color", color);
       node.style.setProperty("--md-icon-button-disabled-content-color", `rgb(from ${color} r g b / .38)`);
     }
-    for (const title of Object.values(this._titles)) for (const record of title.records) write2(record.line, "color", resolve(record.kind === "headline" ? this.titleContentColor : this.subtitleContentColor, validColor(this.contentColor, role(record.kind === "headline" ? "on-surface" : "on-surface-variant"))));
+    for (const title of Object.values(this._titles)) for (const record of title.records) write4(record.line, "color", resolve(record.kind === "headline" ? this.titleContentColor : this.subtitleContentColor, validColor(this.contentColor, role(record.kind === "headline" ? "on-surface" : "on-surface-variant"))));
     if (this.twoRows) {
       this._color?.dispose();
       this._color = null;
       const fraction = this.scrolled ? 1 : this.collapsedFraction, progress = topAppBarColorFraction(fraction), a = colorVector(this._probe, container), b = colorVector(this._probe, scrolled);
-      write2(this._bar, "backgroundColor", fraction === 0 ? container : fraction === 1 ? scrolled : vectorColor(a.map((v, i) => f14(f14(f14(1 - progress) * v) + f14(progress * b[i])))));
-      write2(this._titles.top.group, "opacity", String(topAppBarTitleAlpha(this.collapsedFraction)));
-      write2(this._titles.bottom.group, "opacity", String(f14(1 - this.collapsedFraction)));
+      write4(this._bar, "backgroundColor", fraction === 0 ? container : fraction === 1 ? scrolled : vectorColor(a.map((v, i) => f22(f22(f22(1 - progress) * v) + f22(progress * b[i])))));
+      write4(this._titles.top.group, "opacity", String(topAppBarTitleAlpha(this.collapsedFraction)));
+      write4(this._titles.bottom.group, "opacity", String(f22(1 - this.collapsedFraction)));
       this._titles.top.group.setAttribute("aria-hidden", String(this.collapsedFraction < 0.5));
       this._titles.bottom.group.setAttribute("aria-hidden", String(this.collapsedFraction >= 0.5));
       this._titles.top.group.inert = this.collapsedFraction < 0.5;
       this._titles.bottom.group.inert = this.collapsedFraction >= 0.5;
     } else {
       const target = this.overlappedFraction > 0.01 ? scrolled : container;
-      if (!this._color) this._color = new ColorMotion(this, this._probe, target, (c) => write2(this._bar, "backgroundColor", c));
+      if (!this._color) this._color = new ColorMotion(this, this._probe, target, (c) => write4(this._bar, "backgroundColor", c));
       else this._color.set(target);
-      write2(this._titles.top.group, "opacity", "1");
+      write4(this._titles.top.group, "opacity", "1");
       this._titles.top.group.removeAttribute("aria-hidden");
       this._titles.top.group.inert = false;
     }
   }
   _leaf(n, id) {
-    const r = n.getBoundingClientRect(), button = n.localName === "md-icon-button" ? n.shadowRoot?.querySelector("button") : null, css = getComputedStyle(n);
-    const b = button ? getComputedStyle(button) : null, minimum = parseFloat(css.getPropertyValue("--md-minimum-interactive-component-size"));
+    const r = n.getBoundingClientRect(), button = n.localName === "md-icon-button" ? n.shadowRoot?.querySelector("button") : null, css2 = getComputedStyle(n);
+    const b = button ? getComputedStyle(button) : null, minimum = parseFloat(css2.getPropertyValue("--md-minimum-interactive-component-size"));
     const baseline = Number(n.getAttribute("data-last-baseline")), weight = Number(n.getAttribute("data-app-bar-weight"));
-    return { id, width: Math.round(r.width), height: Math.round(r.height), line: n.hasAttribute("data-last-baseline") && Number.isFinite(baseline) ? Math.round(baseline) : null, weight: weight > 0 ? f14(Math.min(weight, 34028234663852886e22)) : 0, fill: n.getAttribute("data-app-bar-fill") !== "false", ink: b ? { width: Math.round(parseFloat(b.width)), height: Math.round(parseFloat(b.height)), minimum: Number.isFinite(minimum) ? minimum : 48 } : null };
+    return { id, width: Math.round(r.width), height: Math.round(r.height), line: n.hasAttribute("data-last-baseline") && Number.isFinite(baseline) ? Math.round(baseline) : null, weight: weight > 0 ? f22(Math.min(weight, 34028234663852886e22)) : 0, fill: n.getAttribute("data-app-bar-fill") !== "false", ink: b ? { width: Math.round(parseFloat(b.width)), height: Math.round(parseFloat(b.height)), minimum: Number.isFinite(minimum) ? minimum : 48 } : null };
   }
   _layout() {
     this._clearRules();
     const rtl = getComputedStyle(this).direction === "rtl", sizing = this._sizes.sheet.cssRules[0].style;
-    const dimension = () => {
+    const dimension3 = () => {
       const s = getComputedStyle(this);
       return Math.max(0, Math.round(parseFloat(s.height) || 0) - (s.boxSizing === "border-box" ? (parseFloat(s.paddingTop) || 0) + (parseFloat(s.paddingBottom) || 0) + (parseFloat(s.borderTopWidth) || 0) + (parseFloat(s.borderBottomWidth) || 0) : 0));
     };
     sizing.setProperty("--_top-app-bar-height", "0px");
-    const minHeight = dimension();
+    const minHeight = dimension3();
     sizing.setProperty("--_top-app-bar-height", "1000000px");
-    const cap = dimension(), maxHeight = cap >= 1e6 ? INF3 : Math.max(minHeight, cap);
+    const cap = dimension3(), maxHeight = cap >= 1e6 ? INF8 : Math.max(minHeight, cap);
     sizing.removeProperty("--_top-app-bar-height");
     const inset = Math.round(parseFloat(getComputedStyle(this._bar).paddingTop) || 0);
     const width = Math.max(0, Math.round(this._viewport.getBoundingClientRect().width)), entries = [], collect = (slot, prefix) => slot.assignedElements().filter((n) => getComputedStyle(n).display !== "none").map((n, i) => {
@@ -9252,9 +12985,9 @@ var MdTopAppBar = class extends HTMLElement {
     for (const name of this.twoRows ? ["top", "bottom"] : ["top"]) {
       const title = this._titles[name], input = {};
       for (const record of title.records) {
-        rect(record.line, { x: 0, y: 0, width: 0, height: 0 });
-        write2(record.line, "width", "max-content");
-        write2(record.line, "height", "auto");
+        rect3(record.line, { x: 0, y: 0, width: 0, height: 0 });
+        write4(record.line, "width", "max-content");
+        write4(record.line, "height", "auto");
         const elements = collect(record.slot, name + "-" + record.kind + "-");
         if (elements.length) input[record.kind] = elements;
         else {
@@ -9262,33 +12995,33 @@ var MdTopAppBar = class extends HTMLElement {
           input[record.kind] = [{ id: name + "-" + record.kind, width: Math.ceil(r.width), height: Math.round(r.height), line: Math.round(baseline.top - r.top) }];
         }
       }
-      const height = name === "bottom" ? f14(this.expandedHeight - this.collapsedHeight) : this.twoRows ? this.collapsedHeight : this.expandedHeight;
-      const available = maxHeight === INF3 ? INF3 : Math.max(0, maxHeight - inset - y2), minimum = this.twoRows ? 0 : Math.max(0, minHeight - inset);
+      const height = name === "bottom" ? f22(this.expandedHeight - this.collapsedHeight) : this.twoRows ? this.collapsedHeight : this.expandedHeight;
+      const available = maxHeight === INF8 ? INF8 : Math.max(0, maxHeight - inset - y2), minimum = this.twoRows ? 0 : Math.max(0, minHeight - inset);
       const layout = topAppBarContentLayout({ id: name + "-row", minWidth: width, maxWidth: width, minHeight: minimum, maxHeight: available, rtl, height, scrolledOffset: name === "bottom" || !this.twoRows ? this.heightOffset : 0, alignment: this.titleHorizontalAlignment, vertical: name === "bottom" ? "bottom" : "center", titleBottomPadding: name === "bottom" ? this.variant.startsWith("medium") ? 24 : 28 : 0, contentPadding: this.twoRows ? 0 : this.contentPadding, navigation: name === "top" ? navigation : [], actions: name === "top" ? actions : [], title: input.headline, subtitle: input.subtitle, subtitleProvided: this._subtitleProvided });
       rows[name] = layout;
       const row2 = name === "top" ? this._top : this._bottom;
-      rect(row2, { x: 0, y: y2, ...layout.size });
-      const positions2 = layout.placements;
-      rect(title.group, positions2.title);
+      rect3(row2, { x: 0, y: y2, ...layout.size });
+      const positions3 = layout.placements;
+      rect3(title.group, positions3.title);
       for (const record of title.records) {
-        const box3 = positions2[record.kind === "headline" ? "headline-box" : "subtitle-box"] || positions2["title-box"];
+        const box3 = positions3[record.kind === "headline" ? "headline-box" : "subtitle-box"] || positions3["title-box"];
         if (!box3) continue;
-        const leaf2 = positions2[name + "-" + record.kind] || box3;
-        rect(record.line, { x: leaf2.x - positions2.title.x, y: leaf2.y - positions2.title.y, width: leaf2.width, height: box3.height });
+        const leaf3 = positions3[name + "-" + record.kind] || box3;
+        rect3(record.line, { x: leaf3.x - positions3.title.x, y: leaf3.y - positions3.title.y, width: leaf3.width, height: box3.height });
       }
       if (name === "top") {
-        rect(this._leading, positions2.navigationIcon);
-        rect(this._trailing, positions2.actionIcons);
+        rect3(this._leading, positions3.navigationIcon);
+        rect3(this._trailing, positions3.actionIcons);
       }
       for (const { n, input: leafInput } of entries) {
-        const leaf2 = find(layout.node, leafInput.id), p = positions2[leafInput.id];
-        if (!leaf2 || !p) continue;
-        const parent = n.slot === "leading" ? positions2.navigationIcon : n.slot === "trailing" ? positions2.actionIcons : positions2[n.slot.includes("subtitle") ? "subtitle-box" : "headline-box"] || positions2["title-box"];
-        if (!parent) continue;
-        const body = leafInput.ink ? minimumInteractiveLayout({ ...leafInput.ink, ...leaf2.constraints }).body : null;
-        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf2.size.width}px;--md-toolbar-control-layout-height:${leaf2.size.height}px;` : "";
+        const leaf3 = find(layout.node, leafInput.id), p = positions3[leafInput.id];
+        if (!leaf3 || !p) continue;
+        const parent2 = n.slot === "leading" ? positions3.navigationIcon : n.slot === "trailing" ? positions3.actionIcons : positions3[n.slot.includes("subtitle") ? "subtitle-box" : "headline-box"] || positions3["title-box"];
+        if (!parent2) continue;
+        const body = leafInput.ink ? minimumInteractiveLayout({ ...leafInput.ink, ...leaf3.constraints }).body : null;
+        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf3.size.width}px;--md-toolbar-control-layout-height:${leaf3.size.height}px;` : "";
         const index = [...this.children].indexOf(n) + 1;
-        this._sizes.sheet.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - parent.x - leaf2.offset.x}px!important;top:${p.y - parent.y - leaf2.offset.y}px!important;width:${leaf2.size.width}px!important;height:${leaf2.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf2.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf2.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf2.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf2.constraints.maxHeight}px;${native}}`, this._sizes.sheet.cssRules.length);
+        this._sizes.sheet.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - parent2.x - leaf3.offset.x}px!important;top:${p.y - parent2.y - leaf3.offset.y}px!important;width:${leaf3.size.width}px!important;height:${leaf3.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf3.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf3.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf3.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf3.constraints.maxHeight}px;${native}}`, this._sizes.sheet.cssRules.length);
       }
       y2 += layout.size.height;
     }
@@ -9297,7 +13030,7 @@ var MdTopAppBar = class extends HTMLElement {
     for (const n of observed) if (!this._observedChildren?.has(n)) this._resize?.observe(n);
     this._observedChildren = observed;
     this._layoutRows = rows;
-    write2(this._viewport, "height", y2 + "px");
+    write4(this._viewport, "height", y2 + "px");
     sizing.setProperty("--_top-app-bar-height", Math.max(minHeight, y2 + inset) + "px");
     if (this._scrollBehavior) {
       const size = rows[this.twoRows ? "bottom" : "top"].size, key = `${this.twoRows}:${size.width}:${size.height}`;
@@ -9316,11 +13049,9 @@ var MdTopAppBar = class extends HTMLElement {
     if (!this.isConnected || !this._rendered) return;
     this._scrollAbort = new AbortController();
     const { signal } = this._scrollAbort, target = this._scrollTarget;
-    const scrolling = () => target === window ? document.scrollingElement : target;
-    let last = scrolling()?.scrollTop || 0;
+    const position = this._scrollPosition = new ScrollPosition(target), scrolling = () => position.element;
     target?.addEventListener("scroll", () => {
-      const current = scrolling()?.scrollTop || 0, delta = f14(last - current);
-      last = current;
+      const delta = position.consume();
       if (!delta) return;
       const b = this._scrollBehavior;
       if (!b) return;
@@ -9330,14 +13061,17 @@ var MdTopAppBar = class extends HTMLElement {
     target?.addEventListener("wheel", (event) => {
       const b = this._scrollBehavior, n = scrolling();
       if (!b || !n || event.defaultPrevented || event.ctrlKey || !event.deltaY) return;
-      const unit = event.deltaMode === 1 ? parseFloat(getComputedStyle(n).lineHeight) || 16 : event.deltaMode === 2 ? n.clientHeight : 1, available = f14(-event.deltaY * unit), pre = this.preScroll({ x: 0, y: available }), remaining = f14(available - pre.y), before = n.scrollTop;
+      position.begin();
+      const unit = event.deltaMode === 1 ? parseFloat(getComputedStyle(n).lineHeight) || 16 : event.deltaMode === 2 ? n.clientHeight : 1, available = f22(-event.deltaY * unit), pre = this.preScroll({ x: 0, y: available }), remaining = f22(available - pre.y), before = n.scrollTop;
       event.preventDefault();
       n.scrollTo({ top: before - remaining, left: n.scrollLeft + event.deltaX * unit, behavior: "instant" });
-      const consumed = f14(before - n.scrollTop);
-      last = n.scrollTop;
-      this.postScroll({ x: 0, y: consumed }, { x: 0, y: f14(remaining - consumed) });
+      const consumed = f22(before - n.scrollTop);
+      position.commit();
+      this.postScroll({ x: 0, y: consumed }, { x: 0, y: f22(remaining - consumed) });
     }, { signal, passive: false });
-    target?.addEventListener("scrollend", () => this.postFling(), { signal, passive: true });
+    target?.addEventListener("scrollend", () => {
+      if (position.end()) this.postFling();
+    }, { signal, passive: true });
     this.addEventListener("pointerdown", (event) => this._barDragStart(event), { signal });
     this.addEventListener("pointermove", (event) => this._barDragMove(event), { signal });
     const stop = (event) => this._barDragStop(event);
@@ -9424,7 +13158,7 @@ var MdTopAppBar = class extends HTMLElement {
       }
     }
     event.preventDefault();
-    this._scrollBehavior.state.heightOffset = f14(this.heightOffset + amount);
+    this._scrollBehavior.state.heightOffset = f22(this.heightOffset + amount);
     this._suppressDragClick = true;
     this._sync();
   }
@@ -9465,92 +13199,92 @@ var MdTopAppBar = class extends HTMLElement {
 if (!customElements.get("md-top-app-bar")) customElements.define("md-top-app-bar", MdTopAppBar);
 
 // src/motion/android-fling.js
-var f15 = Math.fround;
-var inflection = f15(0.35);
-var p1 = f15(f15(0.5) * inflection);
-var p2 = f15(1 - f15(1 - inflection));
-var positions = new Float32Array(101);
+var f23 = Math.fround;
+var inflection = f23(0.35);
+var p1 = f23(f23(0.5) * inflection);
+var p2 = f23(1 - f23(1 - inflection));
+var positions2 = new Float32Array(101);
 var times = new Float32Array(101);
 var xMin = 0;
 var yMin = 0;
 for (let i = 0; i < 100; i++) {
-  const alpha = f15(i / 100);
+  const alpha = f23(i / 100);
   let xMax = 1, yMax = 1, x, y2, coef;
   for (; ; ) {
-    x = f15(xMin + f15(f15(xMax - xMin) / 2));
-    coef = f15(f15(3 * x) * f15(1 - x));
-    const tx = f15(f15(coef * f15(f15(f15(1 - x) * p1) + f15(x * p2))) + f15(f15(x * x) * x));
-    if (Math.abs(f15(tx - alpha)) < 1e-5) break;
+    x = f23(xMin + f23(f23(xMax - xMin) / 2));
+    coef = f23(f23(3 * x) * f23(1 - x));
+    const tx = f23(f23(coef * f23(f23(f23(1 - x) * p1) + f23(x * p2))) + f23(f23(x * x) * x));
+    if (Math.abs(f23(tx - alpha)) < 1e-5) break;
     if (tx > alpha) xMax = x;
     else xMin = x;
   }
-  positions[i] = f15(f15(coef * f15(f15(f15(1 - x) * f15(0.5)) + x)) + f15(f15(x * x) * x));
+  positions2[i] = f23(f23(coef * f23(f23(f23(1 - x) * f23(0.5)) + x)) + f23(f23(x * x) * x));
   for (; ; ) {
-    y2 = f15(yMin + f15(f15(yMax - yMin) / 2));
-    coef = f15(f15(3 * y2) * f15(1 - y2));
-    const dy = f15(f15(coef * f15(f15(f15(1 - y2) * f15(0.5)) + y2)) + f15(f15(y2 * y2) * y2));
-    if (Math.abs(f15(dy - alpha)) < 1e-5) break;
+    y2 = f23(yMin + f23(f23(yMax - yMin) / 2));
+    coef = f23(f23(3 * y2) * f23(1 - y2));
+    const dy = f23(f23(coef * f23(f23(f23(1 - y2) * f23(0.5)) + y2)) + f23(f23(y2 * y2) * y2));
+    if (Math.abs(f23(dy - alpha)) < 1e-5) break;
     if (dy > alpha) yMax = y2;
     else yMin = y2;
   }
-  times[i] = f15(f15(coef * f15(f15(f15(1 - y2) * p1) + f15(y2 * p2))) + f15(f15(y2 * y2) * y2));
+  times[i] = f23(f23(coef * f23(f23(f23(1 - y2) * p1) + f23(y2 * p2))) + f23(f23(y2 * y2) * y2));
 }
-times[100] = positions[100] = 1;
-var rate = f15(Math.log(0.78) / Math.log(0.9));
+times[100] = positions2[100] = 1;
+var rate = f23(Math.log(0.78) / Math.log(0.9));
 function androidFlingPosition(time) {
-  const clamped = Math.max(0, Math.min(1, f15(time))), index = Math.trunc(f15(100 * clamped));
+  const clamped = Math.max(0, Math.min(1, f23(time))), index = Math.trunc(f23(100 * clamped));
   let distanceCoefficient = 1, velocityCoefficient = 0;
   if (index < 100) {
-    const lower = f15(index / 100), upper = f15((index + 1) / 100), lo = positions[index], hi = positions[index + 1];
-    velocityCoefficient = f15(f15(hi - lo) / f15(upper - lower));
-    distanceCoefficient = f15(lo + f15(f15(clamped - lower) * velocityCoefficient));
+    const lower = f23(index / 100), upper = f23((index + 1) / 100), lo = positions2[index], hi = positions2[index + 1];
+    velocityCoefficient = f23(f23(hi - lo) / f23(upper - lower));
+    distanceCoefficient = f23(lo + f23(f23(clamped - lower) * velocityCoefficient));
   }
   return { distanceCoefficient, velocityCoefficient };
 }
 var AndroidFlingDecay = class {
   constructor({ density = 1, friction: friction2 = 0.015 } = {}) {
     if (!Number.isFinite(density) || density <= 0 || !Number.isFinite(friction2) || friction2 <= 0) throw new RangeError("Positive density and friction required");
-    this.density = f15(density);
-    this.friction = f15(friction2);
-    this.physical = f15(f15(f15(f15(f15(9.80665) * f15(39.37)) * this.density) * 160) * f15(0.84));
+    this.density = f23(density);
+    this.friction = f23(friction2);
+    this.physical = f23(f23(f23(f23(f23(9.80665) * f23(39.37)) * this.density) * 160) * f23(0.84));
   }
   info(velocity) {
-    velocity = f15(velocity);
-    const l = Math.log(f15(inflection * Math.abs(velocity)) / f15(this.friction * this.physical)), minusOne = rate - 1;
-    return { velocity, distance: f15(f15(this.friction * this.physical) * Math.exp(rate / minusOne * l)), duration: Math.trunc(1e3 * Math.exp(l / minusOne)) };
+    velocity = f23(velocity);
+    const l = Math.log(f23(inflection * Math.abs(velocity)) / f23(this.friction * this.physical)), minusOne = rate - 1;
+    return { velocity, distance: f23(f23(this.friction * this.physical) * Math.exp(rate / minusOne * l)), duration: Math.trunc(1e3 * Math.exp(l / minusOne)) };
   }
   target(from, velocity) {
     const info = this.info(velocity);
-    return f15(f15(from) + f15(info.distance * Math.sign(info.velocity)));
+    return f23(f23(from) + f23(info.distance * Math.sign(info.velocity)));
   }
   sample(time, from, velocity) {
-    const info = this.info(velocity), ms = Math.trunc(time), fraction = info.duration > 0 ? f15(ms / f15(info.duration)) : 1;
+    const info = this.info(velocity), ms = Math.trunc(time), fraction = info.duration > 0 ? f23(ms / f23(info.duration)) : 1;
     const spline = androidFlingPosition(fraction), sign = Math.sign(info.velocity);
-    const position = f15(f15(from) + f15(f15(info.distance * sign) * spline.distanceCoefficient));
-    const speed = f15(f15(f15(f15(spline.velocityCoefficient * sign) * info.distance) / f15(info.duration)) * 1e3);
+    const position = f23(f23(from) + f23(f23(info.distance * sign) * spline.distanceCoefficient));
+    const speed = f23(f23(f23(f23(spline.velocityCoefficient * sign) * info.distance) / f23(info.duration)) * 1e3);
     return { position, velocity: speed };
   }
 };
 
 // src/components/top-app-bar-scroll.js
-var f16 = Math.fround;
+var f24 = Math.fround;
 var MAX_FLOAT = 34028234663852886e22;
 var zero = () => ({ x: 0, y: 0 });
-var y = (v) => f16(v?.y ?? 0);
-var clamp6 = (value, minimum) => {
+var y = (v) => f24(v?.y ?? 0);
+var clamp11 = (value, minimum) => {
   if (minimum > 0) throw new RangeError("heightOffsetLimit must be nonpositive");
   return value < minimum ? minimum : value > 0 ? 0 : value;
 };
 var TopAppBarState = class _TopAppBarState {
   constructor({ heightOffsetLimit = -MAX_FLOAT, heightOffset = 0, contentOffset = 0, isScrollingContentAtStart = () => true } = {}) {
     this._listeners = /* @__PURE__ */ new Set();
-    this._heightOffsetLimit = f16(heightOffsetLimit);
-    this._heightOffset = f16(heightOffset);
-    this._contentOffset = f16(contentOffset);
+    this._heightOffsetLimit = f24(heightOffsetLimit);
+    this._heightOffset = f24(heightOffset);
+    this._contentOffset = f24(contentOffset);
     this.isScrollingContentAtStart = isScrollingContentAtStart;
   }
   _set(key, value) {
-    value = f16(value);
+    value = f24(value);
     if (Object.is(this[key], value)) return;
     this[key] = value;
     for (const listener of this._listeners) listener(this);
@@ -9569,7 +13303,7 @@ var TopAppBarState = class _TopAppBarState {
     return this._heightOffset;
   }
   set heightOffset(v) {
-    this._set("_heightOffset", clamp6(f16(v), this.heightOffsetLimit));
+    this._set("_heightOffset", clamp11(f24(v), this.heightOffsetLimit));
   }
   get contentOffset() {
     return this._contentOffset;
@@ -9578,14 +13312,14 @@ var TopAppBarState = class _TopAppBarState {
     this._set("_contentOffset", v);
   }
   get collapsedFraction() {
-    return this.heightOffsetLimit !== 0 ? f16(this.heightOffset / this.heightOffsetLimit) : 0;
+    return this.heightOffsetLimit !== 0 ? f24(this.heightOffset / this.heightOffsetLimit) : 0;
   }
   get overlappedFraction() {
     if (!this.isScrollingContentAtStart() && this.contentOffset === 0) return 1;
-    return this.heightOffsetLimit !== 0 ? f16(1 - f16(clamp6(f16(this.heightOffsetLimit + Math.abs(this.contentOffset)), this.heightOffsetLimit) / this.heightOffsetLimit)) : 0;
+    return this.heightOffsetLimit !== 0 ? f24(1 - f24(clamp11(f24(this.heightOffsetLimit + Math.abs(this.contentOffset)), this.heightOffsetLimit) / this.heightOffsetLimit)) : 0;
   }
   updateHeightOffsetLimit(height) {
-    this.heightOffsetLimit = f16(-f16(f16(height) - this.heightOffset));
+    this.heightOffsetLimit = f24(-f24(f24(height) - this.heightOffset));
   }
   save() {
     return [this.heightOffsetLimit, this.heightOffset, this.contentOffset];
@@ -9623,24 +13357,24 @@ var TopAppBarScrollBehavior = class _TopAppBarScrollBehavior {
     const amount = y(available);
     if (this.isPinned || !this.canScroll() || this.kind === "exit-until-collapsed" && amount > 0) return zero();
     const previous = this.state.heightOffset;
-    this.state.heightOffset = f16(previous + amount);
+    this.state.heightOffset = f24(previous + amount);
     return previous !== this.state.heightOffset && !(this.kind === "legacy-enter-always" && this.reverseLayout) ? { x: 0, y: amount } : zero();
   }
   onPostScroll(consumed, available = { x: 0, y: 0 }) {
     if (!this.canScroll()) return zero();
     const amount = y(consumed), remaining = y(available), s = this.state;
-    s.contentOffset = f16(s.contentOffset + amount);
-    if (this.kind === "legacy-enter-always" && !this.reverseLayout) s.heightOffset = f16(s.heightOffset + amount);
+    s.contentOffset = f24(s.contentOffset + amount);
+    if (this.kind === "legacy-enter-always" && !this.reverseLayout) s.heightOffset = f24(s.heightOffset + amount);
     if (this.kind === "exit-until-collapsed") {
       if (remaining < 0 || amount < 0) {
         const before = s.heightOffset;
-        s.heightOffset = f16(before + amount);
-        return { x: 0, y: f16(s.heightOffset - before) };
+        s.heightOffset = f24(before + amount);
+        return { x: 0, y: f24(s.heightOffset - before) };
       }
       if (remaining > 0) {
         const before = s.heightOffset;
-        s.heightOffset = f16(before + remaining);
-        return { x: 0, y: f16(s.heightOffset - before) };
+        s.heightOffset = f24(before + remaining);
+        return { x: 0, y: f24(s.heightOffset - before) };
       }
     }
     return zero();
@@ -9657,7 +13391,7 @@ var TopAppBarScrollBehavior = class _TopAppBarScrollBehavior {
 var TopAppBarSettling = class _TopAppBarSettling {
   constructor(state, velocity, { snapAnimationSpec = { stiffness: 1600, dampingRatio: 1 }, flingAnimationSpec = new AndroidFlingDecay() } = {}) {
     this.state = state;
-    this.velocity = f16(velocity);
+    this.velocity = f24(velocity);
     this.remainingVelocity = this.velocity;
     this.snapAnimationSpec = snapAnimationSpec;
     this.decay = flingAnimationSpec;
@@ -9665,7 +13399,7 @@ var TopAppBarSettling = class _TopAppBarSettling {
     this.start = null;
     this.lastValue = 0;
     this.returnedVelocity = 0;
-    if (state.collapsedFraction < f16(0.01) || state.collapsedFraction === 1) return;
+    if (state.collapsedFraction < f24(0.01) || state.collapsedFraction === 1) return;
     this.phase = this.decay !== null && Math.abs(this.velocity) > 1 ? "decay" : "snap";
     this._chooseSnap();
   }
@@ -9706,12 +13440,12 @@ var TopAppBarSettling = class _TopAppBarSettling {
     if (phase2 === "decay") {
       const ended = time >= this.decay.info(this.velocity).duration;
       sample = ended ? { position: this.decay.target(0, this.velocity), velocity: 0 } : this.decay.sample(time, 0, this.velocity);
-      const delta = f16(sample.position - this.lastValue), before = this.state.heightOffset;
-      this.state.heightOffset = f16(before + delta);
-      const consumed = Math.abs(f16(before - this.state.heightOffset));
+      const delta = f24(sample.position - this.lastValue), before = this.state.heightOffset;
+      this.state.heightOffset = f24(before + delta);
+      const consumed = Math.abs(f24(before - this.state.heightOffset));
       this.lastValue = sample.position;
       this.remainingVelocity = sample.velocity;
-      canceled = Math.abs(f16(delta - consumed)) > 0.5;
+      canceled = Math.abs(f24(delta - consumed)) > 0.5;
       afterOffsetWrite();
       if (canceled || ended) {
         this.phase = "snap";
@@ -9729,7 +13463,7 @@ var TopAppBarSettling = class _TopAppBarSettling {
   finish() {
     if (this.done) return;
     if (this.phase === "decay") {
-      this.state.heightOffset = f16(this.state.heightOffset + f16(this.decay.target(0, this.velocity) - this.lastValue));
+      this.state.heightOffset = f24(this.state.heightOffset + f24(this.decay.target(0, this.velocity) - this.lastValue));
       this.remainingVelocity = 0;
       this.phase = "snap";
       this._chooseSnap();
@@ -9741,18 +13475,18 @@ var TopAppBarSettling = class _TopAppBarSettling {
 };
 
 // src/components/bottom-app-bar-scroll.js
-var f17 = Math.fround;
+var f25 = Math.fround;
 var MAX_FLOAT2 = 34028234663852886e22;
 var zero2 = () => ({ x: 0, y: 0 });
 var BottomAppBarState = class _BottomAppBarState {
   constructor({ heightOffsetLimit = -MAX_FLOAT2, heightOffset = 0, contentOffset = 0 } = {}) {
     this._listeners = /* @__PURE__ */ new Set();
-    this._heightOffsetLimit = f17(heightOffsetLimit);
-    this._heightOffset = f17(heightOffset);
-    this._contentOffset = f17(contentOffset);
+    this._heightOffsetLimit = f25(heightOffsetLimit);
+    this._heightOffset = f25(heightOffset);
+    this._contentOffset = f25(contentOffset);
   }
   _set(key, value) {
-    value = f17(value);
+    value = f25(value);
     if (Object.is(this[key], value)) return;
     this[key] = value;
     for (const listener of this._listeners) listener(this);
@@ -9772,7 +13506,7 @@ var BottomAppBarState = class _BottomAppBarState {
   }
   set heightOffset(value) {
     if (this.heightOffsetLimit > 0) throw new RangeError("heightOffsetLimit must be nonpositive");
-    value = f17(value);
+    value = f25(value);
     this._set("_heightOffset", value < this.heightOffsetLimit ? this.heightOffsetLimit : value > 0 ? 0 : value);
   }
   get contentOffset() {
@@ -9782,10 +13516,10 @@ var BottomAppBarState = class _BottomAppBarState {
     this._set("_contentOffset", value);
   }
   get collapsedFraction() {
-    return this.heightOffsetLimit !== 0 ? f17(this.heightOffset / this.heightOffsetLimit) : 0;
+    return this.heightOffsetLimit !== 0 ? f25(this.heightOffset / this.heightOffsetLimit) : 0;
   }
   updateHeightOffsetLimit(height) {
-    this.heightOffsetLimit = f17(-height);
+    this.heightOffsetLimit = f25(-height);
   }
   save() {
     return [this.heightOffsetLimit, this.heightOffset, this.contentOffset];
@@ -9834,13 +13568,13 @@ var BottomAppBarScrollBehavior = class _BottomAppBarScrollBehavior {
   }
   onPostScroll(consumed, available = { x: 0, y: 0 }) {
     if (!this.canScroll()) return zero2();
-    const amount = f17(consumed?.y ?? 0), s = this.state;
-    s.contentOffset = f17(s.contentOffset + amount);
-    s.heightOffset = f17(s.heightOffset + amount);
+    const amount = f25(consumed?.y ?? 0), s = this.state;
+    s.contentOffset = f25(s.contentOffset + amount);
+    s.heightOffset = f25(s.heightOffset + amount);
     return zero2();
   }
   onPostFling(consumed = { x: 0, y: 0 }, available = { x: 0, y: 0 }) {
-    const velocity = f17(available?.y ?? 0), s = this.state;
+    const velocity = f25(available?.y ?? 0), s = this.state;
     if (velocity > 0 && (s.heightOffset === 0 || s.heightOffset === s.heightOffsetLimit)) s.contentOffset = 0;
     return this.settle(velocity);
   }
@@ -9850,41 +13584,41 @@ var BottomAppBarScrollBehavior = class _BottomAppBarScrollBehavior {
 };
 
 // src/components/bottom-app-bar-layout.js
-var INF4 = 2147483647;
-var f18 = Math.fround;
-var round3 = (v) => Math.round(f18(v)) || 0;
-var clamp7 = (v, a, b) => Math.max(a, Math.min(b, v));
+var INF9 = 2147483647;
+var f26 = Math.fround;
+var round4 = (v) => Math.round(f26(v)) || 0;
+var clamp12 = (v, a, b) => Math.max(a, Math.min(b, v));
 var arrangements = { "space-between": "between", "space-around": "around", "space-evenly": "evenly", fixed: "spaced" };
 function padding(id, c, p, measure) {
   const dx = p.left + p.right, dy = p.top + p.bottom;
-  const inner = { minWidth: Math.max(0, c.minWidth - dx), maxWidth: c.maxWidth === INF4 ? INF4 : Math.max(0, c.maxWidth - dx), minHeight: Math.max(0, c.minHeight - dy), maxHeight: c.maxHeight === INF4 ? INF4 : Math.max(0, c.maxHeight - dy) };
-  const child = measure(inner), requested = { width: clamp7(child.size.width + dx, c.minWidth, c.maxWidth), height: clamp7(child.size.height + dy, c.minHeight, c.maxHeight) };
+  const inner = { minWidth: Math.max(0, c.minWidth - dx), maxWidth: c.maxWidth === INF9 ? INF9 : Math.max(0, c.maxWidth - dx), minHeight: Math.max(0, c.minHeight - dy), maxHeight: c.maxHeight === INF9 ? INF9 : Math.max(0, c.maxHeight - dy) };
+  const child = measure(inner), requested = { width: clamp12(child.size.width + dx, c.minWidth, c.maxWidth), height: clamp12(child.size.height + dy, c.minHeight, c.maxHeight) };
   return layoutPlaceable(id, requested, c, [{ node: child, x: p.left, y: p.top }]);
 }
 function fill(id, c, axis, measure) {
   const max = axis === "width" ? "maxWidth" : "maxHeight", min = axis === "width" ? "minWidth" : "minHeight";
-  const inner = c[max] === INF4 ? c : { ...c, [min]: c[max] };
+  const inner = c[max] === INF9 ? c : { ...c, [min]: c[max] };
   const child = measure(inner);
   return layoutPlaceable(id, child.size, c, [{ node: child, x: 0, y: 0 }]);
 }
-function leaf(input, c) {
+function leaf2(input, c) {
   return measureLayoutLeaf(input.id, { main: input.width, cross: input.height, ...input }, c, false);
 }
-function row(id, c, inputs, rtl, arrangement, measure = leaf) {
+function row(id, c, inputs, rtl, arrangement, measure = leaf2) {
   return measureRowColumn({ id, rtl, minMain: c.minWidth, maxMain: c.maxWidth, minCross: c.minHeight, maxCross: c.maxHeight, crossAlignment: "center", arrangement: arrangements[arrangement] || arrangement, spacing: 32, children: inputs.map((n) => ({ main: n.width, cross: n.height, ...n })) }, measure);
 }
 function box2(id, c, inputs, rtl) {
-  const children = inputs.map((input) => leaf(input, { ...c, minWidth: 0, minHeight: 0 }));
+  const children = inputs.map((input) => leaf2(input, { ...c, minWidth: 0, minHeight: 0 }));
   const width = Math.max(c.minWidth, ...children.map((n) => n.size.width)), height = Math.max(c.minHeight, ...children.map((n) => n.size.height));
   return layoutPlaceable(id, { width, height }, c, children.map((node) => ({ node, x: rtl && width !== 0 ? width - node.size.width : 0, y: 0 })));
 }
 function bottomAppBarLayout(o) {
-  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF4, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF4 }, rtl = !!o.rtl, flexible = o.variant === "flexible";
+  const c = { minWidth: o.minWidth ?? 0, maxWidth: o.maxWidth ?? INF9, minHeight: o.minHeight ?? 0, maxHeight: o.maxHeight ?? INF9 }, rtl = !!o.rtl, flexible = o.variant === "flexible";
   const p = resolveToolbarPadding(o.contentPadding ?? (flexible ? { start: 16, top: 0, end: 16, bottom: 0 } : { start: 4, top: 4, end: 4, bottom: 0 }), rtl);
-  const insets = Object.fromEntries(["left", "top", "right", "bottom"].map((edge) => [edge, Math.max(0, round3(o.insets?.[edge] ?? 0))]));
+  const insets = Object.fromEntries(["left", "top", "right", "bottom"].map((edge) => [edge, Math.max(0, round4(o.insets?.[edge] ?? 0))]));
   const name = arrangements[o.arrangement] || o.arrangement, arrangement = ["start", "end", "center", "between", "around", "evenly", "spaced"].includes(name) ? name : flexible ? "between" : "start";
   const node = fill("bar", c, "width", (outer) => padding("insets", outer, insets, (incoming) => {
-    const height = clamp7(round3(o.height ?? (flexible ? 64 : 80)), incoming.minHeight, incoming.maxHeight), sized = { ...incoming, minHeight: height, maxHeight: height };
+    const height = clamp12(round4(o.height ?? (flexible ? 64 : 80)), incoming.minHeight, incoming.maxHeight), sized = { ...incoming, minHeight: height, maxHeight: height };
     const child = padding("content-padding", sized, p, (inner) => {
       if (flexible) return row("content-row", inner, [...o.actions || [], ...o.fabs || []], rtl, arrangement);
       const children = [{ id: "actions", weight: 1, fill: true }, ...o.fabs?.length ? [{ id: "fab" }] : []];
@@ -9897,14 +13631,14 @@ function bottomAppBarLayout(o) {
 function bottomAppBarScrollLayout(o, state) {
   const surface = bottomAppBarLayout(o);
   state.updateHeightOffsetLimit(surface.size.height);
-  const height = f18(surface.size.height + state.heightOffset);
+  const height = f26(surface.size.height + state.heightOffset);
   if (Number.isNaN(height)) throw new RangeError("Bottom app bar height cannot be NaN");
-  const node = layoutPlaceable("scroll-root", { width: surface.size.width, height: Math.min(INF4, round3(Math.max(0, height))) }, surface.node.constraints, [{ node: surface.node, x: 0, y: 0 }]);
+  const node = layoutPlaceable("scroll-root", { width: surface.size.width, height: Math.min(INF9, round4(Math.max(0, height))) }, surface.node.constraints, [{ node: surface.node, x: 0, y: 0 }]);
   return { node, size: node.size, requested: node.requested, placements: layoutPlacements(node) };
 }
 
 // src/components/md-bottom-app-bar.js
-var defaultStyle18 = `
+var defaultStyle17 = `
   :host { display: block; position: relative; width: 100%; min-width: 0; height: var(--_bottom-app-bar-height, 80px); touch-action:var(--_bottom-app-bar-touch-action,auto); -webkit-tap-highlight-color: transparent; }
   :host([hidden]) { display: none !important; }
   .bar {
@@ -9928,14 +13662,14 @@ var defaultStyle18 = `
   .inset-probe { position: absolute; visibility: hidden; pointer-events: none; padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
   .minimum-probe { position: absolute; visibility: hidden; pointer-events: none; height: 0; }
 `;
-var sheet3 = createComponentSheet(defaultStyle18);
-var INF5 = 2147483647;
+var sheet5 = createComponentSheet(defaultStyle17);
+var INF10 = 2147483647;
 var find2 = (node, id) => node.id === id ? node : node.children.map((p) => find2(p.node, id)).find(Boolean);
-var write3 = (node, key, value) => {
+var write5 = (node, key, value) => {
   if (node.style[key] !== value) node.style[key] = value;
 };
-var rect2 = (node, p) => {
-  for (const [key, value] of Object.entries({ left: p.x, top: p.y, width: p.width, height: p.height })) write3(node, key, value + "px");
+var rect4 = (node, p) => {
+  for (const [key, value] of Object.entries({ left: p.x, top: p.y, width: p.width, height: p.height })) write5(node, key, value + "px");
 };
 var MdBottomAppBar = class extends HTMLElement {
   static get observedAttributes() {
@@ -9944,7 +13678,7 @@ var MdBottomAppBar = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet3);
+    adoptSheet(this.shadowRoot, sheet5);
     this._rendered = false;
     this._abortController = null;
     this._queued = false;
@@ -10099,7 +13833,7 @@ var MdBottomAppBar = class extends HTMLElement {
   }
   render() {
     const adopted = !!this.shadowRoot.adoptedStyleSheets?.length;
-    this.shadowRoot.innerHTML = `${adopted ? "" : `<style>${defaultStyle18}</style>`}
+    this.shadowRoot.innerHTML = `${adopted ? "" : `<style>${defaultStyle17}</style>`}
       <div class="bar" part="bar" role="group">
         <div class="content" part="content">
           <div class="actions" part="actions"><slot></slot></div>
@@ -10115,55 +13849,62 @@ var MdBottomAppBar = class extends HTMLElement {
     if (this._queued || !this.isConnected) return;
     this._queued = true;
     queueMicrotask(() => {
+      if (!this._queued) return;
       this._queued = false;
       if (this.isConnected) this._sync();
     });
   }
   _sync() {
-    const bar = this.shadowRoot.querySelector(".bar"), row2 = this.shadowRoot.querySelector(".content");
-    const flexible = this.variant === "flexible", rtl = getComputedStyle(this).direction === "rtl";
-    const padding2 = resolveToolbarPadding(this.contentPadding, rtl);
-    row2.classList.toggle("flexible", flexible);
-    for (const edge of ["left", "top", "right", "bottom"]) row2.style["padding" + edge[0].toUpperCase() + edge.slice(1)] = `${padding2[edge]}px`;
-    this.shadowRoot.querySelector(".fab").hidden = this.shadowRoot.querySelector('slot[name="fab"]').assignedElements().length === 0;
-    this._layout();
-    const valid2 = (value, fallback) => value && CSS.supports("color", value) ? value : fallback;
-    const colors = resolveSurfaceColors(this, this.shadowRoot.querySelector(".color-probe"), {
-      container: valid2(this.containerColor, "var(--md-sys-color-surface-container)"),
-      content: valid2(this.contentColor, ""),
-      elevation: this.tonalElevation
-    });
-    bar.style.backgroundColor = colors.container;
-    bar.style.color = colors.content;
-    bar.style.setProperty("--md-icon-button-content-color", colors.content);
-    bar.style.setProperty("--md-icon-button-outline-color", colors.content);
-    bar.style.setProperty("--md-icon-button-disabled-content-color", `rgb(from ${colors.content} r g b / .38)`);
-    bar.style.setProperty("--md-absolute-tonal-elevation", String(colors.total));
-    bar.setAttribute("aria-label", this.getAttribute("aria-label") || "Bottom app bar");
+    this._queued = false;
+    const position = this._scrollPosition, before = position?.captureLayout();
+    try {
+      const bar = this.shadowRoot.querySelector(".bar"), row2 = this.shadowRoot.querySelector(".content");
+      const flexible = this.variant === "flexible", rtl = getComputedStyle(this).direction === "rtl";
+      const padding2 = resolveToolbarPadding(this.contentPadding, rtl);
+      row2.classList.toggle("flexible", flexible);
+      for (const edge of ["left", "top", "right", "bottom"]) row2.style["padding" + edge[0].toUpperCase() + edge.slice(1)] = `${padding2[edge]}px`;
+      this.shadowRoot.querySelector(".fab").hidden = this.shadowRoot.querySelector('slot[name="fab"]').assignedElements().length === 0;
+      this._layout();
+      const valid2 = (value, fallback) => value && CSS.supports("color", value) ? value : fallback;
+      const colors = resolveSurfaceColors(this, this.shadowRoot.querySelector(".color-probe"), {
+        container: valid2(this.containerColor, "var(--md-sys-color-surface-container)"),
+        content: valid2(this.contentColor, ""),
+        elevation: this.tonalElevation
+      });
+      bar.style.backgroundColor = colors.container;
+      bar.style.color = colors.content;
+      bar.style.setProperty("--md-icon-button-content-color", colors.content);
+      bar.style.setProperty("--md-icon-button-outline-color", colors.content);
+      bar.style.setProperty("--md-icon-button-disabled-content-color", `rgb(from ${colors.content} r g b / .38)`);
+      bar.style.setProperty("--md-absolute-tonal-elevation", String(colors.total));
+      bar.setAttribute("aria-label", this.getAttribute("aria-label") || "Bottom app bar");
+    } finally {
+      if (position === this._scrollPosition) position?.restoreLayout(before);
+    }
   }
   _leaf(node, id) {
-    const css = getComputedStyle(node), r = node.getBoundingClientRect();
+    const css2 = getComputedStyle(node), r = node.getBoundingClientRect();
     const button = ["md-icon-button", "md-fab"].includes(node.localName) ? node.shadowRoot?.querySelector("button") : null, b = button ? getComputedStyle(button) : null;
     const probe = this.shadowRoot.querySelector(".minimum-probe");
-    probe.style.fontSize = css.fontSize;
-    probe.style.width = css.getPropertyValue("--md-minimum-interactive-component-size").trim() || "48px";
+    probe.style.fontSize = css2.fontSize;
+    probe.style.width = css2.getPropertyValue("--md-minimum-interactive-component-size").trim() || "48px";
     const minimum = parseFloat(getComputedStyle(probe).width), weight = Number(node.getAttribute("data-app-bar-weight")), line = Number(node.getAttribute("data-app-bar-alignment-line"));
     return { id, width: Math.round(r.width), height: Math.round(r.height), weight: weight > 0 ? Math.fround(Math.min(weight, 34028234663852886e22)) : 0, fill: node.getAttribute("data-app-bar-fill") !== "false", align: node.getAttribute("data-app-bar-align") || "center", line: node.hasAttribute("data-app-bar-alignment-line") && Number.isFinite(line) ? Math.round(line) : null, ink: b ? { width: Math.round(parseFloat(b.width) || 0), height: Math.round(parseFloat(b.height) || 0), minimum: Number.isFinite(minimum) ? minimum : 48 } : null };
   }
   _layout() {
     while (this._sizes.sheet.cssRules.length > 1) this._sizes.sheet.deleteRule(1);
     const sizing = this._sizes.sheet.cssRules[0].style;
-    const dimension = () => {
-      const css2 = getComputedStyle(this);
-      return Math.max(0, Math.round((parseFloat(css2.height) || 0) - (css2.boxSizing === "border-box" ? (parseFloat(css2.paddingTop) || 0) + (parseFloat(css2.paddingBottom) || 0) + (parseFloat(css2.borderTopWidth) || 0) + (parseFloat(css2.borderBottomWidth) || 0) : 0)));
+    const dimension3 = () => {
+      const css3 = getComputedStyle(this);
+      return Math.max(0, Math.round((parseFloat(css3.height) || 0) - (css3.boxSizing === "border-box" ? (parseFloat(css3.paddingTop) || 0) + (parseFloat(css3.paddingBottom) || 0) + (parseFloat(css3.borderTopWidth) || 0) + (parseFloat(css3.borderBottomWidth) || 0) : 0)));
     };
     sizing.setProperty("--_bottom-app-bar-height", "0px");
-    const minHeight = dimension();
+    const minHeight = dimension3();
     sizing.setProperty("--_bottom-app-bar-height", "1000000px");
-    const cap = dimension(), maxHeight = cap >= 1e6 ? INF5 : Math.max(minHeight, cap);
+    const cap = dimension3(), maxHeight = cap >= 1e6 ? INF10 : Math.max(minHeight, cap);
     sizing.removeProperty("--_bottom-app-bar-height");
     const bar = this.shadowRoot.querySelector(".bar"), content = this.shadowRoot.querySelector(".content"), actions = this.shadowRoot.querySelector(".actions"), fab = this.shadowRoot.querySelector(".fab"), rtl = getComputedStyle(this).direction === "rtl", width = Math.max(0, Math.round(bar.getBoundingClientRect().width));
-    const css = getComputedStyle(this.shadowRoot.querySelector(".inset-probe")), insets = Object.fromEntries(["left", "top", "right", "bottom"].map((edge) => [edge, parseFloat(css["padding" + edge[0].toUpperCase() + edge.slice(1)]) || 0]));
+    const css2 = getComputedStyle(this.shadowRoot.querySelector(".inset-probe")), insets = Object.fromEntries(["left", "top", "right", "bottom"].map((edge) => [edge, parseFloat(css2["padding" + edge[0].toUpperCase() + edge.slice(1)]) || 0]));
     const entries = [], collect = (name, prefix) => this.shadowRoot.querySelector(name).assignedElements().filter((n) => getComputedStyle(n).display !== "none").map((n, i) => {
       const input2 = this._leaf(n, prefix + i);
       entries.push({ n, input: input2 });
@@ -10171,24 +13912,24 @@ var MdBottomAppBar = class extends HTMLElement {
     });
     const input = { minWidth: width, maxWidth: width, minHeight, maxHeight, rtl, variant: this.variant, height: this.expandedHeight, contentPadding: this.contentPadding, arrangement: this.horizontalArrangement, insets, actions: collect("slot:not([name])", "action"), fabs: collect('slot[name="fab"]', "fab") };
     const state = this._activeScrollBehavior?.state, layout = state ? bottomAppBarScrollLayout(input, state) : bottomAppBarLayout(input);
-    const positions2 = layout.placements, origin = positions2["content-height"], surface = positions2.bar;
-    rect2(content, { ...origin, x: origin.x - surface.x, y: origin.y - surface.y });
-    write3(bar, "height", surface.height + "px");
-    write3(bar, "top", surface.y + "px");
-    write3(bar, "left", surface.x + "px");
+    const positions3 = layout.placements, origin = positions3["content-height"], surface = positions3.bar;
+    rect4(content, { ...origin, x: origin.x - surface.x, y: origin.y - surface.y });
+    write5(bar, "height", surface.height + "px");
+    write5(bar, "top", surface.y + "px");
+    write5(bar, "left", surface.x + "px");
     const flexible = this.variant === "flexible";
     if (!flexible) {
-      const p = positions2["actions-row"];
-      rect2(actions, { x: p.x - origin.x, y: p.y - origin.y, width: p.width, height: p.height });
-      const q = positions2["fab-fill"];
-      if (q) rect2(fab, { x: q.x - origin.x, y: q.y - origin.y, width: q.width, height: q.height });
+      const p = positions3["actions-row"];
+      rect4(actions, { x: p.x - origin.x, y: p.y - origin.y, width: p.width, height: p.height });
+      const q = positions3["fab-fill"];
+      if (q) rect4(fab, { x: q.x - origin.x, y: q.y - origin.y, width: q.width, height: q.height });
     }
     for (const { n, input: input2 } of entries) {
-      const leaf2 = find2(layout.node, input2.id), p = positions2[input2.id], parent = flexible ? origin : n.slot === "fab" ? positions2["fab-fill"] : positions2["actions-row"];
-      const body = input2.ink ? minimumInteractiveLayout({ ...input2.ink, ...leaf2.constraints }).body : null;
-      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf2.size.width}px;--md-toolbar-control-layout-height:${leaf2.size.height}px;` : "";
+      const leaf3 = find2(layout.node, input2.id), p = positions3[input2.id], parent2 = flexible ? origin : n.slot === "fab" ? positions3["fab-fill"] : positions3["actions-row"];
+      const body = input2.ink ? minimumInteractiveLayout({ ...input2.ink, ...leaf3.constraints }).body : null;
+      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf3.size.width}px;--md-toolbar-control-layout-height:${leaf3.size.height}px;` : "";
       const index = [...this.children].indexOf(n) + 1;
-      this._sizes.sheet.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - parent.x - leaf2.offset.x}px!important;top:${p.y - parent.y - leaf2.offset.y}px!important;width:${leaf2.size.width}px!important;height:${leaf2.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;--md-toolbar-control-min-width:${leaf2.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf2.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf2.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf2.constraints.maxHeight}px;${native}}`, this._sizes.sheet.cssRules.length);
+      this._sizes.sheet.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - parent2.x - leaf3.offset.x}px!important;top:${p.y - parent2.y - leaf3.offset.y}px!important;width:${leaf3.size.width}px!important;height:${leaf3.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;--md-toolbar-control-min-width:${leaf3.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf3.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf3.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf3.constraints.maxHeight}px;${native}}`, this._sizes.sheet.cssRules.length);
     }
     const observed = new Set(entries.flatMap(({ n }) => [n, n.shadowRoot?.querySelector("button")].filter(Boolean)));
     for (const n of this._observedChildren || []) if (!observed.has(n)) this._resize?.unobserve(n);
@@ -10206,14 +13947,14 @@ var MdBottomAppBar = class extends HTMLElement {
     if (!this.isConnected || !this._rendered) return;
     this._scrollAbort = new AbortController();
     const { signal } = this._scrollAbort, target = this._scrollTarget;
-    const scrolling = () => target === window ? document.scrollingElement : target;
-    let last = scrolling()?.scrollTop || 0;
+    const position = this._scrollPosition = new ScrollPosition(target);
     target?.addEventListener("scroll", () => {
-      const current = scrolling()?.scrollTop || 0, delta = Math.fround(last - current);
-      last = current;
+      const delta = position.consume();
       if (delta) this.postScroll({ x: 0, y: delta });
     }, { signal, passive: true });
-    target?.addEventListener("scrollend", () => this.postFling(), { signal, passive: true });
+    target?.addEventListener("scrollend", () => {
+      if (position.end()) this.postFling();
+    }, { signal, passive: true });
     this.addEventListener("pointerdown", (event) => this._barDragStart(event), { signal });
     this.addEventListener("pointermove", (event) => this._barDragMove(event), { signal });
     const stop = (event) => this._barDragStop(event);
@@ -10350,7 +14091,7 @@ var MdBottomAppBar = class extends HTMLElement {
 if (!customElements.get("md-bottom-app-bar")) customElements.define("md-bottom-app-bar", MdBottomAppBar);
 
 // src/components/md-navigation-bar.js
-var defaultStyle19 = `
+var defaultStyle18 = `
   :host { display:block; width:100%; user-select:none; -webkit-user-select:none; }
   .bar {
     box-sizing:border-box; width:100%; border-radius:0;
@@ -10400,7 +14141,7 @@ var defaultStyle19 = `
   .md-ripple-effect { position:absolute; border-radius:50%; background:currentColor; opacity:0; animation:navigation-ripple 450ms linear; }
   @keyframes navigation-ripple { from { transform:scale(0); opacity:.1; } to { transform:scale(1); opacity:0; } }
 `;
-var navigationBarSheet = createComponentSheet(defaultStyle19);
+var navigationBarSheet = createComponentSheet(defaultStyle18);
 var place = (node, x, y2, width, height) => {
   node.style.insetInlineStart = `${x}px`;
   node.style.top = `${y2}px`;
@@ -10551,7 +14292,7 @@ var MdNavigationBar = class extends HTMLElement {
     for (const record of this._records) record.motion?.dispose();
     const hasAdopted = !!this.shadowRoot.adoptedStyleSheets?.length;
     const items = this.items;
-    this.shadowRoot.innerHTML = `${hasAdopted ? "" : `<style>${defaultStyle19}</style>`}
+    this.shadowRoot.innerHTML = `${hasAdopted ? "" : `<style>${defaultStyle18}</style>`}
       <nav class="bar"><div class="items" role="tablist" aria-orientation="horizontal">
       ${items.map((item, index) => `<button class="item" type="button" role="tab" data-index="${index}"
         aria-label="${escapeHtml(item.ariaLabel ?? item.label ?? item.icon ?? "")}">
@@ -10589,8 +14330,8 @@ var MdNavigationBar = class extends HTMLElement {
   _labelSize(record, width) {
     if (!record.measure) return { width: 0, height: 0 };
     record.measure.style.width = width === void 0 ? "max-content" : `${Math.max(0, width)}px`;
-    const bounds2 = record.measure.getBoundingClientRect();
-    return { width: Math.ceil(bounds2.width), height: Math.ceil(bounds2.height) };
+    const bounds4 = record.measure.getBoundingClientRect();
+    return { width: Math.ceil(bounds4.width), height: Math.ceil(bounds4.height) };
   }
   _measureLayout() {
     if (!this._rendered || !this.isConnected) return;
@@ -10723,7 +14464,7 @@ var MdNavigationBar = class extends HTMLElement {
 if (!customElements.get("md-navigation-bar")) customElements.define("md-navigation-bar", MdNavigationBar);
 
 // src/components/md-navigation-drawer.js
-var defaultStyle20 = `
+var defaultStyle19 = `
  :host { display:block; width:var(--md-navigation-drawer-width,var(--drawer-default-width,360px));
    max-width:100%; height:100%; outline:none; user-select:none; -webkit-user-select:none; }
  :host([data-variant="modal"]) { display:contents; }
@@ -10775,8 +14516,8 @@ var defaultStyle20 = `
  .md-ripple-effect { position:absolute; border-radius:50%; background:currentColor; opacity:0; animation:drawer-ripple 450ms linear; }
  @keyframes drawer-ripple { from { transform:scale(0); opacity:.1; } to { transform:scale(1); opacity:0; } }
 `;
-var navigationDrawerSheet = createComponentSheet(defaultStyle20);
-var clamp8 = (value, min, max) => Math.max(min, Math.min(max, value));
+var navigationDrawerSheet = createComponentSheet(defaultStyle19);
+var clamp13 = (value, min, max) => Math.max(min, Math.min(max, value));
 var gestureOwners = /* @__PURE__ */ new WeakMap();
 var MdNavigationDrawer = class extends HTMLElement {
   static get observedAttributes() {
@@ -10946,7 +14687,7 @@ var MdNavigationDrawer = class extends HTMLElement {
     this.dataset.variant = this.variant;
     const items = this.items, tag = this.modal ? "dialog" : "div";
     this.style.setProperty("--drawer-default-width", items.length ? "360px" : "240px");
-    this.shadowRoot.innerHTML = `${this.shadowRoot.adoptedStyleSheets?.length ? "" : `<style>${defaultStyle20}</style>`}
+    this.shadowRoot.innerHTML = `${this.shadowRoot.adoptedStyleSheets?.length ? "" : `<style>${defaultStyle19}</style>`}
     <${tag} class="layer" ${this.modal ? 'aria-modal="true"' : ""}>
      ${this.modal ? '<div class="scrim" part="scrim" aria-hidden="true"></div>' : ""}
      <nav class="drawer" part="drawer" tabindex="-1"><div class="drawer-content">
@@ -11026,22 +14767,22 @@ var MdNavigationDrawer = class extends HTMLElement {
     } });
     this._drawOffset(this._motion.channels.offset.sample(performance.now()).position);
   }
-  _drawOffset(offset) {
+  _drawOffset(offset2) {
     if (!this._drawer) return;
-    this._offset = offset;
+    this._offset = offset2;
     const movable = this.variant !== "standard", rtl = getComputedStyle(this).direction === "rtl";
-    const scale2 = movable && offset > 0 ? Math.fround(1 + Math.fround(offset / 360)) : 1;
-    this._drawer.style.translate = `${movable ? Math.round(offset) * (rtl ? -1 : 1) : 0}px 0`;
+    const scale2 = movable && offset2 > 0 ? Math.fround(1 + Math.fround(offset2 / 360)) : 1;
+    this._drawer.style.translate = `${movable ? Math.round(offset2) * (rtl ? -1 : 1) : 0}px 0`;
     this._drawer.style.scale = `${scale2} 1`;
     this._drawer.style.transformOrigin = rtl ? "left center" : "right center";
     this._content.style.scale = `${Math.fround(1 / scale2)} 1`;
     this._content.style.transformOrigin = rtl ? "left top" : "right top";
-    const fraction = this._width ? clamp8(Math.fround(Math.fround(offset + this._width) / this._width), 0, 1) : 0;
-    const visible = !movable || fraction > 0 || this.open || !!this._drag?.started;
-    this._drawer.inert = !visible;
-    this._drawer.style.visibility = visible ? "visible" : "hidden";
+    const fraction = this._width ? clamp13(Math.fround(Math.fround(offset2 + this._width) / this._width), 0, 1) : 0;
+    const visible2 = !movable || fraction > 0 || this.open || !!this._drag?.started;
+    this._drawer.inert = !visible2;
+    this._drawer.style.visibility = visible2 ? "visible" : "hidden";
     if (this._scrim) this._scrim.style.opacity = String(fraction);
-    if (this.variant === "dismissible") this.style.setProperty("--drawer-revealed-width", `${Math.max(0, this._width + Math.round(offset))}px`);
+    if (this.variant === "dismissible") this.style.setProperty("--drawer-revealed-width", `${Math.max(0, this._width + Math.round(offset2))}px`);
     if (this.modal && !this.open && !this._drag?.started && fraction === 0 && !this._motion?.channels.offset.animation && this._layer.open) this._layer.close();
   }
   _focusable() {
@@ -11161,7 +14902,7 @@ var MdNavigationDrawer = class extends HTMLElement {
   _beginDrag(event) {
     this._drag.started = true;
     const channel2 = this._motion.channels.offset, current = channel2.sample(performance.now()).position;
-    channel2.value = channel2.target = clamp8(current, -this._width, 0);
+    channel2.value = channel2.target = clamp13(current, -this._width, 0);
     channel2.animation = null;
     this._motion.tick(performance.now());
     if (this.modal && !this._layer.open) this._layer.showModal();
@@ -11193,7 +14934,7 @@ var MdNavigationDrawer = class extends HTMLElement {
     }
     event.preventDefault();
     const channel2 = this._motion.channels.offset;
-    channel2.value = channel2.target = clamp8(Math.fround(channel2.value + Math.fround(delta * direction)), -this._width, 0);
+    channel2.value = channel2.target = clamp13(Math.fround(channel2.value + Math.fround(delta * direction)), -this._width, 0);
     channel2.animation = null;
     this._motion.tick(performance.now());
   }
@@ -11234,10 +14975,10 @@ var MdNavigationDrawer = class extends HTMLElement {
 if (!customElements.get("md-navigation-drawer")) customElements.define("md-navigation-drawer", MdNavigationDrawer);
 
 // src/components/navigation-rail-layout.js
-var f19 = Math.fround;
-var lerp3 = (a, b, p) => a + Math.round((b - a) * p);
-var clamp9 = (value, max) => Math.min(max, Math.max(0, value));
-var div = (a, b) => Math.trunc(a / b) || 0;
+var f27 = Math.fround;
+var lerp4 = (a, b, p) => a + Math.round((b - a) * p);
+var clamp14 = (value, max) => Math.min(max, Math.max(0, value));
+var div2 = (a, b) => Math.trunc(a / b) || 0;
 function measureAnimatedRailItem({
   labelWidth,
   labelHeight,
@@ -11247,57 +14988,57 @@ function measureAnimatedRailItem({
   maxWidth,
   minHeight
 }) {
-  const p = Math.max(0, f19(positionProgress)), paddingProgress = clamp9(p, 1);
-  const selection = Math.max(0, f19(selectedProgress));
-  const verticalPadding = f19(f19(f19(1 - paddingProgress) * 4) + f19(paddingProgress * 16));
-  const labelW = clamp9(labelWidth, maxWidth), labelH = labelHeight;
-  const indicatorWidth = lerp3(24, 24 + labelW + 8, p) + 32;
-  const indicatorHeight = lerp3(24, Math.max(24, labelH), p) + Math.round(f19(verticalPadding * 2));
-  const rippleW = clamp9(indicatorWidth, maxWidth), rippleH = indicatorHeight;
-  const backgroundW = clamp9(Math.round(f19(indicatorWidth * selection)), maxWidth);
-  const widthTop = clamp9(Math.max(labelW, 96), maxWidth);
-  const widthStart = clamp9(rippleW + 20, maxWidth);
-  const measuredWidth = f19(widthTop + f19(f19(widthStart - widthTop) * p));
-  const measuredHeight = lerp3(rippleH + 4 + labelH, rippleH, p);
+  const p = Math.max(0, f27(positionProgress)), paddingProgress = clamp14(p, 1);
+  const selection = Math.max(0, f27(selectedProgress));
+  const verticalPadding = f27(f27(f27(1 - paddingProgress) * 4) + f27(paddingProgress * 16));
+  const labelW = clamp14(labelWidth, maxWidth), labelH = labelHeight;
+  const indicatorWidth = lerp4(24, 24 + labelW + 8, p) + 32;
+  const indicatorHeight = lerp4(24, Math.max(24, labelH), p) + Math.round(f27(verticalPadding * 2));
+  const rippleW = clamp14(indicatorWidth, maxWidth), rippleH = indicatorHeight;
+  const backgroundW = clamp14(Math.round(f27(indicatorWidth * selection)), maxWidth);
+  const widthTop = clamp14(Math.max(labelW, 96), maxWidth);
+  const widthStart = clamp14(rippleW + 20, maxWidth);
+  const measuredWidth = f27(widthTop + f27(f27(widthStart - widthTop) * p));
+  const measuredHeight = lerp4(rippleH + 4 + labelH, rippleH, p);
   const innerWidth2 = Math.round(measuredWidth);
   const width = Math.min(maxWidth, Math.max(48, innerWidth2));
   const height = Math.max(Math.round(minHeight), measuredHeight);
-  const dx = div(width - innerWidth2, 2), dy = div(height - measuredHeight, 2);
+  const dx = div2(width - innerWidth2, 2), dy = div2(height - measuredHeight, 2);
   const iconYTop = Math.round(verticalPadding);
-  const iconY = lerp3(0, div(measuredHeight - 24, 2) - iconYTop, p) + iconYTop;
-  const labelXTop = div(96 - labelW, 2);
-  const labelXStart = 68 - (topTarget && p > 0 ? 0 : f19(20 * f19(1 - p)));
-  const labelX = p < 0.5 ? labelXTop : Math.trunc(f19(labelXStart * p));
-  const labelY = p < 0.5 ? iconY + 24 + Math.round(f19(verticalPadding + 4)) : div(measuredHeight - labelH, 2);
-  const rippleX = lerp3(20, Math.round(f19(f19(20 + measuredWidth - rippleW) / 2)), p);
+  const iconY = lerp4(0, div2(measuredHeight - 24, 2) - iconYTop, p) + iconYTop;
+  const labelXTop = div2(96 - labelW, 2);
+  const labelXStart = 68 - (topTarget && p > 0 ? 0 : f27(20 * f27(1 - p)));
+  const labelX = p < 0.5 ? labelXTop : Math.trunc(f27(labelXStart * p));
+  const labelY = p < 0.5 ? iconY + 24 + Math.round(f27(verticalPadding + 4)) : div2(measuredHeight - labelH, 2);
+  const rippleX = lerp4(20, Math.round(f27(f27(20 + measuredWidth - rippleW) / 2)), p);
   return {
     width,
     height,
     innerWidth: innerWidth2,
     measuredHeight,
-    indicator: { x: 20 + dx, y: dy, width: backgroundW, height: rippleH, opacity: clamp9(selection, 1) },
+    indicator: { x: 20 + dx, y: dy, width: backgroundW, height: rippleH, opacity: clamp14(selection, 1) },
     ripple: { x: rippleX + dx, y: dy, width: rippleW, height: rippleH },
     icon: { x: 36 + dx, y: iconY + dy, width: 24, height: 24 },
-    label: { x: labelX + dx, y: labelY + dy, width: labelW, height: labelH, opacity: clamp9(f19(f19(4 * f19(p - 0.5)) * f19(p - 0.5)), 1) }
+    label: { x: labelX + dx, y: labelY + dy, width: labelW, height: labelH, opacity: clamp14(f27(f27(4 * f27(p - 0.5)) * f27(p - 0.5)), 1) }
   };
 }
 function measureIconOnlyRailItem({ selectedProgress, maxWidth, minHeight }) {
   const width = Math.min(maxWidth, 96), height = Math.max(Math.round(minHeight), 56);
-  const selection = Math.max(0, f19(selectedProgress));
-  const backgroundW = clamp9(Math.round(f19(56 * selection)), maxWidth);
-  const y2 = div(height - 56, 2);
+  const selection = Math.max(0, f27(selectedProgress));
+  const backgroundW = clamp14(Math.round(f27(56 * selection)), maxWidth);
+  const y2 = div2(height - 56, 2);
   return {
     width,
     height,
-    indicator: { x: div(width - backgroundW, 2), y: y2, width: backgroundW, height: 56, opacity: clamp9(selection, 1) },
-    ripple: { x: div(width - 56, 2), y: y2, width: Math.min(56, maxWidth), height: 56 },
-    icon: { x: div(width - 24, 2), y: div(height - 24, 2), width: 24, height: 24 },
+    indicator: { x: div2(width - backgroundW, 2), y: y2, width: backgroundW, height: 56, opacity: clamp14(selection, 1) },
+    ripple: { x: div2(width - 56, 2), y: y2, width: Math.min(56, maxWidth), height: 56 },
+    icon: { x: div2(width - 24, 2), y: div2(height - 24, 2), width: 24, height: 24 },
     label: null
   };
 }
 
 // src/components/md-navigation-rail.js
-var defaultStyle21 = `
+var defaultStyle20 = `
   :host { display:inline-block; height:100%; max-width:100%; vertical-align:top; user-select:none; -webkit-user-select:none; }
   .rail {
     position:relative; box-sizing:border-box; display:flex; flex-direction:column;
@@ -11344,7 +15085,7 @@ var defaultStyle21 = `
   .md-ripple-effect { position:absolute; border-radius:50%; background:currentColor; opacity:0; animation:rail-ripple 450ms linear; }
   @keyframes rail-ripple { from { transform:scale(0); opacity:.1; } to { transform:scale(1); opacity:0; } }
 `;
-var navigationRailSheet = createComponentSheet(defaultStyle21);
+var navigationRailSheet = createComponentSheet(defaultStyle20);
 var place2 = (node, g) => {
   if (!node || !g) return;
   node.style.insetInlineStart = `${g.x}px`;
@@ -11528,7 +15269,7 @@ var MdNavigationRail = class extends HTMLElement {
       r.colorMotion?.dispose();
     }
     const items = this.items, hasAdopted = !!this.shadowRoot.adoptedStyleSheets?.length;
-    this.shadowRoot.innerHTML = `${hasAdopted ? "" : `<style>${defaultStyle21}</style>`}
+    this.shadowRoot.innerHTML = `${hasAdopted ? "" : `<style>${defaultStyle20}</style>`}
       <nav class="rail"><div class="header" hidden><slot name="header"></slot></div>
       <div class="items" role="tablist" aria-orientation="vertical">
       ${items.map((item, index) => `<button class="item" type="button" role="tab" data-index="${index}"
@@ -11718,7 +15459,7 @@ var MdNavigationRail = class extends HTMLElement {
 if (!customElements.get("md-navigation-rail")) customElements.define("md-navigation-rail", MdNavigationRail);
 
 // src/components/md-segmented-button.js
-var defaultStyle22 = `
+var defaultStyle21 = `
   :host {
     display: inline-flex;
     outline: none;
@@ -11830,7 +15571,7 @@ var defaultStyle22 = `
     pointer-events: none;
   }
 `;
-var segmentedButtonSheet = createComponentSheet(defaultStyle22);
+var segmentedButtonSheet = createComponentSheet(defaultStyle21);
 var MdSegmentedButton = class extends HTMLElement {
   static get observedAttributes() {
     return ["selected-index", "selected-indices", "items", "multi-select", "disabled", "checked", "selected", "space"];
@@ -12028,7 +15769,7 @@ var MdSegmentedButton = class extends HTMLElement {
     const isMulti = this.multiSelect;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle22}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle21}</style>`}
       <div class="container" role="${isMulti ? "group" : "radiogroup"}" style="${this.space ? `gap: ${this.space}px;` : ""}">
         ${items.map((item) => {
       const icon2 = typeof item === "object" && item !== null ? item.icon : "";
@@ -12051,132 +15792,237 @@ if (!customElements.get("md-segmented-button")) {
   customElements.define("md-segmented-button", MdSegmentedButton);
 }
 
-// src/components/md-dialog.js
-var defaultStyle23 = `
-  :host {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    outline: none;
-    display: contents;
+// src/components/modal-controller.js
+var MODAL_STYLE = `
+  .modal-window {
+    position: fixed; inset: 0; margin: 0; padding: 0; border: 0;
+    width: 100%; height: 100%; max-width: none; max-height: none;
+    background: transparent; color: inherit; overflow: hidden; outline: none;
+    box-sizing: border-box;
   }
-  :host(:not([open])) .scrim,
-  :host(:not([open])) .dialog-container {
-    display: none !important;
-  }
-  :host([open]) .scrim,
-  :host([open]) .dialog-container {
-    display: flex !important;
-  }
-
-  .scrim {
-    position: fixed;
-    inset: 0;
-    background-color: var(--md-sys-color-scrim, #000);
-    opacity: 0.4;
-    z-index: 2000;
-    cursor: pointer;
+  .modal-window:not([open]) { display: none !important; }
+  .modal-window[open] { display: block; }
+  .modal-window::backdrop { background: transparent; }
+  .modal-scrim {
+    position: absolute; inset: 0;
+    background: var(--md-sys-color-scrim);
+    opacity: var(--md-dialog-scrim-opacity, 0.32);
     touch-action: none;
   }
-
-  .dialog-container {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2001;
-    pointer-events: none;
-    padding: 24px;
-    box-sizing: border-box;
-  }
-
-  .dialog {
-    box-sizing: border-box;
-    position: relative;
-    pointer-events: auto;
-    transform-origin: center center;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    min-width: 280px;
-    max-width: 560px;
-    width: 100%;
-    max-height: 80vh;
-    padding: 24px;
-    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
-    background-color: var(--md-sys-color-surface-container-high, #211F26);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.25));
-    border: 1px solid var(--md-sys-color-outline-variant, rgba(255, 255, 255, 0.12));
-    overflow-y: auto;
-    will-change: transform, opacity;
-  }
-
-  .icon {
-    align-self: center;
-    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-    font-weight: normal;
-    font-style: normal;
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    display: inline-block;
-    color: var(--md-sys-color-secondary, #CCC2DC);
-    text-transform: none !important;
-  }
-  .icon:empty { display: none; }
-
-  .headline {
-    font: var(--md-sys-typescale-headline-small, 400 24px/32px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    margin: 0;
-  }
-  .headline:empty { display: none; }
-
-  .supporting {
-    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-  }
-  .supporting:empty { display: none; }
-
-  .content { color: var(--md-sys-color-on-surface-variant, #CAC4D0); }
-
-  .actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding-top: 8px;
-  }
-
-  .action {
-    min-width: 48px;
-    min-height: 40px;
-    padding: 0 16px;
-    border: none;
-    background-color: transparent;
-    color: var(--md-sys-color-primary, #D0BCFF);
-    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-    cursor: pointer;
-    outline: none;
-    border-radius: var(--md-sys-shape-corner-full, 9999px);
-    transition: background-color var(--md-sys-motion-duration-short2, 100ms) ease,
-                color var(--md-sys-motion-duration-short2, 100ms) ease,
-                transform 120ms cubic-bezier(0.2, 0, 0, 1.2);
-  }
-  .action:hover {
-    background-color: color-mix(in srgb, var(--md-sys-color-primary, #D0BCFF) 10%, transparent);
-  }
-  .action:active {
-    background-color: color-mix(in srgb, var(--md-sys-color-primary, #D0BCFF) 16%, transparent);
-    transform: scale(0.94);
-  }
-  .action:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #D0BCFF);
-    outline-offset: 2px;
-  }
 `;
-var dialogSheet = createComponentSheet(defaultStyle23);
+function renderModalContent(host, html, { inline = false, label = "Dialog" } = {}) {
+  let window2 = host.shadowRoot.querySelector(".modal-window");
+  if (inline) {
+    host._modal?.detach();
+    window2?.remove();
+    host.shadowRoot.querySelector(".inline-content")?.remove();
+    const content = document.createElement("div");
+    content.className = "inline-content";
+    content.innerHTML = html;
+    host.shadowRoot.append(content);
+    return;
+  }
+  host.shadowRoot.querySelector(".inline-content")?.remove();
+  if (!window2) {
+    window2 = document.createElement("dialog");
+    window2.className = "modal-window";
+    window2.setAttribute("aria-label", label);
+    host.shadowRoot.append(window2);
+  }
+  window2.innerHTML = `<div class="modal-scrim" part="scrim"></div><div class="modal-content">${html}</div>`;
+}
+var ModalController = class {
+  constructor(host, { surface, onDismiss, onClosed = () => {
+  } }) {
+    this.host = host;
+    this.surfaceSelector = surface;
+    this.onDismiss = onDismiss;
+    this.onClosed = onClosed;
+    this.window = null;
+    this.surface = null;
+    this.jobs = [];
+    this.target = false;
+    this.closing = false;
+    this.generation = 0;
+    this.abort = null;
+  }
+  get visible() {
+    return !!this.window?.open;
+  }
+  _attach() {
+    const window2 = this.host.shadowRoot.querySelector(".modal-window");
+    if (window2 !== this.window) {
+      this.detach();
+      this.window = window2;
+      if (!window2) return;
+      this.abort = new AbortController();
+      const { signal } = this.abort;
+      window2.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        if (!this.closing) this.onDismiss("escape");
+      }, { signal });
+      window2.addEventListener("close", () => {
+        if (window2.open) return;
+        if (this.target) this.onDismiss("dismiss");
+        if (this.target || this.closing) this.sync(false);
+      }, { signal });
+      window2.addEventListener("pointerdown", (event) => {
+        this.outside = this._outside(event.target);
+      }, { signal, capture: true });
+      window2.addEventListener("click", (event) => {
+        if (this.outside && this._outside(event.target) && !this.closing) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.onDismiss("scrim");
+        }
+        this.outside = false;
+      }, { signal });
+    }
+    const surface = window2?.querySelector(this.surfaceSelector);
+    if (surface !== this.surface) {
+      this._cancel();
+      this.surface = surface;
+      this.closing = false;
+    }
+  }
+  _outside(target) {
+    return target === this.window || target?.classList?.contains("modal-scrim") || target?.classList?.contains("dialog-container") || target?.classList?.contains("scrim") || target?.classList?.contains("modal-content");
+  }
+  _cancel() {
+    this.generation++;
+    for (const job of this.jobs) job.cancel();
+    this.jobs = [];
+  }
+  sync(open) {
+    if (!this.host.isConnected) {
+      this.detach();
+      return;
+    }
+    this._attach();
+    if (!this.window) return;
+    if (open) {
+      if (this.target && this.window.open && !this.closing) return;
+      const reopening = this.window.open;
+      const current2 = reopening && this.surface ? getComputedStyle(this.surface) : null;
+      const scrim2 = this.window.querySelector(".modal-scrim");
+      this.scrimFrom = reopening && scrim2 ? getComputedStyle(scrim2).opacity : "0";
+      const from2 = current2 ? { opacity: current2.opacity, transform: current2.transform } : { opacity: "0", transform: "scale(0.8)" };
+      this._cancel();
+      this.target = true;
+      this.closing = false;
+      this.window.inert = false;
+      setThemeLayer(document.body, this, { styles: { overflow: "hidden" }, attributes: {} });
+      if (!this.window.open) this.window.showModal();
+      this._animate(true, from2);
+      return;
+    }
+    if (!this.window.open) {
+      const active = this.target || this.closing;
+      this._cancel();
+      this.target = false;
+      this.closing = false;
+      this.window.inert = false;
+      removeThemeLayer(document.body, this);
+      if (active) this.onClosed();
+      return;
+    }
+    if (this.closing) {
+      this.target = false;
+      return;
+    }
+    const current = this.surface ? getComputedStyle(this.surface) : null;
+    const scrim = this.window.querySelector(".modal-scrim");
+    this.scrimFrom = scrim ? getComputedStyle(scrim).opacity : "0.32";
+    const from = current ? { opacity: current.opacity, transform: current.transform } : { opacity: "1", transform: "none" };
+    this._cancel();
+    this.target = false;
+    this.closing = true;
+    this.window.inert = true;
+    this._animate(false, from);
+  }
+  _animate(enter, from) {
+    const generation = this.generation, style3 = getComputedStyle(this.host);
+    const durationRole = enter ? "medium4" : "short3";
+    const override = style3.getPropertyValue(enter ? "--md-dialog-enter-duration" : "--md-dialog-exit-duration").trim();
+    const raw = override || style3.getPropertyValue("--md-sys-motion-duration-" + durationRole).trim();
+    const parsed = raw ? parseFloat(raw) * (raw.endsWith("ms") ? 1 : 1e3) : enter ? 400 : 150;
+    const duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : Number.isFinite(parsed) && parsed >= 0 ? parsed : enter ? 400 : 150;
+    const easing = style3.getPropertyValue(enter ? "--md-dialog-enter-easing" : "--md-dialog-exit-easing").trim() || (enter ? "cubic-bezier(0.1, 0.7, 0.1, 1)" : "cubic-bezier(0.3, 0, 0.8, 0.2)");
+    const complete = () => {
+      if (generation !== this.generation) return;
+      this._cancel();
+      if (!enter) {
+        this.closing = false;
+        this.window.inert = false;
+        this.window.close();
+        removeThemeLayer(document.body, this);
+        this.onClosed();
+      }
+    };
+    if (!duration || !this.surface) {
+      complete();
+      return;
+    }
+    const to = enter ? { opacity: "1", transform: "none" } : { opacity: "0", transform: from.transform };
+    const job = this.surface.animate([from, to], { duration, easing, fill: "both" });
+    this.jobs.push(job);
+    const scrim = this.window.querySelector(".modal-scrim");
+    if (scrim) {
+      const alpha = getComputedStyle(scrim).getPropertyValue("--md-dialog-scrim-opacity").trim() || "0.32";
+      this.jobs.push(scrim.animate([{ opacity: this.scrimFrom }, { opacity: enter ? alpha : "0" }], { duration, easing: "linear", fill: "both" }));
+    }
+    job.finished.then(complete, () => {
+    });
+  }
+  detach() {
+    this._cancel();
+    this.abort?.abort();
+    this.abort = null;
+    this.target = false;
+    this.closing = false;
+    if (this.window?.open) {
+      this.window.inert = false;
+      this.window.close();
+    }
+    removeThemeLayer(document.body, this);
+    this.window = null;
+    this.surface = null;
+  }
+};
+
+// src/components/md-dialog.js
+var defaultStyle22 = MODAL_STYLE + `
+  :host { display: contents; outline: none; -webkit-tap-highlight-color: transparent; }
+  .dialog-container { position:absolute; inset:0; display:flex; align-items:center;
+    justify-content:center; padding:24px; box-sizing:border-box; pointer-events:none; }
+  .dialog { box-sizing:border-box; position:relative; pointer-events:auto;
+    display:flex; flex-direction:column; min-width:min(280px,100%); max-width:560px;
+    width:100%; max-height:100%; padding:24px;
+    border-radius:var(--md-sys-shape-corner-extra-large,28px);
+    border:0; box-shadow:none; overflow:hidden;
+    background:var(--_md-dialog-container,var(--md-sys-color-surface-container-high));
+    color:var(--md-sys-color-on-surface); transform-origin:center; }
+  .icon { align-self:center; flex:none; margin-bottom:16px;
+    font-family:'Material Symbols Rounded','Material Symbols Outlined',sans-serif;
+    font-weight:normal; font-style:normal; font-size:24px; width:24px; height:24px;
+    line-height:24px; color:var(--_md-dialog-icon,var(--md-sys-color-secondary)); }
+  .headline { flex:none; margin:0 0 16px; align-self:flex-start;
+    font:var(--md-sys-typescale-headline-small,400 24px/32px Roboto,sans-serif);
+    color:var(--_md-dialog-title,var(--md-sys-color-on-surface)); }
+  .dialog.has-icon .headline { align-self:center; text-align:center; }
+  .body { min-height:0; overflow:auto; margin-bottom:24px;
+    font:var(--md-sys-typescale-body-medium,400 14px/20px Roboto,sans-serif);
+    color:var(--_md-dialog-text,var(--md-sys-color-on-surface-variant)); }
+  .supporting { margin:0; }
+  .content { color:inherit; }
+  [hidden] { display:none !important; }
+  .actions { flex:none; align-self:flex-end; max-width:100%; }
+  .action-flow { display:flex; flex-direction:row-reverse; flex-wrap:wrap;
+    justify-content:flex-start; column-gap:8px; row-gap:0; }
+  .action-flow > md-button { min-width:0; }
+  .color-probe { display:none; }
+`;
+var dialogSheet = createComponentSheet(defaultStyle22);
 var MdDialog = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -12189,7 +16035,8 @@ var MdDialog = class extends HTMLElement {
       "container-color",
       "icon-content-color",
       "title-content-color",
-      "text-content-color"
+      "text-content-color",
+      "tonal-elevation"
     ];
   }
   constructor() {
@@ -12197,252 +16044,197 @@ var MdDialog = class extends HTMLElement {
     this.attachShadow({ mode: "open" });
     adoptSheet(this.shadowRoot, dialogSheet);
     this._rendered = false;
-    this._onKeydown = this._onKeydown.bind(this);
     this._abortController = null;
+    this._stopTheme = null;
+    this._closeReason = null;
+    this._modal = new ModalController(this, { surface: ".dialog", onDismiss: (reason) => this.close(reason), onClosed: () => {
+      if (this._closeReason !== null) {
+        const reason = this._closeReason;
+        this._closeReason = null;
+        this.dispatchEvent(new CustomEvent("close", { detail: { reason }, bubbles: true, composed: true }));
+      }
+    } });
   }
   get open() {
     return this.hasAttribute("open");
   }
-  set open(v) {
-    v ? this.setAttribute("open", "") : this.removeAttribute("open");
+  set open(value) {
+    this.toggleAttribute("open", !!value);
   }
   get headline() {
     return this.getAttribute("headline") || "";
   }
-  set headline(v) {
-    this.setAttribute("headline", v);
+  set headline(value) {
+    this.setAttribute("headline", value);
   }
   get supportingText() {
     return this.getAttribute("supporting-text") || "";
   }
-  set supportingText(v) {
-    this.setAttribute("supporting-text", v);
+  set supportingText(value) {
+    this.setAttribute("supporting-text", value);
   }
   get icon() {
     return this.getAttribute("icon") || "";
   }
-  set icon(v) {
-    this.setAttribute("icon", v);
+  set icon(value) {
+    this.setAttribute("icon", value);
   }
   get confirmLabel() {
     return this.getAttribute("confirm-label") || "OK";
   }
-  set confirmLabel(v) {
-    this.setAttribute("confirm-label", v);
+  set confirmLabel(value) {
+    this.setAttribute("confirm-label", value);
   }
   get cancelLabel() {
     return this.getAttribute("cancel-label") || "Cancel";
   }
-  set cancelLabel(v) {
-    this.setAttribute("cancel-label", v);
+  set cancelLabel(value) {
+    this.setAttribute("cancel-label", value);
   }
   get containerColor() {
     return this.getAttribute("container-color") || "";
   }
-  set containerColor(v) {
-    this.setAttribute("container-color", v);
+  set containerColor(value) {
+    this.setAttribute("container-color", value);
   }
   get iconContentColor() {
     return this.getAttribute("icon-content-color") || "";
   }
-  set iconContentColor(v) {
-    this.setAttribute("icon-content-color", v);
+  set iconContentColor(value) {
+    this.setAttribute("icon-content-color", value);
   }
   get titleContentColor() {
     return this.getAttribute("title-content-color") || "";
   }
-  set titleContentColor(v) {
-    this.setAttribute("title-content-color", v);
+  set titleContentColor(value) {
+    this.setAttribute("title-content-color", value);
   }
   get textContentColor() {
     return this.getAttribute("text-content-color") || "";
   }
-  set textContentColor(v) {
-    this.setAttribute("text-content-color", v);
+  set textContentColor(value) {
+    this.setAttribute("text-content-color", value);
+  }
+  get tonalElevation() {
+    const value = Number(this.getAttribute("tonal-elevation"));
+    return Number.isFinite(value) ? value : 0;
+  }
+  set tonalElevation(value) {
+    if (!Number.isFinite(value)) throw new TypeError("Dialog tonalElevation must be finite.");
+    this.setAttribute("tonal-elevation", value);
   }
   connectedCallback() {
     if (!this._rendered) {
       this.render();
       this._rendered = true;
-      this.setupInteractions();
     }
-    if (this.open) this._activate();
+    this.setupInteractions();
+    this._sync();
+    this._stopTheme?.();
+    this._stopTheme = observeThemeContext(this, () => this._syncColors());
+    this._modal.sync(this.open);
   }
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
-    this._deactivate();
+    this._stopTheme?.();
+    this._stopTheme = null;
+    this._closeReason = null;
+    this._modal.detach();
   }
-  attributeChangedCallback(name, oldV, newV) {
-    if (!this._rendered || oldV === newV) return;
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (!this._rendered || oldValue === newValue) return;
     if (name === "open") {
-      this.open ? this._activate() : this._deactivate();
-    } else {
-      this.render();
-      this.setupInteractions();
-    }
+      if (this.open) this._closeReason = null;
+      this._modal.sync(this.open);
+    } else this._sync();
   }
   show() {
+    this._closeReason = null;
     this.open = true;
+    this._modal.sync(true);
   }
   close(reason = "dismiss") {
-    if (!this.open) return;
-    const dialog = this.shadowRoot.querySelector(".dialog");
-    const scrim = this.shadowRoot.querySelector(".scrim");
-    if (dialog && scrim) {
-      dialog.style.transition = "transform 200ms cubic-bezier(0.2, 0, 0, 1), opacity 200ms linear";
-      dialog.style.transform = "scale(0.88, 0.84) translateY(16px)";
-      dialog.style.opacity = "0";
-      scrim.style.transition = "opacity 200ms linear";
-      scrim.style.opacity = "0";
-      setTimeout(() => {
-        this.open = false;
-        dialog.style.transform = "";
-        dialog.style.transition = "";
-        dialog.style.opacity = "";
-        scrim.style.opacity = "";
-        scrim.style.transition = "";
-        this._deactivate();
-        this.dispatchEvent(new CustomEvent("close", { detail: { reason }, bubbles: true, composed: true }));
-      }, 200);
-    } else {
-      this.open = false;
-      this._deactivate();
-      this.dispatchEvent(new CustomEvent("close", { detail: { reason }, bubbles: true, composed: true }));
-    }
+    if (!this.open || this._modal.closing) return;
+    this._closeReason = reason;
+    this.open = false;
   }
   render() {
-    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    const containerColor = this.containerColor;
-    const iconColor = this.iconContentColor;
-    const titleColor = this.titleContentColor;
-    const textColor = this.textContentColor;
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle23}</style>`}
-      <div class="scrim" part="scrim"></div>
-      <div class="dialog-container" part="dialog-container">
-        <div class="dialog" role="dialog" aria-modal="true"
-          aria-labelledby="dlg-headline" aria-describedby="dlg-supporting"
-          style="${containerColor ? `background-color: ${sanitizeAttribute(containerColor)};` : ""}${textColor ? `color: ${sanitizeAttribute(textColor)};` : ""}"
-          part="dialog">
-          <span class="icon material-symbols-rounded" style="${iconColor ? `color: ${sanitizeAttribute(iconColor)};` : ""}">${escapeHtml(this.getAttribute("icon"))}</span>
-          <h2 class="headline" id="dlg-headline" style="${titleColor ? `color: ${sanitizeAttribute(titleColor)};` : ""}">${escapeHtml(this.getAttribute("headline"))}</h2>
-          <div class="supporting" id="dlg-supporting">${escapeHtml(this.getAttribute("supporting-text"))}</div>
-          <div class="content"><slot></slot></div>
-          <div class="actions" part="actions">
-            <slot name="actions">
-              <button class="action" type="button" data-action="cancel">${escapeHtml(this.getAttribute("cancel-label") || "Cancel")}</button>
-              <button class="action" type="button" data-action="confirm">${escapeHtml(this.getAttribute("confirm-label") || "OK")}</button>
-            </slot>
+    const hasAdopted = this.shadowRoot.adoptedStyleSheets?.length;
+    this.shadowRoot.innerHTML = (hasAdopted ? "" : "<style>" + defaultStyle22 + "</style>") + `
+      <dialog class="modal-window" aria-modal="true">
+        <div class="modal-scrim" part="scrim"></div>
+        <div class="dialog-container" part="dialog-container">
+          <div class="dialog" part="dialog">
+            <span class="icon" aria-hidden="true"></span>
+            <h2 class="headline" id="dlg-headline"></h2>
+            <div class="body">
+              <div class="supporting" id="dlg-supporting"></div>
+              <div class="content"><slot></slot></div>
+            </div>
+            <div class="actions" part="actions"><slot name="actions">
+              <div class="action-flow">
+                <md-button class="action" variant="text" size="s" data-action="confirm" autofocus></md-button>
+                <md-button class="action" variant="text" size="s" data-action="cancel"></md-button>
+              </div>
+            </slot></div>
+            <span class="color-probe" hidden aria-hidden="true"></span>
           </div>
         </div>
-      </div>
-    `;
+      </dialog>`;
   }
-  _focusable() {
-    const d = this.shadowRoot.querySelector(".dialog");
-    if (!d) return [];
-    const shadowFocusable = [...d.querySelectorAll(
-      'button:not([disabled]), [tabindex]:not([tabindex="-1"]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
-    )];
-    const slots = this.shadowRoot.querySelectorAll("slot");
-    const slottedFocusable = [];
-    slots.forEach((slot) => {
-      slot.assignedElements({ flatten: true }).forEach((el) => {
-        if (el.matches && el.matches("button, input, select, textarea, a[href], [tabindex]")) {
-          slottedFocusable.push(el);
-        }
-        if (el.querySelectorAll) {
-          slottedFocusable.push(...el.querySelectorAll('button:not([disabled]), [tabindex]:not([tabindex="-1"]), input:not([disabled]), a[href]'));
-        }
-      });
+  _sync() {
+    if (!this.isConnected) return;
+    const root = this.shadowRoot, dialog = root.querySelector(".dialog"), window2 = root.querySelector(".modal-window");
+    dialog.classList.toggle("has-icon", !!this.icon);
+    for (const [selector, text] of [[".icon", this.icon], [".headline", this.headline], [".supporting", this.supportingText]]) {
+      const element2 = root.querySelector(selector);
+      element2.textContent = text;
+      element2.hidden = !text;
+    }
+    const assigned = root.querySelector("slot:not([name])").assignedNodes({ flatten: true });
+    root.querySelector(".body").hidden = !this.supportingText && !assigned.some((node) => node.nodeType === 1 || node.textContent.trim());
+    if (this.headline) window2.setAttribute("aria-labelledby", "dlg-headline");
+    else window2.removeAttribute("aria-labelledby");
+    if (this.supportingText) window2.setAttribute("aria-describedby", "dlg-supporting");
+    else window2.removeAttribute("aria-describedby");
+    root.querySelector('[data-action="confirm"]').setAttribute("label", this.confirmLabel);
+    root.querySelector('[data-action="cancel"]').setAttribute("label", this.cancelLabel);
+    this._syncColors();
+  }
+  _syncColors() {
+    if (!this.isConnected) return;
+    const dialog = this.shadowRoot.querySelector(".dialog"), probe = this.shadowRoot.querySelector(".color-probe");
+    if (!dialog || !probe) return;
+    const color = resolveSurfaceColors(this, probe, {
+      container: this.containerColor || "var(--md-sys-color-surface-container-high)",
+      content: "var(--md-sys-color-on-surface)",
+      elevation: this.tonalElevation
     });
-    return [...shadowFocusable, ...slottedFocusable];
-  }
-  _activate() {
-    document.removeEventListener("keydown", this._onKeydown);
-    document.addEventListener("keydown", this._onKeydown);
-    document.body.style.overflow = "hidden";
-    const dialog = this.shadowRoot.querySelector(".dialog");
-    const scrim = this.shadowRoot.querySelector(".scrim");
-    if (scrim) {
-      scrim.style.opacity = "0";
-      scrim.style.transition = "opacity 240ms ease";
-    }
-    if (dialog) {
-      dialog.style.transform = "scale(0.82, 0.78) translateY(24px)";
-      dialog.style.opacity = "0";
-      dialog.style.transition = "none";
-      void dialog.offsetHeight;
-      requestAnimationFrame(() => {
-        dialog.style.transition = "transform 320ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.35, 0.64, 1)), opacity 220ms ease";
-        dialog.style.transform = "scale(1, 1) translateY(0)";
-        dialog.style.opacity = "1";
-        if (scrim) scrim.style.opacity = "0.4";
-      });
-      setTimeout(() => {
-        dialog.style.transition = "";
-        if (scrim) scrim.style.transition = "";
-      }, 320);
-    }
-    const f22 = this._focusable();
-    if (f22.length) {
-      setTimeout(() => f22[f22.length - 1]?.focus({ preventScroll: true }), 50);
-    }
-  }
-  _deactivate() {
-    document.removeEventListener("keydown", this._onKeydown);
-    document.body.style.overflow = "";
-  }
-  _onKeydown(e) {
-    if (!this.open) return;
-    if (e.key === "Escape") {
-      e.preventDefault();
-      this.close("escape");
-      return;
-    }
-    if (e.key === "Tab") {
-      const f22 = this._focusable();
-      if (!f22.length) return;
-      const first = f22[0], last = f22[f22.length - 1];
-      const active = this.shadowRoot.activeElement || document.activeElement;
-      if (e.shiftKey && (active === first || active === this)) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
+    dialog.style.setProperty("--_md-dialog-container", color.container);
+    dialog.style.setProperty("--md-absolute-tonal-elevation", String(color.total));
+    for (const [name, value] of [["icon", this.iconContentColor], ["title", this.titleContentColor], ["text", this.textContentColor]]) {
+      if (value) dialog.style.setProperty("--_md-dialog-" + name, value);
+      else dialog.style.removeProperty("--_md-dialog-" + name);
     }
   }
   setupInteractions() {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-    const scrim = this.shadowRoot.querySelector(".scrim");
-    if (scrim) {
-      const onScrimDismiss = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.close("scrim");
-      };
-      scrim.addEventListener("click", onScrimDismiss, { signal });
-    }
-    this.shadowRoot.querySelectorAll(".action").forEach((el) => {
-      el.addEventListener("click", () => {
-        const action = el.getAttribute("data-action") || "action";
-        this.dispatchEvent(new CustomEvent(action, { bubbles: true, composed: true }));
-        this.close(action);
-      }, { signal });
-    });
+    this.shadowRoot.querySelectorAll("slot").forEach((slot) => slot.addEventListener("slotchange", () => this._sync(), { signal }));
+    this.shadowRoot.querySelectorAll(".action").forEach((element2) => element2.addEventListener("click", () => {
+      if (!this.open || this._modal.closing) return;
+      const action = element2.dataset.action;
+      this.dispatchEvent(new CustomEvent(action, { bubbles: true, composed: true }));
+      this.close(action);
+    }, { signal }));
   }
 };
-if (!customElements.get("md-dialog")) {
-  customElements.define("md-dialog", MdDialog);
-}
+if (!customElements.get("md-dialog")) customElements.define("md-dialog", MdDialog);
 
 // src/components/md-divider.js
-var defaultStyle24 = `
+var defaultStyle23 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -12482,7 +16274,7 @@ var defaultStyle24 = `
     height: calc(100% - 16px);
   }
 `;
-var dividerSheet = createComponentSheet(defaultStyle24);
+var dividerSheet = createComponentSheet(defaultStyle23);
 var MdDivider = class extends HTMLElement {
   static get observedAttributes() {
     return ["inset", "vertical", "thickness", "color"];
@@ -12553,7 +16345,7 @@ var MdDivider = class extends HTMLElement {
   render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle24}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle23}</style>`}
       <hr class="line${this.inset ? " inset" : ""}${this.vertical ? " vertical" : ""}" aria-hidden="true">
     `;
   }
@@ -12563,7 +16355,7 @@ if (!customElements.get("md-divider")) {
 }
 
 // src/components/md-carousel.js
-var defaultStyle25 = `
+var defaultStyle24 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -12705,7 +16497,7 @@ var defaultStyle25 = `
     pointer-events: none;
   }
 `;
-var carouselSheet = createComponentSheet(defaultStyle25);
+var carouselSheet = createComponentSheet(defaultStyle24);
 var DEMO_ITEMS = [
   {
     id: 1,
@@ -12948,7 +16740,7 @@ var MdCarousel = class extends HTMLElement {
     const items = this.itemsList;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle25}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle24}</style>`}
       <div class="carousel-container" role="region" aria-label="Photo Carousel">
         <div class="carousel-track" role="listbox" tabindex="0" aria-label="Carousel items">
           ${items.map((it, idx) => `
@@ -12977,7 +16769,7 @@ if (!customElements.get("md-carousel")) {
 }
 
 // src/components/md-date-picker.js
-var defaultStyle26 = `
+var defaultStyle25 = MODAL_STYLE + `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -12995,12 +16787,10 @@ var defaultStyle26 = `
   .scrim {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
     padding: 24px 16px;
     box-sizing: border-box;
   }
@@ -13111,12 +16901,13 @@ var defaultStyle26 = `
     padding: 24px;
     width: 328px;
     max-width: calc(100vw - 32px);
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     gap: 16px;
     box-sizing: border-box;
-    will-change: transform;
+    max-height: 100%;
+    overflow-y: auto;
     margin: auto;
   }
 
@@ -13389,7 +17180,7 @@ var defaultStyle26 = `
     }
   }
 `;
-var datePickerSheet = createComponentSheet(defaultStyle26);
+var datePickerSheet = createComponentSheet(defaultStyle25);
 var MONTH_NAMES = [
   "January",
   "February",
@@ -13451,25 +17242,26 @@ var MdDatePicker = class extends HTMLElement {
     };
     this._rendered = false;
     this._abortController = null;
+    this._modal = new ModalController(this, { surface: ".picker-dialog", onDismiss: (reason) => this.close(reason) });
   }
   connectedCallback() {
     if (!this._rendered) {
       this._parseInitialAttributes();
       this.render();
-      this._setup();
       this._rendered = true;
     }
+    this._setup();
     this._sync();
   }
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._modal.detach();
   }
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     if (name === "open") {
       this._sync();
-      if (this.open && !this.inline) this._animateOpen();
     }
     if (name === "value" && this.value) {
       const parsed = parseDateMMDDYYYY(this.value);
@@ -13569,46 +17361,24 @@ var MdDatePicker = class extends HTMLElement {
   }
   show() {
     this.open = true;
-    if (!this.inline) document.body.style.overflow = "hidden";
+    this._sync();
   }
   close() {
     this.open = false;
-    if (!this.inline) document.body.style.overflow = "";
-  }
-  _animateOpen() {
-    const dialog = this.shadowRoot.querySelector(".picker-dialog");
-    if (dialog) {
-      SpringPhysics.animateProperty(dialog, "scale", 0.9, 1, "expressiveSpatialFast");
-    }
   }
   _sync() {
     if (this.inline) {
       this.style.display = "inline-block";
+      this._modal.detach();
     } else {
-      this.style.display = this.open ? "block" : "none";
+      this.style.display = "contents";
+      this._modal.sync(this.open);
     }
   }
   _setup() {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-    const scrim = this.shadowRoot.querySelector(".scrim");
-    if (scrim) {
-      const onScrimDismiss = (e) => {
-        if (e.target === scrim) {
-          e.preventDefault();
-          this.close();
-        }
-      };
-      scrim.addEventListener("click", onScrimDismiss, { signal });
-      scrim.addEventListener("pointerdown", onScrimDismiss, { signal });
-      scrim.addEventListener("touchstart", onScrimDismiss, { signal, passive: false });
-    }
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.open && !this.inline) {
-        this.close();
-      }
-    }, { signal });
     const prevBtn = this.shadowRoot.querySelector("#prev-month");
     const nextBtn = this.shadowRoot.querySelector("#next-month");
     if (prevBtn && nextBtn) {
@@ -13635,6 +17405,7 @@ var MdDatePicker = class extends HTMLElement {
         this.state.displayMode = this.state.displayMode === "picker" ? "input" : "picker";
         this.render();
         this._setup();
+        this._sync();
       }, { signal });
     }
     const cancelBtn = this.shadowRoot.querySelector("#cancel-btn");
@@ -13666,7 +17437,7 @@ var MdDatePicker = class extends HTMLElement {
           this.value = formatDateMMDDYYYY(parsed);
           this._updateCalendarGrid();
         }
-      });
+      }, { signal });
     }
     const rangeStartInput = this.shadowRoot.querySelector("#range-start-input");
     const rangeEndInput = this.shadowRoot.querySelector("#range-end-input");
@@ -13678,7 +17449,7 @@ var MdDatePicker = class extends HTMLElement {
           this.startDate = formatDateMMDDYYYY(s);
           this._updateHeader();
         }
-      });
+      }, { signal });
       rangeEndInput.addEventListener("input", (e) => {
         const endD = parseDateMMDDYYYY(e.target.value);
         if (endD) {
@@ -13686,7 +17457,7 @@ var MdDatePicker = class extends HTMLElement {
           this.endDate = formatDateMMDDYYYY(endD);
           this._updateHeader();
         }
-      });
+      }, { signal });
     }
     this._updateUI();
   }
@@ -13943,10 +17714,12 @@ var MdDatePicker = class extends HTMLElement {
       `;
     }
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle26}</style>`}
-      ${this.inline ? cardContentHtml : `<div class="scrim" role="dialog" aria-modal="true">${cardContentHtml}</div>`}
-    `;
+    if (!hasAdopted && !this.shadowRoot.querySelector("style")) {
+      const style3 = document.createElement("style");
+      style3.textContent = defaultStyle25;
+      this.shadowRoot.prepend(style3);
+    }
+    renderModalContent(this, this.inline ? cardContentHtml : `<div class="scrim">${cardContentHtml}</div>`, { inline: this.inline, label: this.range ? "Select date range" : "Select date" });
   }
 };
 if (!customElements.get("md-date-picker")) {
@@ -13954,7 +17727,7 @@ if (!customElements.get("md-date-picker")) {
 }
 
 // src/components/md-time-picker.js
-var defaultStyle27 = `
+var defaultStyle26 = MODAL_STYLE + `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -13972,12 +17745,10 @@ var defaultStyle27 = `
   .scrim {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
     padding: 24px 16px;
     box-sizing: border-box;
   }
@@ -13987,12 +17758,13 @@ var defaultStyle27 = `
     color: var(--md-sys-color-on-surface, #1D1B20);
     border-radius: var(--md-sys-shape-corner-extra-large, 28px);
     padding: 24px;
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     gap: 20px;
     box-sizing: border-box;
-    will-change: transform;
+    max-height: 100%;
+    overflow-y: auto;
     width: 328px;
     max-width: calc(100vw - 32px);
     margin: auto;
@@ -14374,7 +18146,7 @@ var defaultStyle27 = `
     }
   }
 `;
-var timePickerSheet = createComponentSheet(defaultStyle27);
+var timePickerSheet = createComponentSheet(defaultStyle26);
 var MdTimePicker = class extends HTMLElement {
   static get observedAttributes() {
     return ["open", "value", "mode", "is-24-hour", "rich-colors", "layout-type", "inline", "hour", "minute", "variant"];
@@ -14400,25 +18172,27 @@ var MdTimePicker = class extends HTMLElement {
     this._rendered = false;
     this._abortController = null;
     this._currentArmAngle = this.state.hours % 12 * 30;
+    this._modal = new ModalController(this, { surface: ".picker-dialog", onDismiss: (reason) => this.close(reason) });
   }
   connectedCallback() {
     if (!this._rendered) {
       this._parseInitialAttributes();
       this.render();
-      this._setup();
       this._rendered = true;
     }
+    this._setup();
     this._sync();
   }
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._isDragging = false;
+    this._modal.detach();
   }
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     if (name === "open") {
       this._sync();
-      if (this.open && !this.inline) this._animateOpen();
     }
     if (name === "value" && this.value) {
       this._parseValue(this.value);
@@ -14529,11 +18303,11 @@ var MdTimePicker = class extends HTMLElement {
   }
   show() {
     this.open = true;
-    if (!this.inline) document.body.style.overflow = "hidden";
+    this._sync();
   }
   close() {
+    clearTimeout(this._unitChangeTimer);
     this.open = false;
-    if (!this.inline) document.body.style.overflow = "";
   }
   _parseValue(valStr) {
     if (!valStr) return;
@@ -14545,40 +18319,23 @@ var MdTimePicker = class extends HTMLElement {
       this._currentArmAngle = this.state.hours % 12 * 30;
     }
   }
-  _animateOpen() {
-    const dialog = this.shadowRoot.querySelector(".picker-dialog");
-    if (dialog) {
-      SpringPhysics.animateProperty(dialog, "scale", 0.9, 1, "expressiveSpatialFast");
-    }
-  }
   _sync() {
     if (this.inline) {
       this.style.display = "inline-block";
+      this._modal.detach();
     } else {
-      this.style.display = this.open ? "block" : "none";
+      this.style.display = "contents";
+      this._modal.sync(this.open);
     }
   }
   _setup() {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-    const scrim = this.shadowRoot.querySelector(".scrim");
-    if (scrim) {
-      const onScrimDismiss = (e) => {
-        if (e.target === scrim) {
-          e.preventDefault();
-          this.close();
-        }
-      };
-      scrim.addEventListener("click", onScrimDismiss, { signal });
-      scrim.addEventListener("pointerdown", onScrimDismiss, { signal });
-      scrim.addEventListener("touchstart", onScrimDismiss, { signal, passive: false });
-    }
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.open && !this.inline) {
-        this.close();
-      }
-    }, { signal });
+    signal.addEventListener("abort", () => {
+      clearTimeout(this._unitChangeTimer);
+      this._isDragging = false;
+    }, { once: true });
     const hourCard = this.shadowRoot.querySelector("#hour-card");
     const minCard = this.shadowRoot.querySelector("#min-card");
     if (hourCard && minCard) {
@@ -14602,7 +18359,7 @@ var MdTimePicker = class extends HTMLElement {
           this.state.hours = val;
           this._emitChange();
         }
-      });
+      }, { signal });
       minInput.addEventListener("input", (e) => {
         let val = parseInt(e.target.value, 10);
         if (!isNaN(val)) {
@@ -14610,7 +18367,7 @@ var MdTimePicker = class extends HTMLElement {
           this.state.minutes = val;
           this._emitChange();
         }
-      });
+      }, { signal });
     }
     const amBtn = this.shadowRoot.querySelector("#am-btn");
     const pmBtn = this.shadowRoot.querySelector("#pm-btn");
@@ -14620,13 +18377,13 @@ var MdTimePicker = class extends HTMLElement {
         amBtn.classList.add("active");
         pmBtn.classList.remove("active");
         this._emitChange();
-      });
+      }, { signal });
       pmBtn.addEventListener("click", () => {
         this.state.period = "PM";
         pmBtn.classList.add("active");
         amBtn.classList.remove("active");
         this._emitChange();
-      });
+      }, { signal });
     }
     const modeToggle = this.shadowRoot.querySelector("#mode-toggle-btn");
     if (modeToggle) {
@@ -14634,11 +18391,12 @@ var MdTimePicker = class extends HTMLElement {
         this.state.mode = this.state.mode === "dial" ? "input" : "dial";
         this.render();
         this._setup();
-      });
+        this._sync();
+      }, { signal });
     }
     const cancelBtn = this.shadowRoot.querySelector("#cancel-btn");
     const okBtn = this.shadowRoot.querySelector("#ok-btn");
-    if (cancelBtn) cancelBtn.addEventListener("click", () => this.close());
+    if (cancelBtn) cancelBtn.addEventListener("click", () => this.close(), { signal });
     if (okBtn) {
       okBtn.addEventListener("click", () => {
         this.dispatchEvent(new CustomEvent("confirm", {
@@ -14652,14 +18410,14 @@ var MdTimePicker = class extends HTMLElement {
           composed: true
         }));
         if (!this.inline) this.close();
-      });
+      }, { signal });
     }
     const clockFace = this.shadowRoot.querySelector(".clock-face");
     if (clockFace) {
       const updateFromAngle = (e) => {
-        const rect4 = clockFace.getBoundingClientRect();
-        const cx = rect4.left + rect4.width / 2;
-        const cy = rect4.top + rect4.height / 2;
+        const rect6 = clockFace.getBoundingClientRect();
+        const cx = rect6.left + rect6.width / 2;
+        const cy = rect6.top + rect6.height / 2;
         const dx = e.clientX - cx;
         const dy = e.clientY - cy;
         let rad = Math.atan2(dy, dx) + Math.PI / 2;
@@ -14681,23 +18439,25 @@ var MdTimePicker = class extends HTMLElement {
         this._isDragging = true;
         clockFace.setPointerCapture?.(e.pointerId);
         updateFromAngle(e);
-      });
+      }, { signal });
       clockFace.addEventListener("pointermove", (e) => {
         if (this._isDragging) updateFromAngle(e);
-      });
+      }, { signal });
       const onEnd = () => {
         if (!this._isDragging) return;
         this._isDragging = false;
         this._emitChange();
         if (this.state.activeUnit === "hours") {
-          setTimeout(() => {
+          clearTimeout(this._unitChangeTimer);
+          this._unitChangeTimer = setTimeout(() => {
+            if (signal.aborted || !this.isConnected || !this.inline && !this.open) return;
             this.state.activeUnit = "minutes";
             this._updateDisplay(true);
           }, 200);
         }
       };
-      clockFace.addEventListener("pointerup", onEnd);
-      clockFace.addEventListener("pointercancel", onEnd);
+      clockFace.addEventListener("pointerup", onEnd, { signal });
+      clockFace.addEventListener("pointercancel", onEnd, { signal });
     }
     this._updateDisplay(true);
   }
@@ -14887,10 +18647,12 @@ var MdTimePicker = class extends HTMLElement {
       </div>
     `;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle27}</style>`}
-      ${this.inline ? dialogContent : `<div class="scrim" role="dialog" aria-modal="true">${dialogContent}</div>`}
-    `;
+    if (!hasAdopted && !this.shadowRoot.querySelector("style")) {
+      const style3 = document.createElement("style");
+      style3.textContent = defaultStyle26;
+      this.shadowRoot.prepend(style3);
+    }
+    renderModalContent(this, this.inline ? dialogContent : `<div class="scrim">${dialogContent}</div>`, { inline: this.inline, label: "Select time" });
   }
 };
 if (!customElements.get("md-time-picker")) {
@@ -14965,17 +18727,17 @@ function measureInteractiveListItem({
   const height = Math.max(minimum, Math.min(maxHeight, Math.max(l?.height ?? 0, t?.height ?? 0, mainHeight)));
   const resultWidth = Number.isFinite(width) ? width : (l?.width ?? 0) + (t?.width ?? 0) + Math.max(o?.width ?? 0, c?.width ?? 0, s?.width ?? 0);
   const y2 = (size) => alignment === "top" || alignment === "auto" && height >= 60 ? 0 : alignment === "bottom" ? height - size : Math.round((height - size) / 2);
-  const placements = {}, mainX = l?.width ?? 0;
+  const placements2 = {}, mainX = l?.width ?? 0;
   let mainY = y2(mainHeight);
-  if (l) placements.leading = { ...l, x: 0, y: y2(l.height) };
+  if (l) placements2.leading = { ...l, x: 0, y: y2(l.height) };
   for (const [name, child] of [["overline", o], ["content", c], ["supporting", s]]) {
     if (child) {
-      placements[name] = { ...child, x: mainX, y: mainY };
+      placements2[name] = { ...child, x: mainX, y: mainY };
       mainY += child.height;
     }
   }
-  if (t) placements.trailing = { ...t, x: resultWidth - t.width, y: y2(t.height) };
-  return { width: resultWidth, height, type, placements };
+  if (t) placements2.trailing = { ...t, x: resultWidth - t.width, y: y2(t.height) };
+  return { width: resultWidth, height, type, placements: placements2 };
 }
 
 // src/components/md-list.js
@@ -15101,7 +18863,7 @@ var itemStyle = `
  .color-probe { position:absolute; visibility:hidden; pointer-events:none; width:0; height:0; }
 `;
 var itemSheet = createComponentSheet(itemStyle);
-var fields = ["headline", "supporting-text", "overline", "trailing-text", "icon", "trailing-icon", "avatar", "image"];
+var fields4 = ["headline", "supporting-text", "overline", "trailing-text", "icon", "trailing-icon", "avatar", "image"];
 var hasContent = (slot) => slot.assignedNodes({ flatten: true }).some((node) => node.nodeType === 1 || node.textContent.trim());
 var number = (value, fallback) => Number.isFinite(parseFloat(value)) ? parseFloat(value) : fallback;
 function safeUrl(value, base, image = false) {
@@ -15115,7 +18877,7 @@ function safeUrl(value, base, image = false) {
 }
 var MdListItem = class extends HTMLElement {
   static get observedAttributes() {
-    return [...fields, "selected", "checked", "interactive", "disabled", "enabled", "variant", "href", "shape", "shapes", "vertical-alignment", "selection-mode", "dragged", "colors", "aria-label", "dir"];
+    return [...fields4, "selected", "checked", "interactive", "disabled", "enabled", "variant", "href", "shape", "shapes", "vertical-alignment", "selection-mode", "dragged", "colors", "aria-label", "dir"];
   }
   constructor() {
     super();
@@ -15251,7 +19013,7 @@ var MdListItem = class extends HTMLElement {
       this._suppressActivation = true;
       this._setup();
     }
-    if (fields.includes(name)) this._syncContent();
+    if (fields4.includes(name)) this._syncContent();
     if ((name === "selected" || name === "checked") && this.selected && this.selectionMode === "single") this.closest("md-list")?._select(this);
     this._syncHierarchy();
   }
@@ -15333,7 +19095,7 @@ var MdListItem = class extends HTMLElement {
   _syncVisuals() {
     if (!this.isConnected || !this._item) return;
     const target = [...this._shapeTarget(), this.dragged ? 8 : 0], keys = ["topStart", "topEnd", "bottomEnd", "bottomStart", "elevation"];
-    const shadowStyle = getComputedStyle(this), shadowFrames = [0, 1, 3, 6, 8, 12].map((dp, index) => ({ offset: dp / 12, boxShadow: shadowStyle.getPropertyValue(`--md-sys-elevation-level-${index}`).trim() || "none" }));
+    const shadowStyle = getComputedStyle(this), shadowFrames = [0, 1, 3, 6, 8, 12].map((dp2, index) => ({ offset: dp2 / 12, boxShadow: shadowStyle.getPropertyValue(`--md-sys-elevation-level-${index}`).trim() || "none" }));
     if (!this._shadowAnimation) {
       this._shadowAnimation = this._probe.animate(shadowFrames, { duration: 12, fill: "both" });
       this._shadowAnimation.pause();
@@ -15432,6 +19194,7 @@ var MdListItem = class extends HTMLElement {
     const { signal } = this._abortController;
     bindPress(this._item, {
       signal,
+      pointerNode: () => this.interactive,
       disabled: () => !this.interactive || !this.enabled,
       ignoreEvent: (event) => this._nested(event),
       onPress: (event) => {
@@ -15458,7 +19221,7 @@ var MdListItem = class extends HTMLElement {
     for (const slot of this.shadowRoot.querySelectorAll("slot")) slot.addEventListener("slotchange", () => this._syncContent(), { signal });
   }
 };
-for (const name of fields) {
+for (const name of fields4) {
   const property = name.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
   Object.defineProperty(MdListItem.prototype, property, { get() {
     return this.getAttribute(name) || "";
@@ -15483,14 +19246,14 @@ function calculateMenuPosition({ anchor, windowSize, size, position = "below", r
   const side2 = position === "left" || position === "right";
   const startSide = rtl ? anchor.right : anchor.left - size.width, endSide = rtl ? anchor.left - size.width : anchor.right;
   const xs = side2 ? position === "left" ? [startSide, endSide, windowX] : [endSide, startSide, windowX] : [start, end, windowX];
-  const centered = anchor.top - Math.round(size.height / 2);
-  const ys = side2 ? [anchor.top, anchor.bottom - size.height, windowY] : position === "above" ? [anchor.top - size.height, anchor.bottom, centered, windowY] : [anchor.bottom, anchor.top - size.height, centered, windowY];
-  const choose = (candidates, total, length, margin, offset) => {
+  const centered2 = anchor.top - Math.round(size.height / 2);
+  const ys = side2 ? [anchor.top, anchor.bottom - size.height, windowY] : position === "above" ? [anchor.top - size.height, anchor.bottom, centered2, windowY] : [anchor.bottom, anchor.top - size.height, centered2, windowY];
+  const choose = (candidates, total, length, margin, offset2) => {
     for (const value of candidates) {
-      const candidate = value + offset;
+      const candidate = value + offset2;
       if (candidate >= margin && candidate + length <= total - margin) return candidate;
     }
-    return length >= total - 2 * margin ? Math.round((total - length) / 2) : Math.max(margin, Math.min(total - margin - length, candidates.at(-1) + offset));
+    return length >= total - 2 * margin ? Math.round((total - length) / 2) : Math.max(margin, Math.min(total - margin - length, candidates.at(-1) + offset2));
   };
   const x = choose(xs, windowSize.width, size.width, horizontalMargin, Math.round(offsetX) * (rtl ? -1 : 1)), y2 = choose(ys, windowSize.height, size.height, verticalMargin, Math.round(offsetY));
   return { x, y: y2, origin: menuTransformOrigin(anchor, { left: x, top: y2, right: x + size.width, bottom: y2 + size.height }) };
@@ -15613,7 +19376,7 @@ var popupStyle = `
 var popupSheet = createComponentSheet(popupStyle);
 var MdMenu = class extends HTMLElement {
   static get observedAttributes() {
-    return ["open", "expanded", "enabled", "disabled", "checked", "offset-x", "offset-y", "container-color", "horizontal-arrangement", "variant", "label", "items", "anchor-position", "selection-mode", "close-on-select"];
+    return ["open", "expanded", "enabled", "disabled", "checked", "offset-x", "offset-y", "container-color", "horizontal-arrangement", "variant", "label", "items", "anchor-position", "selection-mode", "close-on-select", "popup-role", "focus-mode", "match-anchor-width"];
   }
   constructor() {
     super();
@@ -15695,6 +19458,35 @@ var MdMenu = class extends HTMLElement {
   set label(value) {
     this._optional("label", value);
   }
+  get popupRole() {
+    return this.getAttribute("popup-role") === "listbox" ? "listbox" : "menu";
+  }
+  set popupRole(value) {
+    this._optional("popup-role", value);
+  }
+  get focusMode() {
+    return this.getAttribute("focus-mode") === "anchor" ? "anchor" : "menu";
+  }
+  set focusMode(value) {
+    this._optional("focus-mode", value);
+  }
+  get matchAnchorWidth() {
+    return this.hasAttribute("match-anchor-width");
+  }
+  set matchAnchorWidth(value) {
+    this.toggleAttribute("match-anchor-width", !!value);
+  }
+  get anchorElement() {
+    return this._externalAnchor || null;
+  }
+  set anchorElement(value) {
+    if (value !== null && !(value instanceof Element)) throw new TypeError("Menu anchor must be an Element or null");
+    if (this._externalAnchor === value) return;
+    if (this._externalAnchor) this._resizeObserver?.unobserve(this._externalAnchor);
+    this._externalAnchor = value;
+    if (value) this._resizeObserver?.observe(value);
+    this._sync();
+  }
   get anchorPosition() {
     return this.getAttribute("anchor-position") || (this.getAttribute("slot") === "submenu" ? "end" : "below");
   }
@@ -15737,6 +19529,7 @@ var MdMenu = class extends HTMLElement {
     });
     this._resizeObserver.observe(this._menu);
     this._resizeObserver.observe(this._trigger);
+    if (this._externalAnchor) this._resizeObserver.observe(this._externalAnchor);
     this._themeObserver = observeThemeContext(this, () => this._sync());
   }
   disconnectedCallback() {
@@ -15793,8 +19586,18 @@ var MdMenu = class extends HTMLElement {
     this._implicitGroup.containerColor = this.containerColor || null;
     this._menu.className = "menu" + (this.variant === "dropdown" ? " dropdown" : "");
     this._menu.setAttribute("aria-label", this.label);
+    if (this.popupRole === "listbox") {
+      this.setAttribute("role", "listbox");
+      this.setAttribute("aria-label", this.label);
+      this.setAttribute("aria-hidden", String(!this.open));
+      this._menu.setAttribute("role", "presentation");
+    } else {
+      if (this.getAttribute("role") === "listbox") this.removeAttribute("role");
+      this.removeAttribute("aria-hidden");
+      this._menu.setAttribute("role", "menu");
+    }
     this._menu.style.backgroundColor = this.variant === "dropdown" && CSS.supports("color", this.containerColor) ? this.containerColor : "";
-    this._trigger.hidden = this.getAttribute("slot") === "submenu";
+    this._trigger.hidden = !!this._externalAnchor || this.getAttribute("slot") === "submenu";
     this.shadowRoot.querySelector(".default-trigger").textContent = this.label;
     for (const group of this._groups) group._sync?.();
     for (const item of this._items) item._syncContext?.();
@@ -15813,6 +19616,7 @@ var MdMenu = class extends HTMLElement {
   }
   _syncTrigger() {
     this._trigger.inert = !this.enabled;
+    if (this._externalAnchor) return;
     const slot = this._trigger.querySelector("slot"), nodes = slot.assignedElements({ flatten: true });
     for (const node of nodes.length ? nodes : [this.shadowRoot.querySelector(".default-trigger")]) {
       const target = node.shadowRoot?.querySelector("button") || node;
@@ -15846,7 +19650,7 @@ var MdMenu = class extends HTMLElement {
     this._position();
     this._listenPopup();
     this._motion.set({ scale: { value: 1, role: "expressiveSpatialFast" }, alpha: { value: 1, role: "expressiveEffectFast" } });
-    if (this._focusOnOpen !== false) queueMicrotask(() => {
+    if (this.focusMode !== "anchor" && this._focusOnOpen !== false) queueMicrotask(() => {
       if (this.open) this._focusFirst();
     });
     this._focusOnOpen = void 0;
@@ -15870,15 +19674,16 @@ var MdMenu = class extends HTMLElement {
     this.dispatchEvent(new CustomEvent("close", { bubbles: true, composed: true }));
   }
   _anchor() {
-    return this.getAttribute("slot") === "submenu" ? this.closest("md-menu-item")?._button : this._trigger.querySelector("slot").assignedElements({ flatten: true })[0] || this._trigger;
+    return this._externalAnchor || (this.getAttribute("slot") === "submenu" ? this.closest("md-menu-item")?._button : this._trigger.querySelector("slot").assignedElements({ flatten: true })[0] || this._trigger);
   }
   _position() {
     if (!this._visible) return;
     const anchor = this._anchor();
     if (!anchor) return;
     this._menu.classList.toggle("scrollable", this._menu.scrollHeight > Math.max(0, innerHeight - 96));
-    const rect4 = anchor.getBoundingClientRect(), bounds2 = { left: Math.round(rect4.left), top: Math.round(rect4.top), right: Math.round(rect4.right), bottom: Math.round(rect4.bottom) };
-    const input = { anchor: bounds2, windowSize: { width: innerWidth, height: innerHeight }, size: { width: this._menu.offsetWidth, height: this._menu.offsetHeight }, position: this.anchorPosition, rtl: getComputedStyle(this).direction === "rtl", offsetX: this.offsetX, offsetY: this.offsetY, horizontalMargin: this.variant === "dropdown" ? 0 : 8 };
+    const rect6 = anchor.getBoundingClientRect(), bounds4 = { left: Math.round(rect6.left), top: Math.round(rect6.top), right: Math.round(rect6.right), bottom: Math.round(rect6.bottom) };
+    this._menu.style.width = this.matchAnchorWidth ? Math.max(0, Math.min(innerWidth, bounds4.right - bounds4.left)) + "px" : "";
+    const input = { anchor: bounds4, windowSize: { width: innerWidth, height: innerHeight }, size: { width: this._menu.offsetWidth, height: this._menu.offsetHeight }, position: this.anchorPosition, rtl: getComputedStyle(this).direction === "rtl", offsetX: this.offsetX, offsetY: this.offsetY, horizontalMargin: this.variant === "dropdown" ? 0 : 8 };
     const result = calculateMenuPosition(input);
     this._positionInput = input;
     this._placement = result;
@@ -15891,8 +19696,12 @@ var MdMenu = class extends HTMLElement {
     this._popupAbort = new AbortController();
     const { signal } = this._popupAbort;
     this.ownerDocument.addEventListener("pointerdown", (event) => {
-      if (!event.composedPath().includes(this)) this._requestClose(false);
+      const path = event.composedPath();
+      if (!path.includes(this) && !path.includes(this._externalAnchor)) this._requestClose(false);
     }, { capture: true, signal });
+    this._menu.addEventListener("pointerdown", (event) => {
+      if (this.focusMode === "anchor") event.preventDefault();
+    }, { signal });
     this.ownerDocument.addEventListener("keydown", (event) => {
       if (activeMenu(event) === this) this._key(event);
     }, { signal });
@@ -15900,6 +19709,14 @@ var MdMenu = class extends HTMLElement {
     this.ownerDocument.defaultView.addEventListener("scroll", () => this._position(), { capture: true, signal });
   }
   _key(event) {
+    if (this.focusMode === "anchor") {
+      if (event.key === "Escape" && this.open) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.close();
+      } else if (event.key === "Tab") this.close({ restoreFocus: false });
+      return;
+    }
     if (this._items.some((item) => event.composedPath().includes(item._button) && nestedControl(event, item._button))) return;
     if (!this.open) return;
     const items = this._items.filter((item) => item.enabled);
@@ -15952,7 +19769,7 @@ var MdMenu = class extends HTMLElement {
   }
   _syncTabStops() {
     const items = this._items.filter((item) => item.enabled), focused = items.find((item) => item._button === activeElement(this.ownerDocument)) || items.find((item) => item.selected) || items[0];
-    for (const item of this._items) if (item._button) item._button.tabIndex = item === focused && item.enabled ? 0 : -1;
+    for (const item of this._items) if (item._button) item._button.tabIndex = this.focusMode !== "anchor" && item === focused && item.enabled ? 0 : -1;
   }
   _select(item) {
     for (const other of owningGroup(item)?._items || this._items) if (other !== item && other.selectionMode === "single") other.selected = false;
@@ -16002,8 +19819,8 @@ var MdMenu = class extends HTMLElement {
     this._restoreFocus = restore;
     this.open = false;
   }
-  close() {
-    this._requestClose(true);
+  close({ restoreFocus = true } = {}) {
+    this._requestClose(restoreFocus);
   }
   toggle() {
     this.open ? this.close() : this.show();
@@ -16133,6 +19950,7 @@ var MdMenuGroup = class extends HTMLElement {
 };
 var itemStyle2 = `
  :host{display:block;position:relative;outline:none;box-sizing:border-box;max-width:288px}
+ :host([hidden]){display:none!important}
  [hidden]{display:none!important}
  .row{display:flex;align-items:center;padding:0 4px;min-height:max(44px,var(--md-minimum-interactive-component-size,48px));box-sizing:border-box}
  .row.supporting{padding:2px 4px;min-height:calc(max(44px,var(--md-minimum-interactive-component-size,48px)) + 4px)}
@@ -16155,6 +19973,7 @@ var itemStyle2 = `
  .ripple::before{content:'';position:absolute;inset:0;background:currentColor;opacity:0}
  .item:hover:not(:disabled) .ripple::before{opacity:.08}
  .item:focus-visible .ripple::before,.item.pressed:not(:disabled) .ripple::before{opacity:.1}
+ :host([active]) .item:not(:disabled) .ripple::before{opacity:.1}
  .md-ripple-effect{position:absolute;background:currentColor;border-radius:50%;animation:menu-ripple 450ms linear;opacity:0}
  @keyframes menu-ripple{from{transform:scale(0);opacity:.1}to{transform:scale(1);opacity:0}}
  .probe{position:absolute;width:0;height:0;visibility:hidden;pointer-events:none}
@@ -16164,7 +19983,7 @@ var itemStyle2 = `
 var itemSheet2 = createComponentSheet(itemStyle2);
 var MdMenuItem = class extends HTMLElement {
   static get observedAttributes() {
-    return ["headline", "label", "leading-icon", "icon", "trailing-text", "trailing-icon", "supporting-text", "selected-icon", "checked-icon", "disabled", "enabled", "has-submenu", "selected", "checked", "selection-mode", "variant", "colors", "shapes", "value", "aria-label", "horizontal-arrangement"];
+    return ["headline", "label", "leading-icon", "icon", "trailing-text", "trailing-icon", "supporting-text", "selected-icon", "checked-icon", "disabled", "enabled", "has-submenu", "selected", "checked", "selection-mode", "variant", "colors", "shapes", "value", "aria-label", "horizontal-arrangement", "active"];
   }
   constructor() {
     super();
@@ -16340,6 +20159,24 @@ var MdMenuItem = class extends HTMLElement {
       this.setupInteractions();
     }
     this._button.disabled = !this.enabled;
+    const listbox = owningMenu(this)?.popupRole === "listbox";
+    if (listbox) {
+      this.setAttribute("role", "option");
+      this.setAttribute("aria-label", this.label);
+      this.setAttribute("aria-selected", String(this.hasAttribute("active") || this.selected));
+      this.setAttribute("aria-disabled", String(!this.enabled));
+      this._button.setAttribute("role", "presentation");
+      this._button.removeAttribute("aria-checked");
+      this._button.setAttribute("aria-hidden", "true");
+      this._button.tabIndex = -1;
+      return;
+    }
+    if (this.getAttribute("role") === "option") {
+      this.removeAttribute("role");
+      this.removeAttribute("aria-selected");
+      this.removeAttribute("aria-disabled");
+    }
+    this._button.removeAttribute("aria-hidden");
     this._button.setAttribute("role", this.selectionMode === "single" ? "menuitemradio" : this.selectionMode === "multiple" ? "menuitemcheckbox" : "menuitem");
     if (this.selectionMode !== "none") this._button.setAttribute("aria-checked", String(this.selected));
     else this._button.removeAttribute("aria-checked");
@@ -16386,6 +20223,9 @@ var MdMenuItem = class extends HTMLElement {
     this._trailing.querySelector(".arrow").hidden = !this.hasSubmenu;
     this._trailing.hidden = !this.hasAttribute("trailing-text") && !this.hasAttribute("trailing-icon") && !this.hasSubmenu && !assigned("end");
     this._trailing.style.setProperty("--arrow-direction", getComputedStyle(this).direction === "rtl" ? -1 : 1);
+    const matchWidth = owningMenu(this)?.matchAnchorWidth;
+    this.style.maxWidth = matchWidth ? "none" : "";
+    this._button.style.maxWidth = matchWidth ? "none" : "";
     const arrangement = this.getAttribute("horizontal-arrangement") || owningMenu(this)?.horizontalArrangement || "menu";
     this._button.style.justifyContent = ["start", "end", "center", "space-between", "space-around", "space-evenly"].includes(arrangement) ? { start: "flex-start", end: "flex-end" }[arrangement] || arrangement : "";
     this._trailing.style.marginInlineStart = arrangement === "menu" ? "auto" : "0";
@@ -16480,7 +20320,7 @@ var MdMenuItem = class extends HTMLElement {
 for (const [name, component] of [["md-menu-group", MdMenuGroup], ["md-menu-item", MdMenuItem], ["md-menu", MdMenu]]) if (!customElements.get(name)) customElements.define(name, component);
 
 // src/components/md-search-bar.js
-var defaultStyle28 = `
+var defaultStyle27 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none; display: block; outline: none; position: relative; }
@@ -16591,7 +20431,7 @@ var defaultStyle28 = `
     outline-offset: -3px;
   }
 `;
-var searchBarSheet = createComponentSheet(defaultStyle28);
+var searchBarSheet = createComponentSheet(defaultStyle27);
 var MdSearchBar = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -16693,7 +20533,7 @@ var MdSearchBar = class extends HTMLElement {
   render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle28}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle27}</style>`}
       <div class="wrapper" role="search">
         <div class="bar">
           <span class="leading material-symbols-rounded">search</span>
@@ -16792,7 +20632,7 @@ if (!customElements.get("md-search-bar")) {
 }
 
 // src/components/md-side-sheet.js
-var defaultStyle29 = `
+var defaultStyle28 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -16911,7 +20751,7 @@ var defaultStyle29 = `
     color: var(--md-sys-color-on-surface-variant, #CAC4D0);
   }
 `;
-var sideSheetSheet = createComponentSheet(defaultStyle29);
+var sideSheetSheet = createComponentSheet(defaultStyle28);
 var MdSideSheet = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -17018,19 +20858,19 @@ var MdSideSheet = class extends HTMLElement {
   }
   close() {
     if (!this.open) return;
-    const sheet8 = this.shadowRoot.querySelector(".sheet");
+    const sheet10 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
-    if (sheet8 && scrim) {
+    if (sheet10 && scrim) {
       const isLeft = this.position === "left";
       const exitTransform = isLeft ? "translateX(-100%)" : "translateX(100%)";
-      sheet8.style.transition = "transform 250ms cubic-bezier(0.3, 0, 0, 1)";
-      sheet8.style.transform = exitTransform;
+      sheet10.style.transition = "transform 250ms cubic-bezier(0.3, 0, 0, 1)";
+      sheet10.style.transform = exitTransform;
       scrim.style.transition = "opacity 250ms linear";
       scrim.style.opacity = "0";
       setTimeout(() => {
         this.open = false;
-        sheet8.style.transform = "";
-        sheet8.style.transition = "";
+        sheet10.style.transform = "";
+        sheet10.style.transition = "";
         scrim.style.opacity = "";
         scrim.style.transition = "";
         this._deactivate();
@@ -17051,7 +20891,7 @@ var MdSideSheet = class extends HTMLElement {
     const drawerContainerColor = this.drawerContainerColor;
     const drawerContentColor = this.drawerContentColor;
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle29}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle28}</style>`}
       <div class="scrim" part="scrim"></div>
       <aside class="sheet" role="dialog" aria-modal="true"
         aria-label="${escapeHtml(headline || "Side Sheet")}"
@@ -17076,7 +20916,7 @@ var MdSideSheet = class extends HTMLElement {
     document.removeEventListener("keydown", this._onKeydown);
     document.addEventListener("keydown", this._onKeydown);
     document.body.style.overflow = "hidden";
-    const sheet8 = this.shadowRoot.querySelector(".sheet");
+    const sheet10 = this.shadowRoot.querySelector(".sheet");
     const scrim = this.shadowRoot.querySelector(".scrim");
     if (scrim) {
       scrim.style.opacity = "0";
@@ -17085,21 +20925,21 @@ var MdSideSheet = class extends HTMLElement {
         scrim.style.opacity = "0.4";
       });
     }
-    if (sheet8) {
+    if (sheet10) {
       const isLeft = this.position === "left";
       const enterFrom = isLeft ? "translateX(-100%)" : "translateX(100%)";
-      sheet8.style.transform = enterFrom;
-      sheet8.style.transition = "transform 350ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1))";
+      sheet10.style.transform = enterFrom;
+      sheet10.style.transition = "transform 350ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1))";
       requestAnimationFrame(() => {
-        sheet8.style.transform = "translateX(0)";
+        sheet10.style.transform = "translateX(0)";
       });
       setTimeout(() => {
-        sheet8.style.transition = "";
+        sheet10.style.transition = "";
         if (scrim) scrim.style.transition = "";
       }, 350);
     }
-    const f22 = this._focusable();
-    if (f22.length) f22[0].focus({ preventScroll: true });
+    const f30 = this._focusable();
+    if (f30.length) f30[0].focus({ preventScroll: true });
   }
   _deactivate() {
     document.removeEventListener("keydown", this._onKeydown);
@@ -17113,9 +20953,9 @@ var MdSideSheet = class extends HTMLElement {
       return;
     }
     if (e.key === "Tab") {
-      const f22 = this._focusable();
-      if (!f22.length) return;
-      const first = f22[0], last = f22[f22.length - 1];
+      const f30 = this._focusable();
+      if (!f30.length) return;
+      const first = f30[0], last = f30[f30.length - 1];
       const active = this.shadowRoot.activeElement;
       if (e.shiftKey && active === first) {
         e.preventDefault();
@@ -17151,8 +20991,8 @@ if (!customElements.get("md-side-sheet")) {
 function tabBaselineLayout({ width, text = null, icon: icon2 = null, fontScale = 1, rtl = false }) {
   const textWidth = text ? Math.min(width, text.width + 32) : 0, iconWidth = icon2 ? Math.min(width, icon2.width) : 0;
   const w = Math.max(textWidth, iconWidth), distance = Math.round(Math.fround(20 * Math.fround(fontScale)));
-  const h = Math.max(text && icon2 ? 72 : 48, (icon2?.height || 0) + (text?.height || 0) + distance), placements = {};
-  const place3 = (name, x, y2, width2, height) => placements[name] = { x: rtl ? w - width2 - x : x, y: y2, width: width2, height };
+  const h = Math.max(text && icon2 ? 72 : 48, (icon2?.height || 0) + (text?.height || 0) + distance), placements2 = {};
+  const place3 = (name, x, y2, width2, height) => placements2[name] = { x: rtl ? w - width2 - x : x, y: y2, width: width2, height };
   if (text && icon2) {
     const baselineOffset = text.firstBaseline === text.lastBaseline ? 14 : 6;
     const textY = h - text.lastBaseline - baselineOffset - 3, iconOffset = icon2.height + distance - text.firstBaseline;
@@ -17160,42 +21000,42 @@ function tabBaselineLayout({ width, text = null, icon: icon2 = null, fontScale =
     place3("icon", Math.trunc((w - iconWidth) / 2), textY - iconOffset, iconWidth, icon2.height);
   } else if (text) place3("text", 0, Math.trunc((h - text.height) / 2), textWidth, text.height);
   else if (icon2) place3("icon", 0, Math.trunc((h - icon2.height) / 2), iconWidth, icon2.height);
-  return { size: { width: w, height: h }, placements };
+  return { size: { width: w, height: h }, placements: placements2 };
 }
 function fixedTabRow({ width, tabs, rtl = false }) {
   const tabWidth = tabs.length ? Math.trunc(width / tabs.length) : 0, height = Math.max(0, ...tabs.map((t) => t.height));
-  const positions2 = tabs.map((t, i) => ({ left: tabWidth * i, width: tabWidth, contentWidth: Math.max(Math.min(t.width, tabWidth) - 32, 24) })), placements = {};
-  tabs.forEach((_, i) => placements["tab" + i] = { x: rtl ? width - tabWidth * (i + 1) : tabWidth * i, y: 0, width: tabWidth, height });
-  placements.divider = { x: 0, y: height - 1, width, height: 1 };
-  return { size: { width, height }, positions: positions2, placements };
+  const positions3 = tabs.map((t, i) => ({ left: tabWidth * i, width: tabWidth, contentWidth: Math.max(Math.min(t.width, tabWidth) - 32, 24) })), placements2 = {};
+  tabs.forEach((_, i) => placements2["tab" + i] = { x: rtl ? width - tabWidth * (i + 1) : tabWidth * i, y: 0, width: tabWidth, height });
+  placements2.divider = { x: 0, y: height - 1, width, height: 1 };
+  return { size: { width, height }, positions: positions3, placements: placements2 };
 }
 function scrollableTabRow({ tabs, minTabWidth = 90, edgePadding = 52 }) {
-  const f22 = Math.fround, min = f22(minTabWidth), padding2 = f22(edgePadding);
+  const f30 = Math.fround, min = f30(minTabWidth), padding2 = f30(edgePadding);
   let left = padding2, layoutWidth = Math.round(padding2) * 2;
-  const positions2 = tabs.map((t) => {
+  const positions3 = tabs.map((t) => {
     const width = Math.max(min, Math.max(Math.round(min), t.width)), p = { left, width, contentWidth: Math.max(t.width - 32, 24) };
-    left = f22(left + width);
+    left = f30(left + width);
     layoutWidth += Math.round(width);
     return p;
   });
-  return { size: { width: layoutWidth, height: Math.max(0, ...tabs.map((t) => t.height)) }, positions: positions2 };
+  return { size: { width: layoutWidth, height: Math.max(0, ...tabs.map((t) => t.height)) }, positions: positions3 };
 }
-function tabIndicatorGeometry({ rowWidth, tabWidth, targetContentWidth, width, offset, scrollable = false, rtl = false }) {
+function tabIndicatorGeometry({ rowWidth, tabWidth, targetContentWidth, width, offset: offset2, scrollable = false, rtl = false }) {
   const drawn = Math.max(0, Math.round(width)), reported = scrollable ? Math.min(drawn, targetContentWidth) : tabWidth;
-  const relative = scrollable ? Math.max(0, Math.trunc((tabWidth - reported) / 2)) : 0;
-  const parentX = rtl ? rowWidth - reported - relative : relative;
-  return { x: parentX + Math.trunc((reported - drawn) / 2) + Math.round(rtl ? -Math.fround(offset) : offset), width: drawn };
+  const relative4 = scrollable ? Math.max(0, Math.trunc((tabWidth - reported) / 2)) : 0;
+  const parentX = rtl ? rowWidth - reported - relative4 : relative4;
+  return { x: parentX + Math.trunc((reported - drawn) / 2) + Math.round(rtl ? -Math.fround(offset2) : offset2), width: drawn };
 }
-function tabScrollOffset({ positions: positions2, selected, edgePadding = 52, maxValue = 0 }) {
-  if (!positions2[selected] || !positions2.length) return 0;
-  const total = Math.round(Math.fround(positions2.at(-1).left + positions2.at(-1).width)) + Math.round(Math.fround(edgePadding)), visible = total - maxValue;
-  const tab = positions2[selected], centered = Math.round(tab.left) - (Math.trunc(visible / 2) - Math.trunc(Math.round(tab.width) / 2));
-  return Math.max(0, Math.min(Math.max(0, total - visible), centered));
+function tabScrollOffset({ positions: positions3, selected, edgePadding = 52, maxValue = 0 }) {
+  if (!positions3[selected] || !positions3.length) return 0;
+  const total = Math.round(Math.fround(positions3.at(-1).left + positions3.at(-1).width)) + Math.round(Math.fround(edgePadding)), visible2 = total - maxValue;
+  const tab = positions3[selected], centered2 = Math.round(tab.left) - (Math.trunc(visible2 / 2) - Math.trunc(Math.round(tab.width) / 2));
+  return Math.max(0, Math.min(Math.max(0, total - visible2), centered2));
 }
 function applyTabScrollDelta({ value, maxValue, accumulator = 0 }, delta) {
-  const f22 = Math.fround, absolute = f22(f22(value + f22(delta)) + f22(accumulator)), next = Math.max(0, Math.min(f22(maxValue), absolute));
-  const consumed = f22(next - value), integer = Math.round(consumed) || 0;
-  return { value: value + integer, accumulator: f22(consumed - integer), consumed: absolute !== next ? consumed : f22(delta) };
+  const f30 = Math.fround, absolute = f30(f30(value + f30(delta)) + f30(accumulator)), next = Math.max(0, Math.min(f30(maxValue), absolute));
+  const consumed = f30(next - value), integer = Math.round(consumed) || 0;
+  return { value: value + integer, accumulator: f30(consumed - integer), consumed: absolute !== next ? consumed : f30(delta) };
 }
 function tabContentOffset({ tabWidth, rowHeight, contentSize }) {
   return { x: Math.round(Math.fround(tabWidth - contentSize.width) / 2) || 0, y: Math.round(Math.fround(rowHeight - contentSize.height) / 2) || 0 };
@@ -17232,20 +21072,20 @@ var style2 = `
  @keyframes tab-ripple{to{transform:scale(1);opacity:0}}
  md-tab{display:none}
 `;
-var sheet4 = createComponentSheet(style2);
-var nextId = 0;
+var sheet6 = createComponentSheet(style2);
+var nextId3 = 0;
 var finite3 = (value, fallback, minimum = 0) => Number.isFinite(Number(value)) && Number(value) >= minimum ? Number(value) : fallback;
-var make2 = (tag, name, parent) => {
+var make2 = (tag, name, parent2) => {
   const el = document.createElement(tag);
   if (name) el.className = name;
-  parent?.append(el);
+  parent2?.append(el);
   return el;
 };
-var px = (el, rect4) => {
-  el.style.left = `${rect4.x}px`;
-  el.style.top = `${rect4.y}px`;
-  el.style.width = `${rect4.width}px`;
-  el.style.height = `${rect4.height}px`;
+var px = (el, rect6) => {
+  el.style.left = `${rect6.x}px`;
+  el.style.top = `${rect6.y}px`;
+  el.style.width = `${rect6.width}px`;
+  el.style.height = `${rect6.height}px`;
 };
 var MdTabs = class extends HTMLElement {
   static get observedAttributes() {
@@ -17254,8 +21094,8 @@ var MdTabs = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet4);
-    this._id = `md-tabs-${++nextId}`;
+    adoptSheet(this.shadowRoot, sheet6);
+    this._id = `md-tabs-${++nextId3}`;
     this._records = [];
     this._positions = [];
     this._panels = /* @__PURE__ */ new Map();
@@ -17459,7 +21299,7 @@ var MdTabs = class extends HTMLElement {
     const button = make2("button", "tab");
     button.type = "button";
     button.setAttribute("role", "tab");
-    button.id = `${this._id}-tab-${++nextId}`;
+    button.id = `${this._id}-tab-${++nextId3}`;
     make2("span", "state", button);
     const content = make2("span", "tab-content", button), label = make2("span", "label", content);
     const first = make2("span", "baseline", label), text = document.createTextNode("");
@@ -17558,15 +21398,15 @@ var MdTabs = class extends HTMLElement {
     const hasText = !r.label.hidden, hasIcon = !r.icon.hidden;
     const textWidth = hasText ? Math.max(0, Math.min(natural, width - (leading && hasIcon ? 64 : 32))) : 0;
     r.label.style.width = `${textWidth}px`;
-    const rect4 = r.label.getBoundingClientRect();
-    const text = hasText ? { width: textWidth, height: Math.ceil(rect4.height), firstBaseline: Math.round(r.first.getBoundingClientRect().top - rect4.top), lastBaseline: Math.round(r.last.getBoundingClientRect().top - rect4.top) } : null;
+    const rect6 = r.label.getBoundingClientRect();
+    const text = hasText ? { width: textWidth, height: Math.ceil(rect6.height), firstBaseline: Math.round(r.first.getBoundingClientRect().top - rect6.top), lastBaseline: Math.round(r.last.getBoundingClientRect().top - rect6.top) } : null;
     const icon2 = hasIcon ? { width: Math.min(24, width), height: 24 } : null;
     const fontScale = parseFloat(getComputedStyle(r.label).fontSize) / 14;
     if (leading) {
-      const gap = hasText && hasIcon ? 8 : 0, w = textWidth + (icon2?.width || 0) + gap, height = 48, placements = {};
-      if (icon2) placements.icon = { x: rtl ? w - icon2.width : 0, y: Math.trunc((height - 24) / 2), width: icon2.width, height: 24 };
-      if (text) placements.text = { x: rtl ? 0 : (icon2?.width || 0) + gap, y: Math.trunc((height - text.height) / 2), width: textWidth, height: text.height };
-      return { naturalWidth: natural + (hasIcon ? 24 + gap : 0) + 32, size: { width: w, height }, placements, text, icon: icon2, fontScale, leading };
+      const gap = hasText && hasIcon ? 8 : 0, w = textWidth + (icon2?.width || 0) + gap, height = 48, placements2 = {};
+      if (icon2) placements2.icon = { x: rtl ? w - icon2.width : 0, y: Math.trunc((height - 24) / 2), width: icon2.width, height: 24 };
+      if (text) placements2.text = { x: rtl ? 0 : (icon2?.width || 0) + gap, y: Math.trunc((height - text.height) / 2), width: textWidth, height: text.height };
+      return { naturalWidth: natural + (hasIcon ? 24 + gap : 0) + 32, size: { width: w, height }, placements: placements2, text, icon: icon2, fontScale, leading };
     }
     return { naturalWidth: Math.max(hasText ? natural + 32 : 0, hasIcon ? 24 : 0), ...tabBaselineLayout({ width, text, icon: icon2, fontScale, rtl }), text, icon: icon2, fontScale, leading };
   }
@@ -17589,8 +21429,8 @@ var MdTabs = class extends HTMLElement {
       r._measure = m;
       const physicalWidth = this.scrollable ? Math.max(Math.round(this.minTabWidth), m.naturalWidth) : p.width, left = Math.round(p.left);
       px(r.button, { x: this._rtl ? row2.size.width - left - physicalWidth : left, y: 0, width: physicalWidth, height: row2.size.height });
-      const offset2 = tabContentOffset({ tabWidth: physicalWidth, rowHeight: row2.size.height, contentSize: m.size });
-      px(r.content, { ...offset2, ...m.size });
+      const offset3 = tabContentOffset({ tabWidth: physicalWidth, rowHeight: row2.size.height, contentSize: m.size });
+      px(r.content, { ...offset3, ...m.size });
       if (m.placements.text) {
         const t = m.placements.text;
         px(r.label, { ...t, x: t.x + (m.leading ? 0 : 16), width: m.text.width });
@@ -17604,9 +21444,9 @@ var MdTabs = class extends HTMLElement {
       this._indicatorMotion = null;
       return;
     }
-    const width = this.variant === "secondary" ? position.width : position.contentWidth, offset = position.left;
-    if (!this._indicatorMotion) this._indicatorMotion = new SelectionMotion(this, { width, offset }, (value) => this._drawIndicator(value));
-    else this._indicatorMotion.set({ width: { value: width }, offset: { value: offset } });
+    const width = this.variant === "secondary" ? position.width : position.contentWidth, offset2 = position.left;
+    if (!this._indicatorMotion) this._indicatorMotion = new SelectionMotion(this, { width, offset: offset2 }, (value) => this._drawIndicator(value));
+    else this._indicatorMotion.set({ width: { value: width }, offset: { value: offset2 } });
     if (this.scrollable && this._scrollSelection !== this.selected) {
       this._scrollSelection = this.selected;
       this._centerSelected(viewportWidth);
@@ -17767,15 +21607,15 @@ function toolbarGroupComposed(expanded, state, animating) {
 }
 
 // src/components/toolbar-layout.js
-var f20 = Math.fround;
-var round4 = Math.round;
+var f28 = Math.fround;
+var round5 = Math.round;
 var int2 = (value) => Math.trunc(value) || 0;
-var lerp4 = (a, b, t) => f20(f20(a * f20(1 - t)) + f20(b * t));
+var lerp5 = (a, b, t) => f28(f28(a * f28(1 - t)) + f28(b * t));
 function toolbarFabLayout({ vertical = false, intrinsic, intrinsicCross = 64, progress, position = vertical ? "bottom" : "end", rtl = false, max = 2147483647, cross = 80, gap = 8, expandedElevation = 1, collapsedElevation = 0 }) {
-  progress = f20(progress);
-  const fabSize = round4(lerp4(56, 80, f20(1 - progress)));
-  const axis = Math.max(0, Math.min(intrinsic, max, int2(f20(intrinsic * progress))));
-  const main = intrinsic + round4(gap) + 56;
+  progress = f28(progress);
+  const fabSize = round5(lerp5(56, 80, f28(1 - progress)));
+  const axis = Math.max(0, Math.min(intrinsic, max, int2(f28(intrinsic * progress))));
+  const main = intrinsic + round5(gap) + 56;
   const atEnd = position === (vertical ? "bottom" : "end");
   const barCross = Math.max(Math.min(64, cross), intrinsicCross);
   const bar = vertical ? { x: int2((cross - barCross) / 2), y: atEnd ? intrinsic - axis : main - intrinsic, width: barCross, height: axis } : { x: atEnd ? intrinsic - axis : main - intrinsic, y: int2((cross - barCross) / 2), width: axis, height: barCross };
@@ -17785,28 +21625,28 @@ function toolbarFabLayout({ vertical = false, intrinsic, intrinsicCross = 64, pr
     bar.x = size.width - bar.width - bar.x;
     fab.x = size.width - fab.width - fab.x;
   }
-  return { size, placements: { toolbar: bar, fab }, elevation: lerp4(collapsedElevation, expandedElevation, Math.min(1, progress)) };
+  return { size, placements: { toolbar: bar, fab }, elevation: lerp5(collapsedElevation, expandedElevation, Math.min(1, progress)) };
 }
 function toolbarFabConstraints({ vertical = false, contentAxis, contentIntrinsicAxis = contentAxis, contentCross = 48, contentPadding = 8, minAxis = 0, maxAxis = 2147483647, minCross = 0, maxCross = 2147483647, progress, position = vertical ? "bottom" : "end", rtl = false, scroll = 0, expandedElevation = 1, collapsedElevation = 0 }) {
-  const clamp11 = (v, a, b) => Math.max(a, Math.min(b, v));
+  const clamp16 = (v, a, b) => Math.max(a, Math.min(b, v));
   const p = resolveToolbarPadding(contentPadding, rtl), mainPadding = vertical ? p.vertical : p.horizontal, crossPadding = vertical ? p.horizontal : p.vertical;
   if (minAxis < 0 || minCross < 0 || maxAxis < minAxis || maxCross < minCross) throw new RangeError("Invalid toolbar constraints");
-  progress = f20(progress);
-  const cross = minCross === 0 ? clamp11(80, 0, maxCross) : minCross;
+  progress = f28(progress);
+  const cross = minCross === 0 ? clamp16(80, 0, maxCross) : minCross;
   const intrinsic = contentIntrinsicAxis + mainPadding, main = intrinsic + 8 + 56;
-  const target = clamp11(int2(f20(intrinsic * progress)), 0, maxAxis);
+  const target = clamp16(int2(f28(intrinsic * progress)), 0, maxAxis);
   if (target < minAxis) throw new RangeError("Invalid toolbar constraints");
   const barMinCross = Math.min(64, cross);
   const contentMain = Math.max(contentAxis, Math.max(0, minAxis - mainPadding));
-  const contentBreadth = clamp11(contentCross, Math.max(0, barMinCross - crossPadding), Math.max(0, maxCross - crossPadding));
+  const contentBreadth = clamp16(contentCross, Math.max(0, barMinCross - crossPadding), Math.max(0, maxCross - crossPadding));
   const viewportMain = Math.min(contentMain, Math.max(0, target - mainPadding));
-  const barMain = clamp11(viewportMain + mainPadding, minAxis, target);
-  const barCross = clamp11(contentBreadth + crossPadding, barMinCross, maxCross);
-  const apparentMain = clamp11(main, minAxis, maxAxis), offset = int2((apparentMain - main) / 2);
+  const barMain = clamp16(viewportMain + mainPadding, minAxis, target);
+  const barCross = clamp16(contentBreadth + crossPadding, barMinCross, maxCross);
+  const apparentMain = clamp16(main, minAxis, maxAxis), offset2 = int2((apparentMain - main) / 2);
   const mirrored = rtl && (!vertical || cross !== 0);
   const layout = toolbarFabLayout({ vertical, intrinsic, intrinsicCross: barCross, progress, position, rtl: mirrored, max: barMain, cross, expandedElevation, collapsedElevation });
   const requested = layout.size;
-  const translate = (p3) => ({ ...p3, x: p3.x + (vertical ? 0 : offset), y: p3.y + (vertical ? offset : 0) });
+  const translate = (p3) => ({ ...p3, x: p3.x + (vertical ? 0 : offset2), y: p3.y + (vertical ? offset2 : 0) });
   const bar = translate(layout.placements.toolbar), fab = translate(layout.placements.fab);
   if (vertical) {
     bar.width = barCross;
@@ -17817,7 +21657,7 @@ function toolbarFabConstraints({ vertical = false, contentAxis, contentIntrinsic
     bar.y = int2((cross - barCross) / 2);
   }
   const viewport = { x: bar.x + p.left, y: bar.y + p.top, width: vertical ? contentBreadth : viewportMain, height: vertical ? viewportMain : contentBreadth };
-  const side2 = contentMain - viewportMain, consumed = clamp11(scroll, 0, side2);
+  const side2 = contentMain - viewportMain, consumed = clamp16(scroll, 0, side2);
   const content = { x: viewport.x, y: viewport.y, width: vertical ? contentBreadth : contentMain, height: vertical ? contentMain : contentBreadth };
   if (vertical) content.y -= consumed;
   else content.x += rtl && viewportMain !== 0 ? viewportMain - contentMain + consumed : -consumed;
@@ -17851,16 +21691,16 @@ function toolbarFabContentLayout(o) {
 }
 function toolbarBalancedPadding({ width, height, top = null, left = null, progress = 1, leading = false, trailing = false }) {
   const active = !leading || !trailing;
-  const v = active && top !== null ? f20(top * f20(progress)) : 0;
-  const h = active && left !== null ? f20(left * f20(progress)) : 0;
-  const dx = round4(Math.max(0, f20(f20(v - h) * 2))), dy = round4(Math.max(0, f20(f20(h - v) * 2)));
+  const v = active && top !== null ? f28(top * f28(progress)) : 0;
+  const h = active && left !== null ? f28(left * f28(progress)) : 0;
+  const dx = round5(Math.max(0, f28(f28(v - h) * 2))), dy = round5(Math.max(0, f28(f28(h - v) * 2)));
   return { size: { width: width + dx, height: height + dy }, placements: { content: { x: int2(dx / 2), y: int2(dy / 2), width, height } } };
 }
 function toolbarRowLayout(o) {
-  const vertical = !!o.vertical, rtl = !!o.rtl, clamp11 = (v, a, b) => Math.max(a, Math.min(b, v));
+  const vertical = !!o.vertical, rtl = !!o.rtl, clamp16 = (v, a, b) => Math.max(a, Math.min(b, v));
   const p = resolveToolbarPadding(o.contentPadding, rtl), mainPadding = vertical ? p.vertical : p.horizontal, crossPadding = vertical ? p.horizontal : p.vertical;
   const outer = { minMain: o.minMain ?? 0, maxMain: o.maxMain ?? 2147483647, minCross: o.minCross ?? 0, maxCross: o.maxCross ?? 2147483647 };
-  const wrap = { ...outer, minCross: clamp11(64, outer.minCross, outer.maxCross) };
+  const wrap = { ...outer, minCross: clamp16(64, outer.minCross, outer.maxCross) };
   const padded = { minMain: Math.max(0, wrap.minMain - mainPadding), maxMain: wrap.maxMain === 2147483647 ? wrap.maxMain : Math.max(0, wrap.maxMain - mainPadding), minCross: Math.max(0, wrap.minCross - crossPadding), maxCross: wrap.maxCross === 2147483647 ? wrap.maxCross : Math.max(0, wrap.maxCross - crossPadding) };
   const toAxis = (c) => vertical ? { minMain: c.minHeight, maxMain: c.maxHeight, minCross: c.minWidth, maxCross: c.maxWidth } : { minMain: c.minWidth, maxMain: c.maxWidth, minCross: c.minHeight, maxCross: c.maxHeight };
   const fixed = (count) => Array.from({ length: count }, () => ({ main: 48, cross: 48 }));
@@ -17878,29 +21718,29 @@ function toolbarRowLayout(o) {
       return layoutPlaceable("balanced", balance.size, c, [{ node: child, x: p3.x, y: p3.y }]);
     }
     const sample = o[name + "Sample"] ?? o.sample ?? child.size[vertical ? "height" : "width"];
-    const sampleCross = Math.max(0, round4(o[name + "Cross"] ?? child.size[vertical ? "width" : "height"]));
-    const requested2 = vertical ? { width: sampleCross, height: Math.max(0, round4(sample)) } : { width: Math.max(0, round4(sample)), height: sampleCross };
-    const current = { width: clamp11(requested2.width, c.minWidth, c.maxWidth), height: clamp11(requested2.height, c.minHeight, c.maxHeight) };
+    const sampleCross = Math.max(0, round5(o[name + "Cross"] ?? child.size[vertical ? "width" : "height"]));
+    const requested2 = vertical ? { width: sampleCross, height: Math.max(0, round5(sample)) } : { width: Math.max(0, round5(sample)), height: sampleCross };
+    const current = { width: clamp16(requested2.width, c.minWidth, c.maxWidth), height: clamp16(requested2.height, c.minHeight, c.maxHeight) };
     const alignment = o[name + "Current"] ?? o.current ?? "none";
     const anchor = alignment === "none" ? vertical ? name === "leading" ? "end" : "start" : name === "leading" ? "start" : "end" : alignment;
     let x = 0, y2 = 0;
     if (!o[name + "Settled"]) {
       if (vertical) {
-        x = round4(f20((current.width - child.size.width) / 2));
+        x = round5(f28((current.width - child.size.width) / 2));
         y2 = anchor === "end" ? current.height - child.size.height : 0;
       } else {
         x = anchor === "end" ? current.width - child.size.width : 0;
-        y2 = round4(f20((current.height - child.size.height) / 2));
+        y2 = round5(f28((current.height - child.size.height) / 2));
       }
     }
-    const delta = round4(o[name + "Delta"] ?? (name === "leading" ? o.delta ?? 0 : -(o.delta ?? 0)));
+    const delta = round5(o[name + "Delta"] ?? (name === "leading" ? o.delta ?? 0 : -(o.delta ?? 0)));
     if (vertical) y2 += delta;
     else x += delta;
     return layoutPlaceable(name, current, c, [{ node: child, x, y: y2 }]);
   };
   const groupNames = ["leading", "main", "trailing"].filter((name) => name === "main" || groups[name].length && o[name + "Composed"] !== false);
   const content = measureRowColumn({ id: "content", vertical, rtl, ...padded, children: groupNames.map(() => ({})), arrangement: "center" }, (_, c, i) => measureGroup(groupNames[i], c));
-  const requested = { width: clamp11(content.size.width + p.horizontal, vertical ? wrap.minCross : wrap.minMain, vertical ? wrap.maxCross : wrap.maxMain), height: clamp11(content.size.height + p.vertical, vertical ? wrap.minMain : wrap.minCross, vertical ? wrap.maxMain : wrap.maxCross) };
+  const requested = { width: clamp16(content.size.width + p.horizontal, vertical ? wrap.minCross : wrap.minMain, vertical ? wrap.maxCross : wrap.maxMain), height: clamp16(content.size.height + p.vertical, vertical ? wrap.minMain : wrap.minCross, vertical ? wrap.maxMain : wrap.maxCross) };
   const paddingNode = layoutPlaceable("padded", requested, axisConstraints(wrap, vertical), [{ node: content, x: p.left, y: p.top }]);
   const root = layoutPlaceable("root", paddingNode.size, axisConstraints(outer, vertical), [{ node: paddingNode, x: 0, y: 0 }]);
   if (["leading", "trailing"].some((name) => groups[name].length && o[name + "Composed"] === false)) {
@@ -17916,79 +21756,8 @@ function toolbarColors(style3 = "standard") {
   return style3 === "vibrant" ? { toolbarContainer: "primary-container", toolbarContent: "on-primary-container", fabContainer: "tertiary-container", fabContent: "on-tertiary-container" } : { toolbarContainer: "surface-container", toolbarContent: "on-surface", fabContainer: "primary-container", fabContent: "on-primary-container" };
 }
 
-// src/shapes/outline-shadow.js
-var ns = "http://www.w3.org/2000/svg";
-var nextId2 = 0;
-var element = (name) => document.createElementNS(ns, name);
-var attributes = (node, values) => {
-  for (const [key, value] of Object.entries(values)) {
-    const text = String(value);
-    if (node.getAttribute(key) !== text) node.setAttribute(key, text);
-  }
-};
-var OutlineShadow = class {
-  constructor(parent) {
-    this.layer = element("svg");
-    attributes(this.layer, { class: "shape-shadow", "aria-hidden": true, focusable: false });
-    const defs = element("defs");
-    this.filter = element("filter");
-    const id = `md-outline-shadow-${++nextId2}`;
-    attributes(this.filter, { id, filterUnits: "userSpaceOnUse", "color-interpolation-filters": "sRGB" });
-    defs.append(this.filter);
-    this.path = element("path");
-    attributes(this.path, { fill: "black", filter: `url(#${id})` });
-    this.layer.append(defs, this.path);
-    this.hide();
-    parent.prepend(this.layer);
-  }
-  hide() {
-    this.layer.style.display = "none";
-  }
-  draw(outline, box3, shadows) {
-    if (!shadows.length || box3.width <= 0 || box3.height <= 0) {
-      this.hide();
-      return;
-    }
-    this.layer.style.display = "block";
-    this.layer.style.left = box3.x + "px";
-    this.layer.style.top = box3.y + "px";
-    attributes(this.layer, { width: box3.width, height: box3.height, viewBox: `0 0 ${box3.width} ${box3.height}` });
-    attributes(this.path, { d: `M${outline.points.map((p) => p.join(" ")).join("L")}Z` });
-    const margin = Math.ceil(Math.max(...shadows.map((s) => s[2] + Math.abs(s[3]) + Math.max(Math.abs(s[0]), Math.abs(s[1])))) + 2);
-    attributes(this.filter, { x: -margin, y: -margin, width: box3.width + 2 * margin, height: box3.height + 2 * margin });
-    if (this.parts?.length !== shadows.length) {
-      this.filter.replaceChildren();
-      this.parts = shadows.map((_, i) => {
-        const spread = element("feMorphology"), blur = element("feGaussianBlur"), offset = element("feOffset");
-        const color = element("feFlood"), composite = element("feComposite");
-        attributes(spread, { in: "SourceAlpha", result: `spread${i}` });
-        attributes(blur, { in: `spread${i}`, result: `blur${i}` });
-        attributes(offset, { in: `blur${i}`, result: `offset${i}` });
-        attributes(color, { result: `color${i}` });
-        attributes(composite, { in: `color${i}`, in2: `offset${i}`, operator: "in", result: `shadow${i}` });
-        this.filter.append(spread, blur, offset, color, composite);
-        return { spread, blur, offset, color };
-      });
-      const merge = element("feMerge");
-      for (let i = shadows.length - 1; i >= 0; i--) {
-        const layer = element("feMergeNode");
-        attributes(layer, { in: `shadow${i}` });
-        merge.append(layer);
-      }
-      this.filter.append(merge);
-    }
-    shadows.forEach(([x, y2, blur, spread, r, g, b, alpha], i) => {
-      const part = this.parts[i];
-      attributes(part.spread, { radius: Math.abs(spread), operator: spread < 0 ? "erode" : "dilate" });
-      attributes(part.blur, { stdDeviation: Math.max(0, blur) / 2 });
-      attributes(part.offset, { dx: x, dy: y2 });
-      attributes(part.color, { "flood-color": `rgb(${r},${g},${b})`, "flood-opacity": alpha });
-    });
-  }
-};
-
 // src/components/md-toolbar.js
-var defaultStyle30 = `
+var defaultStyle29 = `
  :host{display:inline-block;vertical-align:middle;outline:none;-webkit-tap-highlight-color:transparent}
  :host([variant="docked"]),:host(:not([variant])){display:block}
  :host([data-toolbar-fab]),:host([data-toolbar-row]){width:var(--_toolbar-width,auto);height:var(--_toolbar-height,auto);min-width:0;min-height:0;max-width:100%;max-height:100%}
@@ -18030,17 +21799,17 @@ var defaultStyle30 = `
  :host([data-toolbar-measuring]) .group{position:relative!important;left:0!important;top:0!important;width:max-content!important;height:auto!important}
  :host([data-toolbar-measuring]) .frame[data-orientation="vertical"] .group{width:auto!important;height:max-content!important}
 `;
-var toolbarSheet = createComponentSheet(defaultStyle30);
+var toolbarSheet = createComponentSheet(defaultStyle29);
 var token = (role) => `var(--md-sys-color-${role})`;
 var number3 = (value, fallback) => Number.isFinite(Number(value)) && value !== null ? Number(value) : fallback;
-var write4 = (node, key, value) => {
+var write6 = (node, key, value) => {
   if (node.style[key] !== value) node.style[key] = value;
 };
-var rect3 = (node, p) => {
-  write4(node, "left", p.x + "px");
-  write4(node, "top", p.y + "px");
-  write4(node, "width", p.width + "px");
-  write4(node, "height", p.height + "px");
+var rect5 = (node, p) => {
+  write6(node, "left", p.x + "px");
+  write6(node, "top", p.y + "px");
+  write6(node, "width", p.width + "px");
+  write6(node, "height", p.height + "px");
 };
 var parseShadows = (text) => [...text.matchAll(/(rgba?\([^)]*\))\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px\s+(-?[\d.]+)px/g)].map((m) => {
   const color = m[1].match(/[\d.]+/g).map(Number);
@@ -18312,7 +22081,7 @@ var MdToolbar = class extends HTMLElement {
     if (this._rendered) return;
     if (!this.shadowRoot.adoptedStyleSheets?.length) {
       const style3 = document.createElement("style");
-      style3.textContent = defaultStyle30;
+      style3.textContent = defaultStyle29;
       this.shadowRoot.append(style3);
     }
     this._sizeStyle = document.createElement("style");
@@ -18379,11 +22148,11 @@ var MdToolbar = class extends HTMLElement {
     this._hasFabContent = this._hasFab && this._slots.main.assignedNodes().every((n) => n.nodeType === 1 || !n.textContent?.trim());
     this.toggleAttribute("data-toolbar-content", this._hasFabContent);
     if (hadFabContent && !this._hasFabContent) {
-      write4(this._viewport, "direction", "");
-      write4(this._groups.main, "direction", "");
-      for (const key of ["width", "height", "left", "top"]) write4(this._groups.main, key, "");
+      write6(this._viewport, "direction", "");
+      write6(this._groups.main, "direction", "");
+      for (const key of ["width", "height", "left", "top"]) write6(this._groups.main, key, "");
     }
-    if (hadRow && !this._hasRow) for (const node of [this._main, ...Object.values(this._clips), ...Object.values(this._groups)]) for (const key of ["width", "height", "left", "top"]) write4(node, key, "");
+    if (hadRow && !this._hasRow) for (const node of [this._main, ...Object.values(this._clips), ...Object.values(this._groups)]) for (const key of ["width", "height", "left", "top"]) write6(node, key, "");
     this.toggleAttribute("data-toolbar-row", this._hasRow);
     this._frame.dataset.row = String(this._hasRow);
     this.toggleAttribute("data-toolbar-measuring", true);
@@ -18538,52 +22307,52 @@ var MdToolbar = class extends HTMLElement {
     for (const name of ["leading", "trailing"]) {
       const full = this._metrics[name][axis], size = Math.max(0, Math.round(values[name]));
       const clipped = this._clips[name], group = this._groups[name];
-      write4(clipped, axis, size + "px");
-      write4(clipped, vertical ? "width" : "height", Math.max(0, Math.round(values[name + "Cross"] ?? this._metrics[name][vertical ? "width" : "height"])) + "px");
+      write6(clipped, axis, size + "px");
+      write6(clipped, vertical ? "width" : "height", Math.max(0, Math.round(values[name + "Cross"] ?? this._metrics[name][vertical ? "width" : "height"])) + "px");
       const settled = this._motion && !this._motion.channels[name].animation && !this._motion.channels[name + "Cross"].animation && !this._motion.channels[name + "Offset"].animation;
       if (settled) {
         this._alignment[name] = null;
         this._visibilityState[name] = this.effectiveExpanded ? "Visible" : "PostExit";
       }
-      const offset = (this._alignment?.[name] === "end" ? size - full : 0) + Math.round(values[name + "Offset"]);
-      write4(group, "transform", `translate${vertical ? "Y" : "X"}(${offset}px)`);
+      const offset2 = (this._alignment?.[name] === "end" ? size - full : 0) + Math.round(values[name + "Offset"]);
+      write6(group, "transform", `translate${vertical ? "Y" : "X"}(${offset2}px)`);
       this._setInert(clipped, size === 0 && !this.effectiveExpanded && !!settled, "main");
     }
     if (this._hasFab) {
       const options = { vertical, contentAxis: main[axis], contentCross: main[vertical ? "width" : "height"], contentPadding: this.toolbarContentPadding, ...this._constraints, progress: values.progress, position: this.fabPosition, rtl, expandedElevation: this.expandedShadowElevation, collapsedElevation: this.collapsedShadowElevation };
       const layout = this._hasFabContent ? toolbarFabContentLayout({ ...options, main: this._rowInputs.main }) : toolbarFabConstraints(options);
       this._layout = layout;
-      write4(frame, "width", layout.size.width + "px");
-      write4(frame, "height", layout.size.height + "px");
-      rect3(surface, layout.placements.toolbar);
-      rect3(this._fab, layout.placements.fab);
-      write4(this._viewport, "width", layout.placements.viewport.width + "px");
-      write4(this._viewport, "height", layout.placements.viewport.height + "px");
-      write4(this._viewport, "left", padding2.left + "px");
-      write4(this._viewport, "top", padding2.top + "px");
+      write6(frame, "width", layout.size.width + "px");
+      write6(frame, "height", layout.size.height + "px");
+      rect5(surface, layout.placements.toolbar);
+      rect5(this._fab, layout.placements.fab);
+      write6(this._viewport, "width", layout.placements.viewport.width + "px");
+      write6(this._viewport, "height", layout.placements.viewport.height + "px");
+      write6(this._viewport, "left", padding2.left + "px");
+      write6(this._viewport, "top", padding2.top + "px");
       this._fab.style.setProperty("--md-toolbar-fab-size", layout.placements.fab.width + "px");
       elevation = layout.elevation;
       this._setInert(this._main, layout.placements.toolbar[axis] === 0, "fab");
-      write4(this._main, "padding", paddingCss);
+      write6(this._main, "padding", paddingCss);
       if (this._hasFabContent) this._drawFabContent(layout, vertical, rtl);
     } else if (this._hasRow) {
       this._drawRow(values, vertical, rtl);
       elevation = values.elevation;
     } else {
-      for (const node of [frame, surface]) for (const key of ["width", "height", "left", "top"]) write4(node, key, "");
-      write4(this._viewport, "width", "");
-      write4(this._viewport, "height", "");
-      write4(this._viewport, "left", "");
-      write4(this._viewport, "top", "");
+      for (const node of [frame, surface]) for (const key of ["width", "height", "left", "top"]) write6(node, key, "");
+      write6(this._viewport, "width", "");
+      write6(this._viewport, "height", "");
+      write6(this._viewport, "left", "");
+      write6(this._viewport, "top", "");
       this._main.inert = false;
-      if (this.variant === "docked") write4(this._main, "padding", "0");
+      if (this.variant === "docked") write6(this._main, "padding", "0");
       else {
         const child = this._slots.main.assignedElements()[0], button = child?.localName === "md-icon-button" ? child.shadowRoot?.querySelector("button") : null;
         const visual = button?.getBoundingClientRect(), layout = child?.getBoundingClientRect();
         const top = visual && layout ? Math.trunc((layout.height - visual.height) / 2) : null, left = visual && layout ? Math.trunc((layout.width - visual.width) / 2) : null;
         const balance = toolbarBalancedPadding({ ...main, top, left, progress: values.padding, leading: this.effectiveExpanded && this._present("leading"), trailing: this.effectiveExpanded && this._present("trailing") });
         const p = balance.placements.content;
-        write4(this._main, "padding", `${p.y}px ${p.x}px ${balance.size.height - main.height - p.y}px ${balance.size.width - main.width - p.x}px`);
+        write6(this._main, "padding", `${p.y}px ${p.x}px ${balance.size.height - main.height - p.y}px ${balance.size.width - main.width - p.x}px`);
       }
       elevation = this.variant === "docked" ? 0 : values.elevation;
     }
@@ -18593,17 +22362,17 @@ var MdToolbar = class extends HTMLElement {
   }
   _drawFabContent(layout, vertical, rtl) {
     const group = this._groups.main, node = layout.node, row2 = layout.placements.content;
-    write4(this._viewport, "direction", vertical || layout.placements.viewport.width === 0 ? "ltr" : "");
-    write4(group, "direction", rtl ? "rtl" : "ltr");
-    rect3(group, { ...node.requested, x: node.offset.x, y: node.offset.y });
+    write6(this._viewport, "direction", vertical || layout.placements.viewport.width === 0 ? "ltr" : "");
+    write6(group, "direction", rtl ? "rtl" : "ltr");
+    rect5(group, { ...node.requested, x: node.offset.x, y: node.offset.y });
     const extent = layout.scroll.content, viewport = layout.placements.viewport;
-    rect3(this._scrollExtent, { x: !vertical && rtl && viewport.width !== 0 ? viewport.width - extent : 0, y: 0, width: vertical ? 1 : extent, height: vertical ? extent : 1 });
+    rect5(this._scrollExtent, { x: !vertical && rtl && viewport.width !== 0 ? viewport.width - extent : 0, y: 0, width: vertical ? 1 : extent, height: vertical ? extent : 1 });
     this._clearRowRules();
     for (let i = 0; i < this._rowChildren.main.length; i++) {
-      const element2 = this._rowChildren.main[i], leaf2 = node.children[i].node, p = layout.placements["content-" + i], index = [...this.children].indexOf(element2) + 1;
-      const ink = this._rowInputs.main[i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf2.constraints }).body : null;
-      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf2.size.width}px;--md-toolbar-control-layout-height:${leaf2.size.height}px;` : "";
-      const rule = `:host([data-toolbar-content]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - row2.x - leaf2.offset.x}px!important;top:${p.y - row2.y - leaf2.offset.y}px!important;width:${leaf2.size.width}px!important;height:${leaf2.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf2.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf2.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf2.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf2.constraints.maxHeight}px;${native}}`;
+      const element2 = this._rowChildren.main[i], leaf3 = node.children[i].node, p = layout.placements["content-" + i], index = [...this.children].indexOf(element2) + 1;
+      const ink = this._rowInputs.main[i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf3.constraints }).body : null;
+      const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf3.size.width}px;--md-toolbar-control-layout-height:${leaf3.size.height}px;` : "";
+      const rule = `:host([data-toolbar-content]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - row2.x - leaf3.offset.x}px!important;top:${p.y - row2.y - leaf3.offset.y}px!important;width:${leaf3.size.width}px!important;height:${leaf3.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf3.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf3.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf3.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf3.constraints.maxHeight}px;${native}}`;
       this._sizeStyle.sheet.insertRule(rule, this._sizeStyle.sheet.cssRules.length);
     }
   }
@@ -18634,8 +22403,8 @@ var MdToolbar = class extends HTMLElement {
     };
   }
   _clearRowRules() {
-    const sheet8 = this._sizeStyle.sheet;
-    while (sheet8.cssRules.length > 1) sheet8.deleteRule(1);
+    const sheet10 = this._sizeStyle.sheet;
+    while (sheet10.cssRules.length > 1) sheet10.deleteRule(1);
   }
   _drawRow(values, vertical, rtl) {
     const options = this._rowOptions(values, vertical, rtl), preferred = toolbarRowLayout(options), sizing = this._sizeStyle.sheet.cssRules[0].style;
@@ -18644,29 +22413,29 @@ var MdToolbar = class extends HTMLElement {
       const property = "--_toolbar-" + key, text = weighted && key === (vertical ? "height" : "width") ? "100%" : preferred.size[key] + "px";
       if (sizing.getPropertyValue(property) !== text) sizing.setProperty(property, text);
     }
-    const dimension = (key) => {
-      const css = getComputedStyle(this);
-      let value = parseFloat(css[key]) || 0;
-      if (css.boxSizing === "border-box") value -= key === "width" ? (parseFloat(css.paddingLeft) || 0) + (parseFloat(css.paddingRight) || 0) + (parseFloat(css.borderLeftWidth) || 0) + (parseFloat(css.borderRightWidth) || 0) : (parseFloat(css.paddingTop) || 0) + (parseFloat(css.paddingBottom) || 0) + (parseFloat(css.borderTopWidth) || 0) + (parseFloat(css.borderBottomWidth) || 0);
+    const dimension3 = (key) => {
+      const css2 = getComputedStyle(this);
+      let value = parseFloat(css2[key]) || 0;
+      if (css2.boxSizing === "border-box") value -= key === "width" ? (parseFloat(css2.paddingLeft) || 0) + (parseFloat(css2.paddingRight) || 0) + (parseFloat(css2.borderLeftWidth) || 0) + (parseFloat(css2.borderRightWidth) || 0) : (parseFloat(css2.paddingTop) || 0) + (parseFloat(css2.paddingBottom) || 0) + (parseFloat(css2.borderTopWidth) || 0) + (parseFloat(css2.borderBottomWidth) || 0);
       return Math.max(0, Math.round(value));
     };
-    const base = { width: dimension("width"), height: dimension("height") }, saved = { width: this._frame.style.width, height: this._frame.style.height };
+    const base = { width: dimension3("width"), height: dimension3("height") }, saved = { width: this._frame.style.width, height: this._frame.style.height };
     const set = (key, value) => {
       sizing.setProperty("--_toolbar-" + key, value + "px");
-      write4(this._frame, key, value + "px");
+      write6(this._frame, key, value + "px");
     };
     set("width", 0);
     set("height", 0);
-    const minima = { width: dimension("width"), height: dimension("height") }, maxima = {};
+    const minima = { width: dimension3("width"), height: dimension3("height") }, maxima = {};
     for (const key of ["width", "height"]) {
       set(key, 1e6);
-      const value = dimension(key);
+      const value = dimension3(key);
       maxima[key] = value >= 1e6 ? 2147483647 : Math.max(minima[key], value);
       set(key, 0);
     }
     for (const key of ["width", "height"]) {
       sizing.setProperty("--_toolbar-" + key, weighted && key === (vertical ? "height" : "width") ? "100%" : preferred.size[key] + "px");
-      write4(this._frame, key, saved[key]);
+      write6(this._frame, key, saved[key]);
     }
     const axis = vertical ? "height" : "width", crossAxis = vertical ? "width" : "height";
     const parentDisplay = this.parentElement ? getComputedStyle(this.parentElement).display : "";
@@ -18677,37 +22446,37 @@ var MdToolbar = class extends HTMLElement {
     this._rowFullTargets = layout.fullTargets;
     this._rowFullSizes = layout.fullSizes;
     if (previous && ["leading", "trailing"].some((name) => previous[name]?.width !== layout.fullSizes[name]?.width || previous[name]?.height !== layout.fullSizes[name]?.height)) this._queueLayout();
-    write4(this._frame, "width", layout.size.width + "px");
-    write4(this._frame, "height", layout.size.height + "px");
-    rect3(this._surface, { x: 0, y: 0, ...layout.size });
+    write6(this._frame, "width", layout.size.width + "px");
+    write6(this._frame, "height", layout.size.height + "px");
+    rect5(this._surface, { x: 0, y: 0, ...layout.size });
     this._clearRowRules();
     const findNode = (node, id) => node.id === id ? node : node.children.map((p) => findNode(p.node, id)).find(Boolean);
     for (const name of ["leading", "main", "trailing"]) {
       const container = name === "main" ? this._main : this._clips[name], box3 = layout.placements[name === "main" ? "balanced" : name], rowBox = layout.placements[name + "-row"], group = this._groups[name];
-      write4(container, "padding", "0");
+      write6(container, "padding", "0");
       if (!box3 || !rowBox) {
-        rect3(container, { x: 0, y: 0, width: 0, height: 0 });
-        rect3(group, { x: 0, y: 0, width: 0, height: 0 });
+        rect5(container, { x: 0, y: 0, width: 0, height: 0 });
+        rect5(group, { x: 0, y: 0, width: 0, height: 0 });
         continue;
       }
-      rect3(container, box3);
+      rect5(container, box3);
       const shift = (this._alignment?.[name] === "end" ? Math.max(0, Math.round(values[name])) - this._metrics[name][vertical ? "height" : "width"] : 0) + Math.round(values[name + "Offset"] || 0);
       const local = { ...rowBox, x: rowBox.x - box3.x - (name !== "main" && !vertical ? shift : 0), y: rowBox.y - box3.y - (name !== "main" && vertical ? shift : 0) };
-      rect3(group, local);
+      rect5(group, local);
       for (let i = 0; i < this._rowChildren[name].length; i++) {
-        const element2 = this._rowChildren[name][i], id = name + i, leaf2 = findNode(layout.node, id), p = layout.placements[id];
-        if (!leaf2 || !p) continue;
+        const element2 = this._rowChildren[name][i], id = name + i, leaf3 = findNode(layout.node, id), p = layout.placements[id];
+        if (!leaf3 || !p) continue;
         const index = [...this.children].indexOf(element2) + 1;
-        const ink = this._rowInputs[name][i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf2.constraints }).body : null;
-        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf2.size.width}px;--md-toolbar-control-layout-height:${leaf2.size.height}px;` : "";
-        const rule = `:host([data-toolbar-row]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - rowBox.x - leaf2.offset.x}px!important;top:${p.y - rowBox.y - leaf2.offset.y}px!important;width:${leaf2.size.width}px!important;height:${leaf2.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf2.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf2.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf2.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf2.constraints.maxHeight}px;${native}}`;
+        const ink = this._rowInputs[name][i].ink, body = ink ? minimumInteractiveLayout({ ...ink, ...leaf3.constraints }).body : null;
+        const native = body ? `--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf3.size.width}px;--md-toolbar-control-layout-height:${leaf3.size.height}px;` : "";
+        const rule = `:host([data-toolbar-row]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x - rowBox.x - leaf3.offset.x}px!important;top:${p.y - rowBox.y - leaf3.offset.y}px!important;width:${leaf3.size.width}px!important;height:${leaf3.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf3.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf3.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf3.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf3.constraints.maxHeight}px;${native}}`;
         this._sizeStyle.sheet.insertRule(rule, this._sizeStyle.sheet.cssRules.length);
       }
     }
-    write4(this._viewport, "width", "");
-    write4(this._viewport, "height", "");
-    write4(this._viewport, "left", "");
-    write4(this._viewport, "top", "");
+    write6(this._viewport, "width", "");
+    write6(this._viewport, "height", "");
+    write6(this._viewport, "left", "");
+    write6(this._viewport, "top", "");
     this._main.inert = false;
   }
   _configureScroll() {
@@ -18725,13 +22494,13 @@ var MdToolbar = class extends HTMLElement {
       if (delta) this.postScroll({ x: 0, y: delta });
     }, { signal, passive: true });
     target?.addEventListener("scrollend", () => this.postFling(), { signal, passive: true });
-    const parent = this.parentElement;
+    const parent2 = this.parentElement;
     this._scrollResize = new ResizeObserver(() => {
       this._queueLayout();
       this._measureScrollLimit();
       this._drawScroll();
     });
-    if (parent) this._scrollResize.observe(parent);
+    if (parent2) this._scrollResize.observe(parent2);
     this.addEventListener("pointerdown", (event) => this._toolbarDragStart(event), { signal });
     this.addEventListener("pointermove", (event) => this._toolbarDragMove(event), { signal });
     const stop = (event) => this._toolbarDragStop(event);
@@ -18756,16 +22525,16 @@ var MdToolbar = class extends HTMLElement {
   }
   _measureScrollLimit() {
     if (!this._scrollBehavior || this.variant !== "floating" || this.touchExplorationEnabled || !this.parentElement) return;
-    const parent = this.parentElement, p = parent.getBoundingClientRect(), r = this._frame.getBoundingClientRect();
+    const parent2 = this.parentElement, p = parent2.getBoundingClientRect(), r = this._frame.getBoundingClientRect();
     this._scrollBehavior.state.updateLimit({
       direction: this._scrollBehavior.exitDirection,
       rtl: getComputedStyle(this).direction === "rtl",
-      x: r.x - p.x - parent.clientLeft + parent.scrollLeft,
-      y: r.y - p.y - parent.clientTop + parent.scrollTop,
+      x: r.x - p.x - parent2.clientLeft + parent2.scrollLeft,
+      y: r.y - p.y - parent2.clientTop + parent2.scrollTop,
       width: Math.round(r.width),
       height: Math.round(r.height),
-      parentWidth: parent.clientWidth,
-      parentHeight: parent.clientHeight
+      parentWidth: parent2.clientWidth,
+      parentHeight: parent2.clientHeight
     });
   }
   _restoreScrollFocus() {
@@ -18790,9 +22559,9 @@ var MdToolbar = class extends HTMLElement {
     if (!this._rendered) return;
     const behavior = this.variant === "floating" && !this.touchExplorationEnabled ? this._scrollBehavior : null;
     const p = behavior?.state.placement(behavior.exitDirection, getComputedStyle(this).direction === "rtl") || { x: 0, y: 0 };
-    write4(this._frame, "transform", p.x || p.y ? `translate(${p.x}px,${p.y}px)` : "");
+    write6(this._frame, "transform", p.x || p.y ? `translate(${p.x}px,${p.y}px)` : "");
     const horizontal = ["start", "end"].includes(behavior?.exitDirection);
-    write4(this._frame, "touchAction", behavior ? horizontal ? "pan-y" : "pan-x" : "");
+    write6(this._frame, "touchAction", behavior ? horizontal ? "pan-y" : "pan-x" : "");
     if (behavior && behavior.state.offset !== 0) {
       for (const control of this._scrollControls()) {
         if (!this._focusIndices.has(control)) this._focusIndices.set(control, control.getAttribute("tabindex"));
@@ -18889,12 +22658,12 @@ var MdToolbar = class extends HTMLElement {
     this._shapeOutline = outline;
     surface.dataset.shape = outline.type;
     if (outline.type === "rounded") {
-      write4(surface, "borderRadius", `${outline.radii.map((r) => r[0] + "px").join(" ")} / ${outline.radii.map((r) => r[1] + "px").join(" ")}`);
-      write4(surface, "clipPath", "");
+      write6(surface, "borderRadius", `${outline.radii.map((r) => r[0] + "px").join(" ")} / ${outline.radii.map((r) => r[1] + "px").join(" ")}`);
+      write6(surface, "clipPath", "");
       this._shapeShadow.hide();
     } else {
-      write4(surface, "borderRadius", "0px");
-      write4(surface, "clipPath", outline.type === "generic" ? `polygon(${outline.points.map((p) => p.map((v) => v + "px").join(" ")).join(",")})` : "");
+      write6(surface, "borderRadius", "0px");
+      write6(surface, "clipPath", outline.type === "generic" ? `polygon(${outline.points.map((p) => p.map((v) => v + "px").join(" ")).join(",")})` : "");
       if (outline.type !== "generic") this._shapeShadow.hide();
     }
   }
@@ -18905,7 +22674,7 @@ var MdToolbar = class extends HTMLElement {
       return b.map((n, j) => a[j] + (n - a[j]) * t);
     });
     const cut = this._shapeOutline?.type === "generic";
-    write4(this._surface, "boxShadow", cut || !shadows.length ? "none" : shadows.map((v) => `${v.slice(0, 4).map((n) => n + "px").join(" ")} rgba(${v.slice(4).join(",")})`).join(","));
+    write6(this._surface, "boxShadow", cut || !shadows.length ? "none" : shadows.map((v) => `${v.slice(0, 4).map((n) => n + "px").join(" ")} rgba(${v.slice(4).join(",")})`).join(","));
     if (cut) this._shapeShadow.draw(this._shapeOutline, this._shapeBox, shadows);
     this._surface.dataset.elevation = String(elevation);
   }
@@ -18937,52 +22706,52 @@ var MdToolbar = class extends HTMLElement {
 if (!customElements.get("md-toolbar")) customElements.define("md-toolbar", MdToolbar);
 
 // src/components/toolbar-scroll.js
-var f21 = Math.fround;
+var f29 = Math.fround;
 var FloatingToolbarState = class {
-  constructor({ offsetLimit = -34028234663852886e22, offset = 0, contentOffset = 0 } = {}) {
-    this.offsetLimit = f21(offsetLimit);
-    this._offset = f21(offset);
-    this.contentOffset = f21(contentOffset);
+  constructor({ offsetLimit = -34028234663852886e22, offset: offset2 = 0, contentOffset = 0 } = {}) {
+    this.offsetLimit = f29(offsetLimit);
+    this._offset = f29(offset2);
+    this.contentOffset = f29(contentOffset);
   }
   get offsetLimit() {
     return this._offsetLimit;
   }
   set offsetLimit(value) {
-    this._offsetLimit = f21(value);
+    this._offsetLimit = f29(value);
   }
   get contentOffset() {
     return this._contentOffset;
   }
   set contentOffset(value) {
-    this._contentOffset = f21(value);
+    this._contentOffset = f29(value);
   }
   get offset() {
     return this._offset;
   }
   set offset(value) {
     if (this.offsetLimit > 0) throw new RangeError("offsetLimit must be nonpositive");
-    this._offset = f21(Math.max(this.offsetLimit, Math.min(0, f21(value))));
+    this._offset = f29(Math.max(this.offsetLimit, Math.min(0, f29(value))));
   }
   get collapsedFraction() {
-    return this.offsetLimit !== 0 ? f21(this.offset / this.offsetLimit) : 0;
+    return this.offsetLimit !== 0 ? f29(this.offset / this.offsetLimit) : 0;
   }
   postScroll(consumedY) {
-    consumedY = f21(consumedY);
-    this.contentOffset = f21(this.contentOffset + consumedY);
-    this.offset = f21(this.offset + consumedY);
+    consumedY = f29(consumedY);
+    this.contentOffset = f29(this.contentOffset + consumedY);
+    this.offset = f29(this.offset + consumedY);
     return { x: 0, y: 0 };
   }
   drag(delta, direction = "bottom", rtl = false) {
-    let amount = f21(delta);
-    if (rtl && (direction === "start" || direction === "end")) amount = f21(-amount);
-    this.offset = f21(this.offset + (direction === "start" || direction === "top" ? amount : f21(-amount)));
+    let amount = f29(delta);
+    if (rtl && (direction === "start" || direction === "end")) amount = f29(-amount);
+    this.offset = f29(this.offset + (direction === "start" || direction === "top" ? amount : f29(-amount)));
   }
   updateLimit({ direction = "bottom", rtl = false, x, y: y2, width, height, parentWidth, parentHeight }) {
-    const limit = direction === "start" ? rtl ? f21(parentWidth - f21(x)) : f21(width + f21(x)) : direction === "end" ? rtl ? f21(width + f21(x)) : f21(parentWidth - f21(x)) : direction === "top" ? f21(height + f21(y2)) : f21(parentHeight - f21(y2));
-    this.offsetLimit = f21(-f21(limit - this.offset));
+    const limit = direction === "start" ? rtl ? f29(parentWidth - f29(x)) : f29(width + f29(x)) : direction === "end" ? rtl ? f29(width + f29(x)) : f29(parentWidth - f29(x)) : direction === "top" ? f29(height + f29(y2)) : f29(parentHeight - f29(y2));
+    this.offsetLimit = f29(-f29(limit - this.offset));
   }
   placement(direction = "bottom", rtl = false) {
-    const offset = rtl && (direction === "start" || direction === "end") ? f21(-this.offset) : this.offset, n = Math.round(offset) || 0;
+    const offset2 = rtl && (direction === "start" || direction === "end") ? f29(-this.offset) : this.offset, n = Math.round(offset2) || 0;
     return { x: (direction === "start" ? n : direction === "end" ? -n : 0) || 0, y: (direction === "top" ? n : direction === "bottom" ? -n : 0) || 0 };
   }
 };
@@ -18990,17 +22759,17 @@ var ToolbarScrollExpansion = class {
   constructor({ expanded = false, reverseLayout = false, expandThreshold = 40, collapseThreshold = 40, density = 1, onExpand = () => {
   }, onCollapse = () => {
   } } = {}) {
-    Object.assign(this, { expanded, reverseLayout, expandThreshold: f21(expandThreshold), collapseThreshold: f21(collapseThreshold), density: f21(density), onExpand, onCollapse });
+    Object.assign(this, { expanded, reverseLayout, expandThreshold: f29(expandThreshold), collapseThreshold: f29(collapseThreshold), density: f29(density), onExpand, onCollapse });
     this.contentOffset = 0;
     this.updateThreshold();
   }
   updateThreshold() {
-    this.threshold = f21(this.contentOffset + (this.expanded ? f21(-f21(this.collapseThreshold * this.density)) : f21(this.expandThreshold * this.density)));
+    this.threshold = f29(this.contentOffset + (this.expanded ? f29(-f29(this.collapseThreshold * this.density)) : f29(this.expandThreshold * this.density)));
   }
   update({ expanded = this.expanded, reverseLayout = this.reverseLayout, expandThreshold = this.expandThreshold, collapseThreshold = this.collapseThreshold, onExpand = this.onExpand, onCollapse = this.onCollapse } = {}) {
-    if (this.expandThreshold !== f21(expandThreshold) || this.collapseThreshold !== f21(collapseThreshold)) {
-      this.expandThreshold = f21(expandThreshold);
-      this.collapseThreshold = f21(collapseThreshold);
+    if (this.expandThreshold !== f29(expandThreshold) || this.collapseThreshold !== f29(collapseThreshold)) {
+      this.expandThreshold = f29(expandThreshold);
+      this.collapseThreshold = f29(collapseThreshold);
       this.updateThreshold();
     }
     this.reverseLayout = reverseLayout;
@@ -19012,13 +22781,13 @@ var ToolbarScrollExpansion = class {
     }
   }
   postScroll(consumedY) {
-    const delta = f21(f21(consumedY) * (this.reverseLayout ? -1 : 1));
-    this.contentOffset = f21(this.contentOffset + delta);
+    const delta = f29(f29(consumedY) * (this.reverseLayout ? -1 : 1));
+    this.contentOffset = f29(this.contentOffset + delta);
     if (delta < 0 && this.contentOffset <= this.threshold) {
-      this.threshold = f21(this.contentOffset + f21(this.expandThreshold * this.density));
+      this.threshold = f29(this.contentOffset + f29(this.expandThreshold * this.density));
       this.onCollapse();
     } else if (delta > 0 && this.contentOffset >= this.threshold) {
-      this.threshold = f21(this.contentOffset - f21(this.collapseThreshold * this.density));
+      this.threshold = f29(this.contentOffset - f29(this.collapseThreshold * this.density));
       this.onExpand();
     }
     return { x: 0, y: 0 };
@@ -19045,7 +22814,7 @@ var FloatingToolbarScrollBehavior = class {
 var ToolbarSettling = class {
   constructor(state, velocity, { snapSpec = { stiffness: 1600, dampingRatio: 1 }, decay = new AndroidFlingDecay() } = {}) {
     this.state = state;
-    this.velocity = f21(velocity);
+    this.velocity = f29(velocity);
     this.remainingVelocity = this.velocity;
     this.snapSpec = snapSpec;
     this.decay = decay;
@@ -19053,7 +22822,7 @@ var ToolbarSettling = class {
     this.start = null;
     this.lastValue = 0;
     this.returnedVelocity = 0;
-    if (state.collapsedFraction < f21(0.01) || state.collapsedFraction === 1) return;
+    if (state.collapsedFraction < f29(0.01) || state.collapsedFraction === 1) return;
     this.phase = Math.abs(this.velocity) > 1 ? "decay" : "snap";
     this._chooseSnap();
   }
@@ -19087,12 +22856,12 @@ var ToolbarSettling = class {
     if (phase2 === "decay") {
       const duration = this.decay.info(this.velocity).duration, ended = time >= duration;
       sample = ended ? { position: this.decay.target(0, this.velocity), velocity: 0 } : this.decay.sample(time, 0, this.velocity);
-      const delta = f21(sample.position - this.lastValue), initialOffset = this.state.offset;
-      this.state.offset = f21(initialOffset + delta);
-      const consumed = Math.abs(f21(initialOffset - this.state.offset));
+      const delta = f29(sample.position - this.lastValue), initialOffset = this.state.offset;
+      this.state.offset = f29(initialOffset + delta);
+      const consumed = Math.abs(f29(initialOffset - this.state.offset));
       this.lastValue = sample.position;
       this.remainingVelocity = sample.velocity;
-      canceled = Math.abs(f21(delta - consumed)) > 0.5;
+      canceled = Math.abs(f29(delta - consumed)) > 0.5;
       if (canceled || ended) {
         this.phase = "snap";
         this.start = null;
@@ -19109,7 +22878,7 @@ var ToolbarSettling = class {
     if (this.done) return;
     if (this.phase === "decay") {
       const target = this.decay.target(0, this.velocity);
-      this.state.offset = f21(this.state.offset + f21(target - this.lastValue));
+      this.state.offset = f29(this.state.offset + f29(target - this.lastValue));
       this.remainingVelocity = 0;
       this.phase = "snap";
       this._chooseSnap();
@@ -19121,7 +22890,7 @@ var ToolbarSettling = class {
 };
 
 // src/components/md-fab-menu.js
-var defaultStyle31 = `
+var defaultStyle30 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -19295,7 +23064,7 @@ var defaultStyle31 = `
   }
   .fab .icon { font-size: 24px; width: 24px; height: 24px; line-height: 24px; }
 `;
-var fabMenuSheet = createComponentSheet(defaultStyle31);
+var fabMenuSheet = createComponentSheet(defaultStyle30);
 var MdFabMenu = class extends HTMLElement {
   static get observedAttributes() {
     return [
@@ -19450,7 +23219,7 @@ var MdFabMenu = class extends HTMLElement {
     const iconName = this.open ? "close" : rawIcon;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle31}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle30}</style>`}
       <div class="scrim" part="scrim"></div>
       <div class="anchor">
         <button class="fab" type="button" aria-haspopup="true" aria-expanded="${this.open ? "true" : "false"}"
@@ -20055,7 +23824,7 @@ if (!customElements.get("md-select")) {
 }
 
 // src/components/md-autocomplete.js
-var defaultStyle32 = `
+var defaultStyle31 = `
   :host {
     display: inline-block;
     width: 100%;
@@ -20220,7 +23989,7 @@ var defaultStyle32 = `
     font-style: italic;
   }
 `;
-var sheet5 = createComponentSheet(defaultStyle32);
+var sheet7 = createComponentSheet(defaultStyle31);
 var MdAutocomplete = class extends HTMLElement {
   static formAssociated = true;
   static get observedAttributes() {
@@ -20233,7 +24002,7 @@ var MdAutocomplete = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet5);
+    adoptSheet(this.shadowRoot, sheet7);
     if (this.attachInternals) {
       this.#internals = this.attachInternals();
     }
@@ -20436,7 +24205,7 @@ if (!customElements.get("md-autocomplete")) {
 }
 
 // src/components/md-expansion-panel.js
-var defaultStyle33 = `
+var defaultStyle32 = `
   :host {
     display: block;
     width: 100%;
@@ -20538,7 +24307,7 @@ var defaultStyle33 = `
     pointer-events: none;
   }
 `;
-var sheet6 = createComponentSheet(defaultStyle33);
+var sheet8 = createComponentSheet(defaultStyle32);
 var MdExpansionPanel = class extends HTMLElement {
   static get observedAttributes() {
     return ["open", "headline", "supporting-text", "disabled"];
@@ -20548,7 +24317,7 @@ var MdExpansionPanel = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet6);
+    adoptSheet(this.shadowRoot, sheet8);
   }
   get open() {
     return this.hasAttribute("open");
@@ -20666,566 +24435,181 @@ if (!customElements.get("md-accordion")) {
 }
 
 // src/components/md-paginator.js
-var defaultStyle34 = `
-  :host {
-    display: block;
-    width: 100%;
-    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-    font-size: 14px;
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    box-sizing: border-box;
-  }
-
-  .paginator-root {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    min-height: 56px;
-    padding: 8px 16px;
-    gap: 16px;
-    box-sizing: border-box;
-    border-top: 1px solid var(--md-sys-color-outline-variant, rgba(255, 255, 255, 0.12));
-    position: relative;
-  }
-
-  .page-size-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    font-size: 13px;
-  }
-
-  .page-size-dropdown-anchor {
-    position: relative;
-    display: inline-flex;
-  }
-
-  .page-size-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 36px;
-    padding: 0 12px;
-    border-radius: var(--md-sys-shape-corner-full, 18px);
-    border: 1px solid var(--md-sys-color-outline, #79747E);
-    background: var(--md-sys-color-surface-container-high, #ECE6F0);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    font-size: 13px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    user-select: none;
-    outline: none;
-    transition: background-color 150ms ease, border-color 150ms ease, transform 120ms cubic-bezier(0.2, 0, 0, 1.2);
-  }
-
-  .page-size-btn:hover {
-    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-    border-color: var(--md-sys-color-on-surface, #1D1B20);
-  }
-
-  .page-size-btn:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #6750A4);
-    border-color: var(--md-sys-color-primary, #6750A4);
-  }
-
-  .page-size-menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    z-index: 1000;
-    min-width: 90px;
-    background: var(--md-sys-color-surface-container, #211F26);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    border-radius: var(--md-sys-shape-corner-medium, 14px);
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,.25));
-    border: 1px solid var(--md-sys-color-outline-variant, rgba(255,255,255,0.15));
-    padding: 6px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: scale(0.92, 0.85) translateY(-6px);
-    transform-origin: top left;
-    transition:
-      opacity 180ms ease,
-      transform 240ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.35, 0.64, 1)),
-      visibility 180ms ease;
-  }
-
-  .page-size-menu.open-upwards {
-    top: auto;
-    bottom: calc(100% + 6px);
-    transform-origin: bottom left;
-    transform: scale(0.92, 0.85) translateY(6px);
-  }
-
-  .page-size-menu.open {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    transform: scale(1, 1) translateY(0);
-  }
-
-  .page-size-option {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    border-radius: var(--md-sys-shape-corner-small, 8px);
-    border: none;
-    background: transparent;
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background-color 120ms ease, transform 100ms ease;
-  }
-
-  .page-size-option:hover {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 8%, transparent);
-  }
-
-  .page-size-option:active {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 14%, transparent);
-    transform: scale(0.96);
-  }
-
-  .page-size-option.selected {
-    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-    color: var(--md-sys-color-on-secondary-container, #1D192B);
-    font-weight: 600;
-  }
-
-  .range-label {
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    font-size: 13px;
-    white-space: nowrap;
-  }
-
-  .actions-box {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .nav-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--md-sys-shape-corner-full, 18px);
-    border: none;
-    background: transparent;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    cursor: pointer;
-    outline: none;
-    user-select: none;
-    transition: background-color 150ms ease, color 150ms ease, transform 120ms cubic-bezier(0.2, 0, 0, 1.2);
-  }
-
-  .nav-btn:hover:not([disabled]) {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-  }
-
-  .nav-btn:active:not([disabled]) {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 12%, transparent);
-    transform: scale(0.92);
-  }
-
-  .nav-btn:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #6750A4);
-  }
-
-  .nav-btn[disabled] {
-    opacity: 0.38;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-
-  .nav-btn svg,
-  .page-size-btn svg,
-  .page-size-option svg {
-    width: 20px;
-    height: 20px;
-    fill: currentColor;
-    pointer-events: none;
-    flex-shrink: 0;
-  }
+var defaultStyle33 = `
+ :host{display:block;width:100%;box-sizing:border-box;color:var(--md-sys-color-on-surface)}
+ .paginator-root{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+   min-height:56px;padding:8px 16px;gap:16px;box-sizing:border-box}
+ .page-size-box{display:flex;align-items:center;gap:8px}
+ .page-size-label,.range-label{font:var(--md-sys-typescale-body-medium,400 14px/20px Roboto,sans-serif);
+   letter-spacing:var(--md-sys-typescale-body-medium-tracking,0.25px);
+   color:var(--md-sys-color-on-surface-variant);white-space:nowrap}
+ .actions-box{display:flex;align-items:center;gap:0}
+ [hidden]{display:none!important}
 `;
-var paginatorSheet = createComponentSheet(defaultStyle34);
-var SVGS = {
-  firstPage: `<svg viewBox="0 0 24 24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/></svg>`,
-  prevPage: `<svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>`,
-  nextPage: `<svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>`,
-  lastPage: `<svg viewBox="0 0 24 24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"/></svg>`,
-  arrowDown: `<svg viewBox="0 0 24 24" style="width: 18px; height: 18px;"><path d="M7 10l5 5 5-5z"/></svg>`,
-  check: `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
-};
+var paginatorSheet = createComponentSheet(defaultStyle33);
+var defaultOptions = Object.freeze([5, 10, 25, 50, 100]);
 var MdPaginator = class extends HTMLElement {
   static get observedAttributes() {
-    return [
-      "length",
-      "page-index",
-      "page-size",
-      "page-size-options",
-      "hide-page-size",
-      "show-first-last-buttons",
-      "disabled"
-    ];
+    return ["length", "page-index", "page-size", "page-size-options", "hide-page-size", "show-first-last-buttons", "disabled"];
   }
   #rendered = false;
-  #menuOpen = false;
   #abortController = null;
+  #stopTheme = null;
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     adoptSheet(this.shadowRoot, paginatorSheet);
-    this._onDocClick = this._onDocClick.bind(this);
-    this._onKeyDown = this._onKeyDown.bind(this);
   }
   get length() {
-    const val = parseInt(this.getAttribute("length"), 10);
-    return isNaN(val) ? 0 : Math.max(0, val);
+    const value = parseInt(this.getAttribute("length"), 10);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
   }
-  set length(v) {
-    this.setAttribute("length", String(v));
+  set length(value) {
+    this.setAttribute("length", String(value));
   }
   get pageIndex() {
-    const val = parseInt(this.getAttribute("page-index"), 10);
-    return isNaN(val) ? 0 : Math.max(0, val);
+    const value = parseInt(this.getAttribute("page-index"), 10);
+    return Math.min(this.totalPages - 1, Number.isFinite(value) ? Math.max(0, value) : 0);
   }
-  set pageIndex(v) {
-    this.setAttribute("page-index", String(v));
+  set pageIndex(value) {
+    this.setAttribute("page-index", String(value));
   }
   get pageSize() {
-    const val = parseInt(this.getAttribute("page-size"), 10);
-    return isNaN(val) ? 10 : Math.max(1, val);
+    const value = parseInt(this.getAttribute("page-size"), 10);
+    return Number.isFinite(value) ? Math.max(1, value) : 10;
   }
-  set pageSize(v) {
-    this.setAttribute("page-size", String(v));
+  set pageSize(value) {
+    this.setAttribute("page-size", String(value));
   }
   get pageSizeOptions() {
-    const raw = this.getAttribute("page-size-options");
-    if (!raw) return [5, 10, 25, 50, 100];
-    const parsed = safeJsonParse(raw, null);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed.map((n) => parseInt(n, 10)).filter((n) => !isNaN(n) && n > 0);
-    }
-    return [5, 10, 25, 50, 100];
+    const data = safeJsonParse(this.getAttribute("page-size-options") || "", null);
+    const values = Array.isArray(data) ? [...new Set(data.map(Number).filter((value) => Number.isSafeInteger(value) && value > 0))] : [];
+    return values.length ? values : [...defaultOptions];
   }
-  set pageSizeOptions(arr) {
-    this.setAttribute("page-size-options", JSON.stringify(arr));
+  set pageSizeOptions(value) {
+    this.setAttribute("page-size-options", JSON.stringify(value));
   }
   get hidePageSize() {
     return this.hasAttribute("hide-page-size");
   }
-  set hidePageSize(v) {
-    v ? this.setAttribute("hide-page-size", "") : this.removeAttribute("hide-page-size");
+  set hidePageSize(value) {
+    this.toggleAttribute("hide-page-size", !!value);
   }
   get showFirstLastButtons() {
     return this.hasAttribute("show-first-last-buttons");
   }
-  set showFirstLastButtons(v) {
-    v ? this.setAttribute("show-first-last-buttons", "") : this.removeAttribute("show-first-last-buttons");
+  set showFirstLastButtons(value) {
+    this.toggleAttribute("show-first-last-buttons", !!value);
   }
   get disabled() {
     return this.hasAttribute("disabled");
   }
-  set disabled(v) {
-    v ? this.setAttribute("disabled", "") : this.removeAttribute("disabled");
+  set disabled(value) {
+    this.toggleAttribute("disabled", !!value);
   }
   get totalPages() {
-    if (this.length === 0 || this.pageSize === 0) return 1;
-    return Math.ceil(this.length / this.pageSize);
+    return Math.max(1, Math.ceil(this.length / this.pageSize));
   }
   connectedCallback() {
     if (!this.#rendered) {
       this.#render();
-      this.#setupEvents();
       this.#rendered = true;
     }
+    this.#setupEvents();
     this.#sync();
+    this.#stopTheme?.();
+    this.#stopTheme = observeThemeContext(this, () => this.#sync());
   }
   disconnectedCallback() {
     this.#abortController?.abort();
     this.#abortController = null;
-    document.removeEventListener("click", this._onDocClick);
-    document.removeEventListener("keydown", this._onKeyDown);
+    this.#stopTheme?.();
+    this.#stopTheme = null;
+    this.shadowRoot.querySelector("md-menu")?.close();
   }
-  attributeChangedCallback(name, oldV, newV) {
-    if (!this.#rendered || oldV === newV) return;
-    this.#render();
-    this.#setupEvents();
-    this.#sync();
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (this.#rendered && oldValue !== newValue) this.#sync();
   }
   nextPage() {
-    if (this.pageIndex < this.totalPages - 1 && !this.disabled) {
-      this.#setPage(this.pageIndex + 1);
-    }
+    if (!this.disabled && this.pageIndex < this.totalPages - 1) this.#setPage(this.pageIndex + 1);
   }
   previousPage() {
-    if (this.pageIndex > 0 && !this.disabled) {
-      this.#setPage(this.pageIndex - 1);
-    }
+    if (!this.disabled && this.pageIndex > 0) this.#setPage(this.pageIndex - 1);
   }
   firstPage() {
-    if (this.pageIndex > 0 && !this.disabled) {
-      this.#setPage(0);
-    }
+    if (!this.disabled && this.pageIndex > 0) this.#setPage(0);
   }
   lastPage() {
-    if (this.pageIndex < this.totalPages - 1 && !this.disabled) {
-      this.#setPage(this.totalPages - 1);
-    }
+    if (!this.disabled && this.pageIndex < this.totalPages - 1) this.#setPage(this.totalPages - 1);
   }
-  #setPage(newIndex) {
-    const prev = this.pageIndex;
-    this.pageIndex = newIndex;
+  #setPage(index) {
+    const previous = this.pageIndex;
+    this.pageIndex = index;
+    this.#emitPage(previous);
+  }
+  #setPageSize(size) {
+    if (this.disabled || size === this.pageSize || !Number.isSafeInteger(size) || size < 1) return;
+    const previous = this.pageIndex, firstItem = previous * this.pageSize;
+    this.pageSize = size;
+    this.pageIndex = Math.floor(firstItem / size);
+    this.#emitPage(previous);
+  }
+  #emitPage(previousPageIndex) {
     this.dispatchEvent(new CustomEvent("page", {
       bubbles: true,
       composed: true,
-      detail: {
-        pageIndex: this.pageIndex,
-        previousPageIndex: prev,
-        pageSize: this.pageSize,
-        length: this.length
-      }
-    }));
-  }
-  #setPageSize(newSize) {
-    const prevSize = this.pageSize;
-    const firstItemIndex = this.pageIndex * prevSize;
-    this.pageSize = newSize;
-    this.pageIndex = Math.floor(firstItemIndex / newSize);
-    this.dispatchEvent(new CustomEvent("page", {
-      bubbles: true,
-      composed: true,
-      detail: {
-        pageIndex: this.pageIndex,
-        previousPageIndex: this.pageIndex,
-        pageSize: this.pageSize,
-        length: this.length
-      }
+      detail: { pageIndex: this.pageIndex, previousPageIndex, pageSize: this.pageSize, length: this.length }
     }));
   }
   #getRangeLabel() {
-    const len = this.length;
-    if (len === 0) return "0 of 0";
-    const start = this.pageIndex * this.pageSize + 1;
-    const end = Math.min((this.pageIndex + 1) * this.pageSize, len);
-    return `${start} \u2013 ${end} of ${len}`;
+    if (!this.length) return "0 of 0";
+    return this.pageIndex * this.pageSize + 1 + " \u2013 " + Math.min((this.pageIndex + 1) * this.pageSize, this.length) + " of " + this.length;
   }
   #render() {
-    const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    const options = this.pageSizeOptions;
-    const showSize = !this.hidePageSize;
-    const showFL = this.showFirstLastButtons;
-    const isDisabled = this.disabled;
-    const optionsHtml = options.map((size) => `
-      <button type="button"
-        class="page-size-option ${size === this.pageSize ? "selected" : ""}"
-        data-size="${size}">
-        <span>${size}</span>
-        ${size === this.pageSize ? SVGS.check : ""}
-      </button>
-    `).join("");
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle34}</style>`}
-      <nav class="paginator-root" role="navigation" aria-label="Pagination">
-        ${showSize ? `
-          <div class="page-size-box">
-            <span>Items per page:</span>
-            <div class="page-size-dropdown-anchor">
-              <button type="button"
-                class="page-size-btn"
-                id="page-size-toggle"
-                aria-haspopup="listbox"
-                aria-expanded="false"
-                ${isDisabled ? "disabled" : ""}>
-                <span>${this.pageSize}</span>
-                ${SVGS.arrowDown}
-              </button>
-              <div class="page-size-menu" id="page-size-menu" role="listbox">
-                ${optionsHtml}
-              </div>
-            </div>
-          </div>
-        ` : ""}
-
-        <div class="range-label" aria-live="polite" id="range-label">
-          ${this.#getRangeLabel()}
-        </div>
-
-        <div class="actions-box">
-          ${showFL ? `
-            <button type="button" class="nav-btn" id="btn-first" aria-label="First page" title="First page">
-              ${SVGS.firstPage}
-            </button>
-          ` : ""}
-
-          <button type="button" class="nav-btn" id="btn-prev" aria-label="Previous page" title="Previous page">
-            ${SVGS.prevPage}
-          </button>
-
-          <button type="button" class="nav-btn" id="btn-next" aria-label="Next page" title="Next page">
-            ${SVGS.nextPage}
-          </button>
-
-          ${showFL ? `
-            <button type="button" class="nav-btn" id="btn-last" aria-label="Last page" title="Last page">
-              ${SVGS.lastPage}
-            </button>
-          ` : ""}
-        </div>
-      </nav>
-    `;
+    const hasAdopted = this.shadowRoot.adoptedStyleSheets?.length;
+    this.shadowRoot.innerHTML = (hasAdopted ? "" : "<style>" + defaultStyle33 + "</style>") + '<md-divider part="divider"></md-divider><nav class="paginator-root" aria-label="Pagination" part="container"><div class="page-size-box"><span class="page-size-label">Items per page:</span><md-menu id="page-size-menu" variant="dropdown" selection-mode="single" label="Items per page"><md-button id="page-size-toggle" slot="trigger" variant="outlined" size="s" trailing-icon="arrow_drop_down" aria-label="Items per page"></md-button></md-menu></div><div class="range-label" id="range-label" aria-live="polite"></div><div class="actions-box"><md-icon-button id="btn-first" variant="standard" size="s" aria-label="First page" title="First page"></md-icon-button><md-icon-button id="btn-prev" variant="standard" size="s" aria-label="Previous page" title="Previous page"></md-icon-button><md-icon-button id="btn-next" variant="standard" size="s" aria-label="Next page" title="Next page"></md-icon-button><md-icon-button id="btn-last" variant="standard" size="s" aria-label="Last page" title="Last page"></md-icon-button></div></nav>';
   }
   #sync() {
-    const rangeLbl = this.shadowRoot.querySelector("#range-label");
-    if (rangeLbl) rangeLbl.textContent = this.#getRangeLabel();
-    const sizeBtn = this.shadowRoot.querySelector("#page-size-toggle");
-    if (sizeBtn) sizeBtn.querySelector("span").textContent = String(this.pageSize);
-    const btnFirst = this.shadowRoot.querySelector("#btn-first");
-    const btnPrev = this.shadowRoot.querySelector("#btn-prev");
-    const btnNext = this.shadowRoot.querySelector("#btn-next");
-    const btnLast = this.shadowRoot.querySelector("#btn-last");
-    const isFirstDisabled = this.pageIndex === 0 || this.disabled;
-    const isLastDisabled = this.pageIndex >= this.totalPages - 1 || this.disabled;
-    if (btnFirst) btnFirst.toggleAttribute("disabled", isFirstDisabled);
-    if (btnPrev) btnPrev.toggleAttribute("disabled", isFirstDisabled);
-    if (btnNext) btnNext.toggleAttribute("disabled", isLastDisabled);
-    if (btnLast) btnLast.toggleAttribute("disabled", isLastDisabled);
-  }
-  _onDocClick(e) {
-    if (!this.#menuOpen) return;
-    const path = e.composedPath ? e.composedPath() : [];
-    if (!path.includes(this)) {
-      this.#toggleMenu(false);
-    }
-  }
-  _onKeyDown(e) {
-    if (this.#menuOpen && e.key === "Escape") {
-      this.#toggleMenu(false);
-    }
-  }
-  #toggleMenu(open) {
-    const menu = this.shadowRoot.querySelector("#page-size-menu");
-    const btn = this.shadowRoot.querySelector("#page-size-toggle");
-    if (!menu) return;
-    this.#menuOpen = open;
-    if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
-    if (open) {
-      const rect4 = btn.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect4.bottom;
-      const spaceAbove = rect4.top;
-      const menuHeight = 220;
-      const isUp = spaceBelow < menuHeight && spaceAbove > spaceBelow;
-      if (isUp) {
-        menu.classList.add("open-upwards");
-      } else {
-        menu.classList.remove("open-upwards");
-      }
-      menu.style.visibility = "visible";
-      menu.style.pointerEvents = "auto";
-      const { keyframes, duration } = SpringPhysics.generateKeyframes({
-        from: 0.62,
-        to: 1,
-        dampingRatio: 0.62,
-        stiffness: 420,
-        mass: 1
-      });
-      const animKeyframes = keyframes.map((scale2, i) => {
-        const progress = i / (keyframes.length - 1);
-        const opacity = Math.min(1, progress * 4);
-        const ty = isUp ? (scale2 - 1) * 16 : (1 - scale2) * 16;
-        return {
-          transform: `scale(${scale2.toFixed(4)}) translateY(${-ty.toFixed(2)}px)`,
-          opacity: opacity.toFixed(3)
-        };
-      });
-      menu._springAnim?.cancel?.();
-      const anim = menu.animate(animKeyframes, {
-        duration: Math.max(300, duration),
-        easing: "linear",
-        fill: "forwards"
-      });
-      menu._springAnim = anim;
-      document.addEventListener("click", this._onDocClick);
-      document.addEventListener("keydown", this._onKeyDown);
-    } else {
-      if (this.isConnected && menu.style.visibility !== "hidden") {
-        menu._springAnim?.cancel?.();
-        const isUp = menu.classList.contains("open-upwards");
-        const anim = menu.animate([
-          { transform: "scale(1, 1) translateY(0)", opacity: 1 },
-          { transform: `scale(0.9, 0.82) translateY(${isUp ? "8px" : "-8px"})`, opacity: 0 }
-        ], {
-          duration: 150,
-          easing: "cubic-bezier(0.4, 0, 1, 1)",
-          fill: "forwards"
-        });
-        anim.onfinish = () => {
-          menu.style.visibility = "hidden";
-          menu.style.pointerEvents = "none";
-          menu._springAnim = null;
-          menu.classList.remove("open", "open-upwards");
-        };
-      } else {
-        menu.style.visibility = "hidden";
-        menu.style.pointerEvents = "none";
-        menu.classList.remove("open", "open-upwards");
-      }
-      document.removeEventListener("click", this._onDocClick);
-      document.removeEventListener("keydown", this._onKeyDown);
+    if (!this.isConnected) return;
+    const root = this.shadowRoot, menu = root.querySelector("#page-size-menu"), size = root.querySelector("#page-size-toggle");
+    root.querySelector("#range-label").textContent = this.#getRangeLabel();
+    root.querySelector(".page-size-box").hidden = this.hidePageSize;
+    size.setAttribute("label", String(this.pageSize));
+    size.disabled = this.disabled;
+    menu.enabled = !this.disabled;
+    if (this.hidePageSize) menu.close();
+    const options = this.pageSizeOptions;
+    if (!options.includes(this.pageSize)) options.push(this.pageSize);
+    menu.items = options.map((value) => ({ label: String(value), value: String(value), selectionMode: "single", selected: value === this.pageSize }));
+    const rtl = getComputedStyle(this).direction === "rtl";
+    for (const [name, icon2, disabled] of [
+      ["first", rtl ? "last_page" : "first_page", this.pageIndex === 0],
+      ["prev", rtl ? "chevron_right" : "chevron_left", this.pageIndex === 0],
+      ["next", rtl ? "chevron_left" : "chevron_right", this.pageIndex >= this.totalPages - 1],
+      ["last", rtl ? "first_page" : "last_page", this.pageIndex >= this.totalPages - 1]
+    ]) {
+      const control = root.querySelector("#btn-" + name);
+      control.setAttribute("icon", icon2);
+      control.disabled = this.disabled || disabled;
+      if (name === "first" || name === "last") control.hidden = !this.showFirstLastButtons;
     }
   }
   #setupEvents() {
     this.#abortController?.abort();
     this.#abortController = new AbortController();
     const { signal } = this.#abortController;
-    const sizeBtn = this.shadowRoot.querySelector("#page-size-toggle");
-    if (sizeBtn) {
-      sizeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.#toggleMenu(!this.#menuOpen);
-      }, { signal });
+    for (const [name, action] of [["first", () => this.firstPage()], ["prev", () => this.previousPage()], ["next", () => this.nextPage()], ["last", () => this.lastPage()]]) {
+      this.shadowRoot.querySelector("#btn-" + name).addEventListener("click", action, { signal });
     }
     const menu = this.shadowRoot.querySelector("#page-size-menu");
-    if (menu) {
-      menu.addEventListener("click", (e) => {
-        const opt = e.composedPath().find((el) => el.classList && el.classList.contains("page-size-option"));
-        if (opt && opt.dataset.size) {
-          const newSize = parseInt(opt.dataset.size, 10);
-          this.#setPageSize(newSize);
-          this.#toggleMenu(false);
-          this.#render();
-          this.#setupEvents();
-          this.#sync();
-        }
-      }, { signal });
-    }
-    const btnFirst = this.shadowRoot.querySelector("#btn-first");
-    const btnPrev = this.shadowRoot.querySelector("#btn-prev");
-    const btnNext = this.shadowRoot.querySelector("#btn-next");
-    const btnLast = this.shadowRoot.querySelector("#btn-last");
-    btnFirst?.addEventListener("click", () => this.firstPage(), { signal });
-    btnPrev?.addEventListener("click", () => this.previousPage(), { signal });
-    btnNext?.addEventListener("click", () => this.nextPage(), { signal });
-    btnLast?.addEventListener("click", () => this.lastPage(), { signal });
+    menu.addEventListener("select", (event) => {
+      if (event.target !== menu) return;
+      event.stopPropagation();
+      this.#setPageSize(Number(event.detail.item.value));
+    }, { signal });
   }
 };
-if (!customElements.get("md-paginator")) {
-  customElements.define("md-paginator", MdPaginator);
-}
+if (!customElements.get("md-paginator")) customElements.define("md-paginator", MdPaginator);
 
 // src/tokens/shape-extensions.js
 var SHAPE_EXTENSIONS = { "hexagon": "M360.196 147.081C367.995 160.591 371.894 167.346 373.864 174.403C376.712 184.606 376.712 195.394 373.864 205.597C371.894 212.654 367.995 219.409 360.196 232.919L336.437 274.079C328.638 287.589 324.738 294.344 319.613 299.58C312.202 307.148 302.86 312.543 292.601 315.177C285.505 317 277.706 317 262.108 317L117.892 317C102.294 317 94.4949 317 87.399 315.178C77.1398 312.543 67.798 307.149 60.3873 299.58C55.2616 294.345 51.3621 287.589 43.5632 274.079L19.8039 232.919C12.0054 219.409 8.10612 212.654 6.13613 205.597C3.28796 195.394 3.28796 184.606 6.13613 174.403C8.10613 167.346 12.0054 160.591 19.804 147.081L43.5632 105.921C51.3622 92.4107 55.2616 85.6554 60.3874 80.4202C67.798 72.8514 77.1398 67.457 87.3989 64.8224C94.4949 63.0002 102.294 63.0002 117.892 63.0002L262.108 63C277.706 63 285.505 63 292.601 64.8222C302.86 67.4567 312.202 72.8511 319.613 80.42C324.738 85.6551 328.638 92.4104 336.437 105.921L360.196 147.081Z" };
@@ -21272,7 +24656,7 @@ var MATERIAL_SHAPE_NAMES = Object.keys(canonical);
 var MATERIAL_SHAPES_SVG_PATHS = { ...SHAPE_EXTENSIONS, ...canonical };
 
 // src/components/md-shape.js
-var defaultStyle35 = `
+var defaultStyle34 = `
   :host {
     display: inline-flex;
     align-items: center;
@@ -21319,7 +24703,7 @@ var defaultStyle35 = `
     object-fit: cover;
   }
 `;
-var sheet7 = createComponentSheet(defaultStyle35);
+var sheet9 = createComponentSheet(defaultStyle34);
 var MdShape = class extends HTMLElement {
   static get observedAttributes() {
     return ["name", "size", "color", "mask", "aria-label"];
@@ -21328,7 +24712,7 @@ var MdShape = class extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    adoptSheet(this.shadowRoot, sheet7);
+    adoptSheet(this.shadowRoot, sheet9);
   }
   get name() {
     return this.getAttribute("name") || "sunny";
@@ -21388,7 +24772,7 @@ var MdShape = class extends HTMLElement {
     const size = /^\d+(\.\d+)?$/.test(rawSize) ? `${rawSize}px` : rawSize;
     const color = this.#resolveColor(sanitizeAttribute(this.color));
     const isMask = this.mask;
-    const fallbackStyle = this.shadowRoot.adoptedStyleSheets?.length ? "" : `<style>${defaultStyle35}</style>`;
+    const fallbackStyle = this.shadowRoot.adoptedStyleSheets?.length ? "" : `<style>${defaultStyle34}</style>`;
     if (size && CSS.supports("width", size)) {
       this.style.setProperty("--md-shape-size", size);
     } else {
@@ -21939,7 +25323,7 @@ function signum(num) {
     return 1;
   }
 }
-function lerp5(start, stop, amount) {
+function lerp6(start, stop, amount) {
   return (1 - amount) * start + amount * stop;
 }
 function clampInt(min, max, input) {
@@ -22138,11 +25522,11 @@ var ViewingConditions = class _ViewingConditions {
     const rW = xyz[0] * 0.401288 + xyz[1] * 0.650173 + xyz[2] * -0.051461;
     const gW = xyz[0] * -0.250268 + xyz[1] * 1.204414 + xyz[2] * 0.045854;
     const bW = xyz[0] * -2079e-6 + xyz[1] * 0.048952 + xyz[2] * 0.953127;
-    const f22 = 0.8 + surround / 10;
-    const c = f22 >= 0.9 ? lerp5(0.59, 0.69, (f22 - 0.9) * 10) : lerp5(0.525, 0.59, (f22 - 0.8) * 10);
-    let d = discountingIlluminant ? 1 : f22 * (1 - 1 / 3.6 * Math.exp((-adaptingLuminance - 42) / 92));
+    const f30 = 0.8 + surround / 10;
+    const c = f30 >= 0.9 ? lerp6(0.59, 0.69, (f30 - 0.9) * 10) : lerp6(0.525, 0.59, (f30 - 0.8) * 10);
+    let d = discountingIlluminant ? 1 : f30 * (1 - 1 / 3.6 * Math.exp((-adaptingLuminance - 42) / 92));
     d = d > 1 ? 1 : d < 0 ? 0 : d;
-    const nc = f22;
+    const nc = f30;
     const rgbD = [
       d * (100 / rW) + 1 - d,
       d * (100 / gW) + 1 - d,
@@ -22554,8 +25938,8 @@ var HctSolver = class _HctSolver {
    * @return The intersection point of the segment AB with the plane
    * R=coordinate, G=coordinate, or B=coordinate
    */
-  static setCoordinate(source, coordinate, target, axis) {
-    const t = _HctSolver.intercept(source[axis], coordinate, target[axis]);
+  static setCoordinate(source, coordinate2, target, axis) {
+    const t = _HctSolver.intercept(source[axis], coordinate2, target[axis]);
     return _HctSolver.lerpPoint(source, t, target);
   }
   static isBounded(x) {
@@ -23607,11 +26991,11 @@ var ContrastCurve = class {
     if (contrastLevel <= -1) {
       return this.low;
     } else if (contrastLevel < 0) {
-      return lerp5(this.low, this.normal, (contrastLevel - -1) / 1);
+      return lerp6(this.low, this.normal, (contrastLevel - -1) / 1);
     } else if (contrastLevel < 0.5) {
-      return lerp5(this.normal, this.medium, (contrastLevel - 0) / 0.5);
+      return lerp6(this.normal, this.medium, (contrastLevel - 0) / 0.5);
     } else if (contrastLevel < 1) {
-      return lerp5(this.medium, this.high, (contrastLevel - 0.5) / 0.5);
+      return lerp6(this.medium, this.high, (contrastLevel - 0.5) / 0.5);
     } else {
       return this.high;
     }
@@ -26729,9 +30113,9 @@ function parseIntHex(value) {
 
 // src/theme/hct-color-engine.js
 var DEFAULT_SEED = "#6750a4";
-var clamp10 = (value, min, max) => Math.min(max, Math.max(min, value));
+var clamp15 = (value, min, max) => Math.min(max, Math.max(min, value));
 var finite4 = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
-var channel = (value) => clamp10(Math.round(finite4(value, 0)), 0, 255);
+var channel = (value) => clamp15(Math.round(finite4(value, 0)), 0, 255);
 var unpack = (argb) => ({ r: redFromArgb(argb), g: greenFromArgb(argb), b: blueFromArgb(argb) });
 var describe = (hct) => ({ hue: hct.hue, chroma: hct.chroma, tone: hct.tone });
 function hexToRgb(hex) {
@@ -26750,7 +30134,7 @@ function sourceHct(source) {
     return Hct.from(
       finite4(source.hue, 0),
       Math.max(0, finite4(source.chroma ?? 48, 48)),
-      clamp10(finite4(source.tone ?? 40, 40), 0, 100)
+      clamp15(finite4(source.tone ?? 40, 40), 0, 100)
     );
   }
   const { r, g, b } = hexToRgb(source);
@@ -26773,12 +30157,12 @@ var TonalPalette2 = class {
       this._chroma = this.chroma;
       this._palette = TonalPalette.fromHueAndChroma(finite4(this.hue, 0), Math.max(0, finite4(this.chroma, 0)));
     }
-    return hexFromArgb(this._palette.tone(clamp10(finite4(tone, 0), 0, 100)));
+    return hexFromArgb(this._palette.tone(clamp15(finite4(tone, 0), 0, 100)));
   }
 };
 function dynamicScheme(source, isDark, schemeType, contrastLevel) {
   const Scheme = schemeType === "standard" ? SchemeTonalSpot : SchemeExpressive;
-  return new Scheme(sourceHct(source), isDark, clamp10(finite4(contrastLevel, 0), -1, 1), "2025", "phone");
+  return new Scheme(sourceHct(source), isDark, clamp15(finite4(contrastLevel, 0), -1, 1), "2025", "phone");
 }
 function createTonalPalettes(source, schemeType = "expressive", isDark = false, contrastLevel = 0) {
   const scheme = dynamicScheme(source, isDark, schemeType, contrastLevel);
@@ -27133,14 +30517,14 @@ function typographyOverrides(fontFamily) {
 }
 
 // src/components/md-theme.js
-var defaultStyle36 = `
+var defaultStyle35 = `
   :host {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     display: contents;
   }
 `;
-var themeSheet = createComponentSheet(defaultStyle36);
+var themeSheet = createComponentSheet(defaultStyle35);
 var MdExpressiveTheme = class extends HTMLElement {
   static get observedAttributes() {
     return ["scheme", "color-mode", "contrast", "motion-scheme", "primary-seed", "custom-palette", "font-family", "global"];
@@ -27304,9 +30688,9 @@ var MdExpressiveTheme = class extends HTMLElement {
     const tokens = generateM3Scheme(primarySeed, colorMode === "dark", scheme, contrastLevel);
     const inheritColors = target === this && !["primary-seed", "scheme", "color-mode", "contrast"].some((name) => this.hasAttribute(name));
     if (inheritColors) {
-      const parent = themeParent(this);
-      if (parent) {
-        const computed = getComputedStyle(parent);
+      const parent2 = themeParent(this);
+      if (parent2) {
+        const computed = getComputedStyle(parent2);
         for (const key of Object.keys(tokens)) tokens[key] = computed.getPropertyValue(key).trim() || tokens[key];
       }
     }
@@ -27334,7 +30718,7 @@ var MdExpressiveTheme = class extends HTMLElement {
   render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     this.shadowRoot.innerHTML = `
-      ${hasAdopted ? "" : `<style>${defaultStyle36}</style>`}
+      ${hasAdopted ? "" : `<style>${defaultStyle35}</style>`}
       <slot></slot>
     `;
   }
@@ -27412,10 +30796,13 @@ export {
   MdToolbar,
   MdTooltip,
   MdTopAppBar,
+  SnackbarHostState,
   SpringPhysics,
   TonalPalette2 as TonalPalette,
   ToolbarScrollExpansion,
   ToolbarSettling,
+  TooltipMutatorMutex,
+  TooltipState,
   TopAppBarScrollBehavior,
   TopAppBarSettling,
   TopAppBarState,

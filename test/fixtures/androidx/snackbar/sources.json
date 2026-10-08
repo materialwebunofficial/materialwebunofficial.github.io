@@ -20,6 +20,11 @@
       "file": "ComposeMaterial3Flags.kt",
       "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
       "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    },
+    {
+      "file": "AlignmentLine.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/AlignmentLine.kt",
+      "sha256": "fd6cd285af377c6a2ec619ae961e3b048fc4de97ebf651afe6908dcacff6da92"
     }
   ]
 }

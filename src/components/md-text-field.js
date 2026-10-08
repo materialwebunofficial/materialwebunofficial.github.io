@@ -557,6 +557,7 @@ export class MdTextField extends HTMLElement {
     }, { signal });
 
     input.addEventListener('input', (e) => {
+      e.stopPropagation();
       this._value = e.target.value;
       const counter = this.shadowRoot.querySelector('.counter');
       if (counter && this.maxlength) {
@@ -571,6 +572,7 @@ export class MdTextField extends HTMLElement {
     }, { signal });
 
     input.addEventListener('change', (e) => {
+      e.stopPropagation();
       this._value = e.target.value;
       this.dispatchEvent(new CustomEvent('change', {
         detail: { value: this._value },

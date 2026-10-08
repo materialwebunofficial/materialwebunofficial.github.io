@@ -49,6 +49,11 @@ Licensed under the Apache License, Version 2.0 (the "License").
 DockedToolbar, FloatingToolbar, and bottom sheet surface mechanics reference
 MDC-Android specifications.
 
+The shared browser modal window adapter follows MDC Material3 Dialog's
+fade-enter/fade-exit XML resources, motion values and scrim token at revision
+60ff09436d5d477a4b9d02940f31eb01e1250620. Unchanged reference sources and original
+license headers are retained in test/fixtures/androidx/dialog.
+
 ===============================================================================
 4. Material Color Utilities / HCT Color System
 ===============================================================================
@@ -402,3 +407,233 @@ storage, vectors and frames, using original Android spline and FloatSpringSpec.
 Nullable specs, Float state/overlap, source consumed/remaining deltas and settling
 are covered. DOM wheel/touch/scrollend ordering, native fling velocity and coupled
 native measure/settle scheduling remain platform-host boundaries.
+
+The unchanged Snackbar.kt, SnackbarHost.kt, SnackbarTokens.kt,
+ComposeMaterial3Flags.kt and foundation-layout AlignmentLine.kt reference files
+in test/fixtures/androidx/snackbar are Copyright 2019-2025 The Android Open Source
+Project, licensed under Apache-2.0.
+Original copyright/license headers are retained. Their exact pinned URLs and
+SHA-256 hashes are recorded in that directory's sources.json. They are cached
+reference inputs for the snackbar audit. md-snackbar.js and snackbar-host-state.js
+adapt their action-sensitive duration, optional dismiss, default color/type/shape,
+FastSpatial/FastEffects host channels and FIFO/results/cancellation rules.
+The motion harness checks source literals and executes unchanged shared spring
+math and original motion tokens for close-during-entry frames. Promise/AbortSignal,
+visibility/frame clocks, timeout recommendations and queue delivery are web host
+adapters; the full Compose Mutex/coroutine host is not executed.
+snackbar-layout.js adapts the complete legacy one-row measure lambda and the
+horizontal alignment-line padding body, and composes the default separate-line
+modifier/Row/Column tree. The independent JVM layout harness executes those
+unchanged bodies with original packed Constraints, Placeable coercion/relative
+placement, Size/Fill/Padding/Row/Column and modifier coordinator queries. Measured
+Text/action/dismiss boxes and platform baselines are explicit leaves; arbitrary
+Box content/descendant merging, intrinsic queries, full Compose scheduling and
+native font/pixel rendering remain open.
+
+The default SnackbarData presenter now also uses the source padding(12.dp)
+outside the visual Surface. actionColor is the TextButton binding, distinct from
+the generic action wrapper's actionContentColor. Optional dismiss uses the
+shared plain tooltip and source English/Turkish resources. Shared rounded/cut
+corner adapters provide configurable shapes with clipped contents and an
+outline shadow mask independent of container alpha.
+
+The unchanged Tooltip.kt, BasicTooltip.kt, PlainTooltipTokens.kt,
+RichTooltipTokens.kt, MutatorMutex.kt, Transition.kt, AndroidPopup.android.kt,
+AccessibilityServiceStateProvider.android.kt, Surface.kt, Box.kt and English/Turkish strings.xml files in
+test/fixtures/androidx/tooltip are Copyright 2019-2025 The Android Open Source
+Project, licensed under Apache-2.0. Original license headers, pinned URLs and
+SHA-256 hashes are retained. md-tooltip.js, tooltip-state.js and
+tooltip-position.js adapt their presentation, state and placement rules.
+tools/androidx-tooltip/generate.py executes unchanged TooltipPositionProviderImpl,
+caretX and TooltipStateImpl bodies with the original complete MutatorMutex file.
+Integer geometry/transition storage/AtomicReference/annotation/exception shims
+are explicit hosts. State cases run real kotlinx-coroutines-core/test 1.8.1,
+compatible with this test compiler, not the complete pinned AndroidX dependency
+graph. Native spring/token math is reused for scalar motion comparisons.
+SVG union-fill/outline-shadow, HTML popover, Promises/AbortSignal, pointer and
+focus handling are browser adapters. Generic Compose layout/content/intrinsics,
+complete transition/composition scheduling, Android accessibility manager,
+native path boolean/raster operations, fonts, custom specs/carets, other locales
+and other engines are not established by these fixtures.
+The original Transition.updateTarget/onTransitionEnd/onDisposed bodies are also
+executed unchanged around explicit generic field/list/storage hosts. Eight
+bookkeeping histories check the renderer's current/target/visible state, including
+retarget before entry completion and retained state on disposal. This limited
+body extraction does not execute the whole Transition class or frame/composition
+host; scalar channel frames are checked separately. tooltip-focus.js implements
+the DOM focus-window adapter: rendered open-shadow/slot traversal, focus ownership
+and restoration, outside gesture consumption and popup Escape tracking. A host
+flag supplies accessibility service state; no browser service detection is
+claimed. Visible-anchor polling follows CSS/WAAPI transforms and skips unchanged
+layout work. These browser checks do not execute Android WindowManager, IME,
+accessibility services, closed shadow roots or native focus rasterization.
+tooltip-layout.js and tooltip-dom-layout.js implement the default plain/rich
+measurement trees with explicit DOM font/control leaves. The additional
+generate-layout.py harness executes original public PlainTooltip/RichTooltip,
+textVerticalPadding and foundation Box/Column/Size/Padding/baseline/alignment
+coordinator bodies. Composition emission, density1 and drawing-only values are
+explicit hosts; the Modifier type name is relocated. 26,640 JVM trees and 96
+Chromium geometry references check requested/coerced dimensions, native child
+constraints, baseline merging, multiple/empty children and RTL. Dependencies
+and licenses for original foundation bodies are retained in the existing
+toolbar-row, toolbar-alignment and snackbar manifests. This does not run the
+Compose compiler, arbitrary modifiers/intrinsics, font shaping or Android UI.
+
+The twenty unchanged Button, AnimatedShape, size/variant/color/shape-token,
+CornerSize/CornerBasedShape/RoundedCornerShape, Interpolatable and MathHelpers
+references in test/fixtures/androidx/button are Copyright 2019-2025 The Android
+Open Source Project, licensed under Apache-2.0. Original license headers, pinned
+URLs and SHA-256 hashes are retained in sources.json. md-button.js and
+button-shape.js adapt their default geometry, theme roles and rounded shape
+progress bookkeeping. tools/androidx-button extracts original public default
+functions/getters, full ButtonColors/ButtonShapes, shapeByInteraction and remembered
+shape helpers, Row/defaultMinSize and full AnimatedShapeState/interpolation bodies,
+with original token, SpringSpec equality/hash and shared native spring/layout bodies. Composition
+emission/group/slot/effect draining, measured leaves, density1, precision-pointer flag, uniform shape/outline,
+Animatable/frame/coroutine, Color identity/alpha/cache and unused token values
+are explicit hosts. The fixtures do not run full Compose Surface, Animatable,
+composition/input/accessibility scheduling, arbitrary modifiers/intrinsics,
+Android font/Color/raster behavior. Shared
+foundation and spring dependencies retain their existing source manifests and
+licenses; see tools/androidx-button/README.md for exact verification boundaries.
+
+The five unchanged ToggleButton, TonalButtonTokens, SingleValueAnimation,
+foundation Border and Spacer references under test/fixtures/androidx/toggle-button are
+Copyright 2019-2025 The Android Open
+Source Project, licensed under Apache-2.0. Their original license headers,
+pinned raw URLs and SHA-256 hashes are retained in sources.json. md-button.js
+and button-shape.js adapt native ToggleButton defaults, three-shape composition,
+FastSpatial motion, color targets, border transitions and Checkbox semantics.
+button-border.js adapts native pixel-ceiled/capped stroke width. The shared
+color-motion.js uses converted-value/raw-velocity color retargeting.
+tools/androidx-toggle-button executes original shape/color/default/border
+bodies with the separately manifested Button and motion dependencies. Group/
+slot/effect, scalar Animatable/frame, density, uniform final outline/raster,
+Color role/alpha/cache/conversion and theme hosts are explicit. The original
+animateBorderStrokeAsState, animate*AsState/AnimateAsState and scalar border
+paint bodies execute with native TargetBasedAnimation/vectorized springs and
+explicit remember/SideEffect/coroutine/Job/Animatable hosts. The full original
+CornerBasedShape outline scaling/precondition body runs in the scalar fixture;
+negative corners rejected by it use valid zero-radius CSS in the web renderer.
+Full original ButtonElevation/ToggleButtonElevation, public factories and
+internal animateElevation/FloatTweenSpec/Easing bodies execute through explicit
+composition/effect/interaction-flow/Animatable clock hosts. button-elevation.js
+adapts their target-key retention, ordered interactions and scalar tween motion.
+Source dependency licenses/manifests remain under button, toggle-button, ripple,
+motion and navigation-drawer. CSS token shadow interpolation hosts drawing.
+button-layout.js adapts the original Toggle Row, icon Box, Spacer, SizeNode,
+UnspecifiedConstraintsNode and padding measurement. toggle-button-dom-layout.js
+hosts browser font/element leaves and CSS parent constraints with retained DOM.
+The layout harness executes those original source bodies through separately
+manifested generated Button/Tooltip/Row runtimes and explicit composition,
+density-1 and leaf hosts. Emission-wrapper intrinsics are not implemented.
+Complete native Surface, composition scheduling, border/shadow raster,
+custom content/modifiers/intrinsics and Android font/Color/raster/input behavior
+remain outside this proof. See tools/androidx-toggle-button/README.md.
+
+button-surface.js adapts the clickable/toggle Surface content-clip and
+parent tonal-elevation channels through retained web content wrappers and the
+shared surface-color.js sRGB resolver. The unchanged licensed Surface.kt and
+ColorScheme.kt references are already manifested under fab-surface.
+tools/androidx-button/generate-surface.py executes full original clickable/
+toggle Surface overloads, modifier surface chain, tonal wrapper and native
+ColorScheme/global content-color helpers against the original sRGB color
+runtime. Composition locals, remember, modifier/Box emission, density, shape
+names, ripple configuration, interactions and semantics are recording hosts.
+These do not execute complete native pointer/semantics/composition scheduling
+or rasterization. See tools/androidx-button/README.md for scope and boundaries.
+
+The five unchanged Foundation PointerEvent/TapGestureDetector and UI
+NodeCoordinator/ShapeContainingUtil/HitTestResult references under
+test/fixtures/androidx/pointer are Copyright 2019-2025 The Android Open Source
+Project, licensed under Apache-2.0. Source headers, pinned raw URLs and SHA-256
+hashes are retained in sources.json. pointer-geometry.js adapts fitted rounded
+outline membership, Touch minimum-target candidates and captured bounds.
+Button Surface supplies CSS geometry to bindPress and hover/elevation bindings.
+tools/androidx-button/generate-pointer.py executes the full original
+FoundationClickable.ClickableNode (already manifested under ripple), pointer
+helpers, ShapeContainingUtil/HitTestResult and six NodeCoordinator methods.
+The event/base-interaction/density/type and normal-leaf coordinator/collection
+hosts are explicit. Generic/non-fitting Path operations throw. No complete
+native modifier/ancestor/sibling arbitration, input tree, asynchronous base
+interaction emission, keyboard or indirect-pointer pipeline is supplied.
+state-layer.js adapts the existing independently source-executed Material3
+opacity specs and interaction order. Browser RAF, focus/event mapping and CSS
+draw/color serialization are platform adapters. These source manifests retain
+their licenses under ripple; see tools/androidx-ripple/README.md and
+tools/androidx-button/README.md for the verification boundaries.
+
+clickable-keys.js adapts the original Foundation ClickableNode and
+AbstractClickableNode key filters, per-key interaction references, release
+activation and focus/disable cancellation. The unchanged FoundationClickable.kt
+reference is already manifested under ripple. generate-keyboard.py executes
+the full ClickableNode and original key, focus, dispose and updateCommon bodies;
+normalized Key values, map, indication initialization, delegation and synchronous
+interaction emission are explicit hosts. The browser shared bindPress keeps
+independent keyboard/pointer ink ownership and suppresses HTML ancestor default
+activation for nested editable controls. Native Android input routing, collection
+iteration and coroutine/delegation scheduling are not executed by these hosts.
+Button and FAB retain separate press references in their native-derived elevation
+collection adapters. Full original Button/Toggle elevation histories and original
+FAB collector branches verify matching removal, cancellation and arrival order.
+Unchanged Apache-licensed Foundation Toggleable.kt and Selectable.kt at the same
+revision are manifested under test/fixtures/androidx/selection-input. Their
+ToggleableNode, TriStateToggleableNode and SelectableNode inherit ClickableNode's
+key flow. Selection components use the shared binding's synchronous enabled
+update adapter; source inheritance and the independently executed base model are
+documented in tools/androidx-selection-input/README.md. These additional selection
+classes, complete composition and native focus/input trees are not recompiled by
+that source check.
+The original Material3 common ripple draw/tween bodies also produce a separate
+explicit-radius selection artifact via tools/androidx-ripple/snapshot.mjs
+--selection. Supplied draw-size/clip hosts do not establish complete native
+layout, scheduling or raster identity. Production selection indications reuse
+the shared native-derived opacity controller and ripple renderer.
+Supplemental official Google Material Web Checkbox SCSS references retain their
+Apache-2.0 headers under test/fixtures/material-web/checkbox, with URL/SHA manifest
+at47adb655bd7a88c4d62e8faac2873084eed555dc. They are older Web M3 v0.192 context,
+not an oracle for the newer AndroidX Expressive state-color decisions.
+selection-motion.js additionally adapts the updated MD3 drawCheck Float points
+and drawBox fill/inset/outline geometry. The source-verified native Checkbox
+artifact executes original CheckboxColors/default getters and drawing bodies;
+role descriptors, normalized PathMeasure length and draw recording are supplied
+hosts, not native packed Color, full composables or Skia raster execution.
+selection-color.js binds these semantic roles to the existing shared native-
+derived ColorVectorConverter spring and conditional enabled/disabled behavior.
+Checkbox indication colors follow the current official Material Checkbox Specs
+table, recorded on2026-10-08 in current-spec-decisions.json and corroborated by
+the licensed pinned Web role mappings. This intentional normative decision
+supersedes the AndroidX public unchecked Transparent ripple input; the native
+geometry and animation reference is retained. No literal palette colors are
+introduced by that component state adapter.
+color-alpha.js and surface-color.js share the native-derived sRGB Color.copy
+and compositeOver kernel used by disabled selection roles and tonal Surface.
+Existing licensed native Color/Surface fixtures independently check packing and
+Float composition. RadioButton reuses the ColorVector spring in its enabled
+branch; Switch retains direct color updates. The wide-gamut CSS fallback does
+not establish native Float16 packing or complete color-conversion/raster parity.
+
+selection-layout.js adapts the original selection modifier measurement chains
+and the native minimum-interactive, wrap-content, padding and required-size
+policies. The unchanged licensed Checkbox.kt, RadioButton.kt and Switch.kt
+references are already manifested under selection; Size.kt, Padding.kt and
+InteractiveComponentSize.kt are manifested under toolbar-row at the same pinned
+AndroidX revision. SelectionDOMLayout applies those measured inner input/draw
+bounds separately from the outer web reservation, and binds the previously
+native-verified direct/Touch-expanded/captured pointer bounds.
+tools/androidx-selection/layout-snapshot.mjs executes the original policy classes
+and source modifier expressions against the existing native layout runtime.
+Composition emission, input-node attachment, density1 and leaf content are
+explicit hosts. This does not execute complete composables, native pointer
+routing/closest-target arbitration, focus trees or rasterization. See
+tools/androidx-selection/README.md for scope and reproduction instructions.
+
+dom-pointer-geometry.js adapts live CSS coordinates and fitted rounded FAB bounds
+to the existing native-derived pointer-geometry.js kernel. FAB uses the shared
+bindPress capture/key/enabled flow; its separate elevation/opacity collector
+filters hover through direct shape membership. Existing unchanged licensed FAB,
+Surface, FoundationClickable and normal-leaf coordinator/hit-result references
+remain manifested under ripple, fab-surface and pointer. Browser pointer/focus
+mapping and axis-aligned scaling are web adapters. Complete native consumed
+passes, ancestor/sibling/closest-target routing, arbitrary transformed/custom
+shapes and raster remain outside those checks.

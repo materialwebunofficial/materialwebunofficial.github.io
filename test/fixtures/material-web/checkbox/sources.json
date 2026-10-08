@@ -1,0 +1,16 @@
+{
+  "revision": "47adb655bd7a88c4d62e8faac2873084eed555dc",
+  "profile": "Google Material 3 Web v0.192 supplemental reference; not current AndroidX Expressive state-color authority",
+  "sources": [
+    {
+      "file": "checkbox-tokens.scss",
+      "url": "https://raw.githubusercontent.com/material-components/material-web/47adb655bd7a88c4d62e8faac2873084eed555dc/tokens/_md-comp-checkbox.scss",
+      "sha256": "c5782873af9062cd4c5ae6f1ef8a5806fd93c1b6aade6cd4c8847b3cdcbc8264"
+    },
+    {
+      "file": "checkbox-v0_192.scss",
+      "url": "https://raw.githubusercontent.com/material-components/material-web/47adb655bd7a88c4d62e8faac2873084eed555dc/tokens/versions/v0_192/_md-comp-checkbox.scss",
+      "sha256": "7739f7fa7664544b5fe732956f57b78fd0d5ea96a55b4a597732cb7418742270"
+    }
+  ]
+}

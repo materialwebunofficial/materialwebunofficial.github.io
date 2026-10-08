@@ -12,6 +12,7 @@ import {minimumInteractiveLayout} from './row-column-layout.js';
 import {normalizeToolbarPadding,serializeToolbarPadding} from './toolbar-padding.js';
 import {HorizontalTouchSlop,pointerSlop} from '../motion/touch-slop.js';
 import {PointerVelocityTracker} from '../motion/velocity-tracker.js';
+import {ScrollPosition} from '../motion/scroll-position.js';
 
 const style=`
  :host{display:block;box-sizing:border-box;width:100%;min-width:0;height:var(--_top-app-bar-height,auto);touch-action:var(--_top-app-bar-touch-action,auto);-webkit-tap-highlight-color:transparent}
@@ -104,10 +105,14 @@ export class MdTopAppBar extends HTMLElement{
   this._probe=make('span','color-probe',this.shadowRoot);this._probe.setAttribute('aria-hidden','true');
   this._sizes=make('style','',this.shadowRoot);this._sizes.textContent=':host{}';this._rendered=true;
  }
- _queue(){if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{this._queued=false;if(this.isConnected)this._sync();});}
+ _queue(){if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{if(!this._queued)return;this._queued=false;if(this.isConnected)this._sync();});}
  _clearRules(){while(this._sizes.sheet.cssRules.length>1)this._sizes.sheet.deleteRule(1);}
  _sync(){
+  // A synchronous pre/post-scroll render already consumes queued state work.
+  this._queued=false;
   if(!this._rendered||!this.isConnected)return;
+  const position=this._scrollPosition,before=position?.captureLayout();
+  try{
   this._bottom.className='row expanded '+this.variant;this._bottom.hidden=!this.twoRows;
   this._bar.setAttribute('aria-label',this.getAttribute('aria-label')||'Top app bar');
   const subtitle=this._subtitleProvided;
@@ -121,6 +126,7 @@ export class MdTopAppBar extends HTMLElement{
    if(name==='bottom'&&!this.twoRows)record.slot.name='unused-'+record.kind;
   }
   this._layout();this._colors();
+  }finally{if(position===this._scrollPosition)position?.restoreLayout(before);}
  }
  _colors(){
   const css=getComputedStyle(this),resolve=(value,fallback)=>{this._probe.style.color=validColor(value,fallback);return getComputedStyle(this._probe).color;};
@@ -195,21 +201,22 @@ export class MdTopAppBar extends HTMLElement{
  _configureScroll(){
   this._scrollAbort?.abort();if(!this.isConnected||!this._rendered)return;
   this._scrollAbort=new AbortController();const{signal}=this._scrollAbort,target=this._scrollTarget;
-  const scrolling=()=>target===window?document.scrollingElement:target;let last=scrolling()?.scrollTop||0;
-  target?.addEventListener('scroll',()=>{const current=scrolling()?.scrollTop||0,delta=f(last-current);last=current;if(!delta)return;const b=this._scrollBehavior;if(!b)return;
+  const position=this._scrollPosition=new ScrollPosition(target),scrolling=()=>position.element;
+  target?.addEventListener('scroll',()=>{const delta=position.consume();if(!delta)return;const b=this._scrollBehavior;if(!b)return;
    // Programmatic/touch scroll reports consumed DOM movement only. The precise
    // pre/post pipeline remains available through preScroll/postScroll.
    if(b.kind==='enter-always')b.onPreScroll({x:0,y:delta});this.postScroll({x:0,y:delta});
   },{signal,passive:true});
   target?.addEventListener('wheel',event=>{
    const b=this._scrollBehavior,n=scrolling();if(!b||!n||event.defaultPrevented||event.ctrlKey||!event.deltaY)return;
+   position.begin();
    // Wheel input provides a pre-scroll delta. Route it through the actual source
    // connection, then measure what the DOM consumed and report the remainder.
    const unit=event.deltaMode===1?parseFloat(getComputedStyle(n).lineHeight)||16:event.deltaMode===2?n.clientHeight:1,available=f(-event.deltaY*unit),pre=this.preScroll({x:0,y:available}),remaining=f(available-pre.y),before=n.scrollTop;
-   event.preventDefault();n.scrollTo({top:before-remaining,left:n.scrollLeft+event.deltaX*unit,behavior:'instant'});const consumed=f(before-n.scrollTop);last=n.scrollTop;
+   event.preventDefault();n.scrollTo({top:before-remaining,left:n.scrollLeft+event.deltaX*unit,behavior:'instant'});const consumed=f(before-n.scrollTop);position.commit();
    this.postScroll({x:0,y:consumed},{x:0,y:f(remaining-consumed)});
   },{signal,passive:false});
-  target?.addEventListener('scrollend',()=>this.postFling(),{signal,passive:true});
+  target?.addEventListener('scrollend',()=>{if(position.end())this.postFling();},{signal,passive:true});
   this.addEventListener('pointerdown',event=>this._barDragStart(event),{signal});this.addEventListener('pointermove',event=>this._barDragMove(event),{signal});
   const stop=event=>this._barDragStop(event);for(const type of ['pointerup','pointercancel','lostpointercapture'])this.addEventListener(type,stop,{signal});
   this.addEventListener('click',event=>{if(this._suppressDragClick&&event.detail!==0){this._suppressDragClick=false;event.preventDefault();event.stopImmediatePropagation();}},{signal,capture:true});

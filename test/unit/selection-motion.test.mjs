@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { springDuration } from '../../src/motion/spring-duration.js';
-import { SpringValue, checkboxPath } from '../../src/motion/selection-motion.js';
+import { SpringValue, SelectionMotion, checkboxPath } from '../../src/motion/selection-motion.js';
 
 const cases = JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/motion/spring-oracle.json', import.meta.url)));
 for (const spec of cases) {
@@ -48,9 +48,19 @@ assert.equal(dragged.animation.duration,dragOracle.duration);
 for(const expected of dragOracle.samples){const actual=dragged.sample(expected.time);
   for(const key of ['position','velocity'])assert.ok(Math.abs(actual[key]-expected[key])<2e-6*Math.max(1,Math.abs(expected[key])));}
 assert.equal(checkboxPath(0, 0), '');
-assert.equal(checkboxPath(1, 0), 'M 4 10 L 8 14 L 16 6');
-assert.equal(checkboxPath(1, 1), 'M 4 10 L 10 10 L 16 10');
-assert.equal(checkboxPath(.5, 1), 'M 4 10 L 10 10');
+assert.equal(checkboxPath(1, 1), 'M 4.5 9 L 9 9 L 13.5 9');
+assert.equal(checkboxPath(.5, 1), 'M 4.5 9 L 9 9');
 assert.equal(checkboxPath(1.1, 0), checkboxPath(1, 0), 'overshoot must not repeat the path');
 assert.equal(springDuration({from:0,to:1,dampingRatio:0}),9223372036854);
+const jobs = new Map(); let nextJob = 0;
+const previousRaf = Object.getOwnPropertyDescriptor(globalThis, 'requestAnimationFrame'), previousCancel = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
+globalThis.requestAnimationFrame = callback => { const id = ++nextJob; jobs.set(id, callback); return id; };
+globalThis.cancelAnimationFrame = id => jobs.delete(id);
+let disposable;
+disposable = new SelectionMotion(null, {scale: 0}, () => disposable?.dispose());
+disposable.channels.scale.to(1, spatial, {now: 0}); disposable.tick(16);
+assert.equal(jobs.size, 0, 'disposing during draw must not schedule another frame');
+assert.equal(disposable.raf, null);
+if (previousRaf) Object.defineProperty(globalThis, 'requestAnimationFrame', previousRaf); else delete globalThis.requestAnimationFrame;
+if (previousCancel) Object.defineProperty(globalThis, 'cancelAnimationFrame', previousCancel); else delete globalThis.cancelAnimationFrame;
 console.log(`Selection motion: ${cases.length} Kotlin spring duration/trajectory cases, retargeting, snap delay and path segmentation passed.`);

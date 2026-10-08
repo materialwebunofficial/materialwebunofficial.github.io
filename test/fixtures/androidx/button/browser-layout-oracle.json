@@ -1,0 +1,7652 @@
+[
+  {
+    "index": 0,
+    "rtl": false,
+    "size": "xs",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 32
+      },
+      "requested": {
+        "width": 58,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 34,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 6,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 1,
+    "rtl": false,
+    "size": "xs",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 76,
+        "height": 32
+      },
+      "requested": {
+        "width": 76,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 2,
+    "rtl": false,
+    "size": "xs",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 124,
+        "height": 32
+      },
+      "requested": {
+        "width": 124,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 100,
+          "height": 20
+        },
+        "leading": {
+          "x": 12,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 32,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "text": {
+          "x": 36,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 88,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "trailing": {
+          "x": 92,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 3,
+    "rtl": false,
+    "size": "xs",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 52
+      },
+      "requested": {
+        "width": 109,
+        "height": 52
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 4,
+    "rtl": false,
+    "size": "xs",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 32
+      },
+      "requested": {
+        "width": 58,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 34,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 6,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 5,
+    "rtl": false,
+    "size": "xs",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 76,
+        "height": 32
+      },
+      "requested": {
+        "width": 76,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 6,
+    "rtl": false,
+    "size": "xs",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 124,
+        "height": 32
+      },
+      "requested": {
+        "width": 124,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 100,
+          "height": 20
+        },
+        "leading": {
+          "x": 12,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 32,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "text": {
+          "x": 36,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 88,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "trailing": {
+          "x": 92,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 7,
+    "rtl": false,
+    "size": "xs",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 52
+      },
+      "requested": {
+        "width": 109,
+        "height": 52
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 8,
+    "rtl": false,
+    "size": "xs",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 32
+      },
+      "requested": {
+        "width": 58,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 34,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 6,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 9,
+    "rtl": false,
+    "size": "xs",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 76,
+        "height": 32
+      },
+      "requested": {
+        "width": 76,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 10,
+    "rtl": false,
+    "size": "xs",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 124,
+        "height": 32
+      },
+      "requested": {
+        "width": 124,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 100,
+          "height": 20
+        },
+        "leading": {
+          "x": 12,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 32,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "text": {
+          "x": 36,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 88,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "trailing": {
+          "x": 92,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 11,
+    "rtl": false,
+    "size": "xs",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 52
+      },
+      "requested": {
+        "width": 109,
+        "height": 52
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 12,
+    "rtl": false,
+    "size": "s",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 40
+      },
+      "requested": {
+        "width": 58,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 26,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 10,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 13,
+    "rtl": false,
+    "size": "s",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 84,
+        "height": 40
+      },
+      "requested": {
+        "width": 84,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 14,
+    "rtl": false,
+    "size": "s",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 140,
+        "height": 40
+      },
+      "requested": {
+        "width": 140,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 108,
+          "height": 20
+        },
+        "leading": {
+          "x": 16,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 36,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 44,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 96,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 104,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 15,
+    "rtl": false,
+    "size": "s",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 117,
+        "height": 60
+      },
+      "requested": {
+        "width": 117,
+        "height": 60
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 16,
+    "rtl": false,
+    "size": "s",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 40
+      },
+      "requested": {
+        "width": 58,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 26,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 10,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 17,
+    "rtl": false,
+    "size": "s",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 84,
+        "height": 40
+      },
+      "requested": {
+        "width": 84,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 18,
+    "rtl": false,
+    "size": "s",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 140,
+        "height": 40
+      },
+      "requested": {
+        "width": 140,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 108,
+          "height": 20
+        },
+        "leading": {
+          "x": 16,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 36,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 44,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 96,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 104,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 19,
+    "rtl": false,
+    "size": "s",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 117,
+        "height": 60
+      },
+      "requested": {
+        "width": 117,
+        "height": 60
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 20,
+    "rtl": false,
+    "size": "s",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 40
+      },
+      "requested": {
+        "width": 58,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 26,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 10,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 21,
+    "rtl": false,
+    "size": "s",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 84,
+        "height": 40
+      },
+      "requested": {
+        "width": 84,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 22,
+    "rtl": false,
+    "size": "s",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 140,
+        "height": 40
+      },
+      "requested": {
+        "width": 140,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 108,
+          "height": 20
+        },
+        "leading": {
+          "x": 16,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 36,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 44,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 96,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 104,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 23,
+    "rtl": false,
+    "size": "s",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 117,
+        "height": 60
+      },
+      "requested": {
+        "width": 117,
+        "height": 60
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 24,
+    "rtl": false,
+    "size": "m",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 56
+      },
+      "requested": {
+        "width": 58,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 10,
+          "height": 24
+        },
+        "text": {
+          "x": 29,
+          "y": 16,
+          "width": 0,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 25,
+    "rtl": false,
+    "size": "m",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 56
+      },
+      "requested": {
+        "width": 109,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 26,
+    "rtl": false,
+    "size": "m",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 173,
+        "height": 56
+      },
+      "requested": {
+        "width": 173,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 125,
+          "height": 24
+        },
+        "leading": {
+          "x": 24,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        },
+        "leading-gap": {
+          "x": 48,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 56,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "trailing-gap": {
+          "x": 117,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 125,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 27,
+    "rtl": false,
+    "size": "m",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 133,
+        "height": 72
+      },
+      "requested": {
+        "width": 133,
+        "height": 72
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 28,
+    "rtl": false,
+    "size": "m",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 56
+      },
+      "requested": {
+        "width": 58,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 10,
+          "height": 24
+        },
+        "text": {
+          "x": 29,
+          "y": 16,
+          "width": 0,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 29,
+    "rtl": false,
+    "size": "m",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 56
+      },
+      "requested": {
+        "width": 109,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 30,
+    "rtl": false,
+    "size": "m",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 173,
+        "height": 56
+      },
+      "requested": {
+        "width": 173,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 125,
+          "height": 24
+        },
+        "leading": {
+          "x": 24,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        },
+        "leading-gap": {
+          "x": 48,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 56,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "trailing-gap": {
+          "x": 117,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 125,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 31,
+    "rtl": false,
+    "size": "m",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 133,
+        "height": 72
+      },
+      "requested": {
+        "width": 133,
+        "height": 72
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 32,
+    "rtl": false,
+    "size": "m",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 56
+      },
+      "requested": {
+        "width": 58,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 10,
+          "height": 24
+        },
+        "text": {
+          "x": 29,
+          "y": 16,
+          "width": 0,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 33,
+    "rtl": false,
+    "size": "m",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 56
+      },
+      "requested": {
+        "width": 109,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 34,
+    "rtl": false,
+    "size": "m",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 173,
+        "height": 56
+      },
+      "requested": {
+        "width": 173,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 125,
+          "height": 24
+        },
+        "leading": {
+          "x": 24,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        },
+        "leading-gap": {
+          "x": 48,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 56,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "trailing-gap": {
+          "x": 117,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 125,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 35,
+    "rtl": false,
+    "size": "m",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 133,
+        "height": 72
+      },
+      "requested": {
+        "width": 133,
+        "height": 72
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 36,
+    "rtl": false,
+    "size": "l",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "requested": {
+        "width": 96,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 37,
+    "rtl": false,
+    "size": "l",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 183,
+        "height": 96
+      },
+      "requested": {
+        "width": 183,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 38,
+    "rtl": false,
+    "size": "l",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 271,
+        "height": 96
+      },
+      "requested": {
+        "width": 271,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 175,
+          "height": 32
+        },
+        "leading": {
+          "x": 48,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        },
+        "leading-gap": {
+          "x": 80,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "text": {
+          "x": 92,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "trailing-gap": {
+          "x": 179,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "trailing": {
+          "x": 191,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 39,
+    "rtl": false,
+    "size": "l",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 181,
+        "height": 104
+      },
+      "requested": {
+        "width": 181,
+        "height": 104
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 40,
+    "rtl": false,
+    "size": "l",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "requested": {
+        "width": 96,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 41,
+    "rtl": false,
+    "size": "l",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 183,
+        "height": 96
+      },
+      "requested": {
+        "width": 183,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 42,
+    "rtl": false,
+    "size": "l",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 271,
+        "height": 96
+      },
+      "requested": {
+        "width": 271,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 175,
+          "height": 32
+        },
+        "leading": {
+          "x": 48,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        },
+        "leading-gap": {
+          "x": 80,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "text": {
+          "x": 92,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "trailing-gap": {
+          "x": 179,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "trailing": {
+          "x": 191,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 43,
+    "rtl": false,
+    "size": "l",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 181,
+        "height": 104
+      },
+      "requested": {
+        "width": 181,
+        "height": 104
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 44,
+    "rtl": false,
+    "size": "l",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "requested": {
+        "width": 96,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 45,
+    "rtl": false,
+    "size": "l",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 183,
+        "height": 96
+      },
+      "requested": {
+        "width": 183,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 46,
+    "rtl": false,
+    "size": "l",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 271,
+        "height": 96
+      },
+      "requested": {
+        "width": 271,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 175,
+          "height": 32
+        },
+        "leading": {
+          "x": 48,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        },
+        "leading-gap": {
+          "x": 80,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "text": {
+          "x": 92,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "trailing-gap": {
+          "x": 179,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "trailing": {
+          "x": 191,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 47,
+    "rtl": false,
+    "size": "l",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 181,
+        "height": 104
+      },
+      "requested": {
+        "width": 181,
+        "height": 104
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 48,
+    "rtl": false,
+    "size": "xl",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 128,
+        "height": 136
+      },
+      "requested": {
+        "width": 128,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 49,
+    "rtl": false,
+    "size": "xl",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 245,
+        "height": 136
+      },
+      "requested": {
+        "width": 245,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 50,
+    "rtl": false,
+    "size": "xl",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 357,
+        "height": 136
+      },
+      "requested": {
+        "width": 357,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 229,
+          "height": 40
+        },
+        "leading": {
+          "x": 64,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        },
+        "leading-gap": {
+          "x": 104,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "text": {
+          "x": 120,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "trailing-gap": {
+          "x": 237,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "trailing": {
+          "x": 253,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 51,
+    "rtl": false,
+    "size": "xl",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 213,
+        "height": 136
+      },
+      "requested": {
+        "width": 213,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 52,
+    "rtl": false,
+    "size": "xl",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 128,
+        "height": 136
+      },
+      "requested": {
+        "width": 128,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 53,
+    "rtl": false,
+    "size": "xl",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 245,
+        "height": 136
+      },
+      "requested": {
+        "width": 245,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 54,
+    "rtl": false,
+    "size": "xl",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 357,
+        "height": 136
+      },
+      "requested": {
+        "width": 357,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 229,
+          "height": 40
+        },
+        "leading": {
+          "x": 64,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        },
+        "leading-gap": {
+          "x": 104,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "text": {
+          "x": 120,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "trailing-gap": {
+          "x": 237,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "trailing": {
+          "x": 253,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 55,
+    "rtl": false,
+    "size": "xl",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 213,
+        "height": 136
+      },
+      "requested": {
+        "width": 213,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 56,
+    "rtl": false,
+    "size": "xl",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 128,
+        "height": 136
+      },
+      "requested": {
+        "width": 128,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 57,
+    "rtl": false,
+    "size": "xl",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 245,
+        "height": 136
+      },
+      "requested": {
+        "width": 245,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 58,
+    "rtl": false,
+    "size": "xl",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 357,
+        "height": 136
+      },
+      "requested": {
+        "width": 357,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 229,
+          "height": 40
+        },
+        "leading": {
+          "x": 64,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        },
+        "leading-gap": {
+          "x": 104,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "text": {
+          "x": 120,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "trailing-gap": {
+          "x": 237,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "trailing": {
+          "x": 253,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 59,
+    "rtl": false,
+    "size": "xl",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": false,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 213,
+        "height": 136
+      },
+      "requested": {
+        "width": 213,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 60,
+    "rtl": true,
+    "size": "xs",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 32
+      },
+      "requested": {
+        "width": 58,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 34,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 6,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 61,
+    "rtl": true,
+    "size": "xs",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 76,
+        "height": 32
+      },
+      "requested": {
+        "width": 76,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 62,
+    "rtl": true,
+    "size": "xs",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 124,
+        "height": 32
+      },
+      "requested": {
+        "width": 124,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 100,
+          "height": 20
+        },
+        "leading": {
+          "x": 92,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 88,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "text": {
+          "x": 36,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 32,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "trailing": {
+          "x": 12,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 63,
+    "rtl": true,
+    "size": "xs",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 52
+      },
+      "requested": {
+        "width": 109,
+        "height": 52
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 64,
+    "rtl": true,
+    "size": "xs",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 32
+      },
+      "requested": {
+        "width": 58,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 34,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 6,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 65,
+    "rtl": true,
+    "size": "xs",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 76,
+        "height": 32
+      },
+      "requested": {
+        "width": 76,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 66,
+    "rtl": true,
+    "size": "xs",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 124,
+        "height": 32
+      },
+      "requested": {
+        "width": 124,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 100,
+          "height": 20
+        },
+        "leading": {
+          "x": 92,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 88,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "text": {
+          "x": 36,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 32,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "trailing": {
+          "x": 12,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 67,
+    "rtl": true,
+    "size": "xs",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 52
+      },
+      "requested": {
+        "width": 109,
+        "height": 52
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 68,
+    "rtl": true,
+    "size": "xs",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 32
+      },
+      "requested": {
+        "width": 58,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 34,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 6,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 69,
+    "rtl": true,
+    "size": "xs",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 76,
+        "height": 32
+      },
+      "requested": {
+        "width": 76,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 76,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 70,
+    "rtl": true,
+    "size": "xs",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 124,
+        "height": 32
+      },
+      "requested": {
+        "width": 124,
+        "height": 32
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 124,
+          "height": 32
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 100,
+          "height": 20
+        },
+        "leading": {
+          "x": 92,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 88,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "text": {
+          "x": 36,
+          "y": 6,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 32,
+          "y": 16,
+          "width": 4,
+          "height": 0
+        },
+        "trailing": {
+          "x": 12,
+          "y": 6,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 71,
+    "rtl": true,
+    "size": "xs",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 32,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 52
+      },
+      "requested": {
+        "width": 109,
+        "height": 52
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 52
+        },
+        "row": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 12,
+          "y": 6,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 72,
+    "rtl": true,
+    "size": "s",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 40
+      },
+      "requested": {
+        "width": 58,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 26,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 10,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 73,
+    "rtl": true,
+    "size": "s",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 84,
+        "height": 40
+      },
+      "requested": {
+        "width": 84,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 74,
+    "rtl": true,
+    "size": "s",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 140,
+        "height": 40
+      },
+      "requested": {
+        "width": 140,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 108,
+          "height": 20
+        },
+        "leading": {
+          "x": 104,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 96,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 44,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 36,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 16,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 75,
+    "rtl": true,
+    "size": "s",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 117,
+        "height": 60
+      },
+      "requested": {
+        "width": 117,
+        "height": 60
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 76,
+    "rtl": true,
+    "size": "s",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 40
+      },
+      "requested": {
+        "width": 58,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 26,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 10,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 77,
+    "rtl": true,
+    "size": "s",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 84,
+        "height": 40
+      },
+      "requested": {
+        "width": 84,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 78,
+    "rtl": true,
+    "size": "s",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 140,
+        "height": 40
+      },
+      "requested": {
+        "width": 140,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 108,
+          "height": 20
+        },
+        "leading": {
+          "x": 104,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 96,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 44,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 36,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 16,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 79,
+    "rtl": true,
+    "size": "s",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 117,
+        "height": 60
+      },
+      "requested": {
+        "width": 117,
+        "height": 60
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 80,
+    "rtl": true,
+    "size": "s",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 40
+      },
+      "requested": {
+        "width": 58,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 26,
+          "height": 20
+        },
+        "text": {
+          "x": 29,
+          "y": 10,
+          "width": 0,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 81,
+    "rtl": true,
+    "size": "s",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 84,
+        "height": 40
+      },
+      "requested": {
+        "width": 84,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 82,
+    "rtl": true,
+    "size": "s",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 52,
+        "height": 20,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 140,
+        "height": 40
+      },
+      "requested": {
+        "width": 140,
+        "height": 40
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 140,
+          "height": 40
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 108,
+          "height": 20
+        },
+        "leading": {
+          "x": 104,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        },
+        "leading-gap": {
+          "x": 96,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 44,
+          "y": 10,
+          "width": 52,
+          "height": 20
+        },
+        "trailing-gap": {
+          "x": 36,
+          "y": 20,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 16,
+          "y": 10,
+          "width": 20,
+          "height": 20
+        }
+      }
+    }
+  },
+  {
+    "index": 83,
+    "rtl": true,
+    "size": "s",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 40,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 117,
+        "height": 60
+      },
+      "requested": {
+        "width": 117,
+        "height": 60
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 117,
+          "height": 60
+        },
+        "row": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 16,
+          "y": 10,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 84,
+    "rtl": true,
+    "size": "m",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 56
+      },
+      "requested": {
+        "width": 58,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 10,
+          "height": 24
+        },
+        "text": {
+          "x": 29,
+          "y": 16,
+          "width": 0,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 85,
+    "rtl": true,
+    "size": "m",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 56
+      },
+      "requested": {
+        "width": 109,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 86,
+    "rtl": true,
+    "size": "m",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 173,
+        "height": 56
+      },
+      "requested": {
+        "width": 173,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 125,
+          "height": 24
+        },
+        "leading": {
+          "x": 125,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        },
+        "leading-gap": {
+          "x": 117,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 56,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "trailing-gap": {
+          "x": 48,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 24,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 87,
+    "rtl": true,
+    "size": "m",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 133,
+        "height": 72
+      },
+      "requested": {
+        "width": 133,
+        "height": 72
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 88,
+    "rtl": true,
+    "size": "m",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 56
+      },
+      "requested": {
+        "width": 58,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 10,
+          "height": 24
+        },
+        "text": {
+          "x": 29,
+          "y": 16,
+          "width": 0,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 89,
+    "rtl": true,
+    "size": "m",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 56
+      },
+      "requested": {
+        "width": 109,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 90,
+    "rtl": true,
+    "size": "m",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 173,
+        "height": 56
+      },
+      "requested": {
+        "width": 173,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 125,
+          "height": 24
+        },
+        "leading": {
+          "x": 125,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        },
+        "leading-gap": {
+          "x": 117,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 56,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "trailing-gap": {
+          "x": 48,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 24,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 91,
+    "rtl": true,
+    "size": "m",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 133,
+        "height": 72
+      },
+      "requested": {
+        "width": 133,
+        "height": 72
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 92,
+    "rtl": true,
+    "size": "m",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 58,
+        "height": 56
+      },
+      "requested": {
+        "width": 58,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 58,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 10,
+          "height": 24
+        },
+        "text": {
+          "x": 29,
+          "y": 16,
+          "width": 0,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 93,
+    "rtl": true,
+    "size": "m",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 109,
+        "height": 56
+      },
+      "requested": {
+        "width": 109,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 109,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 94,
+    "rtl": true,
+    "size": "m",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 61,
+        "height": 24,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 173,
+        "height": 56
+      },
+      "requested": {
+        "width": 173,
+        "height": 56
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 173,
+          "height": 56
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 125,
+          "height": 24
+        },
+        "leading": {
+          "x": 125,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        },
+        "leading-gap": {
+          "x": 117,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "text": {
+          "x": 56,
+          "y": 16,
+          "width": 61,
+          "height": 24
+        },
+        "trailing-gap": {
+          "x": 48,
+          "y": 28,
+          "width": 8,
+          "height": 0
+        },
+        "trailing": {
+          "x": 24,
+          "y": 16,
+          "width": 24,
+          "height": 24
+        }
+      }
+    }
+  },
+  {
+    "index": 95,
+    "rtl": true,
+    "size": "m",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 56,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 133,
+        "height": 72
+      },
+      "requested": {
+        "width": 133,
+        "height": 72
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 133,
+          "height": 72
+        },
+        "row": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 24,
+          "y": 16,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 96,
+    "rtl": true,
+    "size": "l",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "requested": {
+        "width": 96,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 97,
+    "rtl": true,
+    "size": "l",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 183,
+        "height": 96
+      },
+      "requested": {
+        "width": 183,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 98,
+    "rtl": true,
+    "size": "l",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 271,
+        "height": 96
+      },
+      "requested": {
+        "width": 271,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 175,
+          "height": 32
+        },
+        "leading": {
+          "x": 191,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        },
+        "leading-gap": {
+          "x": 179,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "text": {
+          "x": 92,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "trailing-gap": {
+          "x": 80,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "trailing": {
+          "x": 48,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 99,
+    "rtl": true,
+    "size": "l",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 181,
+        "height": 104
+      },
+      "requested": {
+        "width": 181,
+        "height": 104
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 100,
+    "rtl": true,
+    "size": "l",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "requested": {
+        "width": 96,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 101,
+    "rtl": true,
+    "size": "l",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 183,
+        "height": 96
+      },
+      "requested": {
+        "width": 183,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 102,
+    "rtl": true,
+    "size": "l",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 271,
+        "height": 96
+      },
+      "requested": {
+        "width": 271,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 175,
+          "height": 32
+        },
+        "leading": {
+          "x": 191,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        },
+        "leading-gap": {
+          "x": 179,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "text": {
+          "x": 92,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "trailing-gap": {
+          "x": 80,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "trailing": {
+          "x": 48,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 103,
+    "rtl": true,
+    "size": "l",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 181,
+        "height": 104
+      },
+      "requested": {
+        "width": 181,
+        "height": 104
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 104,
+    "rtl": true,
+    "size": "l",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "requested": {
+        "width": 96,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 96,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 0,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 105,
+    "rtl": true,
+    "size": "l",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 183,
+        "height": 96
+      },
+      "requested": {
+        "width": 183,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 183,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 106,
+    "rtl": true,
+    "size": "l",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 87,
+        "height": 32,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 271,
+        "height": 96
+      },
+      "requested": {
+        "width": 271,
+        "height": 96
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 271,
+          "height": 96
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 175,
+          "height": 32
+        },
+        "leading": {
+          "x": 191,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        },
+        "leading-gap": {
+          "x": 179,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "text": {
+          "x": 92,
+          "y": 32,
+          "width": 87,
+          "height": 32
+        },
+        "trailing-gap": {
+          "x": 80,
+          "y": 48,
+          "width": 12,
+          "height": 0
+        },
+        "trailing": {
+          "x": 48,
+          "y": 32,
+          "width": 32,
+          "height": 32
+        }
+      }
+    }
+  },
+  {
+    "index": 107,
+    "rtl": true,
+    "size": "l",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 96,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 181,
+        "height": 104
+      },
+      "requested": {
+        "width": 181,
+        "height": 104
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 181,
+          "height": 104
+        },
+        "row": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 48,
+          "y": 32,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 108,
+    "rtl": true,
+    "size": "xl",
+    "variant": "filled",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 128,
+        "height": 136
+      },
+      "requested": {
+        "width": 128,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 109,
+    "rtl": true,
+    "size": "xl",
+    "variant": "filled",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 245,
+        "height": 136
+      },
+      "requested": {
+        "width": 245,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 110,
+    "rtl": true,
+    "size": "xl",
+    "variant": "filled",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 357,
+        "height": 136
+      },
+      "requested": {
+        "width": 357,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 229,
+          "height": 40
+        },
+        "leading": {
+          "x": 253,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        },
+        "leading-gap": {
+          "x": 237,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "text": {
+          "x": 120,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "trailing-gap": {
+          "x": 104,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "trailing": {
+          "x": 64,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 111,
+    "rtl": true,
+    "size": "xl",
+    "variant": "filled",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 213,
+        "height": 136
+      },
+      "requested": {
+        "width": 213,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 112,
+    "rtl": true,
+    "size": "xl",
+    "variant": "outlined",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 128,
+        "height": 136
+      },
+      "requested": {
+        "width": 128,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 113,
+    "rtl": true,
+    "size": "xl",
+    "variant": "outlined",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 245,
+        "height": 136
+      },
+      "requested": {
+        "width": 245,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 114,
+    "rtl": true,
+    "size": "xl",
+    "variant": "outlined",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 357,
+        "height": 136
+      },
+      "requested": {
+        "width": 357,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 229,
+          "height": 40
+        },
+        "leading": {
+          "x": 253,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        },
+        "leading-gap": {
+          "x": 237,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "text": {
+          "x": 120,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "trailing-gap": {
+          "x": 104,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "trailing": {
+          "x": 64,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 115,
+    "rtl": true,
+    "size": "xl",
+    "variant": "outlined",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 213,
+        "height": 136
+      },
+      "requested": {
+        "width": 213,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 116,
+    "rtl": true,
+    "size": "xl",
+    "variant": "text",
+    "config": {
+      "label": ""
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 0,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 128,
+        "height": 136
+      },
+      "requested": {
+        "width": 128,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 128,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 0,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 117,
+    "rtl": true,
+    "size": "xl",
+    "variant": "text",
+    "config": {
+      "label": "Material"
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 245,
+        "height": 136
+      },
+      "requested": {
+        "width": 245,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 245,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 118,
+    "rtl": true,
+    "size": "xl",
+    "variant": "text",
+    "config": {
+      "label": "Material",
+      "leading": true,
+      "trailing": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": true,
+      "trailing": true,
+      "text": {
+        "width": 117,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 357,
+        "height": 136
+      },
+      "requested": {
+        "width": 357,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 357,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 229,
+          "height": 40
+        },
+        "leading": {
+          "x": 253,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        },
+        "leading-gap": {
+          "x": 237,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "text": {
+          "x": 120,
+          "y": 48,
+          "width": 117,
+          "height": 40
+        },
+        "trailing-gap": {
+          "x": 104,
+          "y": 68,
+          "width": 16,
+          "height": 0
+        },
+        "trailing": {
+          "x": 64,
+          "y": 48,
+          "width": 40,
+          "height": 40
+        }
+      }
+    }
+  },
+  {
+    "index": 119,
+    "rtl": true,
+    "size": "xl",
+    "variant": "text",
+    "config": {
+      "label": "First line\nSecond line",
+      "font": true
+    },
+    "input": {
+      "height": 136,
+      "rtl": true,
+      "leading": false,
+      "trailing": false,
+      "text": {
+        "width": 85,
+        "height": 40,
+        "first": 0,
+        "last": 0
+      }
+    },
+    "expected": {
+      "size": {
+        "width": 213,
+        "height": 136
+      },
+      "requested": {
+        "width": 213,
+        "height": 136
+      },
+      "placements": {
+        "button-default-min-0": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "button-padding-1": {
+          "x": 0,
+          "y": 0,
+          "width": 213,
+          "height": 136
+        },
+        "row": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        },
+        "text": {
+          "x": 64,
+          "y": 48,
+          "width": 85,
+          "height": 40
+        }
+      }
+    }
+  }
+]

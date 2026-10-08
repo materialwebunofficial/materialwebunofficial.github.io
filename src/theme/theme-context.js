@@ -28,7 +28,7 @@ export function observeThemeContext(element, callback, { includeSelf = true } = 
     for (let node = includeSelf ? element : themeParent(element); node; node = themeParent(node)) ancestors.push(node);
     for (const node of ancestors) {
       observer.observe(node, { attributes: true,
-        attributeFilter: ['style','class','dir','data-theme','data-theme-scheme','data-contrast','data-motion-scheme','data-seed-color'] });
+        attributeFilter: ['style','class','dir','lang','data-theme','data-theme-scheme','data-contrast','data-motion-scheme','data-seed-color'] });
       if (node.localName === 'slot') node.addEventListener('slotchange',onSlotChange);
     }
   };

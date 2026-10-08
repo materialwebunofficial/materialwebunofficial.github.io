@@ -6,7 +6,7 @@ const native=JSON.parse(gunzipSync(fs.readFileSync(new URL('../fixtures/androidx
 const unbounded=native.filter(c=>c.input.width===c.input.height&&[40,56,96].includes(c.input.width)&&
  c.input.minWidth<=c.input.width&&c.input.minHeight<=c.input.height&&c.input.maxWidth>=Math.max(48,c.input.width)&&c.input.maxHeight>=Math.max(48,c.input.height));
 export async function testFabSurface(browser,base){
- const page=await browser.newPage({viewport:{width:1000,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await browser.newPage({viewport:{width:1000,height:900},hasTouch:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(base+'/test/browser/fixtures/toolbars.html');
   await page.evaluate(async()=>{await customElements.whenDefined('md-fab');document.querySelector('#fixture').innerHTML='<md-theme id="scope" style="display:block"><md-fab id="fab" size="small" color="surface"></md-fab></md-theme>';await document.fonts.ready;});
@@ -21,12 +21,14 @@ export async function testFabSurface(browser,base){
    assert.deepEqual(g.host,[Math.max(48,width),Math.max(48,width)]);
   }
   await fab.evaluate(n=>{n.size='small';n._activations=0;n.addEventListener('click',()=>n._activations++);});
-  const box=await fab.boundingBox();await page.mouse.click(box.x+1,box.y+1);assert.equal(await fab.evaluate(n=>n._activations),1,'48dp hit area accepts a pointer outside the 40dp visible body');
+  const box=await fab.boundingBox();await page.mouse.click(box.x+1,box.y+1);assert.equal(await fab.evaluate(n=>n._activations),0,'Mouse does not receive the expanded small FAB target');
+  await page.touchscreen.tap(box.x+1,box.y+1);assert.equal(await fab.evaluate(n=>n._activations),1,'Touch receives the 48dp target outside the 40dp visible body');
   await scope.evaluate(n=>n.style.setProperty('--md-minimum-interactive-component-size','49px'));await page.waitForTimeout(30);
   assert.deepEqual((await geometry()).offset,[5,5],'native odd-pixel centering rounds 4.5 to 5');
   await scope.evaluate(n=>n.style.setProperty('--md-minimum-interactive-component-size','calc(3rem + 4px)'));await page.waitForTimeout(30);assert.deepEqual((await geometry()).host,[52,52]);
   await scope.evaluate(n=>n.style.setProperty('--md-minimum-interactive-component-size','0px'));await page.waitForTimeout(30);assert.deepEqual((await geometry()).host,[40,40]);
-  await page.mouse.click(box.x-1,box.y-1);assert.equal(await fab.evaluate(n=>n._activations),2,'layout reservation can be disabled independently from the minimum pointer target');
+  await page.mouse.click(box.x-1,box.y-1);assert.equal(await fab.evaluate(n=>n._activations),1,'zero layout reservation does not expand Mouse input');
+  await page.touchscreen.tap(box.x-1,box.y-1);assert.equal(await fab.evaluate(n=>n._activations),2,'layout reservation can be disabled independently from the Touch minimum target');
   await scope.evaluate(n=>n.style.removeProperty('--md-minimum-interactive-component-size'));
   const constrained=native.filter(c=>c.body.width===c.body.height&&c.size.width===c.body.width&&c.size.height===c.body.height);
   const samples=[...new Map(constrained.map(c=>[JSON.stringify([c.body,c.lines]),c])).values()];

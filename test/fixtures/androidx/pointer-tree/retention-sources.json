@@ -1,0 +1,11 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "scope": "SHA-verified source inspection of retained down paths; the full processor/tracker is not executed by the tree fixture.",
+  "sources": [
+    {
+      "file": "PointerInputEventProcessor.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/pointer/PointerInputEventProcessor.kt",
+      "sha256": "cc4fa6164ab6793ba3fdf7015e9a3adaf51661bc792489b323903fa4e39a892b"
+    }
+  ]
+}
