@@ -1,519 +1,165 @@
-/**
- * Material Design 3 Expressive (MD3E) Web Component: <md-select> & <md-option>
- *
- * Spec: MD3E-OFFICIAL-RESEARCH-AND-INTEGRATION-PLAN.md §4.7.5
- *
- * Features:
- *  - Floating label with animated notch ($T_y = -8px, S = 0.75$).
- *  - Single-select and Multi-select (`multiple` attribute) modes.
- *  - Supports `headline`, `label`, and slot text content for human-readable display.
- *  - Material Symbols `check` selection indicator.
- *  - Native Form Associated Custom Element (FACE) via `attachInternals`.
- *  - Keyboard navigation: ArrowDown / ArrowUp / Enter / Space / Escape / Tab.
- */
+/** Read-only exposed dropdown composed from shared Material field/menu primitives. */
+import {MdTextField} from './md-text-field.js';
+import './md-menu.js';
 
-import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
-import { createComponentSheet, adoptSheet } from '../utils/styles.js';
-
-/* --- MD-OPTION --- */
-const optionStyle = `
-  :host {
-    display: block;
-    box-sizing: border-box;
-    outline: none;
-  }
-  .opt-root {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 48px;
-    padding: 0 16px;
-    cursor: pointer;
-    user-select: none;
-    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    border-radius: var(--md-sys-shape-corner-extra-small, 4px);
-    transition: background-color var(--md-sys-motion-duration-short2, 100ms) ease,
-                color var(--md-sys-motion-duration-short2, 100ms) ease;
-  }
-  .opt-root:hover,
-  .opt-root.highlighted {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
-  }
-  .opt-root:active {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 14%, transparent);
-  }
-  .opt-root.selected {
-    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-    color: var(--md-sys-color-on-secondary-container, #1D192B);
-    font-weight: 500;
-  }
-  .opt-label {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .material-symbols-outlined,
-  .check-icon {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif !important;
-    font-weight: normal !important;
-    font-style: normal !important;
-    font-size: 20px;
-    line-height: 1;
-    letter-spacing: normal;
-    text-transform: none !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--md-sys-color-primary, #6750A4);
-    font-feature-settings: 'liga' 1;
-    -webkit-font-smoothing: antialiased;
-    user-select: none;
-    pointer-events: none;
-    margin-left: 12px;
-    flex-shrink: 0;
-  }
-  :host([disabled]) .opt-root {
-    opacity: 0.38;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-`;
-
-const optionSheet = createComponentSheet(optionStyle);
-
+// Declarative option data. The Select's MenuItems render each choice once.
 export class MdOption extends HTMLElement {
-  static get observedAttributes() {
-    return ['value', 'selected', 'disabled', 'headline', 'label'];
-  }
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    adoptSheet(this.shadowRoot, optionSheet);
-  }
-
-  get value() { return this.getAttribute('value') || ''; }
-  set value(v) { this.setAttribute('value', v); }
-
-  get selected() { return this.hasAttribute('selected'); }
-  set selected(v) { v ? this.setAttribute('selected', '') : this.removeAttribute('selected'); }
-
-  get disabled() { return this.hasAttribute('disabled'); }
-  set disabled(v) { v ? this.setAttribute('disabled', '') : this.removeAttribute('disabled'); }
-
-  get displayText() {
-    return this.getAttribute('headline') ||
-           this.getAttribute('label') ||
-           this.textContent.trim() ||
-           this.value;
-  }
-
-  connectedCallback() {
-    this.setAttribute('role', 'option');
-    this.#render();
-  }
-
-  attributeChangedCallback() {
-    this.#render();
-  }
-
-  #render() {
-    const isSel = this.selected;
-    const headline = this.getAttribute('headline') || this.getAttribute('label') || '';
-    this.shadowRoot.innerHTML = `
-      <div class="opt-root ${isSel ? 'selected' : ''}">
-        <span class="opt-label">${headline ? escapeHtml(headline) : '<slot></slot>'}</span>
-        ${isSel ? '<span class="check-icon material-symbols-outlined">check</span>' : ''}
-      </div>
-    `;
-  }
+ connectedCallback(){this.closest('md-select')?._scheduleOptions?.();}
+ get value(){return this.getAttribute('value')||'';}set value(value){this.setAttribute('value',value??'');}
+ get selected(){return this.hasAttribute('selected');}set selected(value){this.toggleAttribute('selected',!!value);}
+ get disabled(){return this.hasAttribute('disabled');}set disabled(value){this.toggleAttribute('disabled',!!value);}
+ get displayText(){return this.getAttribute('headline')||this.getAttribute('label')||this.textContent.trim()||this.value;}
 }
+if(!customElements.get('md-option'))customElements.define('md-option',MdOption);
 
-if (!customElements.get('md-option')) {
-  customElements.define('md-option', MdOption);
+let selectId=0;
+export class MdSelect extends MdTextField {
+ static get observedAttributes(){return [...super.observedAttributes,'open','multiple','hide-required-marker','float-label','aria-label'];}
+ constructor(){super();this._selectId='md-select-'+ ++selectId;this._optionRecords=[];this._selectedSources=new Set();this._activeSource=null;}
+ get label(){return super.label;}set label(value){this.setAttribute('label',value??'');}
+ get name(){return super.name;}set name(value){this.setAttribute('name',value??'');}
+ get readOnly(){return true;}
+ // ExposedDropdownMenuDefaults.TrailingIcon is part of the field's measured layout.
+ get trailingIcon(){return this.getAttribute('trailing-icon')||'arrow_drop_down';}set trailingIcon(value){super.trailingIcon=value;}
+ _usesSingleLineEditor(){return true;}
+ get disabled(){return super.disabled||!!this._formDisabled;}set disabled(value){this.toggleAttribute('disabled',!!value);}
+ get required(){return this.hasAttribute('required');}set required(value){this.toggleAttribute('required',!!value);}
+ get hideRequiredMarker(){return this.hasAttribute('hide-required-marker');}set hideRequiredMarker(value){this.toggleAttribute('hide-required-marker',!!value);}
+ get floatLabel(){return this.getAttribute('float-label')||'auto';}set floatLabel(value){this.setAttribute('float-label',value??'auto');}
+ get multiple(){return this.hasAttribute('multiple');}set multiple(value){this.toggleAttribute('multiple',!!value);}
+ get open(){return this.hasAttribute('open');}set open(value){this.toggleAttribute('open',!!value&&!this.disabled);}
+ get value(){return super.value;}set value(value){this._selectionKey=null;if(!this._rendered)this._pendingValue=value??'';super.value=value;this._sync();}
+ get form(){return super.form||null;}
+ get validity(){return this._internals?.validity;}
+ get validationMessage(){return this._internals?.validationMessage||'';}
+ get willValidate(){return this._internals?.willValidate??false;}
+ checkValidity(){return this._internals?.checkValidity()??true;}
+ reportValidity(){return this._internals?.reportValidity()??true;}
+ setCustomValidity(message){this._customValidity=String(message);this._syncValidity();}
+ focus(options){this.shadowRoot.querySelector('input')?.focus(options);}
+ attributeChangedCallback(name,oldValue,newValue){if(name==='value'||name==='multiple')this._selectionKey=null;super.attributeChangedCallback(name,oldValue,newValue);}
+ connectedCallback(){
+  const pending=this._pendingValue;super.connectedCallback();if(pending!==undefined){this._pendingValue=undefined;this.value=pending;}this._optionsObserver?.disconnect();
+  this._optionsObserver=new MutationObserver(records=>{
+   if(records.some(record=>record.type==='attributes'&&record.attributeName==='value'&&this._selectedSources.has(record.target))){
+    this._value=[...this._selectedSources].map(option=>option.value).join(',');this._selectionKey=this._key();
+   }
+   if(records.some(record=>record.target!==this||record.type==='childList'))this._scheduleOptions();
+  });
+  this._optionsObserver.observe(this,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['value','headline','label','disabled','supporting-text','leading-icon','trailing-icon']});
+ }
+ disconnectedCallback(){this._optionsObserver?.disconnect();this._optionsObserver=null;super.disconnectedCallback();this._selectMenu?.close({restoreFocus:false});this.open=false;}
+ formResetCallback(){super.formResetCallback();this.open=false;}
+ formStateRestoreCallback(state){super.formStateRestoreCallback(state);}
+ formDisabledCallback(disabled){this._formDisabled=disabled;this._sync();}
+ _scheduleOptions(){
+  if(this._optionsSyncQueued)return;this._optionsSyncQueued=true;const signal=this._abortController?.signal;
+  queueMicrotask(()=>{this._optionsSyncQueued=false;if(this.isConnected&&!signal?.aborted)this._sync();});
+ }
+ _key(){return JSON.stringify([this.multiple,this.value]);}
+ render(){
+  super.render();
+  const style=document.createElement('style');style.textContent='.select-menu{display:block;width:0;height:0}.field-box,input{cursor:pointer}input{caret-color:transparent}slot.options-data{display:none}';this.shadowRoot.append(style);
+  const slot=document.createElement('slot');slot.className='options-data';slot.hidden=true;this.shadowRoot.append(slot);
+  const box=this.shadowRoot.querySelector('.field-box');box.setAttribute('part','box');
+  this._selectMenu=document.createElement('md-menu');this._selectMenu.className='select-menu';this._selectMenu.id=this._selectId+'-listbox';
+  this._selectMenu.variant='dropdown';this._selectMenu.popupRole='listbox';this._selectMenu.focusMode='anchor';this._selectMenu.matchAnchorWidth=true;this._selectMenu.anchorElement=box;this.shadowRoot.append(this._selectMenu);
+  const input=this.shadowRoot.querySelector('input');input.setAttribute('role','combobox');input.setAttribute('aria-haspopup','listbox');input.setAttribute('aria-controls',this._selectMenu.id);input.setAttribute('autocomplete','off');
+ }
+ _showExpandedLabel(){return this.floatLabel!=='always'&&super._showExpandedLabel();}
+ _isFieldFocused(){return this.open||super._isFieldFocused();}
+ _sync(){
+  super._sync();if(!this.isConnected||!this._selectMenu)return;
+  const options=[...this.querySelectorAll('md-option')].filter(option=>option instanceof MdOption&&option.closest('md-select')===this),previous=new Map(this._optionRecords.map(record=>[record.source,record]));
+  this._optionRecords=options.map(source=>{
+   let record=previous.get(source);
+   if(!record){const item=document.createElement('md-menu-item');item.id=this._selectId+'-option-'+ ++selectId;record={source,item};}
+   const item=record.item;item.selectionMode=this.multiple?'multiple':'single';item.label=source.displayText;item.value=source.value;item.disabled=source.disabled;
+   for(const name of['supporting-text','leading-icon','trailing-icon']){
+    const value=source.getAttribute(name);if(value===null)item.removeAttribute(name);else if(item.getAttribute(name)!==value)item.setAttribute(name,value);
+   }
+   if(!source.hasAttribute('leading-icon'))item.setAttribute('selected-icon','check');else item.removeAttribute('selected-icon');
+   return record;
+  });
+  for(const record of previous.values())if(!options.includes(record.source))record.item.remove();
+  this._optionRecords.forEach((record,index)=>{if(this._selectMenu.children[index]!==record.item)this._selectMenu.insertBefore(record.item,this._selectMenu.children[index]||null);});
+  const key=this._key(),values=this.multiple?this.value.split(',').map(value=>value.trim()).filter(Boolean):[this.value];
+  const counts=new Map();for(const option of this._selectedSources)counts.set(option.value,(counts.get(option.value)||0)+1);
+  const unresolved=values.some(value=>{const count=counts.get(value)||0;if(!count)return true;counts.set(value,count-1);return false;});
+  if(this._selectionKey!==key||unresolved||[...this._selectedSources].some(source=>!options.includes(source))){
+   const candidates=this._selectionKey===key?[...new Set([...this._selectedSources,...options])].filter(option=>options.includes(option)):options;
+   this._selectedSources=new Set();
+   for(const value of values){const source=candidates.find(option=>option.value===value&&!this._selectedSources.has(option));if(source)this._selectedSources.add(source);}
+   this._selectionKey=key;
+  }
+  for(const record of this._optionRecords){record.source.selected=this._selectedSources.has(record.source);record.item.selected=record.source.selected;}
+  const input=this.shadowRoot.querySelector('input');input.value=this._optionRecords.filter(record=>record.source.selected).map(record=>record.source.displayText).join(', ')||this.value;
+  input.readOnly=true;input.setAttribute('aria-required',String(this.required));
+  const label=this.shadowRoot.querySelector('.label');label.textContent=this.label+(this.required&&!this.hideRequiredMarker?' *':'');
+  const icon=this.shadowRoot.querySelector('.ico.trailing');icon.style.transform=this.open?'rotate(180deg)':'';
+  const menu=this._selectMenu;menu.label=this.label||this.getAttribute('aria-label')||'Options';menu.enabled=!this.disabled;menu.setAttribute('aria-multiselectable',String(this.multiple));
+  if(this.disabled||!this._optionRecords.length)this.open=false;menu.open=this.open;input.setAttribute('aria-expanded',String(this.open));
+  this._syncFloating();this._syncValidity();this._syncActive();
+ }
+ _syncValidity(){
+  const input=this.shadowRoot.querySelector('input');if(!input)return;
+  const missing=this.required&&!this.value&&!this.disabled,custom=!!this._customValidity;
+  this._internals?.setValidity(custom?{customError:true}:missing?{valueMissing:true}:{},custom?this._customValidity:missing?'Please select an option':'',input);
+ }
+ _syncActive(){
+  const active=this.open?this._optionRecords.find(record=>record.source===this._activeSource&&!record.source.disabled):null;
+  this._selectMenu.activeItem=active?.item||null;const input=this.shadowRoot.querySelector('input');
+  if(active)input.setAttribute('aria-activedescendant',active.item.id);else input.removeAttribute('aria-activedescendant');
+ }
+ _commit(record){
+  if(this.disabled||!record||record.source.disabled)return;
+  const before=this.value,previous=[...this._selectedSources];
+  if(this.multiple){if(this._selectedSources.has(record.source))this._selectedSources.delete(record.source);else this._selectedSources.add(record.source);}
+  else this._selectedSources=new Set([record.source]);
+  this._value=this._optionRecords.filter(entry=>this._selectedSources.has(entry.source)).map(entry=>entry.source.value).join(',');this._selectionKey=this._key();
+  this._activeSource=record.source;this._sync();if(!this.multiple)this.open=false;
+  if(before!==this.value||previous.length!==this._selectedSources.size||previous.some(source=>!this._selectedSources.has(source))){
+   this.dispatchEvent(new CustomEvent('input',{detail:{value:this.value},bubbles:true,composed:true}));this.dispatchEvent(new CustomEvent('change',{detail:{value:this.value},bubbles:true,composed:true}));
+  }
+ }
+ _selectKey(event){
+  if(this.disabled||event.isComposing)return;
+  if(event.altKey&&event.key==='ArrowUp'&&this.open){event.preventDefault();if(!this.multiple)this._commit(this._optionRecords.find(record=>record.source===this._activeSource));this.open=false;return;}
+  const options=this._optionRecords.filter(record=>!record.source.disabled);if(!options.length)return;
+  if(event.key==='Tab'){
+   const active=this.open&&!this.multiple?this._optionRecords.find(record=>record.source===this._activeSource):null;
+   this._selectMenu.close({restoreFocus:false});if(active)this._commit(active);this.open=false;return;
+  }
+  if(event.key==='Escape'&&this.open){event.preventDefault();event.stopPropagation();this.open=false;return;}
+  if(['ArrowDown','ArrowUp','Home','End','PageDown','PageUp'].includes(event.key)){
+   event.preventDefault();event.stopPropagation();
+   if(!this.open&&(event.key==='ArrowDown'||event.key==='ArrowUp')){this._openChoices();return;}
+   const current=options.findIndex(record=>record.source===this._activeSource);
+   const index=event.key==='Home'?0:event.key==='End'?options.length-1:event.key==='PageDown'?Math.min(Math.max(0,current)+10,options.length-1):event.key==='PageUp'?Math.max(0,current-10):event.key==='ArrowDown'?Math.min(current+1,options.length-1):current<0?options.length-1:Math.max(0,current-1);
+   this.open=true;this._activeSource=options[index].source;this._syncActive();
+  }else if(event.key==='Enter'||event.key===' '){
+   event.preventDefault();event.stopPropagation();if(event.repeat)return;
+   if(this.open)this._commit(this._optionRecords.find(record=>record.source===this._activeSource));else this._openChoices();
+  }else if(event.key.length===1&&!event.ctrlKey&&!event.altKey&&!event.metaKey){
+   event.preventDefault();const character=event.key.toLocaleLowerCase(),now=event.timeStamp;
+   this._searchText=now-(this._searchTime??-Infinity)>500?character:(this._searchText||'')+character;this._searchTime=now;
+   const repeated=[...this._searchText].every(value=>value===character),query=repeated?character:this._searchText;
+   const current=options.findIndex(record=>record.source===this._activeSource),ordered=repeated&&this._searchText.length>1?[...options.slice(current+1),...options.slice(0,current+1)]:options;
+   const match=ordered.find(record=>record.source.displayText.toLocaleLowerCase().startsWith(query));
+   if(match){this.open=true;this._activeSource=match.source;this._syncActive();}
+  }
+ }
+ _openChoices(){
+  if(this.disabled)return;this._sync();this._activeSource=this._optionRecords.find(record=>record.source.selected&&!record.source.disabled)?.source||this._optionRecords.find(record=>!record.source.disabled)?.source||null;this.open=true;this._syncActive();
+ }
+ _setup(){
+  super._setup();const{signal}=this._abortController,input=this.shadowRoot.querySelector('input'),menu=this._selectMenu;
+  this.shadowRoot.querySelector('.field-box').addEventListener('click',()=>{if(this.disabled)return;if(this.open)this.open=false;else this._openChoices();},{signal});
+  input.addEventListener('keydown',event=>this._selectKey(event),{signal});
+  input.addEventListener('blur',()=>queueMicrotask(()=>{if(!signal.aborted&&this.shadowRoot.activeElement!==input){menu.close({restoreFocus:false});this.open=false;}}),{signal});
+  menu.addEventListener('change',event=>event.stopPropagation(),{signal});
+  menu.addEventListener('select',event=>{if(event.target!==menu)return;event.stopPropagation();this._commit(this._optionRecords[event.detail.index]);},{signal});
+  menu.addEventListener('expanded-change',event=>{if(event.target!==menu)return;event.stopPropagation();if(this.open!==menu.open)this.open=menu.open;},{signal});
+ }
 }
-
-
-/* --- MD-SELECT --- */
-const selectStyle = `
-  :host {
-    display: inline-block;
-    width: 100%;
-    position: relative;
-    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-    box-sizing: border-box;
-    vertical-align: middle;
-  }
-
-  .select-box {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 56px;
-    padding: 0 16px;
-    box-sizing: border-box;
-    cursor: pointer;
-    user-select: none;
-    border-radius: var(--md-sys-shape-corner-extra-small, 8px);
-    border: 1px solid var(--md-sys-color-outline, #79747E);
-    background-color: var(--md-sys-color-surface-container, #211F26);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    transition: border-color var(--md-sys-motion-duration-short2, 200ms) ease,
-                background-color var(--md-sys-motion-duration-short2, 200ms) ease;
-  }
-  .select-box:hover:not(.disabled) {
-    border-color: var(--md-sys-color-on-surface, #1D1B20);
-  }
-  .select-box.focused,
-  :host([open]) .select-box {
-    border-color: var(--md-sys-color-primary, #6750A4);
-    border-width: 2px;
-    padding: 0 15px;
-  }
-
-  .label {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    transform-origin: left top;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-    pointer-events: none;
-    transition: transform var(--md-sys-motion-duration-short2, 150ms) var(--md-sys-motion-easing-expressive-spatial, ease),
-                color var(--md-sys-motion-duration-short2, 150ms) ease,
-                font-size var(--md-sys-motion-duration-short2, 150ms) ease;
-    padding: 0 4px;
-    background-color: var(--md-sys-color-surface-container, #211F26);
-    border-radius: 2px;
-  }
-
-  .select-box.floating .label {
-    top: 0;
-    transform: translateY(-50%) scale(0.75);
-    color: var(--md-sys-color-primary, #6750A4);
-    font-weight: 500;
-  }
-
-  .value-display {
-    flex: 1;
-    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-right: 8px;
-    padding-top: 2px;
-  }
-
-  .material-symbols-outlined,
-  .arrow-icon {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif !important;
-    font-weight: normal !important;
-    font-style: normal !important;
-    font-size: 24px;
-    line-height: 1;
-    letter-spacing: normal;
-    text-transform: none !important;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    font-feature-settings: 'liga' 1;
-    -webkit-font-smoothing: antialiased;
-    pointer-events: none;
-    transition: transform var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-spatial, ease);
-    flex-shrink: 0;
-  }
-  :host([open]) .arrow-icon {
-    transform: rotate(180deg);
-    color: var(--md-sys-color-primary, #6750A4);
-  }
-
-  .options-panel {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    width: 100%;
-    min-width: 180px;
-    max-height: 260px;
-    overflow-y: auto;
-    background-color: var(--md-sys-color-surface-container, #211F26);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    border-radius: var(--md-sys-shape-corner-small, 8px);
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.25));
-    border: 1px solid var(--md-sys-color-outline-variant, rgba(255,255,255,0.12));
-    padding: 4px;
-    z-index: 1000;
-    box-sizing: border-box;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: scale(0.92, 0.85) translateY(-6px);
-    transform-origin: top center;
-    transition:
-      opacity 180ms ease,
-      transform 220ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1.2)),
-      visibility 180ms ease;
-  }
-  :host([open]) .options-panel {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    transform: scale(1, 1) translateY(0);
-  }
-
-  .required-marker {
-    color: var(--md-sys-color-error, #B3261E);
-    margin-left: 2px;
-  }
-  .required-marker.hidden { display: none; }
-
-  :host([disabled]) {
-    opacity: 0.38;
-    pointer-events: none;
-    cursor: not-allowed;
-  }
-`;
-
-const selectSheet = createComponentSheet(selectStyle);
-
-export class MdSelect extends HTMLElement {
-  static formAssociated = true;
-
-  static get observedAttributes() {
-    return ['value', 'label', 'disabled', 'required', 'hide-required-marker', 'float-label', 'multiple', 'open'];
-  }
-
-  #internals = null;
-  #abortController = null;
-  #rendered = false;
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    adoptSheet(this.shadowRoot, selectSheet);
-    if (this.attachInternals) {
-      this.#internals = this.attachInternals();
-    }
-    this._onDocClick = this._onDocClick.bind(this);
-    this._onKeyDown = this._onKeyDown.bind(this);
-  }
-
-  get value() { return this.getAttribute('value') || ''; }
-  set value(v) {
-    this.setAttribute('value', v);
-    this.#updateSelectedOption();
-  }
-
-  get open() { return this.hasAttribute('open'); }
-  set open(v) { v ? this.setAttribute('open', '') : this.removeAttribute('open'); }
-
-  get multiple() { return this.hasAttribute('multiple'); }
-  set multiple(v) { v ? this.setAttribute('multiple', '') : this.removeAttribute('multiple'); }
-
-  get label() { return this.getAttribute('label') || ''; }
-  set label(v) { this.setAttribute('label', v); }
-
-  get required() { return this.hasAttribute('required'); }
-  set required(v) { v ? this.setAttribute('required', '') : this.removeAttribute('required'); }
-
-  get hideRequiredMarker() { return this.hasAttribute('hide-required-marker'); }
-  set hideRequiredMarker(v) { v ? this.setAttribute('hide-required-marker', '') : this.removeAttribute('hide-required-marker'); }
-
-  get floatLabel() { return this.getAttribute('float-label') || 'auto'; }
-  set floatLabel(v) { this.setAttribute('float-label', v); }
-
-  connectedCallback() {
-    this.#abortController = new AbortController();
-    this.setAttribute('tabindex', '0');
-    if (!this.#rendered) {
-      this.#render();
-      this.#setupEvents();
-      this.#rendered = true;
-    }
-    // Defer update to allow children to mount
-    requestAnimationFrame(() => {
-      this.#updateSelectedOption();
-    });
-  }
-
-  disconnectedCallback() {
-    this.#abortController?.abort();
-    this.#abortController = null;
-    document.removeEventListener('click', this._onDocClick);
-  }
-
-  attributeChangedCallback(name, oldVal, newVal) {
-    if (oldVal === newVal) return;
-    if (name === 'open') {
-      if (this.open) {
-        setTimeout(() => {
-          if (this.open) document.addEventListener('click', this._onDocClick);
-        }, 10);
-      } else {
-        document.removeEventListener('click', this._onDocClick);
-      }
-    }
-    this.#updateSelectedOption();
-  }
-
-  #render() {
-    const label = this.label;
-    const isRequired = this.required;
-    const showMarker = isRequired && !this.hideRequiredMarker;
-
-    this.shadowRoot.innerHTML = `
-      <div class="select-box" part="box">
-        <label class="label">
-          <span>${escapeHtml(label)}</span>
-          <span class="required-marker ${showMarker ? '' : 'hidden'}">*</span>
-        </label>
-        <span class="value-display"></span>
-        <span class="arrow-icon material-symbols-outlined">arrow_drop_down</span>
-      </div>
-      <div class="options-panel" role="listbox">
-        <slot></slot>
-      </div>
-    `;
-  }
-
-  #getOptions() {
-    return Array.from(this.querySelectorAll('md-option'));
-  }
-
-  #updateSelectedOption() {
-    if (!this.shadowRoot) return;
-    const box = this.shadowRoot.querySelector('.select-box');
-    const valDisplay = this.shadowRoot.querySelector('.value-display');
-    if (!box || !valDisplay) return;
-
-    const currentVal = this.value;
-    const options = this.#getOptions();
-    let displayTexts = [];
-
-    if (this.multiple) {
-      const selectedVals = currentVal ? currentVal.split(',').map(s => s.trim()) : [];
-      options.forEach(opt => {
-        const isSel = selectedVals.includes(opt.value);
-        opt.selected = isSel;
-        if (isSel) {
-          const t = opt.displayText || opt.getAttribute('headline') || opt.getAttribute('label') || opt.textContent.trim() || opt.value;
-          displayTexts.push(t);
-        }
-      });
-    } else {
-      options.forEach(opt => {
-        const isSel = opt.value === currentVal;
-        opt.selected = isSel;
-        if (isSel) {
-          const t = opt.displayText || opt.getAttribute('headline') || opt.getAttribute('label') || opt.textContent.trim() || opt.value;
-          displayTexts.push(t);
-        }
-      });
-    }
-
-    // If options aren't slotted yet or text is empty, check if we can display formatted value
-    let text = displayTexts.join(', ');
-    if (!text && currentVal) {
-      // Find matching option or capitalize
-      const match = options.find(o => o.value === currentVal);
-      text = match ? (match.displayText || match.getAttribute('headline') || match.textContent.trim() || currentVal) : currentVal;
-    }
-
-    valDisplay.textContent = text;
-
-    const alwaysFloat = this.floatLabel === 'always';
-    const isFloating = !!text || alwaysFloat || this.open;
-    box.classList.toggle('floating', isFloating);
-
-    if (this.#internals) {
-      this.#internals.setFormValue(currentVal);
-      if (this.required && !currentVal) {
-        this.#internals.setValidity({ valueMissing: true }, 'Please select an option');
-      } else {
-        this.#internals.setValidity({});
-      }
-    }
-  }
-
-  _onDocClick(e) {
-    if (!this.open) return;
-    if (!e.composedPath().includes(this)) {
-      this.open = false;
-    }
-  }
-
-  _onKeyDown(e) {
-    if (this.disabled) return;
-    const options = this.#getOptions().filter(o => !o.disabled);
-    if (!options.length) return;
-
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      this.open = !this.open;
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      this.open = false;
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (!this.open) {
-        this.open = true;
-        return;
-      }
-      const currentIdx = options.findIndex(o => o.value === this.value);
-      const nextIdx = (currentIdx + 1) % options.length;
-      this.value = options[nextIdx].value;
-      this.dispatchEvent(new CustomEvent('change', { bubbles: true, composed: true }));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (!this.open) {
-        this.open = true;
-        return;
-      }
-      const currentIdx = options.findIndex(o => o.value === this.value);
-      const prevIdx = (currentIdx - 1 + options.length) % options.length;
-      this.value = options[prevIdx].value;
-      this.dispatchEvent(new CustomEvent('change', { bubbles: true, composed: true }));
-    }
-  }
-
-  #setupEvents() {
-    const { signal } = this.#abortController;
-    const box = this.shadowRoot.querySelector('.select-box');
-
-    box.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.open = !this.open;
-    }, { signal });
-
-    this.addEventListener('click', (e) => {
-      const opt = e.composedPath().find(el => el.tagName === 'MD-OPTION');
-      if (opt && !opt.disabled) {
-        if (this.multiple) {
-          const currentVals = this.value ? this.value.split(',').map(s => s.trim()).filter(Boolean) : [];
-          const idx = currentVals.indexOf(opt.value);
-          if (idx >= 0) currentVals.splice(idx, 1);
-          else currentVals.push(opt.value);
-          this.value = currentVals.join(',');
-        } else {
-          this.value = opt.value;
-          this.open = false;
-        }
-        this.dispatchEvent(new CustomEvent('change', { bubbles: true, composed: true }));
-      }
-    }, { signal });
-
-    this.addEventListener('keydown', this._onKeyDown, { signal });
-
-    // Listen to slotchange so when options are injected dynamically, we update text immediately
-    const slot = this.shadowRoot.querySelector('slot');
-    slot?.addEventListener('slotchange', () => {
-      this.#updateSelectedOption();
-    }, { signal });
-  }
-}
-
-if (!customElements.get('md-select')) {
-  customElements.define('md-select', MdSelect);
-}
+if(!customElements.get('md-select'))customElements.define('md-select',MdSelect);

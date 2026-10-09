@@ -33,7 +33,7 @@ const defaultStyle = `
   .item:not(:disabled).pressed .ripple::before { opacity:0.1; }
   .item:focus-visible .ripple { outline:3px solid var(--md-sys-color-secondary, #625B71); outline-offset:2px; }
   .icon {
-    font-family:'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-weight:normal; font-style:normal; font-size:24px; line-height:24px;
     width:24px; height:24px; white-space:nowrap;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;

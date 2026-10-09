@@ -1,0 +1,53 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "count": 260,
+  "sha256": "8d4d6ed01b1189bb9b2304f0b28ad307a8a8db59adcc9597d30a959eb4a002bb",
+  "sources": [
+    {
+      "file": "Chip.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Chip.kt",
+      "sha256": "d3f1c95d15522e08a2b8222956ff0503c346f97aab670741ab8b7aedcfe538d9"
+    },
+    {
+      "file": "AssistChipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/AssistChipTokens.kt",
+      "sha256": "8ea69b2b3996905eb6b447347746d143877ca588887077af80d84c2c77381fa5"
+    },
+    {
+      "file": "FilterChipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FilterChipTokens.kt",
+      "sha256": "6a718caa30f5ce889889bb20eae01f9fa9bf2400c36c1c8d8856b1dedc95a61a"
+    },
+    {
+      "file": "InputChipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/InputChipTokens.kt",
+      "sha256": "5592a6e747c423b9e8c82a4ab3eeb07383fb925288519687bad2c0d13c999b15"
+    },
+    {
+      "file": "SuggestionChipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SuggestionChipTokens.kt",
+      "sha256": "69bb0710c284abf90b044c738d0b94b07e3d5989c9ac88c5836afd7124f630d8"
+    },
+    {
+      "file": "ChipsTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ChipsTokens.kt",
+      "sha256": "2b2a4dedec98b42017ac89cea5a1e6a505fdc9ce27560abf83ca6219bbdd9dec"
+    },
+    {
+      "file": "ElevationTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ElevationTokens.kt",
+      "sha256": "b0613cc2c1e30fb62da126f82f5870f7231e3cf4117f36132e466e1827de0a3c"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-chip/generate.mjs",
+      "sha256": "560750e3e932ad6e0492906dd37d832dce84e008f2e1e49a483feb3d13053366"
+    },
+    {
+      "file": "tools/androidx-chip/ReferenceHost.kt",
+      "sha256": "7d68c2394db9a1aa546a1a752fb021413700fbe239ea60f3defdf7a8f3a3e58c"
+    }
+  ],
+  "scope": "Unchanged complete color classes/getters/copy, default color constructor/copy arguments, current border and elevation factory defaults, input padding and complete compact ChipArrangement, ChipShapes/default constructor/selection priority. Symbolic role/alpha-copy/shape, Dp/Density/Arrangement, elevation descriptor and animated-shape identity hosts. No native packed Color, Row/Surface/modifier/composition runtime, elevation/shape/content animation frames or raster."
+}

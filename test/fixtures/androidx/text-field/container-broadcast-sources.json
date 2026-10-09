@@ -1,0 +1,35 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "BroadcastFrameClock.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/BroadcastFrameClock.kt",
+      "sha256": "b2c327f8d949c9c27c70087bb1573f8048da049105dc1ad03a4960ecef9a99ca"
+    },
+    {
+      "file": "AwaiterQueue.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/internal/AwaiterQueue.kt",
+      "sha256": "c787c7c5c226d475d0e6ff84ce72972bd099f1ba316d7b79e37e948c9c522ba9"
+    },
+    {
+      "file": "CancellationHandle.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/CancellationHandle.kt",
+      "sha256": "b745d4ddd31e151192100ee0c8e75fbe05642c3b6df352f53b98b97657da3678"
+    },
+    {
+      "file": "Effects.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/Effects.kt",
+      "sha256": "e888128ec8581f2b718545bb2805246988a7dcc36661c6e71f66d3cc2e1bf575"
+    },
+    {
+      "file": "Recomposer.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/Recomposer.kt",
+      "sha256": "bc3893ce682af392bbd27b5157671f2aa774a806f8d5be755fe0f744f92268a3"
+    },
+    {
+      "file": "AndroidX-libs.versions.toml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/gradle/libs.versions.toml",
+      "sha256": "46e5ee0848d0e78561f93c4c1d9c6d7319dd1221cbb29fd408ff77b308febcbf"
+    }
+  ]
+}

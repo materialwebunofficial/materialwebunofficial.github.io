@@ -1,0 +1,10 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "MutatorMutex.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/MutatorMutex.kt",
+      "sha256": "2f92acb2f25e56d6c126aa054c97c97434b4006b1ba333a0e1efd28f185a1655"
+    }
+  ]
+}

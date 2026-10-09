@@ -12,11 +12,13 @@ const roles = Object.getOwnPropertyNames(m.DynamicScheme.prototype).filter(name 
   const descriptor = Object.getOwnPropertyDescriptor(m.DynamicScheme.prototype, name);
   return descriptor.get && !name.endsWith('PaletteKeyColor') && !['primaryDim','secondaryDim','tertiaryDim','errorDim'].includes(name);
 });
+const variants = {'tonal-spot':m.SchemeTonalSpot,neutral:m.SchemeNeutral,vibrant:m.SchemeVibrant,
+  expressive:m.SchemeExpressive,fidelity:m.SchemeFidelity,content:m.SchemeContent,
+  monochrome:m.SchemeMonochrome,rainbow:m.SchemeRainbow,'fruit-salad':m.SchemeFruitSalad};
 const cases = [];
 for (const seed of ['#6750a4','#ff0000','#00ff00','#0000ff','#000000','#ffffff','#888888','#ffcc00']) {
-  for (const variant of ['expressive','standard']) for (const dark of [false,true]) for (const contrast of [-1,0,0.5,1]) {
+  for (const [variant,Scheme] of Object.entries(variants)) for (const dark of [false,true]) for (const contrast of [-1,0,0.5,1]) {
     const hct = m.Hct.fromInt(m.argbFromHex(seed));
-    const Scheme = variant === 'expressive' ? m.SchemeExpressive : m.SchemeTonalSpot;
     const scheme = new Scheme(hct,dark,contrast,'2025','phone');
     cases.push({seed,variant,dark,contrast,
       hct: {hue:hct.hue,chroma:hct.chroma,tone:hct.tone},

@@ -1,0 +1,30 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "count": 2016,
+  "sha256": "e341eaaa14614bd70eea931078d5b01c8f4a8afb3e094364982a81f7215473be",
+  "sources": [
+    {
+      "file": "OutlinedTextField.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/OutlinedTextField.kt",
+      "sha256": "41426cc018ae1ec5d4cf590d550e3e9d1e072bb69c8096935f07556a5965c86d",
+      "path": "test/fixtures/androidx/text-field/OutlinedTextField.kt"
+    },
+    {
+      "file": "Alignment.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Alignment.kt",
+      "sha256": "bf2e150a8f21de8088dba5f7007c5e2afd5e4ee2c73eca6c43d93a0132977fc1",
+      "path": "test/fixtures/androidx/toolbar-row/Alignment.kt"
+    }
+  ],
+  "hosts": [
+    {
+      "path": "tools/androidx-text-field/generate-cutout.mjs",
+      "sha256": "8a1eb6379f2e1b2973fcdbecfaebaebd193b2ba1ee40be46186fadc399734c96"
+    },
+    {
+      "path": "tools/androidx-text-field/CutoutHost.kt",
+      "sha256": "e5716fcaaf5aa3f8c47ad176dedb03d38c87afbea8b68d58022951d69f34f0cb"
+    }
+  ],
+  "scope": "Unchanged outlineCutout draw body and BiasAlignment.Horizontal class. Density1 Dp/padding, logical DrawScope and clip-call recorder hosts; finite JVM roundToInt supplies fastRoundToInt. No source modifier/cache scheduling or native border/path/raster."
+}

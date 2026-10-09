@@ -1,0 +1,62 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sha256": "f2b978cf75bbd82de378a7e73c69703c0c2709d6ba098109f76526df084eeac6",
+  "count": 18,
+  "sources": [
+    {
+      "file": "test/fixtures/androidx/picker/DatePicker.kt",
+      "sha256": "6d80d7ba27b052beaac1628458dc41621e02093d36c5d2691234d0931ca3ea22"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TimePicker.kt",
+      "sha256": "787e55e79a94b58775567110b2b27c74834529b643960cb0ff86589930e3f221"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/DatePickerModalTokens.kt",
+      "sha256": "f3f7d43cafd3769803283fcf77f01da2106b25acfbc0a9debfe46ad2dcfb14d5"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TimePickerTokens.kt",
+      "sha256": "c5fc3f727d18098c95be81d09863b8274a36554e49eb26a14ac3fc7d8dd9884e"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/ComposeMaterial3Flags.kt",
+      "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/TextFieldDefaults.kt",
+      "sha256": "862b2e5705f879402c62c6dc30844ff2e40b0dcbcf56b868c0f84bffe3d32a41"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/TextField.kt",
+      "sha256": "00ed832c27f1dd8f2f6a57b9f8ecaf13be43e08cf96c79ca5b989a5fe5855ceb"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/OutlinedTextField.kt",
+      "sha256": "41426cc018ae1ec5d4cf590d550e3e9d1e072bb69c8096935f07556a5965c86d"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/TextFieldImpl.kt",
+      "sha256": "6490160723b2e07790cbcae86db014b494aa45b4f5f13402ebfc5597d94b2253"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/FilledTextFieldTokens.kt",
+      "sha256": "3cceaa2d42662fbd200b1ed543de1abfd5e727baade052ab446e35669350cc11"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/OutlinedTextFieldTokens.kt",
+      "sha256": "04ffa7424f96b8ad0e82dfcf2bfbeb122a509c5b26478633ce56077018863fa6"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-picker/generate-input-colors.mjs",
+      "sha256": "17c4753a3df9eb46f40c6fc27a7ca15f3b92f8b977a34ad3c338df2a454dd76a"
+    },
+    {
+      "file": "tools/androidx-picker/InputColorsHost.kt",
+      "sha256": "dcd0bc283b2da0d5661c7ff9f0066039f6d1e92a618f5dd29f27bfa8fd508e18"
+    }
+  ],
+  "scope": "Complete original default/vibrant TimeInput and default OutlinedTextField factory bodies, public Outlined colors override call, complete TextFieldColors and TimeInputColors classes, Outlined Container and animateBorderStrokeAsState. Symbolic Color/alpha-copy, theme/selection locals, focus State and animation descriptor hosts. Descriptor targets/specs and cache paths execute; Compose jobs/frame scheduling, packed Color conversion, BasicTextField composition, border raster and IME do not."
+}

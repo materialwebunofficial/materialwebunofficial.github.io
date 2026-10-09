@@ -1,0 +1,30 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "DatePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/DatePicker.kt",
+      "sha256": "6d80d7ba27b052beaac1628458dc41621e02093d36c5d2691234d0931ca3ea22"
+    },
+    {
+      "file": "TimePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TimePicker.kt",
+      "sha256": "787e55e79a94b58775567110b2b27c74834529b643960cb0ff86589930e3f221"
+    },
+    {
+      "file": "DatePickerModalTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/DatePickerModalTokens.kt",
+      "sha256": "f3f7d43cafd3769803283fcf77f01da2106b25acfbc0a9debfe46ad2dcfb14d5"
+    },
+    {
+      "file": "TimePickerTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TimePickerTokens.kt",
+      "sha256": "c5fc3f727d18098c95be81d09863b8274a36554e49eb26a14ac3fc7d8dd9884e"
+    },
+    {
+      "file": "ComposeMaterial3Flags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
+      "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    }
+  ]
+}

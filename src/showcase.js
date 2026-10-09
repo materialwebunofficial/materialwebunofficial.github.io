@@ -1,10 +1,10 @@
 /**
- * Material Design 3 Expressive (MD3E) — Showcase Controller
- * Pure M3 Tonal Surface, 15-Step Typescale, Dynamic CAM16 HCT Theming, and Spring Physics
+ * Showcase controller: theme state, adaptive navigation, the component
+ * catalog, copy actions, and the wiring of interactive examples.
  */
 
 import { SpringPhysics } from './motion/spring-physics.js';
-import { applyDynamicTheme, rgbToHct, hexToRgb, hctToHex } from './theme/hct-color-engine.js';
+import { applyDynamicTheme, rgbToHct, hexToRgb, hctToHex, resolvePaletteVariant } from './theme/hct-color-engine.js';
 import {FloatingToolbarScrollBehavior,ToolbarScrollExpansion} from './components/toolbar-scroll.js';
 import {TopAppBarScrollBehavior} from './components/top-app-bar-scroll.js';
 import {BottomAppBarScrollBehavior} from './components/bottom-app-bar-scroll.js';
@@ -15,1104 +15,550 @@ const STORAGE_KEYS = {
   MOTION_SCHEME: 'md3e_motion_scheme',
   HCT_STATE: 'md3e_hct_state',
   HCT_VERSION: 'md3e_hct_version',
-  SEED_HEX: 'md3e_seed_hex'
+  SEED_HEX: 'md3e_seed_hex',
+  PALETTE_VARIANT: 'md3e_palette_variant',
+  CONTRAST: 'md3e_contrast'
 };
 
-const MD3_PRESETS = [
-  { name: 'Baseline Purple', hex: '#6750A4' },
-  { name: 'Expressive Violet', hex: '#185EAC' },
-  { name: 'Expressive Ocean', hex: '#00639B' },
-  { name: 'Forest Green', hex: '#386A20' },
-  { name: 'Warm Amber', hex: '#7D5700' },
-  { name: 'Vibrant Coral', hex: '#9C4146' }
+// Example seed colors for the showcase. They are inputs, not official palettes.
+const SEED_PRESETS = [
+  { name: 'Purple', hex: '#6750A4' },
+  { name: 'Blue', hex: '#185EAC' },
+  { name: 'Ocean', hex: '#00639B' },
+  { name: 'Green', hex: '#386A20' },
+  { name: 'Amber', hex: '#7D5700' },
+  { name: 'Coral', hex: '#9C4146' }
 ];
+const CONTRAST_LEVELS = ['standard', 'medium', 'high'];
+const PRIMARY_TABS = ['home', 'get-started', 'components'];
+
+const storage = {
+  get(key) { try { return localStorage.getItem(key); } catch { return null; } },
+  set(key, value) { try { localStorage.setItem(key, value); } catch {} }
+};
 
 export function initShowcase() {
-  if ('scrollRestoration' in history) {
-    history.scrollRestoration = 'manual';
-  }
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  const root = document.documentElement;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
-  // 1. Theme & Scheme Controls Wiring
-  const schemeToggle = document.getElementById('scheme-toggle');
-  const themeToggle = document.getElementById('theme-toggle');
-  const railMotionToggle = document.getElementById('rail-motion-toggle');
-  const railThemeToggle = document.getElementById('rail-theme-toggle');
-  const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
-  const mobileMotionToggle = document.getElementById('mobile-motion-toggle');
-
-  // Load Persisted Settings from localStorage (works on localhost, github.io, etc.)
-  let savedThemeMode = 'dark';
-  let savedThemeScheme = 'expressive';
-  let savedMotionScheme = 'expressive';
-  let savedHct = rgbToHct(103, 80, 164);
-
+  // =========================================================================
+  // 1. Theme state
+  // =========================================================================
+  const savedMode = storage.get(STORAGE_KEYS.THEME_MODE);
+  const theme = {
+    dark: savedMode === 'dark' || (savedMode !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches),
+    motion: storage.get(STORAGE_KEYS.MOTION_SCHEME) === 'standard' ? 'standard' : 'expressive',
+    variant: resolvePaletteVariant(storage.get(STORAGE_KEYS.PALETTE_VARIANT)),
+    contrast: CONTRAST_LEVELS.includes(storage.get(STORAGE_KEYS.CONTRAST)) ? storage.get(STORAGE_KEYS.CONTRAST) : 'standard',
+    hct: rgbToHct(103, 80, 164)
+  };
   try {
-    const mode = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
-    if (mode === 'dark' || mode === 'light') savedThemeMode = mode;
-
-    const scheme = localStorage.getItem(STORAGE_KEYS.THEME_SCHEME);
-    if (scheme) savedThemeScheme = scheme;
-
-    const motion = localStorage.getItem(STORAGE_KEYS.MOTION_SCHEME);
-    if (motion) savedMotionScheme = motion;
-
-    const rawHct = localStorage.getItem(STORAGE_KEYS.HCT_STATE);
-    if (rawHct) {
-      const parsed = JSON.parse(rawHct);
-      if (typeof parsed.hue === 'number' && typeof parsed.chroma === 'number' && typeof parsed.tone === 'number') {
-        savedHct = parsed;
-      }
+    const raw = JSON.parse(storage.get(STORAGE_KEYS.HCT_STATE) || 'null');
+    if (raw && ['hue', 'chroma', 'tone'].every(key => Number.isFinite(raw[key]))) theme.hct = raw;
+    // Older releases stored Lab-LCH coordinates; recompute HCT from the seed.
+    if (storage.get(STORAGE_KEYS.HCT_VERSION) !== 'mcu-0.4.0') {
+      const rgb = hexToRgb(storage.get(STORAGE_KEYS.SEED_HEX) || '#6750a4');
+      theme.hct = rgbToHct(rgb.r, rgb.g, rgb.b);
     }
-    // Older releases persisted Lab-LCH under the HCT name. Preserve the selected
-    // sRGB seed, then recompute real HCT instead of interpreting old coordinates.
-    if (localStorage.getItem(STORAGE_KEYS.HCT_VERSION) !== 'mcu-0.4.0') {
-      const previousSeed = localStorage.getItem(STORAGE_KEYS.SEED_HEX) || '#6750a4';
-      const rgb = hexToRgb(previousSeed);
-      savedHct = rgbToHct(rgb.r, rgb.g, rgb.b);
-    }
-  } catch (_) {}
+  } catch {}
 
-  // Apply initial persisted settings to document
-  document.documentElement.setAttribute('data-theme', savedThemeMode);
-  document.documentElement.setAttribute('data-theme-scheme', savedThemeScheme);
-  document.documentElement.setAttribute('data-motion-scheme', savedMotionScheme);
-  SpringPhysics.setScheme(savedMotionScheme);
+  const seedHex = () => hctToHex(theme.hct.hue, theme.hct.chroma, theme.hct.tone);
 
-  // HCT Live State initialized from saved storage
-  const hctState = {
-    hue: savedHct.hue,
-    chroma: savedHct.chroma,
-    tone: savedHct.tone
-  };
-
-  function syncSchemeButtonLabels() {
-    const currentScheme = document.documentElement.getAttribute('data-theme-scheme') || 'expressive';
-    const isExpressive = currentScheme === 'expressive';
-    if (schemeToggle) {
-      schemeToggle.textContent = `Scheme: ${isExpressive ? 'Expressive' : 'Standard'}`;
-    }
-    if (railMotionToggle) {
-      const icon = railMotionToggle.querySelector('.mat-sym');
-      if (icon) icon.textContent = isExpressive ? 'auto_awesome' : 'tune';
-      railMotionToggle.title = `Theme Scheme: ${isExpressive ? 'Expressive (Active)' : 'Standard (Active)'}`;
-    }
-    if (mobileMotionToggle) {
-      const icon = mobileMotionToggle.querySelector('.mat-sym');
-      if (icon) icon.textContent = isExpressive ? 'auto_awesome' : 'tune';
-      mobileMotionToggle.title = `Theme Scheme: ${isExpressive ? 'Expressive (Active)' : 'Standard (Active)'}`;
-    }
+  function applyTheme() {
+    root.setAttribute('data-theme', theme.dark ? 'dark' : 'light');
+    // The expressive theme pairs MaterialExpressiveTheme with the expressive
+    // motion scheme; the palette variant is chosen independently.
+    root.setAttribute('data-theme-scheme', theme.motion);
+    root.setAttribute('data-motion-scheme', theme.motion);
+    root.setAttribute('data-palette-variant', theme.variant);
+    root.setAttribute('data-contrast', theme.contrast);
+    SpringPhysics.setScheme(theme.motion);
+    applyDynamicTheme(theme.hct, theme.dark, theme.variant);
+    syncThemeControls();
   }
 
-  function toggleThemeScheme() {
-    const current = document.documentElement.getAttribute('data-theme-scheme') || 'expressive';
-    const next = current === 'expressive' ? 'standard' : 'expressive';
-    document.documentElement.setAttribute('data-theme-scheme', next);
-    document.documentElement.setAttribute('data-motion-scheme', next);
-    SpringPhysics.setScheme(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.THEME_SCHEME, next);
-      localStorage.setItem(STORAGE_KEYS.MOTION_SCHEME, next);
-    } catch (_) {}
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    applyDynamicTheme(hctState, isDark, next);
-    syncSchemeButtonLabels();
+  function persistColor() {
+    storage.set(STORAGE_KEYS.HCT_STATE, JSON.stringify(theme.hct));
+    storage.set(STORAGE_KEYS.HCT_VERSION, 'mcu-0.4.0');
+    storage.set(STORAGE_KEYS.SEED_HEX, seedHex());
   }
 
-  if (schemeToggle) {
-    schemeToggle.addEventListener('click', toggleThemeScheme);
+  const darkToggles = ['rail-theme-toggle', 'mobile-theme-toggle'].map(id => document.getElementById(id)).filter(Boolean);
+  const motionToggles = ['rail-motion-toggle', 'mobile-motion-toggle'].map(id => document.getElementById(id)).filter(Boolean);
+
+  function syncThemeControls() {
+    darkToggles.forEach(toggle => { toggle.selected = theme.dark; });
+    motionToggles.forEach(toggle => { toggle.selected = theme.motion === 'expressive'; });
+    syncColorControls();
   }
 
-  if (railMotionToggle) {
-    railMotionToggle.addEventListener('click', toggleThemeScheme);
-  }
-
-  if (mobileMotionToggle) {
-    mobileMotionToggle.addEventListener('click', toggleThemeScheme);
-  }
-
-  function syncThemeButtonLabels() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (themeToggle) {
-      themeToggle.textContent = `Mode: ${isDark ? 'Dark' : 'Light'}`;
-    }
-    if (railThemeToggle) {
-      const icon = railThemeToggle.querySelector('.mat-sym');
-      if (icon) icon.textContent = isDark ? 'dark_mode' : 'light_mode';
-    }
-    if (mobileThemeToggle) {
-      const icon = mobileThemeToggle.querySelector('.mat-sym');
-      if (icon) icon.textContent = isDark ? 'dark_mode' : 'light_mode';
-    }
-  }
-
-  function toggleColorMode() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const nextMode = isDark ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', nextMode);
-    try { localStorage.setItem(STORAGE_KEYS.THEME_MODE, nextMode); } catch (_) {}
-    const scheme = document.documentElement.getAttribute('data-theme-scheme') || 'expressive';
-    applyDynamicTheme(hctState, nextMode === 'dark', scheme);
-    syncThemeButtonLabels();
-  }
-
-  if (themeToggle) {
-    themeToggle.addEventListener('click', toggleColorMode);
-  }
-
-  if (railThemeToggle) {
-    railThemeToggle.addEventListener('click', toggleColorMode);
-  }
-
-  if (mobileThemeToggle) {
-    mobileThemeToggle.addEventListener('click', toggleColorMode);
-  }
-
-  syncSchemeButtonLabels();
-  syncThemeButtonLabels();
-
-  // Use the audited drawer for responsive catalogue navigation.
-  const catalogueDrawer = document.getElementById('components-sub-nav');
-  const drawerToggles = [document.getElementById('mobile-drawer-toggle'), document.getElementById('rail-drawer-toggle')].filter(Boolean);
-  const permanentDrawer = window.matchMedia('(min-width: 1200px)');
-  function syncDrawerVariant() {
-    catalogueDrawer.close();
-    catalogueDrawer.variant = permanentDrawer.matches ? 'standard' : 'modal';
-  }
-  syncDrawerVariant();
-  permanentDrawer.addEventListener('change', syncDrawerVariant);
-  const syncDrawerToggles = () => {
-    // Gestures belong to the visible catalogue sheet, avoiding closed sibling demo drawers.
-    catalogueDrawer.gesturesEnabled = catalogueDrawer.open && !permanentDrawer.matches;
-    drawerToggles.forEach(button => button.setAttribute('aria-expanded', String(catalogueDrawer.open)));
-  };
-  new MutationObserver(syncDrawerToggles).observe(catalogueDrawer, { attributes: true, attributeFilter: ['open'] });
-  drawerToggles.forEach(button => button.addEventListener('click', () => {
-    if (catalogueDrawer.open) catalogueDrawer.close();
-    else catalogueDrawer.show();
+  darkToggles.forEach(toggle => toggle.addEventListener('change', () => {
+    theme.dark = toggle.selected;
+    storage.set(STORAGE_KEYS.THEME_MODE, theme.dark ? 'dark' : 'light');
+    applyTheme();
+  }));
+  motionToggles.forEach(toggle => toggle.addEventListener('change', () => {
+    theme.motion = toggle.selected ? 'expressive' : 'standard';
+    storage.set(STORAGE_KEYS.MOTION_SCHEME, theme.motion);
+    storage.set(STORAGE_KEYS.THEME_SCHEME, theme.motion);
+    applyTheme();
+    announce(theme.motion === 'expressive' ? 'Expressive motion is on' : 'Standard motion is on');
   }));
 
-  // 3. Tab Switching Architecture (home, get-started, components)
-  const railNavigation = document.querySelector('md-navigation-rail.app-nav-rail');
-  const mobileNavigation = document.querySelector('md-navigation-bar.mobile-bottom-nav');
-  const primaryTabs = ['home', 'get-started', 'components'];
-  const tabViews = document.querySelectorAll('.tab-view');
-  const subNavLinks = document.querySelectorAll('.sub-nav-drawer a[href]');
+  // Follow the system color mode until the visitor chooses one.
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    if (storage.get(STORAGE_KEYS.THEME_MODE)) return;
+    theme.dark = event.matches;
+    applyTheme();
+  });
 
-  function switchTab(tabId, scrollToTop = true, updateHash = true) {
+  // =========================================================================
+  // 2. Snackbar feedback
+  // =========================================================================
+  const appSnackbar = document.getElementById('app-snackbar');
+  const bottomNav = document.querySelector('md-navigation-bar.mobile-bottom-nav');
+  const mainEl = document.getElementById('main');
+
+  function positionSnackbar(snackbar) {
+    const rect = mainEl.getBoundingClientRect();
+    const left = Math.max(0, rect.left) + 16, right = Math.max(0, window.innerWidth - rect.right) + 16;
+    const bottom = (getComputedStyle(bottomNav).display === 'none' ? 0 : bottomNav.getBoundingClientRect().height) + 16;
+    const rtl = getComputedStyle(snackbar).direction === 'rtl';
+    snackbar.style.setProperty('--md-snackbar-inline-start', (rtl ? right : left) + 'px');
+    snackbar.style.setProperty('--md-snackbar-inline-end', (rtl ? left : right) + 'px');
+    snackbar.style.setProperty('--md-snackbar-bottom', bottom + 'px');
+  }
+
+  function announce(message) {
+    if (!appSnackbar) return;
+    document.querySelectorAll('#snackbars md-snackbar[open]').forEach(other => other.close());
+    if (appSnackbar.open) appSnackbar.close();
+    appSnackbar.message = message;
+    positionSnackbar(appSnackbar);
+    appSnackbar.show();
+  }
+
+  // =========================================================================
+  // 3. Adaptive navigation: rail, navigation bar, top app bar, catalog drawer
+  // =========================================================================
+  const rail = document.querySelector('md-navigation-rail.app-nav-rail');
+  const topBar = document.getElementById('app-top-bar');
+  const drawer = document.getElementById('components-sub-nav');
+  const drawerToggles = ['mobile-drawer-toggle', 'rail-drawer-toggle'].map(id => document.getElementById(id)).filter(Boolean);
+  const largeWindow = matchMedia('(min-width: 1200px)');
+  const catalog = drawer.items.map((item, index) => ({ ...item, index })).filter(item => item.value);
+  const tabViews = [...document.querySelectorAll('.tab-view')];
+  let activeTab = 'home';
+  let drawerPinned = true;
+
+  // Large windows show the catalog beside the content while browsing
+  // components; other windows and views open it as a modal sheet.
+  function syncDrawerVariant() {
+    const docked = largeWindow.matches && activeTab === 'components';
+    const variant = docked ? 'dismissible' : 'modal';
+    if (drawer.variant !== variant) {
+      drawer.open = false;
+      drawer.variant = variant;
+    }
+    if (docked) drawer.open = drawerPinned;
+    drawer.gesturesEnabled = !docked;
+    syncDrawerToggles();
+  }
+
+  function syncDrawerToggles() {
+    drawerToggles.forEach(button => button.setAttribute('aria-expanded', String(drawer.open)));
+  }
+
+  new MutationObserver(syncDrawerToggles).observe(drawer, { attributes: true, attributeFilter: ['open'] });
+  largeWindow.addEventListener('change', syncDrawerVariant);
+  drawerToggles.forEach(button => button.addEventListener('click', () => {
+    if (drawer.variant === 'dismissible') drawerPinned = !drawer.open;
+    if (drawer.open) drawer.close(); else drawer.show();
+  }));
+
+  function setTabSelection(tabId) {
+    const index = PRIMARY_TABS.indexOf(tabId);
+    if (rail) rail.selected = index;
+    if (bottomNav) bottomNav.selected = index;
+  }
+
+  function switchTab(tabId, { scroll = true, hash = true } = {}) {
+    activeTab = tabId;
     document.body.setAttribute('data-active-tab', tabId);
+    tabViews.forEach(view => view.classList.toggle('active', view.id === `tab-view-${tabId}`));
+    setTabSelection(tabId);
+    if (drawer.variant === 'modal') drawer.close();
+    syncDrawerVariant();
+    if (scroll) window.scrollTo({ top: 0, behavior: 'instant' });
+    if (hash) history.replaceState(null, '', `#${tabId}`);
+  }
 
-    if (railNavigation) railNavigation.selected = primaryTabs.indexOf(tabId);
+  function selectCatalogEntry(id) {
+    const entry = catalog.find(item => item.value === id);
+    if (entry && drawer.selected !== entry.index) drawer.selected = entry.index;
+  }
 
-    if (mobileNavigation) mobileNavigation.selected = primaryTabs.indexOf(tabId);
+  function navigateToSection(id, smooth = true) {
+    if (activeTab !== 'components') switchTab('components', { scroll: false, hash: false });
+    history.replaceState(null, '', `#${id}`);
+    const target = document.getElementById(id);
+    if (target) target.scrollIntoView({ behavior: smooth && !reducedMotion.matches ? 'smooth' : 'instant', block: 'start' });
+    selectCatalogEntry(id);
+  }
 
-    catalogueDrawer.selected = primaryTabs.indexOf(tabId);
+  rail?.addEventListener('change', event => {
+    const tabId = PRIMARY_TABS[event.detail.index];
+    if (tabId) switchTab(tabId);
+  });
+  bottomNav?.addEventListener('change', event => {
+    const tabId = PRIMARY_TABS[event.detail.index];
+    if (tabId) switchTab(tabId);
+  });
+  drawer.addEventListener('change', event => {
+    const id = event.detail.value;
+    if (drawer.variant === 'modal') drawer.close();
+    if (id) navigateToSection(id);
+  });
 
-    tabViews.forEach(view => {
-      view.classList.toggle('active', view.id === `tab-view-${tabId}`);
+  document.querySelectorAll('[data-navigate-tab]').forEach(el => {
+    el.addEventListener('click', event => {
+      event.preventDefault();
+      switchTab(el.getAttribute('data-navigate-tab'));
     });
+  });
 
-    if (tabId === 'components') {
-      document.body.classList.remove('drawer-collapsed');
-    } else {
-      document.body.classList.add('drawer-collapsed');
+  // In-page links (including buttons with an href) stay inside the app.
+  document.addEventListener('navigate', event => {
+    const href = event.detail.href || '';
+    if (!href.startsWith('#')) return;
+    event.preventDefault();
+    routeTo(href.slice(1), true);
+  });
+  document.addEventListener('click', event => {
+    const anchor = event.target.closest?.('a[href^="#"]');
+    if (!anchor) return;
+    const id = anchor.getAttribute('href').slice(1);
+    if (!id || !document.getElementById(id)) return;
+    event.preventDefault();
+    routeTo(id, true);
+  });
+
+  // Anchors from earlier versions of the catalog.
+  const LEGACY_ANCHORS = { progress: 'progress-indicators', selection: 'switch', 'selection-controls': 'checkbox',
+    segmented: 'segmented-buttons', 'time-picker': 'time-pickers', 'date-picker': 'date-pickers', overview: 'overview' };
+
+  function routeTo(id, smooth) {
+    id = LEGACY_ANCHORS[id] ?? id;
+    if (!id || id === 'home') return switchTab('home', { hash: id === 'home' });
+    if (id === 'get-started' || id === 'getstarted') return switchTab('get-started');
+    if (id === 'components') return switchTab('components');
+    const target = document.getElementById(id);
+    if (!target) return switchTab('home', { hash: false });
+    const view = target.closest('.tab-view');
+    if (view?.id === 'tab-view-get-started') {
+      switchTab('get-started', { scroll: false, hash: false });
+      history.replaceState(null, '', `#${id}`);
+      target.scrollIntoView({ behavior: smooth && !reducedMotion.matches ? 'smooth' : 'instant', block: 'start' });
+      return;
     }
+    navigateToSection(id, smooth);
+  }
 
-    catalogueDrawer.close();
-    if (scrollToTop) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  window.addEventListener('hashchange', () => routeTo(location.hash.slice(1), false));
 
-    if (updateHash) {
-      history.replaceState(null, '', `#${tabId}`);
+  // Compact top app bar: the container changes color while content scrolls under it.
+  const syncTopBar = () => { if (topBar) topBar.scrolled = window.scrollY > 0; };
+  window.addEventListener('scroll', syncTopBar, { passive: true });
+  syncTopBar();
+
+  // Scroll spy for the catalog.
+  const spyTargets = [document.getElementById('overview'), ...document.querySelectorAll('#tab-view-components .category-section')].filter(Boolean);
+  const spy = new IntersectionObserver(entries => {
+    if (activeTab !== 'components') return;
+    for (const entry of entries) if (entry.isIntersecting) selectCatalogEntry(entry.target.id);
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  spyTargets.forEach(target => spy.observe(target));
+
+  // =========================================================================
+  // 4. Copy actions
+  // =========================================================================
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.append(area);
+      area.select();
+      const copied = document.execCommand('copy');
+      area.remove();
+      return copied;
     }
   }
 
-  // Set initial active tab synchronously from URL hash (prevents CLS)
-  const initialHash = (window.location.hash || '').replace('#', '').trim();
-  let initialTab = 'home';
-  if (initialHash === 'components' || initialHash === 'overview' || document.getElementById(initialHash)) {
-    initialTab = 'components';
-  } else if (initialHash === 'get-started' || initialHash === 'getstarted') {
-    initialTab = 'get-started';
+  document.addEventListener('click', async event => {
+    const button = event.target.closest?.('md-icon-button.code-copy, md-icon-button.section-link');
+    if (!button) return;
+    event.stopPropagation();
+    if (button.classList.contains('section-link')) {
+      const id = button.dataset.anchor;
+      const url = `${location.origin}${location.pathname}#${id}`;
+      history.replaceState(null, '', `#${id}`);
+      announce(await copyText(url) ? 'Link copied to clipboard' : 'Couldn’t copy the link');
+      return;
+    }
+    const code = button.closest('.comp-code-box, .code-block-wrapper')?.querySelector('code');
+    const text = code?.textContent.trim();
+    if (text) announce(await copyText(text) ? 'Copied to clipboard' : 'Couldn’t copy the code');
+  });
+
+  // =========================================================================
+  // 5. Seed color chips, color lab
+  // =========================================================================
+  const chipSets = [document.getElementById('preset-swatches'), document.getElementById('home-seed-chips')].filter(Boolean);
+  chipSets.forEach(set => {
+    for (const preset of SEED_PRESETS) {
+      const chip = document.createElement('md-chip');
+      chip.className = 'preset-swatch-item';
+      chip.setAttribute('variant', 'filter');
+      chip.setAttribute('label', preset.name);
+      chip.dataset.hex = preset.hex;
+      const swatch = document.createElement('span');
+      swatch.slot = 'leading-icon';
+      swatch.className = 'seed-swatch';
+      swatch.style.setProperty('--seed', preset.hex);
+      chip.append(swatch);
+      chip.addEventListener('change', () => setSeedHex(preset.hex));
+      set.append(chip);
+    }
+  });
+
+  const hueSlider = document.getElementById('hue-slider');
+  const chromaSlider = document.getElementById('chroma-slider');
+  const toneSlider = document.getElementById('tone-slider');
+  const hueValue = document.getElementById('hue-val-display');
+  const chromaValue = document.getElementById('chroma-val-display');
+  const toneValue = document.getElementById('tone-val-display');
+  const hexInput = document.getElementById('hex-code-input');
+  const variantSelect = document.getElementById('palette-variant-select');
+  const contrastControl = document.getElementById('contrast-segmented');
+
+  function syncColorControls({ fromSlider = null } = {}) {
+    const hex = seedHex().toLowerCase();
+    document.querySelectorAll('.preset-swatch-item').forEach(chip => {
+      chip.selected = chip.dataset.hex.toLowerCase() === hex;
+    });
+    if (hexInput && document.activeElement !== hexInput) hexInput.value = hex.toUpperCase();
+    if (hueSlider && fromSlider !== hueSlider) hueSlider.value = theme.hct.hue;
+    if (chromaSlider && fromSlider !== chromaSlider) chromaSlider.value = theme.hct.chroma;
+    if (toneSlider && fromSlider !== toneSlider) toneSlider.value = theme.hct.tone;
+    if (hueValue) hueValue.textContent = `${Math.round(theme.hct.hue)}°`;
+    if (chromaValue) chromaValue.textContent = `${Math.round(theme.hct.chroma)}`;
+    if (toneValue) toneValue.textContent = `${Math.round(theme.hct.tone)}`;
+    if (variantSelect && variantSelect.value !== theme.variant) variantSelect.value = theme.variant;
+    if (contrastControl) {
+      const index = CONTRAST_LEVELS.indexOf(theme.contrast);
+      if (contrastControl.getAttribute('selected-index') !== String(index)) contrastControl.setAttribute('selected-index', String(index));
+    }
   }
 
-  document.body.setAttribute('data-active-tab', initialTab);
-  if (initialTab === 'components') {
-    document.body.classList.remove('drawer-collapsed');
-  } else {
-    document.body.classList.add('drawer-collapsed');
+  function setSeedHex(hex) {
+    const rgb = hexToRgb(hex);
+    theme.hct = rgbToHct(rgb.r, rgb.g, rgb.b);
+    persistColor();
+    applyTheme();
   }
 
-  tabViews.forEach(view => {
-    view.classList.toggle('active', view.id === `tab-view-${initialTab}`);
-  });
-  if (railNavigation) railNavigation.selected = primaryTabs.indexOf(initialTab);
-  if (mobileNavigation) mobileNavigation.selected = primaryTabs.indexOf(initialTab);
-  catalogueDrawer.selected = primaryTabs.indexOf(initialTab);
+  let colorFrame = 0;
+  function scheduleColor(fromSlider) {
+    cancelAnimationFrame(colorFrame);
+    colorFrame = requestAnimationFrame(() => {
+      persistColor();
+      applyDynamicTheme(theme.hct, theme.dark, theme.variant);
+      syncColorControls({ fromSlider });
+    });
+  }
 
+  for (const [slider, key] of [[hueSlider, 'hue'], [chromaSlider, 'chroma'], [toneSlider, 'tone']]) {
+    slider?.addEventListener('input', event => {
+      theme.hct = { ...theme.hct, [key]: typeof event.detail?.value === 'number' ? event.detail.value : Number(slider.value) };
+      scheduleColor(slider);
+    });
+  }
 
-  railNavigation?.addEventListener('change', event => {
-    const tabId = primaryTabs[event.detail.index];
-    if (tabId) switchTab(tabId, true, true);
+  hexInput?.addEventListener('input', () => {
+    let value = String(hexInput.value || '').trim();
+    if (!value.startsWith('#')) value = `#${value}`;
+    if (/^#[0-9a-f]{6}$/i.test(value)) setSeedHex(value);
   });
 
-  mobileNavigation?.addEventListener('change', event => {
-    const tabId = primaryTabs[event.detail.index];
-    if (tabId) switchTab(tabId, true, true);
+  variantSelect?.addEventListener('change', () => {
+    theme.variant = resolvePaletteVariant(variantSelect.value);
+    storage.set(STORAGE_KEYS.PALETTE_VARIANT, theme.variant);
+    applyTheme();
   });
+
+  contrastControl?.addEventListener('change', event => {
+    const index = Number(event.detail?.selectedIndex ?? contrastControl.getAttribute('selected-index'));
+    theme.contrast = CONTRAST_LEVELS[index] ?? 'standard';
+    storage.set(STORAGE_KEYS.CONTRAST, theme.contrast);
+    applyTheme();
+  });
+
+  document.getElementById('reset-color-btn')?.addEventListener('click', () => {
+    theme.variant = 'tonal-spot';
+    theme.contrast = 'standard';
+    storage.set(STORAGE_KEYS.PALETTE_VARIANT, theme.variant);
+    storage.set(STORAGE_KEYS.CONTRAST, theme.contrast);
+    setSeedHex(SEED_PRESETS[0].hex);
+  });
+
+  applyTheme();
+
+  // Initial route, after the theme so first measurements use final tokens.
+  const initialHash = LEGACY_ANCHORS[location.hash.slice(1)] ?? location.hash.slice(1);
+  activeTab = PRIMARY_TABS.includes(initialHash) ? initialHash
+    : initialHash && document.getElementById(initialHash)?.closest('#tab-view-get-started') ? 'get-started'
+    : initialHash && document.getElementById(initialHash) ? 'components' : 'home';
+  switchTab(activeTab, { scroll: false, hash: false });
+  if (initialHash && !PRIMARY_TABS.includes(initialHash)) {
+    requestAnimationFrame(() => routeTo(initialHash, false));
+  }
+
+  // =========================================================================
+  // 6. Home examples
+  // =========================================================================
+  const heroSlider = document.getElementById('hero-live-slider');
+  const heroSliderValue = document.getElementById('hero-slider-val');
+  heroSlider?.addEventListener('input', event => {
+    const value = typeof event.detail?.value === 'number' ? event.detail.value : Number(heroSlider.value);
+    if (heroSliderValue) heroSliderValue.textContent = `${Math.round(value)}`;
+  });
+
+  // Progress animates with ProgressIndicatorDefaults.ProgressAnimationSpec:
+  // spring(dampingRatio = 1, stiffness = 50, visibilityThreshold = 0.001).
+  const heroProgress = document.getElementById('hero-wavy-progress');
+  const heroProgressValue = document.getElementById('hero-progress-val');
+  if (heroProgress) {
+    const steps = [{ target: 0.08, wait: 900 }, { target: 0.27, wait: 900 }, { target: 0.68, wait: 1100 },
+      { target: 0.96, wait: 900 }, { target: 1, wait: 2400 }, { target: 0, wait: 1200 }];
+    let step = 0, position = 0, velocity = 0, from = 0, start = 0;
+    const render = value => {
+      heroProgress.value = value * 100;
+      if (heroProgressValue) heroProgressValue.textContent = `${Math.round(value * 100)}%`;
+    };
+    const advance = () => {
+      const target = steps[step].target;
+      from = position; start = performance.now();
+      if (reducedMotion.matches || target === 0) {
+        position = target; velocity = 0; render(position);
+        step = (step + 1) % steps.length;
+        setTimeout(advance, steps[(step + steps.length - 1) % steps.length].wait);
+        return;
+      }
+      const startVelocity = velocity;
+      const frame = now => {
+        const state = SpringPhysics.solve({ from, to: target, velocity: startVelocity, dampingRatio: 1, stiffness: 50, time: (now - start) / 1000 });
+        position = state.position; velocity = state.velocity;
+        if (Math.abs(position - target) < 0.001 && Math.abs(velocity) < 0.001) {
+          position = target; velocity = 0; render(position);
+          const wait = steps[step].wait;
+          step = (step + 1) % steps.length;
+          setTimeout(advance, wait);
+          return;
+        }
+        render(position);
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    };
+    setTimeout(advance, 600);
+  }
+
+  // =========================================================================
+  // 7. Component examples
+  // =========================================================================
+  const openers = [['open-dialog-btn', 'sample-dialog'], ['open-bottom-sheet-btn', 'sample-bottom-sheet'],
+    ['open-side-sheet-btn', 'sample-side-sheet'], ['open-date-picker-btn', 'sample-date-picker'],
+    ['open-time-picker-btn', 'sample-time-picker']];
+  for (const [buttonId, targetId] of openers) {
+    const button = document.getElementById(buttonId), target = document.getElementById(targetId);
+    if (button && target) button.addEventListener('click', () => target.show());
+  }
 
   document.querySelectorAll('[data-toggle-rail]').forEach(button => {
     button.addEventListener('click', () => {
-      const rail = document.getElementById(button.dataset.toggleRail);
-      if (!rail) return;
-      rail.expanded = !rail.expanded;
-      button.textContent = rail.expanded ? 'Collapse rail' : 'Expand rail';
+      const demoRail = document.getElementById(button.dataset.toggleRail);
+      if (!demoRail) return;
+      demoRail.expanded = !demoRail.expanded;
+      button.textContent = demoRail.expanded ? 'Collapse rail' : 'Expand rail';
     });
   });
 
   document.querySelectorAll('[data-open-drawer], [data-close-drawer]').forEach(button => {
     button.addEventListener('click', () => {
-      const drawer = document.getElementById(button.dataset.openDrawer || button.dataset.closeDrawer);
-      if (!drawer) return;
-      if (button.hasAttribute('data-open-drawer')) drawer.show();
-      else drawer.close();
+      const demoDrawer = document.getElementById(button.dataset.openDrawer || button.dataset.closeDrawer);
+      if (!demoDrawer) return;
+      if (button.hasAttribute('data-open-drawer')) demoDrawer.show();
+      else demoDrawer.close();
     });
   });
-
-  catalogueDrawer.addEventListener('click', event => {
-    if (event.composedPath().some(node => node.matches?.('.item[role="tab"]'))) catalogueDrawer.close();
-  });
-  catalogueDrawer.addEventListener('change', event => {
-    const tabId = primaryTabs[event.detail.index];
-    if (tabId) switchTab(tabId, true, true);
-  });
-
-  // Generic navigation attribute handler: [data-navigate-tab]
-  document.querySelectorAll('[data-navigate-tab]').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tabId = el.getAttribute('data-navigate-tab');
-      if (tabId) switchTab(tabId, true, true);
-    });
-  });
-
-  // 4. Sub-Navigation Accordions & Links
-  function setAccordionOpen(accordion, open) {
-    accordion.classList.toggle('open', open);
-    accordion.querySelector('.sub-nav-accordion-header').setAttribute('aria-expanded', String(open));
-  }
-  document.querySelectorAll('.sub-nav-accordion').forEach(accordion => {
-    const header = accordion.querySelector('.sub-nav-accordion-header');
-    const content = accordion.querySelector('.sub-nav-accordion-content');
-    content.id = `catalogue-group-${accordion.dataset.group}`;
-    header.setAttribute('aria-controls', content.id);
-    header.setAttribute('aria-expanded', String(accordion.classList.contains('open')));
-    header.addEventListener('click', () => setAccordionOpen(accordion, !accordion.classList.contains('open')));
-  });
-  function setSectionSelection(targetId) {
-    subNavLinks.forEach(link => {
-      const active = link.dataset.target === targetId;
-      link.classList.toggle('active', active);
-      if (active) {
-        link.setAttribute('aria-current', 'location');
-        const accordion = link.closest('.sub-nav-accordion');
-        if (accordion) setAccordionOpen(accordion, true);
-      } else link.removeAttribute('aria-current');
-    });
-  }
-
-  function navigateToSection(targetId, smooth = true) {
-    switchTab('components', false, false);
-    history.replaceState(null, '', `#${targetId}`);
-
-    const targetEl = document.getElementById(targetId);
-    if (targetEl) {
-      targetEl.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'start' });
-      setSectionSelection(targetId);
-    }
-  }
-
-  subNavLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      const targetId = link.getAttribute('href')?.replace('#', '') || link.dataset.target;
-      if (targetId) {
-        e.preventDefault();
-        navigateToSection(targetId, true);
-      }
-    });
-  });
-
-  // Delegate in-page category title anchor clicks
-  document.addEventListener('click', (e) => {
-    const anchor = e.target.closest('a[href^="#"]');
-    if (!anchor || anchor.closest('.sub-nav-drawer') || anchor.closest('.app-nav-rail')) return;
-    const targetId = anchor.getAttribute('href')?.replace('#', '');
-    if (targetId) {
-      const targetEl = document.getElementById(targetId);
-      if (targetEl) {
-        e.preventDefault();
-        navigateToSection(targetId, true);
-      }
-    }
-  });
-
-  // 5. Initial Hash Router (Handles direct URL / F5 refresh)
-  function handleRouteFromHash() {
-    const rawHash = (window.location.hash || '').replace('#', '').trim();
-    if (!rawHash || rawHash === 'home') {
-      switchTab('home', false, false);
-      return;
-    }
-
-    if (rawHash === 'get-started' || rawHash === 'getstarted') {
-      switchTab('get-started', false, false);
-      return;
-    }
-
-    if (rawHash === 'components' || rawHash === 'overview') {
-      switchTab('components', false, false);
-      const overviewEl = document.getElementById('overview');
-      if (overviewEl) overviewEl.scrollIntoView({ behavior: 'instant', block: 'start' });
-      setSectionSelection('overview');
-      return;
-    }
-
-    // Any other section anchor (e.g. #tabs, #segmented-buttons, #chips, #buttons, etc.)
-    navigateToSection(rawHash, false);
-  }
-
-  window.addEventListener('hashchange', handleRouteFromHash);
-  handleRouteFromHash();
-
-  // 6. Scroll-spy active drawer item
-  const componentSections = [...document.querySelectorAll('#tab-view-components .category-section, #overview')];
-  const scrollObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const id = entry.target.id;
-        setSectionSelection(id);
-      }
-    });
-  }, { rootMargin: '-20% 0px -70% 0px' });
-  componentSections.forEach(sec => sec && scrollObserver.observe(sec));
-
-  // 6. Interactive Demo Wiring (Dialog, Sheet, Time Picker, Snackbar)
-  const openDialogBtn = document.getElementById('open-dialog-btn');
-  const sampleDialog = document.getElementById('sample-dialog');
-  if (openDialogBtn && sampleDialog) {
-    openDialogBtn.addEventListener('click', () => sampleDialog.show());
-  }
-
-  const openBottomSheetBtn = document.getElementById('open-bottom-sheet-btn');
-  const sampleBottomSheet = document.getElementById('sample-bottom-sheet');
-  if (openBottomSheetBtn && sampleBottomSheet) {
-    openBottomSheetBtn.addEventListener('click', () => sampleBottomSheet.show());
-  }
-
-  const openSideSheetBtn = document.getElementById('open-side-sheet-btn');
-  const sampleSideSheet = document.getElementById('sample-side-sheet');
-  if (openSideSheetBtn && sampleSideSheet) {
-    openSideSheetBtn.addEventListener('click', () => sampleSideSheet.show());
-  }
 
   const snackbarExamples = [...document.querySelectorAll('#snackbars md-snackbar')];
-  const snackbarMain = document.querySelector('main.main'), snackbarBottomNav = document.querySelector('md-navigation-bar.mobile-bottom-nav');
-  const positionSnackbarExamples = () => {
-    const rect = snackbarMain.getBoundingClientRect();
-    const left = Math.max(0, rect.left) + 16, right = Math.max(0, window.innerWidth - rect.right) + 16;
-    const bottom = (getComputedStyle(snackbarBottomNav).display === 'none' ? 0 : snackbarBottomNav.getBoundingClientRect().height) + 16;
-    snackbarExamples.forEach(snackbar => {
-      const rtl = getComputedStyle(snackbar).direction === 'rtl';
-      snackbar.style.setProperty('--md-snackbar-inline-start', (rtl ? right : left) + 'px');
-      snackbar.style.setProperty('--md-snackbar-inline-end', (rtl ? left : right) + 'px');
-      snackbar.style.setProperty('--md-snackbar-bottom', bottom + 'px');
-    });
-  };
-  const snackbarLayout = new ResizeObserver(positionSnackbarExamples); snackbarLayout.observe(snackbarMain); snackbarLayout.observe(snackbarBottomNav);
-  const snackbarDirection = new MutationObserver(positionSnackbarExamples);
-  snackbarDirection.observe(document.documentElement, {attributes: true, attributeFilter: ['dir']});
-  snackbarDirection.observe(document.body, {attributes: true, attributeFilter: ['dir']});
+  const positionSnackbarExamples = () => snackbarExamples.concat(appSnackbar ? [appSnackbar] : []).forEach(positionSnackbar);
+  const snackbarLayout = new ResizeObserver(positionSnackbarExamples);
+  snackbarLayout.observe(mainEl);
+  snackbarLayout.observe(bottomNav);
+  new MutationObserver(positionSnackbarExamples).observe(root, { attributes: true, attributeFilter: ['dir'] });
   positionSnackbarExamples();
   document.querySelectorAll('[data-snackbar-target]').forEach(button => {
     const snackbar = document.getElementById(button.dataset.snackbarTarget);
     if (snackbar) button.addEventListener('click', () => {
       document.querySelectorAll('#snackbars md-snackbar[open]').forEach(other => { if (other !== snackbar) other.close(); });
-      positionSnackbarExamples();
+      if (appSnackbar?.open) appSnackbar.close();
+      positionSnackbar(snackbar);
       snackbar.show();
     });
   });
 
-  const openDatePickerBtn = document.getElementById('open-date-picker-btn');
-  const sampleDatePicker = document.getElementById('sample-date-picker');
-  if (openDatePickerBtn && sampleDatePicker) {
-    openDatePickerBtn.addEventListener('click', () => sampleDatePicker.show());
-  }
+  // =========================================================================
+  // 8. Code highlighting (color roles only)
+  // =========================================================================
+  // One left-to-right scan, so a URL inside a string is never read as a comment.
+  const SYNTAX = new RegExp([
+    '(?<comment>&lt;!--[\\s\\S]*?--&gt;|\\/\\/[^\\n]*)',
+    '(?<string>"(?:\\\\.|[^"\\\\\\n])*"|\'(?:\\\\.|[^\'\\\\\\n])*\'|`(?:\\\\.|[^`\\\\])*`)',
+    '(?<tag>&lt;\\/?[a-zA-Z][\\w-]*|\\/?&gt;)',
+    '(?<attr>\\b[a-zA-Z_][\\w-]*(?==))',
+    '(?<keyword>\\b(?:import|from|export|default|const|let|return|function|class|new|if|else)\\b)',
+    '(?<cmd>\\b(?:npm|pnpm|bun|npx|yarn)\\b(?= ))',
+    '(?<pkg>@materialwebunofficial\\/md3e-web[\\w./-]*)',
+    '(?<num>\\b\\d+(?:\\.\\d+)?\\b|\\b(?:true|false|null|undefined)\\b)',
+    '(?<func>\\b(?:applyDynamicTheme|useEffect|defineConfig|createElement|addEventListener|setAttribute|startsWith)\\b)'
+  ].join('|'), 'g');
 
-  const openTimePickerBtn = document.getElementById('open-time-picker-btn');
-  const sampleTimePicker = document.getElementById('sample-time-picker');
-  if (openTimePickerBtn && sampleTimePicker) {
-    openTimePickerBtn.addEventListener('click', () => sampleTimePicker.show());
-  }
-
-  // 6.1 Expressive Slider Independent Binding
-  const heroLiveSlider = document.getElementById('hero-live-slider');
-  const heroSliderVal = document.getElementById('hero-slider-val');
-
-  if (heroLiveSlider) {
-    heroLiveSlider.addEventListener('input', (e) => {
-      const val = typeof e.detail?.value === 'number' ? Math.round(e.detail.value) : Math.round(parseFloat(heroLiveSlider.value || '50'));
-      if (heroSliderVal) heroSliderVal.textContent = `${val}`;
-    });
-  }
-
-  // 6.2 Autonomous Organic Download Simulation Loop for Wavy Progress (8%, 27%, 68%, 96%, 100%)
-  const heroWavyProgress = document.getElementById('hero-wavy-progress');
-  const heroProgressVal = document.getElementById('hero-progress-val');
-
-  if (heroWavyProgress) {
-    const downloadSteps = [
-      { target: 8, duration: 750, wait: 400 },
-      { target: 27, duration: 950, wait: 350 },
-      { target: 68, duration: 1200, wait: 500 },
-      { target: 96, duration: 850, wait: 450 },
-      { target: 100, duration: 400, wait: 2000 },
-      { target: 0, duration: 300, wait: 600 }
-    ];
-
-    let stepIndex = 0;
-    let currentVal = 0;
-
-    function animateToNextStep() {
-      const step = downloadSteps[stepIndex];
-      const startVal = currentVal;
-      const targetVal = step.target;
-      const startTime = performance.now();
-
-      function stepFrame(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / step.duration, 1);
-        // Emphasized Decelerate Easing (M3)
-        const ease = 1 - Math.pow(1 - progress, 3);
-        const floatVal = startVal + (targetVal - startVal) * ease;
-        currentVal = floatVal;
-
-        if (heroWavyProgress) heroWavyProgress.value = floatVal;
-        if (heroProgressVal) heroProgressVal.textContent = `${Math.round(floatVal)}%`;
-
-        if (progress < 1) {
-          requestAnimationFrame(stepFrame);
-        } else {
-          currentVal = targetVal;
-          if (heroWavyProgress) heroWavyProgress.value = targetVal;
-          if (heroProgressVal) heroProgressVal.textContent = `${Math.round(targetVal)}%`;
-
-          stepIndex = (stepIndex + 1) % downloadSteps.length;
-          setTimeout(animateToNextStep, step.wait);
-        }
-      }
-
-      requestAnimationFrame(stepFrame);
-    }
-
-    setTimeout(animateToNextStep, 600);
-  }
-
-  // 7. Dynamic Color Seed Dot Engine (Home Experiment Band & Elsewhere)
-  function applyColorHex(hex) {
-    syncAllFromHex(hex);
-  }
-
-  document.querySelectorAll('.quick-color-dot, .seed-dot').forEach(dot => {
-    dot.addEventListener('click', () => {
-      const hex = dot.dataset.hex;
-      if (hex) applyColorHex(hex);
-    });
-  });
-
-  // 8. Framework Code Switcher Tabs (Get Started Tab)
-  const frameworkBtns = document.querySelectorAll('.framework-tab-btn');
-  const frameworkPanels = document.querySelectorAll('.framework-tab-panel');
-
-  frameworkBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const framework = btn.dataset.framework;
-      frameworkBtns.forEach(b => b.classList.toggle('active', b.dataset.framework === framework));
-      frameworkPanels.forEach(p => p.classList.toggle('active', p.dataset.framework === framework));
-      highlightAllCodeBlocks();
-    });
-  });
-
-  // 9. Unified Code Copy Engine
-  async function handleSnippetCopy(btn, targetContainer) {
-    const codeEl = targetContainer.querySelector('code');
-    if (!codeEl) return;
-    const textToCopy = codeEl.textContent.trim();
-    if (!textToCopy) return;
-
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(textToCopy);
-      } else {
-        const ta = document.createElement('textarea');
-        ta.value = textToCopy;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-      }
-
-      const originalHTML = btn.innerHTML;
-      btn.classList.add('copied');
-      
-      // If the button originally had text (like in Get Started .copy-code-btn), include "Copied!" text
-      if (btn.classList.contains('copy-code-btn') && originalHTML.includes('Copy')) {
-        btn.innerHTML = `<span class="mat-sym" style="font-size: 16px; color: var(--md-sys-color-on-primary, #ffffff) !important;">check</span> Copied!`;
-      } else {
-        btn.innerHTML = `<span class="mat-sym" style="font-size: 16px; color: var(--md-sys-color-on-primary, #ffffff) !important;">check</span>`;
-      }
-
-      setTimeout(() => {
-        btn.classList.remove('copied');
-        btn.innerHTML = originalHTML;
-      }, 1600);
-    } catch (e) {
-      console.warn('Clipboard write failed:', e);
-    }
-  }
-
-  // Bind to all copy buttons across the entire site
-  document.querySelectorAll('.copy-code-btn, .comp-code-copy-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const container = btn.closest('.code-block-wrapper, .comp-code-box, .install-snippet-box, .next-steps-card');
-      if (container) {
-        handleSnippetCopy(btn, container);
-      }
-    });
-  });
-
-  // 9.2 Section Heading Copy Link Anchor Buttons
-  document.querySelectorAll('.copy-anchor-btn').forEach(btn => {
-    btn.addEventListener('pointerdown', () => {
-      pressScale(btn, 0.88, 'expressiveSpatialFast');
-    });
-    const releaseAnchor = () => {
-      releaseScale(btn, 0.88, 'expressiveSpatialMedium');
-    };
-    btn.addEventListener('pointerup', releaseAnchor);
-    btn.addEventListener('pointercancel', releaseAnchor);
-
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const anchor = btn.dataset.anchor;
-      const url = `${window.location.origin}${window.location.pathname}#${anchor}`;
-
-      try {
-        await navigator.clipboard.writeText(url);
-      } catch (_) {
-        const input = document.createElement('input');
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        input.remove();
-      }
-
-      if (history.pushState) {
-        history.pushState(null, null, `#${anchor}`);
-      }
-
-      const tooltip = btn.querySelector('.copy-anchor-tooltip');
-      btn.classList.add('copied');
-      if (tooltip) tooltip.textContent = 'Link copied';
-
-      setTimeout(() => {
-        btn.classList.remove('copied');
-        if (tooltip) tooltip.textContent = 'Copy link';
-      }, 2000);
-    });
-  });
-
-  // 10. Dynamic HCT Color Customizer Wiring (#theming section)
-  const presetSwatchesContainer = document.getElementById('preset-swatches');
-  const hueSlider = document.getElementById('hue-slider');
-  const chromaSlider = document.getElementById('chroma-slider');
-  const toneSlider = document.getElementById('tone-slider');
-  const hueValDisplay = document.getElementById('hue-val-display');
-  const chromaValDisplay = document.getElementById('chroma-val-display');
-  const toneValDisplay = document.getElementById('tone-val-display');
-  const nativeColorPicker = document.getElementById('native-color-picker');
-  const hexCodeInput = document.getElementById('hex-code-input');
-  const resetColorBtn = document.getElementById('reset-color-btn');
-
-  const customColorSwatchDisplay = document.getElementById('custom-color-swatch-display');
-
-  function applyHctColor(updateInputs = true) {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const scheme = document.documentElement.getAttribute('data-theme-scheme') || 'expressive';
-    applyDynamicTheme(hctState, isDark, scheme);
-
-    const hex = hctToHex(hctState.hue, hctState.chroma, hctState.tone);
-
-    try {
-      localStorage.setItem(STORAGE_KEYS.HCT_STATE, JSON.stringify(hctState));
-      localStorage.setItem(STORAGE_KEYS.HCT_VERSION, 'mcu-0.4.0');
-      localStorage.setItem(STORAGE_KEYS.SEED_HEX, hex);
-    } catch (_) {}
-
-    if (customColorSwatchDisplay) {
-      customColorSwatchDisplay.style.backgroundColor = hex;
-    }
-
-    if (updateInputs) {
-      if (nativeColorPicker) nativeColorPicker.value = hex;
-      if (hexCodeInput) hexCodeInput.value = hex.toUpperCase();
-    }
-
-    if (presetSwatchesContainer) {
-      presetSwatchesContainer.querySelectorAll('.preset-swatch-item').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.hex.toLowerCase() === hex.toLowerCase());
-      });
-    }
-
-    document.querySelectorAll('.quick-color-dot, .seed-dot').forEach(dot => {
-      dot.classList.toggle('active', dot.dataset.hex.toLowerCase() === hex.toLowerCase());
-    });
-  }
-
-  function syncAllFromHex(hex) {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const scheme = document.documentElement.getAttribute('data-theme-scheme') || 'expressive';
-
-    const rgb = hexToRgb(hex);
-    const hct = rgbToHct(rgb.r, rgb.g, rgb.b);
-
-    hctState.hue = hct.hue;
-    hctState.chroma = hct.chroma;
-    hctState.tone = hct.tone;
-
-    try {
-      localStorage.setItem(STORAGE_KEYS.HCT_STATE, JSON.stringify(hctState));
-      localStorage.setItem(STORAGE_KEYS.HCT_VERSION, 'mcu-0.4.0');
-      localStorage.setItem(STORAGE_KEYS.SEED_HEX, hex);
-    } catch (_) {}
-
-    applyDynamicTheme(hctState, isDark, scheme);
-
-    if (customColorSwatchDisplay) {
-      customColorSwatchDisplay.style.backgroundColor = hex;
-    }
-
-    if (hueSlider) hueSlider.value = hctState.hue;
-    if (chromaSlider) chromaSlider.value = hctState.chroma;
-    if (toneSlider) toneSlider.value = hctState.tone;
-
-    if (hueValDisplay) hueValDisplay.textContent = `${Math.round(hctState.hue)}°`;
-    if (chromaValDisplay) chromaValDisplay.textContent = `${Math.round(hctState.chroma)}`;
-    if (toneValDisplay) toneValDisplay.textContent = `${Math.round(hctState.tone)}`;
-
-    if (nativeColorPicker) nativeColorPicker.value = hex;
-    if (hexCodeInput) hexCodeInput.value = hex.toUpperCase();
-
-    if (presetSwatchesContainer) {
-      presetSwatchesContainer.querySelectorAll('.preset-swatch-item').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.hex.toLowerCase() === hex.toLowerCase());
-      });
-    }
-
-    document.querySelectorAll('.quick-color-dot, .seed-dot').forEach(dot => {
-      dot.classList.toggle('active', dot.dataset.hex.toLowerCase() === hex.toLowerCase());
-    });
-  }
-
-  let hctRafId = null;
-  function scheduleApplyHctColor(updateInputs = true) {
-    if (hctRafId) cancelAnimationFrame(hctRafId);
-    hctRafId = requestAnimationFrame(() => {
-      applyHctColor(updateInputs);
-      hctRafId = null;
-    });
-  }
-
-  if (presetSwatchesContainer) {
-    const currentInitHex = hctToHex(hctState.hue, hctState.chroma, hctState.tone).toLowerCase();
-    presetSwatchesContainer.innerHTML = MD3_PRESETS.map(p => `
-      <button class="preset-swatch-item ${p.hex.toLowerCase() === currentInitHex ? 'active' : ''}" data-hex="${p.hex}" type="button">
-        <span class="preset-swatch-dot" style="background-color: ${p.hex};"></span>
-        <span>${p.name}</span>
-      </button>
-    `).join('');
-
-    presetSwatchesContainer.querySelectorAll('.preset-swatch-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const hex = btn.dataset.hex;
-        syncAllFromHex(hex);
-      });
-    });
-  }
-
-  if (hueSlider) {
-    hueSlider.addEventListener('input', (e) => {
-      const val = typeof e.detail?.value === 'number' ? e.detail.value : parseFloat(hueSlider.value);
-      hctState.hue = val;
-      if (hueValDisplay) hueValDisplay.textContent = `${Math.round(val)}°`;
-      scheduleApplyHctColor(true);
-    });
-  }
-
-  if (chromaSlider) {
-    chromaSlider.addEventListener('input', (e) => {
-      const val = typeof e.detail?.value === 'number' ? e.detail.value : parseFloat(chromaSlider.value);
-      hctState.chroma = val;
-      if (chromaValDisplay) chromaValDisplay.textContent = `${Math.round(val)}`;
-      scheduleApplyHctColor(true);
-    });
-  }
-
-  if (toneSlider) {
-    toneSlider.addEventListener('input', (e) => {
-      const val = typeof e.detail?.value === 'number' ? e.detail.value : parseFloat(toneSlider.value);
-      hctState.tone = val;
-      if (toneValDisplay) toneValDisplay.textContent = `${Math.round(val)}`;
-      scheduleApplyHctColor(true);
-    });
-  }
-
-  // Initial Sync from loaded / persisted HCT state
-  if (hueSlider) hueSlider.value = hctState.hue;
-  if (chromaSlider) chromaSlider.value = hctState.chroma;
-  if (toneSlider) toneSlider.value = hctState.tone;
-  if (hueValDisplay) hueValDisplay.textContent = `${Math.round(hctState.hue)}°`;
-  if (chromaValDisplay) chromaValDisplay.textContent = `${Math.round(hctState.chroma)}`;
-  if (toneValDisplay) toneValDisplay.textContent = `${Math.round(hctState.tone)}`;
-  applyHctColor(true);
-
-  // HSV / RGB conversion helpers for 2D picker
-  function hsvToRgb(h, s, v) {
-    const f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
-    return {
-      r: Math.round(f(5) * 255),
-      g: Math.round(f(3) * 255),
-      b: Math.round(f(1) * 255)
-    };
-  }
-
-  function rgbToHsv(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    const d = max - min;
-    let h = 0;
-    const s = max === 0 ? 0 : d / max;
-    const v = max;
-    if (max !== min) {
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-      }
-      h /= 6;
-    }
-    return { h: h * 360, s, v };
-  }
-
-  function rgbToHexStr(r, g, b) {
-    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
-  }
-
-  // MD3E Color Picker Popover Elements
-  const md3eColorPopover = document.getElementById('md3e-color-popover');
-  const popoverCloseBtn = document.getElementById('popover-close-btn');
-  const popoverApplyBtn = document.getElementById('popover-apply-btn');
-  const colorSvArea = document.getElementById('color-sv-area');
-  const colorSvHandle = document.getElementById('color-sv-handle');
-  const colorHueBar = document.getElementById('color-hue-bar');
-  const colorHueHandle = document.getElementById('color-hue-handle');
-  const popoverHexVal = document.getElementById('popover-hex-val');
-
-  let currentHsv = { h: 280, s: 0.6, v: 0.64 };
-
-  function updatePopoverControls(hex) {
-    if (popoverHexVal) popoverHexVal.textContent = hex.toUpperCase();
-    const rgb = hexToRgb(hex);
-    currentHsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-
-    if (colorSvArea) {
-      const pureHueRgb = hsvToRgb(currentHsv.h, 1, 1);
-      colorSvArea.style.backgroundColor = rgbToHexStr(pureHueRgb.r, pureHueRgb.g, pureHueRgb.b);
-    }
-    if (colorSvHandle) {
-      colorSvHandle.style.left = `${Math.min(100, Math.max(0, currentHsv.s * 100))}%`;
-      colorSvHandle.style.top = `${Math.min(100, Math.max(0, (1 - currentHsv.v) * 100))}%`;
-    }
-    if (colorHueHandle) {
-      colorHueHandle.style.left = `${Math.min(100, Math.max(0, (currentHsv.h / 360) * 100))}%`;
-    }
-  }
-
-  function openPopover() {
-    if (!md3eColorPopover) return;
-    md3eColorPopover.removeAttribute('hidden');
-    md3eColorPopover.style.display = 'flex';
-    customColorSwatchDisplay?.setAttribute('aria-expanded', 'true');
-    const curHex = hctToHex(hctState.hue, hctState.chroma, hctState.tone);
-    updatePopoverControls(curHex);
-  }
-
-  function closePopover() {
-    if (!md3eColorPopover) return;
-    md3eColorPopover.setAttribute('hidden', '');
-    md3eColorPopover.style.display = 'none';
-    customColorSwatchDisplay?.setAttribute('aria-expanded', 'false');
-  }
-
-  function togglePopover() {
-    const isHidden = md3eColorPopover?.hasAttribute('hidden') || md3eColorPopover?.style.display === 'none';
-    if (isHidden) {
-      openPopover();
-    } else {
-      closePopover();
-    }
-  }
-
-  if (customColorSwatchDisplay) {
-    customColorSwatchDisplay.addEventListener('pointerdown', () => {
-      pressScale(customColorSwatchDisplay, 0.88, 'expressiveSpatialFast');
-    });
-    const releaseSwatch = () => {
-      releaseScale(customColorSwatchDisplay, 0.88, 'expressiveSpatialMedium');
-    };
-    customColorSwatchDisplay.addEventListener('pointerup', releaseSwatch);
-    customColorSwatchDisplay.addEventListener('pointercancel', releaseSwatch);
-
-    customColorSwatchDisplay.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      togglePopover();
-    });
-  }
-
-  if (popoverCloseBtn) {
-    popoverCloseBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closePopover();
-    });
-  }
-
-  if (popoverApplyBtn) {
-    popoverApplyBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closePopover();
-    });
-  }
-
-  document.addEventListener('click', (e) => {
-    if (!md3eColorPopover || md3eColorPopover.hasAttribute('hidden')) return;
-    const wrapper = document.getElementById('custom-color-swatch-wrapper');
-    if (wrapper && !wrapper.contains(e.target)) {
-      closePopover();
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && md3eColorPopover && !md3eColorPopover.hasAttribute('hidden')) {
-      closePopover();
-    }
-  });
-
-  // 2D SV Canvas Pointer Interaction
-  if (colorSvArea) {
-    let svDragging = false;
-    const updateSvFromPointer = (e) => {
-      const rect = colorSvArea.getBoundingClientRect();
-      const x = Math.min(rect.width, Math.max(0, e.clientX - rect.left));
-      const y = Math.min(rect.height, Math.max(0, e.clientY - rect.top));
-      const s = x / rect.width;
-      const v = 1 - (y / rect.height);
-      currentHsv.s = s;
-      currentHsv.v = v;
-      if (colorSvHandle) {
-        colorSvHandle.style.left = `${s * 100}%`;
-        colorSvHandle.style.top = `${(1 - v) * 100}%`;
-      }
-      const rgb = hsvToRgb(currentHsv.h, currentHsv.s, currentHsv.v);
-      const hex = rgbToHexStr(rgb.r, rgb.g, rgb.b);
-      syncAllFromHex(hex);
-      if (popoverHexVal) popoverHexVal.textContent = hex;
-    };
-
-    colorSvArea.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      svDragging = true;
-      colorSvArea.setPointerCapture?.(e.pointerId);
-      updateSvFromPointer(e);
-    });
-
-    colorSvArea.addEventListener('pointermove', (e) => {
-      if (!svDragging) return;
-      updateSvFromPointer(e);
-    });
-
-    const endSv = (e) => {
-      if (svDragging) {
-        svDragging = false;
-        try { colorSvArea.releasePointerCapture?.(e.pointerId); } catch (_) {}
-      }
-    };
-    colorSvArea.addEventListener('pointerup', endSv);
-    colorSvArea.addEventListener('pointercancel', endSv);
-  }
-
-  // Hue Bar Pointer Interaction
-  if (colorHueBar) {
-    let hueDragging = false;
-    const updateHueFromPointer = (e) => {
-      const rect = colorHueBar.getBoundingClientRect();
-      const x = Math.min(rect.width, Math.max(0, e.clientX - rect.left));
-      const ratio = x / rect.width;
-      const h = Math.min(360, Math.max(0, ratio * 360));
-      currentHsv.h = h;
-      if (colorHueHandle) {
-        colorHueHandle.style.left = `${ratio * 100}%`;
-      }
-      if (colorSvArea) {
-        const pureHueRgb = hsvToRgb(h, 1, 1);
-        colorSvArea.style.backgroundColor = rgbToHexStr(pureHueRgb.r, pureHueRgb.g, pureHueRgb.b);
-      }
-      const rgb = hsvToRgb(currentHsv.h, currentHsv.s, currentHsv.v);
-      const hex = rgbToHexStr(rgb.r, rgb.g, rgb.b);
-      syncAllFromHex(hex);
-      if (popoverHexVal) popoverHexVal.textContent = hex;
-    };
-
-    colorHueBar.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      hueDragging = true;
-      colorHueBar.setPointerCapture?.(e.pointerId);
-      updateHueFromPointer(e);
-    });
-
-    colorHueBar.addEventListener('pointermove', (e) => {
-      if (!hueDragging) return;
-      updateHueFromPointer(e);
-    });
-
-    const endHue = (e) => {
-      if (hueDragging) {
-        hueDragging = false;
-        try { colorHueBar.releasePointerCapture?.(e.pointerId); } catch (_) {}
-      }
-    };
-    colorHueBar.addEventListener('pointerup', endHue);
-    colorHueBar.addEventListener('pointercancel', endHue);
-  }
-
-  // Swatches inside Popover
-  document.querySelectorAll('.popover-swatch').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const hex = btn.dataset.hex;
-      if (hex) {
-        syncAllFromHex(hex);
-        updatePopoverControls(hex);
-      }
-    });
-  });
-
-  if (hexCodeInput) {
-    hexCodeInput.addEventListener('input', (e) => {
-      let val = e.target.value.trim();
-      if (!val.startsWith('#')) val = '#' + val;
-      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-        syncAllFromHex(val);
-        updatePopoverControls(val);
-      }
-    });
-  }
-
-  if (resetColorBtn) {
-    resetColorBtn.addEventListener('click', () => {
-      Object.assign(hctState, rgbToHct(103, 80, 164));
-      applyHctColor(true);
-      if (hueSlider) hueSlider.value = 300;
-      if (chromaSlider) chromaSlider.value = 48;
-      if (toneSlider) toneSlider.value = 40;
-      if (hueValDisplay) hueValDisplay.textContent = '300°';
-      if (chromaValDisplay) chromaValDisplay.textContent = '48';
-      if (toneValDisplay) toneValDisplay.textContent = '40';
-      const hex = hctToHex(300, 48, 40);
-      updatePopoverControls(hex);
-    });
-  }
-
-  // 11. Built-in Micro Syntax Highlighter
   function highlightAllCodeBlocks() {
-    document.querySelectorAll('.code-block-wrapper pre code, .comp-code-box code, .install-snippet-box code').forEach(el => {
+    document.querySelectorAll('.code-block-wrapper pre code, .comp-code-box code').forEach(el => {
       if (el.dataset.highlighted) return;
-      const text = el.textContent;
-
-      const tokens = [];
-      function addToken(content, cls) {
-        const id = `@@@MD3E_TK_${tokens.length}@@@`;
-        tokens.push(`<span class="${cls}">${content}</span>`);
-        return id;
-      }
-
-      // Step 1: Escape HTML entities from raw source text
-      let raw = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-      // Step 2: Extract & tokenize Comments (<!-- ... -->, // ..., # ...)
-      raw = raw.replace(/(&lt;!--[\s\S]*?--&gt;|\/\/[^\n]*|#[^\n]*)/g, m => addToken(m, 'syn-comment'));
-
-      // Step 3: Extract & tokenize Strings ("...", '...', `...`)
-      raw = raw.replace(/(&quot;(?:\\&quot;|[^&"\n])*&quot;|'(?:\\'|[^'\n])*'|"(?:\\"|[^"\n])*"`?|`(?:\\`|[^`])*`)/g, m => addToken(m, 'syn-string'));
-
-      // Step 4: Extract & tokenize HTML / Web Component tags (&lt;/?tag-name and &gt;)
-      raw = raw.replace(/(&lt;\/?[a-zA-Z0-9_-]+)/g, m => addToken(m, 'syn-tag'));
-      raw = raw.replace(/(&gt;)/g, m => addToken(m, 'syn-tag'));
-
-      // Step 5: Extract & tokenize HTML attributes before '='
-      raw = raw.replace(/\b([a-zA-Z0-9_-]+)(?==)/g, m => addToken(m, 'syn-attr'));
-
-      // Step 5.1: Standalone boolean attributes
-      raw = raw.replace(/\s(interactive|toggle|selected|dismissible|multi-select)\b/g, (m, p1) => ' ' + addToken(p1, 'syn-attr'));
-
-      // Step 6: CLI Commands & Package Names
-      raw = raw.replace(/\b(npm|pnpm|bun|npx|yarn)\b/g, m => addToken(m, 'syn-cmd'));
-      raw = raw.replace(/\b(@materialwebunofficial\/md3e-web|md3e-web-unofficial|md3e-web)\b/g, m => addToken(m, 'syn-pkg'));
-
-      // Step 7: Language Keywords
-      raw = raw.replace(/\b(import|from|export|default|const|let|var|return|function|class|extends|new|if|else|install|add|standalone|schemas|template|selector)\b/g, m => addToken(m, 'syn-keyword'));
-
-      // Step 8: Numbers & Booleans
-      raw = raw.replace(/\b(\d+(?:\.\d+)?|true|false|null|undefined)\b/g, m => addToken(m, 'syn-num'));
-
-      // Step 9: Functions
-      raw = raw.replace(/\b(applyDynamicTheme|SpringPhysics|generateKeyframes|useEffect|defineConfig|animate|querySelector|querySelectorAll|addEventListener|startsWith)\b/g, m => addToken(m, 'syn-func'));
-
-      // Step 10: Re-insert all tokens
-      for (let j = 0; j < tokens.length; j++) {
-        raw = raw.replace(`@@@MD3E_TK_${j}@@@`, tokens[j]);
-      }
-
-      el.innerHTML = raw;
+      const escaped = el.textContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      el.innerHTML = escaped.replace(SYNTAX, (match, ...args) => {
+        const groups = args.at(-1);
+        const kind = Object.keys(groups).find(name => groups[name] !== undefined);
+        return `<span class="syn-${kind}">${match}</span>`;
+      });
       el.dataset.highlighted = 'true';
     });
   }
 
   highlightAllCodeBlocks();
 
-
   // =========================================================================
-  // 10. AMBIENT SEQUENTIAL BACKGROUND WAVE ENGINE (MD3E SHOWCASE EXCLUSIVE)
+  // 9. AMBIENT SEQUENTIAL BACKGROUND WAVE ENGINE (MD3E SHOWCASE EXCLUSIVE)
   // =========================================================================
   function initAmbientSequentialWave() {
     const stageWrapper = document.getElementById('ambientStageWrapper');
@@ -1463,6 +909,7 @@ export function initShowcase() {
 
   initAmbientSequentialWave();
 
+
   // Floating toolbar state belongs to its caller, as in the Compose samples.
   document.querySelectorAll('[data-toolbar-shape]').forEach(control => {
     const toolbar = document.getElementById(control.dataset.toolbarShape);
@@ -1555,6 +1002,14 @@ export function initShowcase() {
   const resetBtn = document.getElementById('stepper-reset-btn');
 
   if (stepper) {
+    const syncStepperActions = () => {
+      const steps = stepper.getSteps();
+      if (prevBtn) prevBtn.disabled = !steps.slice(0, stepper.activeStep).some(step => !step.disabled);
+      if (nextBtn) nextBtn.disabled = !steps.slice(stepper.activeStep + 1).some(step => !step.disabled);
+    };
+    stepper.addEventListener('step-change', syncStepperActions);
+    stepper.addEventListener('reset', syncStepperActions);
+    syncStepperActions();
     nextBtn?.addEventListener('click', () => {
       stepper.next();
     });

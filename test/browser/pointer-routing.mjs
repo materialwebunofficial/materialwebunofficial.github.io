@@ -79,6 +79,11 @@ export async function testPointerRouting(browser,base){
   for(const tag of ['md-checkbox','md-radio-button','md-switch'])for(const type of ['Mouse','Touch','Stylus']){
    await page.mouse.move(1,1);
    await page.evaluate(tag=>{document.querySelector('#fixture').innerHTML=`<md-chip id="routing-parent" variant="filter" style="position:fixed;left:100px;top:100px"><${tag} id="routing-child" style="pointer-events:auto;--md-minimum-interactive-component-size:0px"></${tag}></md-chip>`;window.routingParentChanges=0;document.querySelector('#routing-parent').addEventListener('change',event=>{if(event.target===event.currentTarget)window.routingParentChanges++;});},tag);
+   // Native targeting fixtures describe measured placeables. The parser connects
+   // the Chip before its light-DOM control; wait for both slot/ResizeObserver
+   // layouts before querying the pen coordinate (an unpainted child can be 0px).
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   await page.waitForFunction(()=>{const root=document.querySelector('#routing-child').shadowRoot.querySelector('[role]');const box=root.getBoundingClientRect();return box.width>0&&box.height>0;});
    const r=await page.locator('#routing-child').locator('[role]').boundingBox();await tap(type,r.x+r.width/2,r.y+r.height/2);
    assert.deepEqual(await page.evaluate(()=>({child:document.querySelector('#routing-child').checked,parent:document.querySelector('#routing-parent').selected,parentChanges:window.routingParentChanges})),{child:true,parent:false,parentChanges:0},'one semantic owner '+tag+'/'+type);
   }

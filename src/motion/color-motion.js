@@ -38,8 +38,9 @@ export class ColorSpringVector {
     if(target.every((component,index)=>component===this.target[index]))return;
     const current=this.sample(now);this.target=target;
     if(snap){this.finish();return;}
-    // AnimateAsState retargets from Animatable.value: the original Color vector
-    // converter clamps that converted color, while preserving raw velocity.
+    // This numerical timeline clamps its converted color when retargeting and
+    // preserves raw velocity. Complete animate-as-state job cancellation is
+    // implemented by AnimateAsStateMotion, which owns a retained frame value.
     // This matters when a caller supplies an underdamped effects spring.
     const converted=current.value.map((value,index)=>clamp(value,index<2?0:-.5,index<2?1:.5));
     const channels=target.map((to,index)=>({from:converted[index],to,velocity:current.velocity[index],

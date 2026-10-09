@@ -1,0 +1,25 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "SingleValueAnimation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/SingleValueAnimation.kt",
+      "sha256": "e9e130f48de5a411abb21c7c1055e43ee8af5f37a9d76828d14cfbaaf6c478d8"
+    },
+    {
+      "file": "AnimationTooling.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/tooling/AnimationTooling.kt",
+      "sha256": "f66f0085e9212484de358522d3b36b5af4814130e1e3ace2ebdecf4382df8142"
+    },
+    {
+      "file": "AndroidUiDispatcher.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/AndroidUiDispatcher.android.kt",
+      "sha256": "48ef248c7d25086c4c0f6716c123f0dee1ae0f3dc867667bc061d0e01f2fc19c"
+    },
+    {
+      "file": "AndroidUiFrameClock.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/AndroidUiFrameClock.android.kt",
+      "sha256": "84da45b04e25fa64a5d2e9b0dafc9e223990a30c102228fffa0d6a546e31bbb8"
+    }
+  ]
+}

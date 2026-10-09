@@ -9,6 +9,7 @@
  *   - Toggle mode (toggle, selected, checked), icon / selected-icon switching
  */
 
+import { followHref } from '../utils/navigation.js';
 import { createRipple, bindPress, morphShape } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -122,9 +123,10 @@ const defaultStyle = `
     background-color: var(--md-sys-color-primary, #6750a4);
     color: var(--md-sys-color-on-primary, #ffffff);
   }
+  /* FilledIconButtonTokens.Unselected*: SurfaceContainer / OnSurfaceVariant. */
   .btn.filled.togglable {
-    background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
-    color: var(--md-sys-color-primary, #6750a4);
+    background-color: var(--md-sys-color-surface-container, #f3edf7);
+    color: var(--md-sys-color-on-surface-variant, #49454f);
   }
   .btn.filled.togglable.selected {
     background-color: var(--md-sys-color-primary, #6750a4);
@@ -136,9 +138,10 @@ const defaultStyle = `
     background-color: var(--md-sys-color-secondary-container, #e8def8);
     color: var(--md-sys-color-on-secondary-container, #1d192b);
   }
+  /* FilledTonalIconButtonTokens.Unselected*: SecondaryContainer / OnSecondaryContainer. */
   .btn.tonal.togglable {
-    background-color: var(--md-sys-color-surface-container, #f3edf7);
-    color: var(--md-sys-color-on-surface-variant, #49454f);
+    background-color: var(--md-sys-color-secondary-container, #e8def8);
+    color: var(--md-sys-color-on-secondary-container, #1d192b);
   }
   .btn.tonal.togglable.selected {
     background-color: var(--md-sys-color-secondary, #625b71);
@@ -204,7 +207,7 @@ const defaultStyle = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Google Symbols', sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-size: 24px;
     line-height: 1;
     pointer-events: none;
@@ -227,7 +230,7 @@ const SIZES = {
 
 export class MdIconButton extends HTMLElement {
   static get observedAttributes() {
-    return ['variant', 'size', 'width', 'shape', 'toggle', 'selected', 'checked', 'disabled', 'icon', 'selected-icon', 'aria-label', 'aria-controls', 'aria-expanded'];
+    return ['variant', 'size', 'width', 'shape', 'toggle', 'selected', 'checked', 'disabled', 'icon', 'selected-icon', 'href', 'target', 'aria-label', 'aria-controls', 'aria-expanded'];
   }
 
   constructor() {
@@ -287,7 +290,14 @@ export class MdIconButton extends HTMLElement {
   get icon() { return this.getAttribute('icon') || ''; }
   set icon(v) { if (v == null) this.removeAttribute('icon'); else this.setAttribute('icon', v); }
   get selectedIcon() { return this.getAttribute('selected-icon') || this.icon; }
+  get href() { return this.getAttribute('href') || ''; }
+  set href(v) { v ? this.setAttribute('href', v) : this.removeAttribute('href'); }
+  get target() { return this.getAttribute('target') || ''; }
+  set target(v) { v ? this.setAttribute('target', v) : this.removeAttribute('target'); }
   set selectedIcon(v) { if (v == null) this.removeAttribute('selected-icon'); else this.setAttribute('selected-icon', v); }
+  focus(options) { this.shadowRoot.querySelector('.btn')?.focus(options); }
+  click() { this.shadowRoot.querySelector('.btn')?.click(); }
+
   _getBaseRadius() {
     const s = SIZES[this.size];
     return (this.getAttribute('shape') === 'square') !== (this.toggle && this.selected) ? s.square : s.size / 2;
@@ -321,11 +331,13 @@ export class MdIconButton extends HTMLElement {
       onRelease: () => {
         morphShape(btn, SIZES[this.size].press, this._getBaseRadius(), 'expressiveSpatialFast');
       },
-      onActivate: () => {
+      onActivate: (e) => {
         if (this.disabled) return;
         if (this.toggle) {
           this.selected = !this.selected;
           this.dispatchEvent(new CustomEvent('change', { detail: { selected: this.selected }, bubbles: true, composed: true }));
+        } else if (this.href) {
+          followHref(this, e, this.href, this.target);
         }
       },
       signal
@@ -342,7 +354,7 @@ export class MdIconButton extends HTMLElement {
     btn.disabled = this.disabled;
     btn.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
     btn.setAttribute('tabindex', this.disabled ? '-1' : '0');
-    btn.setAttribute('role', 'button');
+    btn.setAttribute('role', this.href && !this.toggle ? 'link' : 'button');
     btn.setAttribute('aria-label', sanitizeAttribute(this.getAttribute('aria-label') || this.icon || 'icon button'));
     for (const name of ['aria-controls', 'aria-expanded']) {
       if (this.hasAttribute(name)) btn.setAttribute(name, this.getAttribute(name));

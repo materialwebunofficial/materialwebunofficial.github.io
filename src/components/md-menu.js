@@ -4,9 +4,10 @@ import {safeJsonParse} from '../utils/security.js';
 import {createComponentSheet,adoptSheet} from '../utils/styles.js';
 import {bindPress,createRipple} from '../motion/interactions.js';
 import {SelectionMotion} from '../motion/selection-motion.js';
-import {ColorMotion} from '../motion/color-motion.js';
+import { AsStateColorMotion as ColorMotion } from '../motion/animate-as-state.js';
+import {resolveComposeColor,composeColorCSS,composeColorWithAlpha} from '../motion/compose-color-css.js';
 import {themeParent,observeThemeContext} from '../theme/theme-context.js';
-import {calculateMenuPosition,menuItemCorners,menuGroupCorners,menuItemColorRoles} from './menu-layout.js';
+import {calculateMenuPosition,calculateExposedMenuPosition,calculateExposedMenuMaxHeight,menuItemCorners,menuGroupCorners,menuItemColorRoles} from './menu-layout.js';
 import {MENU_ICONS} from './menu-icons.js';
 
 let menuId=0;
@@ -77,6 +78,17 @@ export class MdMenu extends HTMLElement {
  get selectionMode(){const value=this.getAttribute('selection-mode');return value==='single'||value==='multiple'?value:'none';}set selectionMode(value){this._optional('selection-mode',value);}
  get items(){const value=safeJsonParse(this.getAttribute('items'),[]);return Array.isArray(value)?value.filter(item=>item&&typeof item==='object'&&!Array.isArray(item)):[];}set items(value){this.setAttribute('items',JSON.stringify(value));}
  get _items(){return[...(this._generated?.querySelectorAll('md-menu-item')||[]),...this.querySelectorAll('md-menu-item')].filter(item=>owningMenu(item)===this);}
+ get activeItem(){return this._items.find(item=>item.hasAttribute('active'))||null;}
+ set activeItem(value){
+  const items=this._items,active=items.includes(value)?value:null;
+  for(const item of items)item.toggleAttribute('active',item===active);
+  if(!active||!this.open||!this._menu)return;
+  const surface=this._menu,scale=Math.max(.01,this._scale||1);
+  const itemBounds=active.getBoundingClientRect(),surfaceBounds=surface.getBoundingClientRect();
+  const top=(itemBounds.top-surfaceBounds.top)/scale+surface.scrollTop,bottom=top+itemBounds.height/scale;
+  if(top<surface.scrollTop)surface.scrollTop=top;
+  else if(bottom>surface.scrollTop+surface.clientHeight)surface.scrollTop=bottom-surface.clientHeight;
+ }
  get _groups(){const groups=[...this.querySelectorAll('md-menu-group')].filter(group=>owningMenu(group)===this);return groups.length?groups:this._implicitGroup?[this._implicitGroup]:[];}
  _optional(name,value){if(value==null)this.removeAttribute(name);else this.setAttribute(name,String(value));}
  connectedCallback(){
@@ -112,15 +124,16 @@ export class MdMenu extends HTMLElement {
   this._implicitGroup.variant=this.variant;this._implicitGroup.containerColor=this.containerColor||null;
   this._menu.className='menu'+(this.variant==='dropdown'?' dropdown':'');this._menu.setAttribute('aria-label',this.label);
   if(this.popupRole==='listbox'){
+   if(!this._listboxAria)this._listboxAria=Object.fromEntries(['role','aria-label','aria-hidden'].map(name=>[name,this.getAttribute(name)]));
    this.setAttribute('role','listbox');this.setAttribute('aria-label',this.label);this.setAttribute('aria-hidden',String(!this.open));this._menu.setAttribute('role','presentation');
   }else{
-   if(this.getAttribute('role')==='listbox')this.removeAttribute('role');this.removeAttribute('aria-hidden');this._menu.setAttribute('role','menu');
+   if(this._listboxAria){for(const[name,value]of Object.entries(this._listboxAria))this._optional(name,value);this._listboxAria=null;}this._menu.setAttribute('role','menu');
   }
   this._menu.style.backgroundColor=this.variant==='dropdown'&&CSS.supports('color',this.containerColor)?this.containerColor:'';
   this._trigger.hidden=!!this._externalAnchor||this.getAttribute('slot')==='submenu';this.shadowRoot.querySelector('.default-trigger').textContent=this.label;
   for(const group of this._groups)group._sync?.();for(const item of this._items)item._syncContext?.();this._syncTabStops();this._syncTrigger();
-  if(this.open&&!this.enabled){this.open=false;return;}
-  if(this._targetOpen!==this.open){this._targetOpen=this.open;if(this.open&&this.enabled)this._beginOpen();else this._beginClose();}
+  if(this.open&&!this.enabled){this._requestClose(false);return;}
+  if(this._targetOpen!==this.open){this._targetOpen=this.open;if(this.open&&this.enabled)this._beginOpen();else this._beginClose();this.dispatchEvent(new CustomEvent('expanded-change',{detail:{expanded:this.open},bubbles:true,composed:true}));}
   if(this._visible)this._position();
  }
  _syncTrigger(){
@@ -160,9 +173,13 @@ export class MdMenu extends HTMLElement {
   if(!this._visible)return;const anchor=this._anchor();if(!anchor)return;
   this._menu.classList.toggle('scrollable',this._menu.scrollHeight>Math.max(0,innerHeight-96));
   const rect=anchor.getBoundingClientRect(),bounds={left:Math.round(rect.left),top:Math.round(rect.top),right:Math.round(rect.right),bottom:Math.round(rect.bottom)};
-  this._menu.style.width=this.matchAnchorWidth?Math.max(0,Math.min(innerWidth,bounds.right-bounds.left))+'px':'';
-  const input={anchor:bounds,windowSize:{width:innerWidth,height:innerHeight},size:{width:this._menu.offsetWidth,height:this._menu.offsetHeight},position:this.anchorPosition,rtl:getComputedStyle(this).direction==='rtl',offsetX:this.offsetX,offsetY:this.offsetY,horizontalMargin:this.variant==='dropdown'?0:8};
-  const result=calculateMenuPosition(input);this._positionInput=input;this._placement=result;this._menu.style.left=result.x+'px';this._menu.style.top=result.y+'px';this._menu.style.transformOrigin=`${result.origin.x*100}% ${result.origin.y*100}%`;
+  const view=this.matchAnchorWidth?this.ownerDocument.defaultView.visualViewport:null;
+  const viewport={left:Math.round(view?.offsetLeft||0),top:Math.round(view?.offsetTop||0),width:Math.round(view?.width||innerWidth),height:Math.round(view?.height||innerHeight)};
+  this._menu.style.width=this.matchAnchorWidth?Math.max(0,Math.min(viewport.width,bounds.right-bounds.left))+'px':'';
+  this._menu.style.maxHeight=this.matchAnchorWidth?calculateExposedMenuMaxHeight({windowBounds:{top:viewport.top,bottom:viewport.top+viewport.height},anchor:rect})+'px':'';
+  const positionedAnchor=this.matchAnchorWidth?{left:bounds.left-viewport.left,right:bounds.right-viewport.left,top:bounds.top-viewport.top,bottom:bounds.bottom-viewport.top}:bounds;
+  const input={anchor:positionedAnchor,windowSize:{width:viewport.width,height:viewport.height},size:{width:this._menu.offsetWidth,height:this._menu.offsetHeight},position:this.anchorPosition,rtl:getComputedStyle(this).direction==='rtl',offsetX:this.offsetX,offsetY:this.offsetY,horizontalMargin:this.variant==='dropdown'?0:8};
+  const result=this.matchAnchorWidth?calculateExposedMenuPosition(input):calculateMenuPosition(input);this._positionInput=input;this._placement=result;this._menu.style.left=(result.x+viewport.left)+'px';this._menu.style.top=(result.y+viewport.top)+'px';this._menu.style.transformOrigin=`${result.origin.x*100}% ${result.origin.y*100}%`;
  }
  _listenPopup(){
   this._popupAbort?.abort();this._popupAbort=new AbortController();const {signal}=this._popupAbort;
@@ -170,6 +187,7 @@ export class MdMenu extends HTMLElement {
   this._menu.addEventListener('pointerdown',event=>{if(this.focusMode==='anchor')event.preventDefault();},{signal});
   this.ownerDocument.addEventListener('keydown',event=>{if(activeMenu(event)===this)this._key(event);},{signal});
   this.ownerDocument.defaultView.addEventListener('resize',()=>this._position(),{signal});this.ownerDocument.defaultView.addEventListener('scroll',()=>this._position(),{capture:true,signal});
+  this.ownerDocument.defaultView.visualViewport?.addEventListener('resize',()=>this._position(),{signal});this.ownerDocument.defaultView.visualViewport?.addEventListener('scroll',()=>this._position(),{signal});
  }
  _key(event){
   if(this.focusMode==='anchor'){
@@ -210,7 +228,7 @@ export class MdMenu extends HTMLElement {
   for(const slot of this.shadowRoot.querySelectorAll('slot'))slot.addEventListener('slotchange',()=>this._sync(),{signal});
  }
  show({focus=true}={}){if(!this.enabled||this.open)return;this._focusOnOpen=focus;this.open=true;}
- _requestClose(restore=true){if(!this.open)return;this._restoreFocus=restore;this.open=false;}
+ _requestClose(restore=true){if(!this.open){if(this._visible&&restore===false)this._restoreFocus=false;return;}this._restoreFocus=restore;this.open=false;}
  close({restoreFocus=true}={}){this._requestClose(restoreFocus);}
  toggle(){this.open?this.close():this.show();}
 }
@@ -276,7 +294,7 @@ const itemStyle=`
  .supporting-text,slot[name="supporting"]{display:block;font:var(--md-sys-typescale-body-medium,400 14px/20px Roboto,sans-serif);letter-spacing:var(--md-sys-typescale-body-medium-tracking,.2px)}
  .ico{display:flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;direction:ltr}
  .ico svg{display:block;width:100%;height:100%;fill:currentColor}
- .symbol{font:normal 20px/20px 'Material Symbols Rounded','Material Symbols Outlined',sans-serif;direction:ltr}
+ .symbol{font:normal 20px/20px var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);direction:ltr}
  .trailing{margin-inline-start:auto}
  .trailing-text{font:inherit;letter-spacing:inherit}
  .arrow{width:20px;height:20px;transform:scaleX(var(--arrow-direction,1))}
@@ -332,10 +350,11 @@ export class MdMenuItem extends HTMLElement{
   this._button.disabled=!this.enabled;
   const listbox=owningMenu(this)?.popupRole==='listbox';
   if(listbox){
-   this.setAttribute('role','option');this.setAttribute('aria-label',this.label);this.setAttribute('aria-selected',String(this.hasAttribute('active')||this.selected));this.setAttribute('aria-disabled',String(!this.enabled));
+   if(!this._listboxAria)this._listboxAria=Object.fromEntries(['role','aria-label','aria-selected','aria-disabled'].map(name=>[name,this.getAttribute(name)]));
+   this.setAttribute('role','option');this.setAttribute('aria-label',this.label);this.setAttribute('aria-selected',String(this.selected||(this.selectionMode==='none'&&this.hasAttribute('active'))));this.setAttribute('aria-disabled',String(!this.enabled));
    this._button.setAttribute('role','presentation');this._button.removeAttribute('aria-checked');this._button.setAttribute('aria-hidden','true');this._button.tabIndex=-1;return;
   }
-  if(this.getAttribute('role')==='option'){this.removeAttribute('role');this.removeAttribute('aria-selected');this.removeAttribute('aria-disabled');}
+  if(this._listboxAria){const previous=this._listboxAria;this._listboxAria=null;for(const[name,value]of Object.entries(previous))this._optional(name,value);}
   this._button.removeAttribute('aria-hidden');
   this._button.setAttribute('role',this.selectionMode==='single'?'menuitemradio':this.selectionMode==='multiple'?'menuitemcheckbox':'menuitem');
   if(this.selectionMode!=='none')this._button.setAttribute('aria-checked',String(this.selected));else this._button.removeAttribute('aria-checked');
@@ -360,6 +379,7 @@ export class MdMenuItem extends HTMLElement{
   icon(this._trailing.querySelector('.ico'),this.getAttribute('trailing-icon')||'');this._trailing.querySelector('.ico').hidden=!this.hasAttribute('trailing-icon');icon(this._trailing.querySelector('.arrow'),'arrow_right');this._trailing.querySelector('.arrow').hidden=!this.hasSubmenu;
   this._trailing.hidden=!this.hasAttribute('trailing-text')&&!this.hasAttribute('trailing-icon')&&!this.hasSubmenu&&!assigned('end');this._trailing.style.setProperty('--arrow-direction',getComputedStyle(this).direction==='rtl'?-1:1);
   const matchWidth=owningMenu(this)?.matchAnchorWidth;this.style.maxWidth=matchWidth?'none':'';this._button.style.maxWidth=matchWidth?'none':'';
+  this._button.style.paddingInline=owningMenu(this)?.popupRole==='listbox'?'16px':'';
   const arrangement=this.getAttribute('horizontal-arrangement')||owningMenu(this)?.horizontalArrangement||'menu';this._button.style.justifyContent=['start','end','center','space-between','space-around','space-evenly'].includes(arrangement)?({start:'flex-start',end:'flex-end'}[arrangement]||arrangement):'';this._trailing.style.marginInlineStart=arrangement==='menu'?'auto':'0';
   const group=owningGroup(this),items=group?group._items:owningMenu(this)?._items||[this];const corners=menuItemCorners({selected:this.selected,index:items.indexOf(this),count:items.length,dropdown,small:radius(this,'extra-small',4),medium:radius(this,'medium',12)});
   const leadingWidth=only?(this.selected?Math.max(20,this._leading.querySelector('.ico').offsetWidth):0):0;
@@ -373,9 +393,9 @@ export class MdMenuItem extends HTMLElement{
   const prefix=!this.enabled?'disabled':this.selected&&this.selectionMode!=='none'?'selected':'',names={content:'textColor',leading:'leadingIconColor',trailing:'trailingContentColor',container:'containerColor'},style=getComputedStyle(this);
   const resolved=Object.fromEntries(Object.entries(roles).map(([key,entry])=>{
    const base=names[key],name=prefix?prefix+base[0].toUpperCase()+base.slice(1):base,option=options[name]??(key==='trailing'?options[name.replace('Content','Icon')]:null);
-   if(typeof option==='string'&&CSS.supports('color',option)){this._probe.style.color=option;return[key,getComputedStyle(this._probe).color];}
+   if(typeof option==='string'&&CSS.supports('color',option))return[key,composeColorCSS(resolveComposeColor(this._probe,option))];
    const fallback={'on-surface':'#1d1b20','on-surface-variant':'#49454f','surface-container-low':'#f7f2fa','tertiary-container':'#ffd8e4','on-tertiary-container':'#31111d','tertiary':'#7d5260','on-tertiary':'#fff'};
-   const color=entry.role==='transparent'?'transparent':style.getPropertyValue('--md-sys-color-'+entry.role).trim()||fallback[entry.role];return[key,entry.alpha===1||entry.alpha===0?color:`color-mix(in srgb,${color} ${entry.alpha*100}%,transparent)`];
+   const color=entry.role==='transparent'?'transparent':style.getPropertyValue('--md-sys-color-'+entry.role).trim()||fallback[entry.role];return[key,entry.alpha===1?composeColorCSS(resolveComposeColor(this._probe,color)):composeColorWithAlpha(this._probe,color,entry.alpha)];
   }));
   this._button.style.color=resolved.content;this._leading.style.color=resolved.leading;this._trailing.style.color=resolved.trailing;
   if(!this._containerMotion)this._containerMotion=new ColorMotion(this,this._probe,resolved.container,value=>this._button.style.backgroundColor=value,{role:'expressiveEffectFast'});

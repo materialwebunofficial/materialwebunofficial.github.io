@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import {calculateMenuPosition} from '../../src/components/menu-layout.js';
 const spring=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/motion/spring-oracle.json',import.meta.url)));
 const colors=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/menus/color-role-oracle.json',import.meta.url)));
-const colorSpring=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/motion/color-vector-oracle.json',import.meta.url)));
 const near=(a,b,label,tolerance=.00006)=>assert.ok(Math.abs(a-b)<tolerance,`${label}: ${a} vs ${b}`);
 const motion=(from,to,stiffness=800,velocity=0)=>spring.find(c=>c.stiffness===stiffness&&Math.abs(c.from-from)<.00003&&c.to===to&&Math.abs(c.velocity-velocity)<.00003);
 
@@ -11,6 +10,7 @@ export async function testMenuParity(browser,base){
  const page=await browser.newPage({viewport:{width:1000,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(base+'/test/browser/fixtures/menu.html');await page.evaluate(async()=>{await customElements.whenDefined('md-menu');await document.fonts.ready;});
+  await page.evaluate(async()=>{window.colorRoleTestBinding=await import('/src/motion/compose-color-css.js');});
   await page.clock.install({time:new Date('2026-10-02T10:00:00Z')});await page.clock.pauseAt(new Date('2026-10-02T10:00:01.008Z'));
   await page.evaluate(()=>{
    document.querySelector('#fixture').innerHTML=`
@@ -59,16 +59,18 @@ export async function testMenuParity(browser,base){
   // Sixteen colors are outputs of unchanged Kotlin MenuItemColors methods.
   for(const state of colors){
    await el('color').evaluate((n,state)=>{n.selectionMode=state.selectable?'multiple':'none';n.variant=state.vibrant?'vibrant':'standard';n.toggleAttribute('selected',state.selected);n.enabled=state.enabled;},state);await run(512);
-   const pairs=await el('color').evaluate((n,roles)=>{
+   const pairs=await el('color').evaluate(async(n,roles)=>{
+    const {resolveComposeColor,composeColorCSS,composeColorWithAlpha}=window.colorRoleTestBinding;
     const nodes={container:n._button,content:n._button,leading:n._leading,trailing:n._trailing},p=document.createElement('span');n.shadowRoot.append(p);const result={};
-    for(const[k,entry]of Object.entries(roles)){const color=entry.role==='transparent'?'transparent':getComputedStyle(n).getPropertyValue('--md-sys-color-'+entry.role);p.style.color=entry.alpha===0||entry.alpha===1?color:`color-mix(in srgb,${color} ${entry.alpha*100}%,transparent)`;result[k]=[getComputedStyle(nodes[k])[k==='container'?'backgroundColor':'color'],getComputedStyle(p).color];}p.remove();return result;
+    for(const[k,entry]of Object.entries(roles)){const color=entry.role==='transparent'?'transparent':getComputedStyle(n).getPropertyValue('--md-sys-color-'+entry.role);p.style.color=entry.alpha===1?composeColorCSS(resolveComposeColor(p,color)):composeColorWithAlpha(p,color,entry.alpha);result[k]=[getComputedStyle(nodes[k])[k==='container'?'backgroundColor':'color'],getComputedStyle(p).color];}p.remove();return result;
    },state.roles);
    for(const[k,pair]of Object.entries(pairs))assert.equal(pair[0],pair[1],JSON.stringify(state)+' '+k);assert.equal((await geometry('color')).opacity,'1');
   }
   await el('color').evaluate(n=>{n.enabled=true;n.variant='standard';n.selectionMode='multiple';n.selected=false;n.colors={containerColor:'oklab(.5 .01 -.04)',selectedContainerColor:'oklab(.7 .04 .01)',textColor:'red',selectedTextColor:'blue'};});await run(512);await el('color').evaluate(n=>n.selected=true);
   assert.equal(await el('color').evaluate(n=>getComputedStyle(n._button).color),'rgb(0, 0, 255)','source content color changes directly');
-  const c=colorSpring.find(c=>c.stiffness===3800&&c.from[1]===.5&&c.to[1]===.7&&c.velocity.every(v=>v===0));let previous=0;
-  for(const time of [16,32,64,80,128]){await run(time-previous);previous=time;const v=await el('color').evaluate(n=>n._containerMotion.vector.sample(performance.now()).value);v.forEach((x,i)=>near(x,c.samples.find(s=>s.time===time).value[i],'FastEffects color '+time+'/'+i));}
+  // The packed FastEffects applying trajectories, raw/converted velocities
+  // and actual color paints are covered by packed-color-consumers.mjs.
+  await run(512);
   await close('standard');
   // Real popup scale is the source exception to stationary item content.
   const sample=async(id,key,expected,times,draw)=>{let previous=0;for(const time of times){await run(time-previous);previous=time;const v=await el(id).evaluate((n,{key,draw})=>{const m=draw==='popup'?n._motion:draw==='group'?n._implicitGroup._shapeMotion:n._shapeMotion;return{raw:m.channels[key].sample(performance.now()).position,drawn:draw==='popup'?key==='scale'?Number(n._menu.style.transform.match(/scale\(([^)]+)/)[1]):Number(n._menu.style.opacity):draw==='width'?parseFloat(n._leading.style.width):parseFloat(n._implicitGroup._group.style.borderStartStartRadius)};},{key,draw});const source=expected.samples.find(s=>s.time===time).position;near(v.raw,source,key+' raw '+time);near(v.drawn,draw==='width'?Math.max(0,Math.round(source)):key==='alpha'?Math.max(0,Math.min(1,source)):source,key+' drawn '+time,.0001);}};

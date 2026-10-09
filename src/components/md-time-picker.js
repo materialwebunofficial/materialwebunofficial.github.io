@@ -10,8 +10,14 @@
  * Contract: docs/AGENT-INTERACTION-CONTRACT.md
  */
 
+import './md-button.js';
+import './md-icon-button.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import {ModalController,MODAL_STYLE,renderModalContent} from './modal-controller.js';
+import {PickerClock} from './picker-clock.js';
+import {timePickerColors,timeInputColors,pickerPaletteStyle} from './picker-colors.js';
+import {PickerPeriodGroup} from './picker-period.js';
+import {PickerTimeInput} from './picker-input.js';
 
 const defaultStyle = MODAL_STYLE+`
   :host {
@@ -40,7 +46,7 @@ const defaultStyle = MODAL_STYLE+`
   }
 
   .picker-dialog {
-    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    background-color: var(--time-container-color);
     color: var(--md-sys-color-on-surface, #1D1B20);
     border-radius: var(--md-sys-shape-corner-extra-large, 28px);
     padding: 24px;
@@ -73,20 +79,6 @@ const defaultStyle = MODAL_STYLE+`
     max-width: calc(100vw - 32px);
   }
 
-  /* Rich Color Scheme (Expressive Palette) */
-  .picker-dialog.rich {
-    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-  }
-  .picker-dialog.rich .time-card.active,
-  .picker-dialog.rich .time-input-field:focus {
-    background-color: var(--md-sys-color-primary-container, #EADDFF);
-    color: var(--md-sys-color-on-primary-container, #21005D);
-    border-color: var(--md-sys-color-primary, #6750A4);
-  }
-  .picker-dialog.rich .clock-face {
-    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 10%, var(--md-sys-color-surface-container, #F3EDF7));
-  }
-
   .picker-header {
     display: flex;
     align-items: center;
@@ -97,14 +89,14 @@ const defaultStyle = MODAL_STYLE+`
     font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
     color: var(--md-sys-color-on-surface-variant, #49454F);
-    text-transform: capitalize;
   }
 
   .main-layout-wrap.vertical {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
+    gap: 36px;
+    padding-bottom: 24px;
   }
 
   .main-layout-wrap.horizontal {
@@ -112,7 +104,7 @@ const defaultStyle = MODAL_STYLE+`
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
+    gap: 36px;
   }
 
   /* Time Cards Section */
@@ -130,27 +122,36 @@ const defaultStyle = MODAL_STYLE+`
 
   .time-cards-row {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .clock-display-numbers {
+    display: flex;
+    align-items: flex-start;
+    direction: ltr;
+    flex-shrink: 0;
+  }
+  .period-toggle-column {
+    margin-inline-start: 4px;
   }
 
   .time-card {
     width: 96px;
     height: 80px;
-    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    border-radius: var(--md-sys-shape-corner-small, 8px);
     border: none;
-    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-    color: var(--md-sys-color-on-surface, #1D1B20);
+    box-sizing: border-box;
+    background-color: var(--time-time-selector-container-color);
+    color: var(--time-time-selector-content-color);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     outline: none;
-    transition: background-color 180ms ease, color 180ms ease;
   }
   .time-card.active {
-    background-color: var(--md-sys-color-primary-container, #EADDFF);
-    color: var(--md-sys-color-on-primary-container, #21005D);
+    background-color: var(--time-time-selector-selected-container-color);
+    color: var(--time-time-selector-selected-content-color);
   }
 
   .time-val {
@@ -159,107 +160,128 @@ const defaultStyle = MODAL_STYLE+`
   }
 
   .time-separator {
+    width: 24px;
+    height: 80px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
     color: var(--md-sys-color-on-surface, #1D1B20);
-    line-height: 80px;
     user-select: none;
   }
+  .time-separator span {transform: translateY(-4px);}
+  .input-mode .main-layout-wrap {padding-bottom: 0;}
 
   /* Keyboard Input Mode Textfields */
   .input-card-wrap {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 7px;
+    width: 96px;
   }
+
+  .time-input-slot {width: 96px; height: 72px; position: relative;}
+  .time-input-slot [hidden] {display: none;}
 
   .time-input-field {
     box-sizing: border-box;
     width: 96px;
-    height: 80px;
-    border-radius: var(--md-sys-shape-corner-medium, 12px);
-    border: 2px solid transparent;
-    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    font: var(--md-sys-typescale-display-large, 400 57px/64px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-display-large-tracking, -0.2px);
+    height: 72px;
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+    border: none;
+    padding: 0;
+    background-color: var(--time-input-container,var(--time-time-selector-container-color));
+    color: var(--time-time-selector-selected-content-color);
+    font: var(--md-sys-typescale-display-medium, 400 45px/52px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-display-medium-tracking, 0);
+    caret-color: var(--md-sys-color-primary);
     text-align: center;
     outline: none;
-    transition: border-color 150ms ease, background-color 150ms ease;
   }
-  .time-input-field:focus {
-    border-color: var(--md-sys-color-primary, #6750A4);
-    background-color: var(--md-sys-color-primary-container, #EADDFF);
-    color: var(--md-sys-color-on-primary-container, #21005D);
+  .time-input-field[aria-invalid="true"], .time-input-field[aria-invalid="true"]:focus {
+    color: var(--md-sys-color-error);
   }
+  .time-input-outline {position: absolute; inset: 0; width: 96px; height: 72px; overflow: visible; pointer-events: none; color: var(--time-input-indicator,var(--md-sys-color-outline));}
+  .time-input-outline rect {fill: none; stroke: currentColor;}
+  .time-input-selector {
+    position: relative;
+    box-sizing: border-box;
+    width: 96px;
+    height: 72px;
+    padding: 0;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+    background: var(--time-time-selector-container-color);
+    color: var(--time-time-selector-content-color);
+    font: var(--md-sys-typescale-display-medium, 400 45px/52px Roboto, sans-serif);
+    text-align: center;
+    cursor: pointer;
+    outline: none;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .time-input-selector[aria-invalid="true"] {background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);}
+  .time-input-selector .state-layer {position: absolute; inset: 0; background: currentColor; opacity: var(--md-button-state-alpha,0); pointer-events: none;}
+  .time-input-selector .selector-text {position: relative;}
 
   .input-sublabel {
+    min-height: 32px;
     font: var(--md-sys-typescale-body-small, 400 12px/16px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-body-small-tracking, 0.4px);
     color: var(--md-sys-color-on-surface-variant, #49454F);
   }
+  .input-sublabel.error {color: var(--md-sys-color-error);}
 
-  /* AM / PM Segmented Column (Vertical layout) */
+  /* Current AndroidX updated AM/PM toggle: two independent ToggleButtons. */
   .period-toggle-column {
-    display: flex;
-    flex-direction: column;
     height: 80px;
     width: 52px;
-    border: 1px solid var(--md-sys-color-outline, #79747E);
-    border-radius: var(--md-sys-shape-corner-small, 8px);
-    overflow: hidden;
   }
-
-  .period-toggle-column .period-btn {
-    flex: 1;
+  .period-toggle-column,.period-toggle-row {
+    position: relative;
+    flex-shrink: 0;
+    direction: ltr;
     border: none;
-    background: transparent;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
+  }
+  .period-btn {
+    position: absolute;
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: none;
+    border-radius: 9999px;
+    background: var(--time-period-selector-container-color);
+    color: var(--time-period-selector-content-color);
+    font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-title-medium-tracking, 0.2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    isolation: isolate;
     cursor: pointer;
     outline: none;
-    transition: background-color 150ms ease, color 150ms ease;
   }
-  .period-toggle-column .period-btn:first-child {
-    border-bottom: 1px solid var(--md-sys-color-outline, #79747E);
+  .period-btn.active {
+    background-color: var(--time-period-selector-selected-container-color);
+    color: var(--time-period-selector-selected-content-color);
+    font-weight: 700;
   }
-  .period-toggle-column .period-btn.active {
-    background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
-    color: var(--md-sys-color-on-tertiary-container, #31111D);
-    font-weight: var(--md-sys-typescale-label-large-emphasized-weight, 700);
+  .period-btn .state-layer {
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: var(--md-button-state-alpha,0);
+    pointer-events: none;
   }
-
-  /* AM / PM Segmented Row (Horizontal landscape layout - Android Compose Parity) */
+  .period-btn .lbl-wrapper {position: relative;}
   .period-toggle-row {
-    display: flex;
-    flex-direction: row;
     height: 38px;
     width: 216px;
-    border: 1px solid var(--md-sys-color-outline, #79747E);
-    border-radius: var(--md-sys-shape-corner-small, 8px);
-    overflow: hidden;
-  }
-
-  .period-toggle-row .period-btn {
-    flex: 1;
-    border: none;
-    background: transparent;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-    cursor: pointer;
-    outline: none;
-    transition: background-color 150ms ease, color 150ms ease;
-  }
-  .period-toggle-row .period-btn:first-child {
-    border-right: 1px solid var(--md-sys-color-outline, #79747E);
-  }
-  .period-toggle-row .period-btn.active {
-    background-color: var(--md-sys-color-tertiary-container, #FFD8E4);
-    color: var(--md-sys-color-on-tertiary-container, #31111D);
-    font-weight: var(--md-sys-typescale-label-large-emphasized-weight, 700);
   }
 
   /* 256dp Clock Dial */
@@ -276,7 +298,7 @@ const defaultStyle = MODAL_STYLE+`
     width: 256px;
     height: 256px;
     border-radius: 9999px;
-    background-color: var(--md-sys-color-surface-container-highest, #E6E0E9);
+    background-color: var(--time-clock-dial-color);
     touch-action: none;
     cursor: pointer;
     flex-shrink: 0;
@@ -286,7 +308,7 @@ const defaultStyle = MODAL_STYLE+`
     position: absolute;
     width: 8px;
     height: 8px;
-    background-color: var(--md-sys-color-primary, #6750A4);
+    background-color: var(--time-selector-color);
     border-radius: 9999px;
     top: 124px;
     left: 124px;
@@ -301,7 +323,6 @@ const defaultStyle = MODAL_STYLE+`
     height: 256px;
     pointer-events: none;
     transform-origin: 128px 128px;
-    transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
     z-index: 2;
   }
 
@@ -309,7 +330,7 @@ const defaultStyle = MODAL_STYLE+`
     position: absolute;
     width: 2px;
     height: 100px;
-    background-color: var(--md-sys-color-primary, #6750A4);
+    background-color: var(--time-selector-color);
     left: 127px;
     top: 28px;
   }
@@ -319,7 +340,7 @@ const defaultStyle = MODAL_STYLE+`
     width: 48px;
     height: 48px;
     border-radius: 9999px;
-    background-color: var(--md-sys-color-primary, #6750A4);
+    background-color: var(--time-selector-color);
     left: 104px;
     top: 4px;
     display: flex;
@@ -327,13 +348,7 @@ const defaultStyle = MODAL_STYLE+`
     justify-content: center;
   }
 
-  .selector-dot {
-    display: none;
-    width: 8px;
-    height: 8px;
-    background-color: var(--md-sys-color-on-primary, #FFFFFF);
-    border-radius: 9999px;
-  }
+  .clock-label-layer {position:absolute;inset:0;z-index:3;}
 
   .dial-number {
     position: absolute;
@@ -345,16 +360,21 @@ const defaultStyle = MODAL_STYLE+`
     justify-content: center;
     font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    transform: translate(-50%, -50%);
+    color: var(--time-clock-dial-content-color);
     user-select: none;
     cursor: pointer;
     z-index: 3;
-    transition: color 150ms ease;
+    outline: none;
+    overflow: hidden;
   }
-  .dial-number.selected {
-    color: var(--md-sys-color-on-primary, #FFFFFF) !important;
-    font-weight: var(--md-sys-typescale-body-large-emphasized-weight, 500);
+  .dial-number-selected {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--time-clock-dial-selected-content-color);
+    pointer-events: none;
   }
 
   /* Footer Actions */
@@ -407,7 +427,7 @@ const defaultStyle = MODAL_STYLE+`
   }
 
   .ico {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-size: 24px;
     line-height: 1;
     font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
@@ -437,7 +457,7 @@ const timePickerSheet = createComponentSheet(defaultStyle);
 
 export class MdTimePicker extends HTMLElement {
   static get observedAttributes() {
-    return ['open', 'value', 'mode', 'is-24-hour', 'rich-colors', 'layout-type', 'inline', 'hour', 'minute', 'variant'];
+    return ['open', 'value', 'mode', 'is-24-hour', 'rich-colors', 'layout-type', 'inline', 'hour', 'minute', 'variant', 'accessibility-services-enabled'];
   }
 
   constructor() {
@@ -457,7 +477,6 @@ export class MdTimePicker extends HTMLElement {
     this._isDragging = false;
     this._rendered = false;
     this._abortController = null;
-    this._currentArmAngle = (this.state.hours % 12) * 30;
     this._modal=new ModalController(this,{surface:'.picker-dialog',onDismiss:reason=>this.close(reason)});
   }
 
@@ -483,8 +502,8 @@ export class MdTimePicker extends HTMLElement {
     if (name === 'open') {
       this._sync();
     }
-    if (name === 'value' && this.value) {
-      this._parseValue(this.value);
+    if (name === 'value' && newVal) {
+      this._parseValue(newVal);
       this._updateDisplay(true);
     }
     if (name === 'hour') {
@@ -501,26 +520,28 @@ export class MdTimePicker extends HTMLElement {
         this._updateDisplay(true);
       }
     }
-    if (name === 'layout-type' || name === 'mode' || name === 'rich-colors' || name === 'inline' || name === 'variant') {
-      this._parseInitialAttributes();
+    if (name === 'layout-type' || name === 'mode' || name === 'rich-colors' || name === 'is-24-hour' || name === 'inline' || name === 'variant') {
+      this._parseInitialAttributes(false);
       this.render();
       this._setup();
       this._sync();
     }
   }
 
-  _parseInitialAttributes() {
-    if (this.hasAttribute('value')) this._parseValue(this.getAttribute('value'));
-    if (this.hasAttribute('hour')) {
+  _parseInitialAttributes(readTime = true) {
+    const previousHour=this.state.is24Hour?this.state.hours:this.state.hours%12+(this.state.period==='PM'?12:0);
+    this.state.is24Hour = this.is24Hour;
+    if (readTime && this.hasAttribute('value')) this._parseValue(this.getAttribute('value'));
+    if (readTime && this.hasAttribute('hour')) {
       const h = parseInt(this.getAttribute('hour'), 10);
       if (!isNaN(h)) this.state.hours = h;
     }
-    if (this.hasAttribute('minute')) {
+    if (readTime && this.hasAttribute('minute')) {
       const m = parseInt(this.getAttribute('minute'), 10);
       if (!isNaN(m)) this.state.minutes = m;
     }
-    if (this.hasAttribute('is-24-hour')) this.state.is24Hour = true;
-    if (this.hasAttribute('rich-colors')) this.state.richColors = true;
+    if(!readTime){this.state.hours=this.state.is24Hour?previousHour:previousHour%12||12;this.state.period=previousHour>=12?'PM':'AM';}
+    this.state.richColors = this.richColors;
     if (this.hasAttribute('mode')) this.state.mode = this.getAttribute('mode');
     if (this.hasAttribute('layout-type')) this.state.layoutType = this.getAttribute('layout-type');
     if (this.hasAttribute('variant')) {
@@ -529,7 +550,6 @@ export class MdTimePicker extends HTMLElement {
       else if (v === 'input') this.state.mode = 'input';
       else if (v === 'dial') this.state.mode = 'dial';
     }
-    this._currentArmAngle = (this.state.hours % 12) * 30;
   }
 
   get open() { return this.hasAttribute('open'); }
@@ -549,19 +569,37 @@ export class MdTimePicker extends HTMLElement {
     const mm = String(this.state.minutes).padStart(2, '0');
     return this.state.is24Hour ? `${hh}:${mm}` : `${hh}:${mm} ${this.state.period}`;
   }
-  set value(v) { this.setAttribute('value', v); }
+  set value(v) {
+    const text=String(v);
+    if(this.getAttribute('value')===text){this._parseValue(text);if(this._rendered)this._updateDisplay(true);}
+    else this.setAttribute('value',text);
+  }
 
   get hour() { return this.state.hours; }
-  set hour(v) { this.setAttribute('hour', String(v)); }
+  set hour(v) {
+    const text=String(v);
+    if(this.getAttribute('hour')===text){const hour=parseInt(text,10);if(!isNaN(hour)){this.state.hours=hour;if(this._rendered)this._updateDisplay(true);}}
+    else this.setAttribute('hour',text);
+  }
 
   get minute() { return this.state.minutes; }
-  set minute(v) { this.setAttribute('minute', String(v)); }
+  set minute(v) {
+    const text=String(v);
+    if(this.getAttribute('minute')===text){const minute=parseInt(text,10);if(!isNaN(minute)){this.state.minutes=minute;if(this._rendered)this._updateDisplay(true);}}
+    else this.setAttribute('minute',text);
+  }
 
   get is24Hour() { return this.hasAttribute('is-24-hour'); }
   set is24Hour(v) {
     if (v) this.setAttribute('is-24-hour', '');
     else this.removeAttribute('is-24-hour');
   }
+
+  get accessibilityServicesEnabled() { return this.hasAttribute('accessibility-services-enabled'); }
+  set accessibilityServicesEnabled(value) { this.toggleAttribute('accessibility-services-enabled',Boolean(value)); }
+  get hourInput() { return this._pickerTime?.hourInput ?? (this.state.is24Hour?this.state.hours:this.state.hours%12+(this.state.period==='PM'?12:0)); }
+  get minuteInput() { return this._pickerTime?.minuteInput ?? this.state.minutes; }
+  get isInputValid() { return this._pickerTime?.isInputValid ?? (this.hourInput>=0&&this.hourInput<=23&&this.minuteInput>=0&&this.minuteInput<=59); }
 
   get richColors() { return this.hasAttribute('rich-colors'); }
   set richColors(v) {
@@ -580,7 +618,7 @@ export class MdTimePicker extends HTMLElement {
     this._sync();
   }
   close() {
-    clearTimeout(this._unitChangeTimer);
+    this._clock?.cancelAction();
     this.open = false;
   }
 
@@ -591,17 +629,18 @@ export class MdTimePicker extends HTMLElement {
       this.state.hours = parseInt(match[1], 10);
       this.state.minutes = parseInt(match[2], 10);
       if (match[3]) this.state.period = match[3].toUpperCase();
-      this._currentArmAngle = (this.state.hours % 12) * 30;
     }
   }
 
   _sync() {
+    if(!this.inline&&!this.open)this._clock?.cancelAction();
     if (this.inline) {
       this.style.display = 'inline-block';
       this._modal.detach();
     } else {
       this.style.display = 'contents';
       this._modal.sync(this.open);
+      if(this.open)this._input?.focusSelection();
     }
   }
 
@@ -609,59 +648,30 @@ export class MdTimePicker extends HTMLElement {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-    signal.addEventListener('abort',()=>{clearTimeout(this._unitChangeTimer);this._isDragging=false;},{once:true});
+    signal.addEventListener('abort',()=>{this._isDragging=false;},{once:true});
 
     const hourCard = this.shadowRoot.querySelector('#hour-card');
     const minCard = this.shadowRoot.querySelector('#min-card');
     if (hourCard && minCard) {
-      hourCard.addEventListener('click', () => {
+      hourCard.addEventListener('click', event => {
         this.state.activeUnit = 'hours';
         this._updateDisplay(true);
+        if(event.detail===0)this._clock?.focusSelected();
       }, { signal });
-      minCard.addEventListener('click', () => {
+      minCard.addEventListener('click', event => {
         this.state.activeUnit = 'minutes';
         this._updateDisplay(true);
+        if(event.detail===0)this._clock?.focusSelected();
       }, { signal });
     }
 
-    const hourInput = this.shadowRoot.querySelector('#hour-input');
-    const minInput = this.shadowRoot.querySelector('#min-input');
-    if (hourInput && minInput) {
-      hourInput.addEventListener('input', (e) => {
-        let val = parseInt(e.target.value, 10);
-        if (!isNaN(val)) {
-          if (this.state.is24Hour) val = Math.max(0, Math.min(23, val));
-          else val = Math.max(1, Math.min(12, val));
-          this.state.hours = val;
-          this._emitChange();
-        }
-      }, { signal });
-      minInput.addEventListener('input', (e) => {
-        let val = parseInt(e.target.value, 10);
-        if (!isNaN(val)) {
-          val = Math.max(0, Math.min(59, val));
-          this.state.minutes = val;
-          this._emitChange();
-        }
-      }, { signal });
-    }
+    this._input=this.shadowRoot.querySelector('#hour-input')?new PickerTimeInput(this,signal):null;
 
-    const amBtn = this.shadowRoot.querySelector('#am-btn');
-    const pmBtn = this.shadowRoot.querySelector('#pm-btn');
-    if (amBtn && pmBtn) {
-      amBtn.addEventListener('click', () => {
-        this.state.period = 'AM';
-        amBtn.classList.add('active');
-        pmBtn.classList.remove('active');
-        this._emitChange();
-      }, { signal });
-      pmBtn.addEventListener('click', () => {
-        this.state.period = 'PM';
-        pmBtn.classList.add('active');
-        amBtn.classList.remove('active');
-        this._emitChange();
-      }, { signal });
-    }
+    const periodGroup=this.shadowRoot.querySelector('.period-toggle-column,.period-toggle-row');
+    this._periodGroup=periodGroup?new PickerPeriodGroup(this,periodGroup,{period:()=>this.state.period,signal,onActivate:period=>{
+      if(this.state.period===period)return;
+      this.state.period=period;this._updateDisplay();this._emitChange();
+    }}):null;
 
     const modeToggle = this.shadowRoot.querySelector('#mode-toggle-btn');
     if (modeToggle) {
@@ -693,60 +703,9 @@ export class MdTimePicker extends HTMLElement {
     }
 
     const clockFace = this.shadowRoot.querySelector('.clock-face');
-    if (clockFace) {
-      const updateFromAngle = (e) => {
-        const rect = clockFace.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        const dx = e.clientX - cx;
-        const dy = e.clientY - cy;
+    this._clock=clockFace?new PickerClock(this,clockFace,signal):null;
 
-        let rad = Math.atan2(dy, dx) + Math.PI / 2;
-        if (rad < 0) rad += Math.PI * 2;
-        let deg = rad * (180 / Math.PI);
-        const norm = ((deg % 360) + 360) % 360;
-
-        if (this.state.activeUnit === 'hours') {
-          let h = Math.round(norm / 30);
-          if (h === 0 || h === 12) h = 12;
-          this.state.hours = h;
-        } else {
-          let m = Math.round(norm / 6);
-          if (m === 60) m = 0;
-          this.state.minutes = m;
-        }
-        this._updateDisplay();
-      };
-
-      clockFace.addEventListener('pointerdown', (e) => {
-        this._isDragging = true;
-        clockFace.setPointerCapture?.(e.pointerId);
-        updateFromAngle(e);
-      }, { signal });
-
-      clockFace.addEventListener('pointermove', (e) => {
-        if (this._isDragging) updateFromAngle(e);
-      }, { signal });
-
-      const onEnd = () => {
-        if (!this._isDragging) return;
-        this._isDragging = false;
-        this._emitChange();
-        if (this.state.activeUnit === 'hours') {
-          clearTimeout(this._unitChangeTimer);
-          this._unitChangeTimer=setTimeout(() => {
-            if(signal.aborted||!this.isConnected||(!this.inline&&!this.open))return;
-            this.state.activeUnit = 'minutes';
-            this._updateDisplay(true);
-          }, 200);
-        }
-      };
-
-      clockFace.addEventListener('pointerup', onEnd, { signal });
-      clockFace.addEventListener('pointercancel', onEnd, { signal });
-    }
-
-    this._updateDisplay(true);
+    this._updateDisplay();
   }
 
   _emitChange() {
@@ -762,14 +721,8 @@ export class MdTimePicker extends HTMLElement {
     }));
   }
 
-  _calcShortestRotation(currentAngle, targetAngle) {
-    let diff = (targetAngle - currentAngle) % 360;
-    if (diff > 180) diff -= 360;
-    if (diff < -180) diff += 360;
-    return currentAngle + diff;
-  }
-
-  _updateDisplay(rebuildNumbers = false) {
+  _updateDisplay(force = false) {
+    this._periodGroup?.refresh();
     const isHours = this.state.activeUnit === 'hours';
     const hourCard = this.shadowRoot.querySelector('#hour-card');
     const minCard = this.shadowRoot.querySelector('#min-card');
@@ -789,89 +742,9 @@ export class MdTimePicker extends HTMLElement {
     if (hourValEl) hourValEl.textContent = hh;
     if (minValEl) minValEl.textContent = mm;
 
-    // Update Input Textboxes if in input mode
-    const hourInput = this.shadowRoot.querySelector('#hour-input');
-    const minInput = this.shadowRoot.querySelector('#min-input');
-    if (hourInput && hourInput !== this.shadowRoot.activeElement) {
-      hourInput.value = String(this.state.hours).padStart(2, '0');
-    }
-    if (minInput && minInput !== this.shadowRoot.activeElement) {
-      minInput.value = String(this.state.minutes).padStart(2, '0');
-    }
+    this._input?.sync(force);
 
-    const clockArm = this.shadowRoot.querySelector('#clock-arm');
-    const targetDeg = isHours ? (this.state.hours % 12) * 30 : this.state.minutes * 6;
-
-    if (clockArm) {
-      this._currentArmAngle = this._calcShortestRotation(this._currentArmAngle, targetDeg);
-      clockArm.style.transform = `rotate(${this._currentArmAngle}deg)`;
-    }
-
-    // Selector dot is ONLY visible for off-grid un-labeled minutes (e.g. 14, 23).
-    // On all labeled numbers (1..12 or 00, 05, 10... 55), the dot is hidden so it never covers the number!
-    const selectorDot = this.shadowRoot.querySelector('.selector-dot');
-    if (selectorDot) {
-      const isOffGrid = !isHours && (this.state.minutes % 5 !== 0);
-      selectorDot.style.display = isOffGrid ? 'block' : 'none';
-    }
-
-    if (rebuildNumbers) this._buildDialNumbers();
-    this._highlightSelectedNumber();
-  }
-
-  _buildDialNumbers() {
-    const clockFace = this.shadowRoot.querySelector('.clock-face');
-    if (!clockFace) return;
-
-    clockFace.querySelectorAll('.dial-number').forEach(el => el.remove());
-    const isHours = this.state.activeUnit === 'hours';
-    const total = 12;
-    const radius = 100; // Radius in 256dp dial container
-
-    for (let i = 1; i <= total; i++) {
-      const val = isHours ? i : (i === 12 ? 0 : i * 5);
-      const label = isHours ? String(val) : String(val).padStart(2, '0');
-      const angle = (i * 30 - 90) * (Math.PI / 180);
-      const cx = 128 + radius * Math.cos(angle);
-      const cy = 128 + radius * Math.sin(angle);
-
-      const numEl = document.createElement('div');
-      numEl.className = 'dial-number';
-      numEl.setAttribute('data-val', String(val));
-      numEl.style.left = `${cx}px`;
-      numEl.style.top = `${cy}px`;
-      numEl.textContent = label;
-
-      numEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (this.state.activeUnit === 'hours') {
-          this.state.hours = val;
-          this._updateDisplay();
-          this._emitChange();
-          setTimeout(() => {
-            this.state.activeUnit = 'minutes';
-            this._updateDisplay(true);
-          }, 250);
-        } else {
-          this.state.minutes = val;
-          this._updateDisplay();
-          this._emitChange();
-        }
-      });
-
-      clockFace.appendChild(numEl);
-    }
-  }
-
-  _highlightSelectedNumber() {
-    const isHours = this.state.activeUnit === 'hours';
-    const targetVal = isHours ? this.state.hours : this.state.minutes;
-
-    this.shadowRoot.querySelectorAll('.dial-number').forEach((el) => {
-      const val = parseInt(el.getAttribute('data-val'), 10);
-      const isMatch = isHours ? (val === targetVal || (val === 12 && targetVal === 0)) : (val === targetVal);
-      el.classList.toggle('selected', isMatch);
-    });
+    this._clock?.sync();
   }
 
   render() {
@@ -883,7 +756,7 @@ export class MdTimePicker extends HTMLElement {
     const mm = String(this.state.minutes).padStart(2, '0');
 
     const dialogContent = `
-      <div class="picker-dialog ${this.state.layoutType} ${isRich ? 'rich' : ''} ${isInputMode ? 'input-mode' : ''}" part="dialog">
+      <div class="picker-dialog ${this.state.layoutType} ${isRich ? 'rich' : ''} ${isInputMode ? 'input-mode' : ''}" part="dialog" style="${pickerPaletteStyle(isInputMode?timeInputColors(isRich):timePickerColors(isRich),'time')}">
         <div class="picker-header">
           <span class="header-title">${isInputMode ? 'Enter time' : 'Select time'}</span>
         </div>
@@ -892,38 +765,48 @@ export class MdTimePicker extends HTMLElement {
           <!-- Time Display Cards (HH : MM + AM/PM) -->
           <div class="time-display-section ${isHorizontal ? 'horizontal' : ''}">
             <div class="time-cards-row">
+              <div class="clock-display-numbers">
               ${isInputMode ? `
                 <div class="input-card-wrap">
-                  <input type="text" id="hour-input" class="time-input-field" maxlength="2" value="${hh}" aria-label="Hour" />
-                  <span class="input-sublabel">Hour</span>
+                  <div class="time-input-slot">
+                  <button type="button" id="hour-input-selector" class="time-input-selector" role="radio" aria-label="Select hour" aria-describedby="hour-support"><span class="state-layer"></span><span class="selector-text">${hh}</span></button>
+                  <input type="text" id="hour-input" class="time-input-field" inputmode="numeric" enterkeyhint="next" value="${hh}" aria-label="Hour" aria-describedby="hour-support" />
+                  <svg class="time-input-outline" aria-hidden="true" viewBox="0 0 96 72"><rect /></svg>
+                  </div>
+                  <span class="input-sublabel" id="hour-support">Hour</span>
                 </div>
-                <div class="time-separator">:</div>
+                <div class="time-separator" aria-hidden="true"><span>:</span></div>
                 <div class="input-card-wrap">
-                  <input type="text" id="min-input" class="time-input-field" maxlength="2" value="${mm}" aria-label="Minute" />
-                  <span class="input-sublabel">Minute</span>
+                  <div class="time-input-slot">
+                  <button type="button" id="min-input-selector" class="time-input-selector" role="radio" aria-label="Select minute" aria-describedby="minute-support"><span class="state-layer"></span><span class="selector-text">${mm}</span></button>
+                  <input type="text" id="min-input" class="time-input-field" inputmode="numeric" enterkeyhint="done" value="${mm}" aria-label="Minute" aria-describedby="minute-support" />
+                  <svg class="time-input-outline" aria-hidden="true" viewBox="0 0 96 72"><rect /></svg>
+                  </div>
+                  <span class="input-sublabel" id="minute-support">Minute</span>
                 </div>
               ` : `
                 <button class="time-card active" id="hour-card" type="button" aria-label="Hour ${hh}">
                   <span class="time-val" id="hour-val">${hh}</span>
                 </button>
-                <div class="time-separator">:</div>
+                <div class="time-separator" aria-hidden="true"><span>:</span></div>
                 <button class="time-card" id="min-card" type="button" aria-label="Minute ${mm}">
                   <span class="time-val" id="min-val">${mm}</span>
                 </button>
               `}
+              </div>
 
               ${!this.state.is24Hour && !isHorizontal ? `
-                <div class="period-toggle-column">
-                  <button class="period-btn ${this.state.period === 'AM' ? 'active' : ''}" id="am-btn" type="button">AM</button>
-                  <button class="period-btn ${this.state.period === 'PM' ? 'active' : ''}" id="pm-btn" type="button">PM</button>
+                <div class="period-toggle-column" role="group" aria-label="AM or PM">
+                  <button class="period-btn ${this.state.period === 'AM' ? 'active' : ''}" id="am-btn" data-period="AM" type="button"><span class="state-layer"></span><span class="lbl-wrapper">AM</span></button>
+                  <button class="period-btn ${this.state.period === 'PM' ? 'active' : ''}" id="pm-btn" data-period="PM" type="button"><span class="state-layer"></span><span class="lbl-wrapper">PM</span></button>
                 </div>
               ` : ''}
             </div>
 
             ${!this.state.is24Hour && isHorizontal ? `
-              <div class="period-toggle-row">
-                <button class="period-btn ${this.state.period === 'AM' ? 'active' : ''}" id="am-btn" type="button">AM</button>
-                <button class="period-btn ${this.state.period === 'PM' ? 'active' : ''}" id="pm-btn" type="button">PM</button>
+              <div class="period-toggle-row" role="group" aria-label="AM or PM">
+                <button class="period-btn ${this.state.period === 'AM' ? 'active' : ''}" id="am-btn" data-period="AM" type="button"><span class="state-layer"></span><span class="lbl-wrapper">AM</span></button>
+                <button class="period-btn ${this.state.period === 'PM' ? 'active' : ''}" id="pm-btn" data-period="PM" type="button"><span class="state-layer"></span><span class="lbl-wrapper">PM</span></button>
               </div>
             ` : ''}
           </div>
@@ -936,7 +819,6 @@ export class MdTimePicker extends HTMLElement {
                 <div class="clock-arm" id="clock-arm">
                   <div class="clock-hand-line"></div>
                   <div class="clock-selector-head">
-                    <div class="selector-dot"></div>
                   </div>
                 </div>
               </div>
@@ -946,12 +828,11 @@ export class MdTimePicker extends HTMLElement {
 
         <!-- Footer Actions Bar -->
         <div class="picker-footer">
-          <button class="icon-btn mode-switch" id="mode-toggle-btn" type="button" aria-label="Toggle input mode">
-            <span class="ico">${isInputMode ? 'schedule' : 'keyboard'}</span>
-          </button>
+          <md-icon-button class="mode-switch" id="mode-toggle-btn" icon="${isInputMode ? 'schedule' : 'keyboard'}"
+            aria-label="${isInputMode ? 'Switch to clock input' : 'Switch to text input'}"></md-icon-button>
           <div class="action-buttons">
-            <button class="text-btn" id="cancel-btn" type="button">Cancel</button>
-            <button class="text-btn primary" id="ok-btn" type="button">OK</button>
+            <md-button variant="text" id="cancel-btn" label="Cancel"></md-button>
+            <md-button variant="text" id="ok-btn" label="OK"></md-button>
           </div>
         </div>
       </div>

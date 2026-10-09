@@ -637,3 +637,50 @@ remain manifested under ripple, fab-surface and pointer. Browser pointer/focus
 mapping and axis-aligned scaling are web adapters. Complete native consumed
 passes, ancestor/sibling/closest-target routing, arbitrary transformed/custom
 shapes and raster remain outside those checks.
+
+picker-clock-state.js ports TimePickerStateImpl, AnalogTimePickerState, native
+Float angle conversion, tap/moveSelector/selector geometry, CircularLayout
+integer placement and TouchSlopDetector from the pinned AndroidX revision above.
+Copyright2019,2023 The Android Open Source Project, Apache-2.0. Licensed unchanged
+originals and SHA/URL manifests are under test/fixtures/androidx/picker and
+test/fixtures/androidx/sliders. picker-clock.js binds those scalar policies to
+web pointer capture, keyboard, one shared spring owner, label layers and abort
+lifecycle. The independently compiled reference includes original FloatSpringSpec,
+SpringSimulation and SpringEstimation from the manifested motion originals.
+Explicit JVM/DOM platform and scheduling boundaries are documented in
+tools/androidx-picker/README.md; these are not complete native composition,
+coroutine/frame/gesture dispatch, font or raster claims.
+
+animatable-float.js and picker-clock-animation.js adapt the finite Float
+Animatable/frame and Foundation MutatorMutex/clock job paths from the same
+pinned AndroidX revision. Copyright2019-2021,2023 The Android Open Source Project,
+Apache-2.0. Unchanged licensed Foundation MutatorMutex.kt and its SHA/URL manifest
+are under test/fixtures/androidx/picker; unchanged animation-core/runtime originals
+are manifested under progress-runtime and motion. The separately compiled clock
+runtime executes those native finite animation bodies with real Kotlin coroutine
+Jobs/Mutex/Delay and explicit deterministic JVM dispatcher/frame/scalar hosts.
+RAF/timers and DOM lifetime are web bindings, not complete Compose/Android input,
+node update, font or raster equivalence. See tools/androidx-picker/README.md.
+
+picker-input-state.js ports TimeInputTransformation and TextFieldBuffer's plain
+edit-range adjustment from the same pinned AndroidX revision. picker-input.js
+binds the native TimeInput selection/edit/focus policies to HTML inputs and the
+shared Surface/interaction/theme owners. Copyright2019,2023,2024 The Android Open
+Source Project, Apache-2.0. Licensed originals for TextFieldBuffer, TextRange,
+GapBuffer/PartialGapBuffer, ChangeTracker, TextFieldCharSequence, foundation flags,
+TimeInputTokens and English strings are preserved with SHA/URL provenance in
+test/fixtures/androidx/picker/input-sources.json. The independent reference runs
+native plain-text buffer and transformation bodies with explicit JVM scalar,
+collection/packing/character-copy, digit and unused style/mapping hosts. Native
+TextFieldState transactions/recomposition, styled annotations, IME/input dispatch,
+locale and raster are separate. See tools/androidx-picker/README.md.
+
+text-field-container.js adapts OutlinedTextFieldDefaults.Container and
+animateBorderStrokeAsState from the same pinned revision. Copyright2016 The
+Android Open Source Project, Apache-2.0. TimeInput palette and field overrides
+in picker-colors.js are derived from TimeInputDefaults. Unchanged licensed
+originals are SHA manifested under test/fixtures/androidx/text-field and picker.
+The independent input-colors reference executes the complete original color
+classes/factories and container with explicit symbolic color/theme/focus and
+animation descriptor hosts; complete native scheduling, conversion and raster
+remain separate. See tools/androidx-picker/README.md.

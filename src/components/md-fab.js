@@ -92,7 +92,7 @@ const defaultStyle = `
   .fab::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 48px); height: max(100%, 48px); transform: translate(-50%, -50%); }
 
   .fab .material-symbols-outlined {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-weight: normal;
     font-style: normal;
     line-height: 1;

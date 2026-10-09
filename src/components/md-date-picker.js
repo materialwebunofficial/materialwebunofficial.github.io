@@ -14,6 +14,11 @@
 
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import {ModalController,MODAL_STYLE,renderModalContent} from './modal-controller.js';
+import {datePickerColors,datePickerDayColors,pickerCssColor,pickerPaletteStyle} from './picker-colors.js';
+import {bindPress,createRipple} from '../motion/interactions.js';
+import './md-button.js';
+import './md-icon-button.js';
+import './md-text-field.js';
 
 const defaultStyle = MODAL_STYLE+`
   :host {
@@ -94,15 +99,16 @@ const defaultStyle = MODAL_STYLE+`
     margin-left: 12px;
   }
 
+  /* Docked date picker: SurfaceContainerHigh, CornerLarge, elevation level 3. */
   .docked-calendar {
-    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-    border: 1px solid var(--md-sys-color-outline-variant, #CAC4D0);
-    border-radius: 16px;
+    background-color: var(--date-container-color);
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-large, 16px);
     padding: 16px 12px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px rgba(0,0,0,0.12));
+    box-shadow: var(--md-sys-elevation-level3, 0 1px 3px 0 rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
     box-sizing: border-box;
     width: 100%;
   }
@@ -141,16 +147,16 @@ const defaultStyle = MODAL_STYLE+`
 
   /* 2. MODAL & RANGE DIALOG STYLES */
   .picker-dialog {
-    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
+    background-color: var(--date-container-color);
     color: var(--md-sys-color-on-surface, #1D1B20);
     border-radius: var(--md-sys-shape-corner-extra-large, 28px);
-    padding: 24px;
-    width: 328px;
+    padding: 0;
+    width: 360px;
     max-width: calc(100vw - 32px);
     box-shadow: none;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 0;
     box-sizing: border-box;
     max-height: 100%;
     overflow-y: auto;
@@ -159,7 +165,7 @@ const defaultStyle = MODAL_STYLE+`
 
   :host([inline]) .picker-dialog {
     width: 100%;
-    max-width: 328px;
+    max-width: 360px;
     box-shadow: none;
     margin: 0 auto;
   }
@@ -167,32 +173,97 @@ const defaultStyle = MODAL_STYLE+`
   .picker-header {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
   }
 
-  .header-top {
+  /* DatePickerDefaults: title padding 16/12/24, headline row with the mode toggle. */
+  .picker-header {
+    min-height: 120px;
+    padding: 16px 12px 12px 24px;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+  .header-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .mode-toggle, .nav-btn { --md-icon-button-content-color: var(--date-navigation-content-color); }
+  .year-menu, .month-menu { --md-button-content-color: var(--date-navigation-content-color); }
+  .calendar-views { position: relative; }
+  .day-view[hidden], .year-grid[hidden], .option-list[hidden], .month-nav[hidden] { display: none; }
+  /* Year picker: three columns of 72x36dp years, selected Primary, current year outlined. */
+  .year-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-content: start;
+    justify-items: center;
+    row-gap: 16px;
+    height: 336px;
+    padding: 8px 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
+  }
+  .year {
+    position: relative;
+    width: 72px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full, 9999px);
+    background: transparent;
+    color: var(--date-year-content-color);
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
+    cursor: pointer;
+    overflow: hidden;
+    outline: none;
+  }
+  .year.current { box-shadow: inset 0 0 0 1px var(--date-today-date-border-color); color: var(--date-current-year-content-color); }
+  .year.selected { box-shadow: none; background: var(--date-selected-year-container-color); color: var(--date-selected-year-content-color); }
+  .year::before, .option::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: 0; pointer-events: none; }
+  .year:hover::before, .option:hover::before { opacity: var(--md-sys-state-hover-state-layer-opacity, .08); }
+  .year:focus-visible::before, .option:focus-visible::before { opacity: var(--md-sys-state-focus-state-layer-opacity, .1); }
+  .year:focus-visible, .option:focus-visible { outline: 3px solid var(--md-sys-color-secondary, #625B71); outline-offset: -3px; }
+  /* Docked month and year lists. */
+  .option-list { display: flex; flex-direction: column; height: 336px; overflow-y: auto; overscroll-behavior: contain; padding: 8px 0; box-sizing: border-box; }
+  .option {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 16px;
+    flex: none;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface, #1D1B20);
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
+    text-align: start;
+    cursor: pointer;
+    overflow: hidden;
+    outline: none;
   }
+  .option-check { width: 24px; font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif); font-size: 24px; line-height: 1; visibility: hidden; }
+  .option.selected .option-check { visibility: visible; }
+  .md-ripple-effect { position: absolute; border-radius: 50%; background: currentColor; opacity: 0; animation: date-ripple 450ms linear; pointer-events: none; }
+  @keyframes date-ripple { from { transform: scale(0); opacity: .1; } to { transform: scale(1); opacity: 0; } }
 
   .header-title {
     font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    text-transform: capitalize;
+    color: var(--date-title-content-color);
+    text-transform: none;
   }
 
   .formatted-date {
     font: var(--md-sys-typescale-headline-large, 400 32px/40px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-headline-large-tracking, 0px);
-    color: var(--md-sys-color-on-surface, #1D1B20);
+    color: var(--date-headline-content-color);
   }
 
   .icon-toggle-btn {
     border: none;
     background: transparent;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
+    color: var(--date-navigation-content-color);
     width: 36px;
     height: 36px;
     border-radius: 9999px;
@@ -209,25 +280,25 @@ const defaultStyle = MODAL_STYLE+`
 
   .divider {
     height: 1px;
-    background-color: var(--md-sys-color-outline-variant, #CAC4D0);
+    background-color: var(--date-divider-color);
     margin: 0;
   }
 
   .calendar-body {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
     width: 100%;
+    padding: 0 12px;
     box-sizing: border-box;
   }
 
   .month-header {
+    min-height: 56px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-    padding: 0 4px;
+    padding: 0;
   }
 
   .month-nav {
@@ -238,7 +309,7 @@ const defaultStyle = MODAL_STYLE+`
   .nav-btn {
     border: none;
     background: transparent;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
+    color: var(--date-navigation-content-color);
     cursor: pointer;
     width: 36px;
     height: 36px;
@@ -255,7 +326,7 @@ const defaultStyle = MODAL_STYLE+`
   }
 
   .ico {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-size: 22px;
     line-height: 1;
     display: inline-block;
@@ -268,10 +339,10 @@ const defaultStyle = MODAL_STYLE+`
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     text-align: center;
-    font: var(--md-sys-typescale-label-medium, 500 12px/16px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-label-medium-tracking, 0.5px);
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    height: 32px;
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
+    color: var(--date-weekday-content-color);
+    height: 48px;
     align-items: center;
     justify-items: center;
     width: 100%;
@@ -281,7 +352,9 @@ const defaultStyle = MODAL_STYLE+`
   .days-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px 0;
+    grid-template-rows: repeat(6, 48px);
+    gap: 0;
+    height: 288px;
     align-items: center;
     justify-items: center;
     width: 100%;
@@ -291,15 +364,15 @@ const defaultStyle = MODAL_STYLE+`
   .day-cell {
     position: relative;
     width: 100%;
-    height: 40px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.2px);
+    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
     border: none;
     background: transparent;
-    color: var(--md-sys-color-on-surface, #1D1B20);
+    color: var(--date-day-content);
     cursor: pointer;
     outline: none;
     padding: 0;
@@ -313,12 +386,12 @@ const defaultStyle = MODAL_STYLE+`
   .day-cell .day-text {
     position: relative;
     z-index: 2;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
-    max-width: 36px;
-    max-height: 36px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 40px;
+    max-height: 40px;
     aspect-ratio: 1 / 1;
     border-radius: 50%;
     display: flex;
@@ -326,47 +399,42 @@ const defaultStyle = MODAL_STYLE+`
     justify-content: center;
     flex-shrink: 0;
     margin: auto;
-    line-height: 1;
+    background-color: var(--date-day-container);
     text-align: center;
     transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
     box-sizing: border-box;
   }
+  /* State layer: the day's content color at the hover opacity. */
   .day-cell:hover:not(.empty):not(.selected):not(.in-range) .day-text {
-    background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent);
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 8%, transparent);
   }
-  .day-cell.today .day-text {
-    border: 1px solid var(--md-sys-color-primary, #6750A4);
-  }
-  .day-cell.selected .day-text {
-    background-color: var(--md-sys-color-primary, #6750A4);
-    color: var(--md-sys-color-on-primary, #FFFFFF);
-    font-weight: var(--md-sys-typescale-body-medium-emphasized-weight, 500);
+  .day-cell.today:not(.selected) .day-text {
+    border: 1px solid var(--date-today-date-border-color);
   }
 
-  /* Seamless Continuous Range Selection Highlighting (1:1 AndroidX Compose DateRangePicker Parity) */
+  /* Native range ink is 40dp high, centered within each 48dp week. */
   .day-cell.in-range {
-    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-    color: var(--md-sys-color-on-secondary-container, #1D192B);
+    background: linear-gradient(var(--date-day-in-selection-range-container-color),var(--date-day-in-selection-range-container-color)) center / 100% 40px no-repeat;
     border-radius: 0;
   }
   .day-cell.range-start::before {
     content: '';
     position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
+    top: 4px;
+    bottom: 4px;
+    inset-inline-end: 0;
     width: 50%;
-    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+    background-color: var(--date-day-in-selection-range-container-color);
     z-index: 1;
   }
   .day-cell.range-end::before {
     content: '';
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
+    top: 4px;
+    bottom: 4px;
+    inset-inline-start: 0;
     width: 50%;
-    background-color: var(--md-sys-color-secondary-container, #E8DEF8);
+    background-color: var(--date-day-in-selection-range-container-color);
     z-index: 1;
   }
   .day-cell.range-start.range-end::before {
@@ -376,18 +444,20 @@ const defaultStyle = MODAL_STYLE+`
   .range-input-pane, .modal-input-pane {
     display: flex;
     gap: 12px;
-    padding: 12px 0;
+    padding: 16px 24px 24px;
     width: 100%;
     box-sizing: border-box;
   }
+  .range-input-pane md-text-field, .modal-input-pane md-text-field { flex: 1; min-width: 0; }
   .range-input-pane .outlined-field-wrap { flex: 1; }
 
+  /* DatePickerDialog: buttons 8dp apart, padded 8dp from the bottom and 6dp from the end. */
   .actions-row {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
-    margin-top: 4px;
+    padding: 0 6px 8px 0;
   }
 
   .text-btn {
@@ -409,9 +479,9 @@ const defaultStyle = MODAL_STYLE+`
 
   @media (max-width: 600px) {
     .picker-dialog {
-      width: 328px !important;
+      width: 360px !important;
       max-width: calc(100vw - 32px) !important;
-      padding: 20px 16px !important;
+      padding: 24px !important;
       border-radius: var(--md-sys-shape-corner-extra-large, 28px) !important;
       box-sizing: border-box !important;
       margin: auto !important;
@@ -518,6 +588,10 @@ export class MdDatePicker extends HTMLElement {
         this._updateUI();
       }
     }
+    if(name === 'start-date' || name === 'end-date'){
+      this.state[name === 'start-date'?'startDate':'endDate']=parseDateMMDDYYYY(newVal);
+      this._updateUI();
+    }
     if (name === 'variant' || name === 'inline' || name === 'range') {
       this.render();
       this._setup();
@@ -535,12 +609,15 @@ export class MdDatePicker extends HTMLElement {
       }
     }
     if (this.hasAttribute('start-date')) {
-      const s = parseDateMMDDYYYY(this.getAttribute('start-date'));
-      if (s) this.state.startDate = s;
+      this.state.startDate = parseDateMMDDYYYY(this.getAttribute('start-date'));
+      // DateRangePicker initially displays the month of the selected start date.
+      if (this.state.startDate && !this.hasAttribute('value')) {
+        this.state.viewYear = this.state.startDate.getFullYear();
+        this.state.viewMonth = this.state.startDate.getMonth();
+      }
     }
     if (this.hasAttribute('end-date')) {
-      const e = parseDateMMDDYYYY(this.getAttribute('end-date'));
-      if (e) this.state.endDate = e;
+      this.state.endDate = parseDateMMDDYYYY(this.getAttribute('end-date'));
     }
     if (this.variant === 'modal-input' || (this.range && this.getAttribute('mode') === 'input')) {
       this.state.displayMode = 'input';
@@ -616,6 +693,7 @@ export class MdDatePicker extends HTMLElement {
     const nextBtn = this.shadowRoot.querySelector('#next-month');
     if (prevBtn && nextBtn) {
       prevBtn.addEventListener('click', () => {
+        if (this.state.view !== 'day') this._setView('day');
         this.state.viewMonth--;
         if (this.state.viewMonth < 0) {
           this.state.viewMonth = 11;
@@ -624,11 +702,23 @@ export class MdDatePicker extends HTMLElement {
         this._updateUI();
       }, { signal });
       nextBtn.addEventListener('click', () => {
+        if (this.state.view !== 'day') this._setView('day');
         this.state.viewMonth++;
         if (this.state.viewMonth > 11) {
           this.state.viewMonth = 0;
           this.state.viewYear++;
         }
+        this._updateUI();
+      }, { signal });
+    }
+
+    const yearMenu = this.shadowRoot.querySelector('#year-menu');
+    yearMenu?.addEventListener('click', () => this._setView(this.state.view === 'year' ? 'day' : 'year'), { signal });
+    this.shadowRoot.querySelector('#month-menu')?.addEventListener('click', () => this._setView(this.state.view === 'month' ? 'day' : 'month'), { signal });
+    for (const [id, step] of [['#prev-year', -1], ['#next-year', 1]]) {
+      this.shadowRoot.querySelector(id)?.addEventListener('click', () => {
+        this.state.viewYear = Math.min(2100, Math.max(1900, this.state.viewYear + step));
+        if (this.state.view !== 'day') this._setView('day');
         this._updateUI();
       }, { signal });
     }
@@ -720,7 +810,7 @@ export class MdDatePicker extends HTMLElement {
         const e = this.state.endDate;
         headerEl.textContent = `${MONTH_SHORT[s.getMonth()]} ${s.getDate()} – ${MONTH_SHORT[e.getMonth()]} ${e.getDate()}`;
       } else {
-        headerEl.textContent = 'Select range';
+        headerEl.textContent = 'Start date – End date';
       }
     } else {
       const sel = this.state.selectedDate;
@@ -729,15 +819,13 @@ export class MdDatePicker extends HTMLElement {
   }
 
   _updateCalendarGrid() {
-    const monthLabelEl = this.shadowRoot.querySelector('.month-label');
-    if (monthLabelEl) {
-      if (this.variant === 'docked') {
-        monthLabelEl.textContent = `${MONTH_SHORT[this.state.viewMonth]}`;
-        const yearLabelEl = this.shadowRoot.querySelector('.year-label');
-        if (yearLabelEl) yearLabelEl.textContent = `${this.state.viewYear}`;
-      } else {
-        monthLabelEl.textContent = `${MONTH_NAMES[this.state.viewMonth]} ${this.state.viewYear}`;
-      }
+    const yearMenu = this.shadowRoot.querySelector('#year-menu');
+    const monthMenu = this.shadowRoot.querySelector('#month-menu');
+    if (this.variant === 'docked') {
+      monthMenu?.setAttribute('label', MONTH_SHORT[this.state.viewMonth]);
+      yearMenu?.setAttribute('label', String(this.state.viewYear));
+    } else {
+      yearMenu?.setAttribute('label', `${MONTH_NAMES[this.state.viewMonth]} ${this.state.viewYear}`);
     }
 
     const daysGrid = this.shadowRoot.querySelector('.days-grid');
@@ -768,13 +856,15 @@ export class MdDatePicker extends HTMLElement {
       if (isToday) cellClasses += ' today';
 
       if (isRange) {
-        const isStart = startTime && currentTime === startTime;
-        const isEnd = endTime && currentTime === endTime;
-        const inRange = startTime && endTime && currentTime > startTime && currentTime < endTime;
+        const isStart = startTime !== null && currentTime === startTime;
+        const isEnd = endTime !== null && currentTime === endTime;
+        const inRange = startTime !== null && endTime !== null && currentTime > startTime && currentTime < endTime;
 
-        if (isStart) cellClasses += ' range-start selected';
-        else if (isEnd) cellClasses += ' range-end selected';
-        else if (inRange) cellClasses += ' in-range';
+        if (isStart || isEnd) {
+          cellClasses += ' selected';
+          if(isStart && endTime !== null)cellClasses += ' range-start';
+          if(isEnd && startTime !== null)cellClasses += ' range-end';
+        } else if (inRange) cellClasses += ' in-range';
       } else {
         const isSelected =
           this.state.selectedDate.getFullYear() === this.state.viewYear &&
@@ -783,12 +873,15 @@ export class MdDatePicker extends HTMLElement {
         if (isSelected) cellClasses += ' selected';
       }
 
+      const selected=cellClasses.includes(' selected'),inRange=!!(isRange&&startTime!==null&&endTime!==null&&currentTime>=startTime&&currentTime<=endTime);
+      const colors=datePickerDayColors({isToday,selected,inRange});
       gridHtml += `
-        <button class="${cellClasses}" data-day="${day}" tabindex="0" type="button" aria-label="${day} ${MONTH_NAMES[this.state.viewMonth]} ${this.state.viewYear}">
+        <button class="${cellClasses}" data-day="${day}" tabindex="0" type="button" aria-pressed="${selected}" style="--date-day-content:${pickerCssColor(colors.content)};--date-day-container:${pickerCssColor(colors.container)}" aria-label="${day} ${MONTH_NAMES[this.state.viewMonth]} ${this.state.viewYear}">
           <span class="day-text">${day}</span>
         </button>
       `;
     }
+    for(let i=firstDayIndex+daysInMonth;i<42;i++)gridHtml+='<div class="day-cell empty"></div>';
     daysGrid.innerHTML = gridHtml;
 
     const dayCells = daysGrid.querySelectorAll('.day-cell:not(.empty)');
@@ -841,146 +934,101 @@ export class MdDatePicker extends HTMLElement {
     const isDocked = this.variant === 'docked';
     const isRange = this.range;
     const isInputMode = this.state.displayMode === 'input';
+    this.state.view = 'day';
 
     const currentFormattedValue = formatDateMMDDYYYY(this.state.selectedDate);
     const startFormattedValue = formatDateMMDDYYYY(this.state.startDate);
     const endFormattedValue = formatDateMMDDYYYY(this.state.endDate);
+    const m = this.state.viewMonth, y = this.state.viewYear;
+
+    const weekdays = `<div class="weekdays-row" aria-hidden="true"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>`;
+    const dayView = `<div class="day-view">${weekdays}<div class="days-grid${isRange ? ' range-grid' : ''}"></div></div>`;
+    // DatePicker: the year picker replaces the calendar while it is open.
+    const yearGrid = `<div class="year-grid" role="listbox" aria-label="Years" hidden></div>`;
+    const modeToggle = `<md-icon-button class="mode-toggle" id="mode-toggle-btn" icon="${isInputMode ? 'date_range' : 'edit'}"
+      aria-label="${isInputMode ? 'Switch to calendar input mode' : 'Switch to text input mode'}"></md-icon-button>`;
+    const monthHeader = `
+      <div class="month-header">
+        <md-button class="year-menu" id="year-menu" variant="text" trailing-icon="arrow_drop_down"
+          label="${MONTH_NAMES[m]} ${y}" aria-label="Switch to selecting a year"></md-button>
+        <div class="month-nav">
+          <md-icon-button class="nav-btn" id="prev-month" icon="chevron_left" aria-label="Change to previous month"></md-icon-button>
+          <md-icon-button class="nav-btn" id="next-month" icon="chevron_right" aria-label="Change to next month"></md-icon-button>
+        </div>
+      </div>`;
+    const actions = label => `
+      <div class="actions-row">
+        <md-button variant="text" id="cancel-btn" label="Cancel"></md-button>
+        <md-button variant="text" id="ok-btn" label="${label}"></md-button>
+      </div>`;
 
     let cardContentHtml = '';
 
     if (isDocked) {
-      // 1. DOCKED DATE PICKER (Outlined input field at top + attached docked calendar)
+      // Docked: an outlined field, with month and year menus above the calendar.
       cardContentHtml = `
         <div class="docked-container">
-          <div class="outlined-field-wrap">
-            <label class="field-label">Date</label>
-            <input type="text" id="docked-text-input" class="outlined-input" value="${currentFormattedValue}" placeholder="MM/DD/YYYY" />
-            <span class="helper-text">MM/DD/YYYY</span>
-          </div>
-
-          <div class="docked-calendar">
+          <md-text-field class="docked-field" id="docked-text-input" variant="outlined" label="Date"
+            value="${currentFormattedValue}" placeholder="MM/DD/YYYY" supporting-text="MM/DD/YYYY"></md-text-field>
+          <div class="docked-calendar" style="${pickerPaletteStyle(datePickerColors(),'date')}">
             <div class="docked-nav-row">
               <div class="nav-cluster">
-                <button class="nav-btn" id="prev-month" type="button" aria-label="Previous month"><span class="ico">chevron_left</span></button>
-                <button class="dropdown-pill-btn" type="button"><span class="month-label">${MONTH_SHORT[this.state.viewMonth]}</span> <span class="ico arrow">arrow_drop_down</span></button>
-                <button class="nav-btn" id="next-month" type="button" aria-label="Next month"><span class="ico">chevron_right</span></button>
+                <md-icon-button class="nav-btn" id="prev-month" icon="chevron_left" aria-label="Change to previous month"></md-icon-button>
+                <md-button class="month-menu" id="month-menu" variant="text" trailing-icon="arrow_drop_down" label="${MONTH_SHORT[m]}" aria-label="Select month"></md-button>
+                <md-icon-button class="nav-btn" id="next-month" icon="chevron_right" aria-label="Change to next month"></md-icon-button>
               </div>
               <div class="nav-cluster">
-                <button class="dropdown-pill-btn" type="button"><span class="year-label">${this.state.viewYear}</span> <span class="ico arrow">arrow_drop_down</span></button>
+                <md-icon-button class="nav-btn" id="prev-year" icon="chevron_left" aria-label="Change to previous year"></md-icon-button>
+                <md-button class="year-menu" id="year-menu" variant="text" trailing-icon="arrow_drop_down" label="${y}" aria-label="Select year"></md-button>
+                <md-icon-button class="nav-btn" id="next-year" icon="chevron_right" aria-label="Change to next year"></md-icon-button>
               </div>
             </div>
-
-            <div class="weekdays-row">
-              <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+            <div class="calendar-views">
+              ${dayView}
+              <div class="option-list month-list" role="listbox" aria-label="Months" hidden></div>
+              <div class="option-list year-list" role="listbox" aria-label="Years" hidden></div>
             </div>
-
-            <div class="days-grid"></div>
           </div>
         </div>
       `;
     } else if (isRange) {
-      // 3. DATE RANGE PICKER (Modal Range / Input)
+      const headline = isInputMode ? 'Enter dates' : (this.state.startDate && this.state.endDate
+        ? `${MONTH_SHORT[this.state.startDate.getMonth()]} ${this.state.startDate.getDate()} – ${MONTH_SHORT[this.state.endDate.getMonth()]} ${this.state.endDate.getDate()}`
+        : 'Start date – End date');
       cardContentHtml = `
-        <div class="picker-dialog range" part="dialog">
+        <div class="picker-dialog range" part="dialog" style="${pickerPaletteStyle(datePickerColors(),'date')}">
           <div class="picker-header">
-            <div class="header-top">
-              <span class="header-title">Select date</span>
-              <button class="icon-toggle-btn" id="mode-toggle-btn" type="button" aria-label="Toggle input mode">
-                <span class="ico">${isInputMode ? 'calendar_month' : 'edit'}</span>
-              </button>
-            </div>
-            <div class="formatted-date">${isInputMode ? 'Enter dates' : (this.state.startDate && this.state.endDate ? `${MONTH_SHORT[this.state.startDate.getMonth()]} ${this.state.startDate.getDate()} – ${MONTH_SHORT[this.state.endDate.getMonth()]} ${this.state.endDate.getDate()}` : 'Select range')}</div>
+            <span class="header-title">Select dates</span>
+            <div class="header-row"><div class="formatted-date">${headline}</div>${modeToggle}</div>
           </div>
-
           <div class="divider"></div>
-
           ${isInputMode ? `
             <div class="range-input-pane">
-              <div class="outlined-field-wrap">
-                <label class="field-label">Date</label>
-                <input type="text" id="range-start-input" class="outlined-input" value="${startFormattedValue}" placeholder="mm/dd/yyyy" />
-              </div>
-              <div class="outlined-field-wrap">
-                <label class="field-label">End date</label>
-                <input type="text" id="range-end-input" class="outlined-input" value="${endFormattedValue}" placeholder="mm/dd/yyyy" />
-              </div>
+              <md-text-field id="range-start-input" variant="outlined" label="Start date" value="${startFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
+              <md-text-field id="range-end-input" variant="outlined" label="End date" value="${endFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
             </div>
           ` : `
-            <div class="calendar-body">
-              <div class="month-header">
-                <button class="dropdown-pill-btn" type="button">
-                  <span class="month-label">${MONTH_NAMES[this.state.viewMonth]} ${this.state.viewYear}</span>
-                  <span class="ico arrow">arrow_drop_down</span>
-                </button>
-                <div class="month-nav">
-                  <button class="nav-btn" id="prev-month" type="button" aria-label="Previous month"><span class="ico">chevron_left</span></button>
-                  <button class="nav-btn" id="next-month" type="button" aria-label="Next month"><span class="ico">chevron_right</span></button>
-                </div>
-              </div>
-
-              <div class="weekdays-row">
-                <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
-              </div>
-
-              <div class="days-grid range-grid"></div>
-            </div>
+            <div class="calendar-body">${monthHeader}<div class="calendar-views">${dayView}${yearGrid}</div></div>
           `}
-
-          <div class="actions-row">
-            <button class="text-btn" id="cancel-btn" type="button">Cancel</button>
-            <button class="text-btn primary" id="ok-btn" type="button">Save</button>
-          </div>
+          ${actions('Save')}
         </div>
       `;
     } else {
-      // 2. MODAL DATE PICKER (Full Calendar Dialog)
       cardContentHtml = `
-        <div class="picker-dialog modal" part="dialog">
+        <div class="picker-dialog modal" part="dialog" style="${pickerPaletteStyle(datePickerColors(),'date')}">
           <div class="picker-header">
-            <div class="header-top">
-              <span class="header-title">Select date</span>
-              <button class="icon-toggle-btn" id="mode-toggle-btn" type="button" aria-label="Toggle input mode">
-                <span class="ico">${isInputMode ? 'calendar_month' : 'edit'}</span>
-              </button>
-            </div>
-            <div class="formatted-date">${DAY_NAMES[this.state.selectedDate.getDay()]}, ${MONTH_SHORT[this.state.selectedDate.getMonth()]} ${this.state.selectedDate.getDate()}</div>
+            <span class="header-title">Select date</span>
+            <div class="header-row"><div class="formatted-date">${isInputMode ? 'Enter date' : `${DAY_NAMES[this.state.selectedDate.getDay()]}, ${MONTH_SHORT[this.state.selectedDate.getMonth()]} ${this.state.selectedDate.getDate()}`}</div>${modeToggle}</div>
           </div>
-
           <div class="divider"></div>
-
           ${isInputMode ? `
             <div class="modal-input-pane">
-              <div class="outlined-field-wrap">
-                <label class="field-label">Date</label>
-                <input type="text" id="docked-text-input" class="outlined-input" value="${currentFormattedValue}" placeholder="MM/DD/YYYY" />
-                <span class="helper-text">MM/DD/YYYY</span>
-              </div>
+              <md-text-field id="docked-text-input" variant="outlined" label="Date" value="${currentFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
             </div>
           ` : `
-            <div class="calendar-body">
-              <div class="month-header">
-                <button class="dropdown-pill-btn" type="button">
-                  <span class="month-label">${MONTH_NAMES[this.state.viewMonth]} ${this.state.viewYear}</span>
-                  <span class="ico arrow">arrow_drop_down</span>
-                </button>
-                <div class="month-nav">
-                  <button class="nav-btn" id="prev-month" type="button" aria-label="Previous month"><span class="ico">chevron_left</span></button>
-                  <button class="nav-btn" id="next-month" type="button" aria-label="Next month"><span class="ico">chevron_right</span></button>
-                </div>
-              </div>
-
-              <div class="weekdays-row">
-                <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
-              </div>
-
-              <div class="days-grid"></div>
-            </div>
+            <div class="calendar-body">${monthHeader}<div class="calendar-views">${dayView}${yearGrid}</div></div>
           `}
-
-          <div class="actions-row">
-            <button class="text-btn" id="cancel-btn" type="button">Cancel</button>
-            <button class="text-btn primary" id="ok-btn" type="button">OK</button>
-          </div>
+          ${actions('OK')}
         </div>
       `;
     }
@@ -990,8 +1038,70 @@ export class MdDatePicker extends HTMLElement {
     if(!hasAdopted&&!this.shadowRoot.querySelector('style')){
       const style=document.createElement('style');style.textContent=defaultStyle;this.shadowRoot.prepend(style);
     }
-    renderModalContent(this,this.inline?cardContentHtml:`<div class="scrim">${cardContentHtml}</div>`,{inline:this.inline,label:this.range?'Select date range':'Select date'});
+    renderModalContent(this,this.inline?cardContentHtml:`<div class="scrim">${cardContentHtml}</div>`,{inline:this.inline,label:this.range?'Select dates':'Select date'});
   }
+
+  /** Switches between the day grid and the year (and, docked, month) selection. */
+  _setView(view) {
+    const root = this.shadowRoot;
+    const isDocked = this.variant === 'docked';
+    this.state.view = view;
+    const dayView = root.querySelector('.day-view');
+    if (!dayView) return;
+    dayView.hidden = view !== 'day';
+    const years = root.querySelector(isDocked ? '.year-list' : '.year-grid');
+    const months = root.querySelector('.month-list');
+    if (years) years.hidden = view !== 'year';
+    if (months) months.hidden = view !== 'month';
+    const yearMenu = root.querySelector('#year-menu'), monthMenu = root.querySelector('#month-menu');
+    yearMenu?.setAttribute('trailing-icon', view === 'year' ? 'arrow_drop_up' : 'arrow_drop_down');
+    monthMenu?.setAttribute('trailing-icon', view === 'month' ? 'arrow_drop_up' : 'arrow_drop_down');
+    yearMenu?.setAttribute('aria-expanded', String(view === 'year'));
+    monthMenu?.setAttribute('aria-expanded', String(view === 'month'));
+    // The modal picker hides month navigation while the year picker is shown.
+    if (!isDocked) root.querySelector('.month-nav')?.toggleAttribute('hidden', view === 'year');
+    if (view === 'year') this._renderYears(years, isDocked);
+    if (view === 'month') this._renderMonths(months);
+  }
+
+  _renderYears(container, asList) {
+    if (!container) return;
+    const current = new Date().getFullYear(), selected = this.state.viewYear;
+    let html = '';
+    for (let year = 1900; year <= 2100; year++) {
+      const cls = `${asList ? 'option' : 'year'}${year === selected ? ' selected' : ''}${year === current ? ' current' : ''}`;
+      html += asList
+        ? `<button class="${cls}" type="button" role="option" data-year="${year}" aria-selected="${year === selected}"><span class="option-check" aria-hidden="true">check</span><span>${year}</span></button>`
+        : `<button class="${cls}" type="button" role="option" data-year="${year}" aria-selected="${year === selected}">${year}</button>`;
+    }
+    container.innerHTML = html;
+    const chosen = container.querySelector('.selected');
+    if (chosen) container.scrollTop = chosen.offsetTop - container.clientHeight / 2 + chosen.offsetHeight / 2;
+    for (const button of container.querySelectorAll('button')) {
+      bindPress(button, { onPress: event => createRipple(event, button), onActivate: () => {
+        this.state.viewYear = Number(button.dataset.year);
+        this._setView('day');
+        this._updateUI();
+        this.shadowRoot.querySelector('#year-menu')?.focus();
+      } });
+    }
+    chosen?.focus({ preventScroll: true });
+  }
+
+  _renderMonths(container) {
+    if (!container) return;
+    container.innerHTML = MONTH_NAMES.map((name, index) => `<button class="option${index === this.state.viewMonth ? ' selected' : ''}" type="button" role="option" data-month="${index}" aria-selected="${index === this.state.viewMonth}"><span class="option-check" aria-hidden="true">check</span><span>${name}</span></button>`).join('');
+    for (const button of container.querySelectorAll('button')) {
+      bindPress(button, { onPress: event => createRipple(event, button), onActivate: () => {
+        this.state.viewMonth = Number(button.dataset.month);
+        this._setView('day');
+        this._updateUI();
+        this.shadowRoot.querySelector('#month-menu')?.focus();
+      } });
+    }
+    container.querySelector('.selected')?.focus({ preventScroll: true });
+  }
+
 }
 
 if (!customElements.get('md-date-picker')) {

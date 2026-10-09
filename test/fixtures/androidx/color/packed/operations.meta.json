@@ -1,0 +1,176 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "count": 8800,
+  "sha256": "d847a2dcd631befc598cd8bac283d3de73c460216ce0aa391915ab57a573144f",
+  "sources": [
+    {
+      "file": "test/fixtures/androidx/color/packed/ColorSpace.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpace.kt",
+      "sha256": "f6a937d920188b8f9a3236c73513141fd446ca2dad14e33b688d1bef213d7d45",
+      "bytes": 26906
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/ColorSpaces.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpaces.kt",
+      "sha256": "0646b25223bd32f3818f0651f99d883281f9c5b6fbb856273ad6f5bf1d2751d7",
+      "bytes": 16476
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/ColorModel.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorModel.kt",
+      "sha256": "64016fc1f2f16feaeb48570bf60e3d83531fcb79064b7de0fe5943a9bcaeeeb8",
+      "bytes": 3007
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Rgb.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Rgb.kt",
+      "sha256": "1994720f9c2cca4ca1f7f6fe3ce0d1803a2e2c99818096dd96966a147b979bf5",
+      "bytes": 54036
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Connector.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Connector.kt",
+      "sha256": "044837f674a3886f6cc2b669f0201e56e73ae9ed24ed1265177d91b72547e702",
+      "bytes": 13268
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/RenderIntent.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/RenderIntent.kt",
+      "sha256": "cc97098b45e36f4dc13a4d47d1ebf2fdd0fe8225a941e55ee3473d679334b157",
+      "bytes": 2898
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/TransferParameters.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/TransferParameters.kt",
+      "sha256": "ddbb9a6295dfd203a6d90b670d508e72c2fdbbd3456fac6aa44eeda907641988",
+      "bytes": 4021
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/WhitePoint.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/WhitePoint.kt",
+      "sha256": "291d963e891eb49297b3701b46e98c7f3f39b094a0124a84934703686edf043f",
+      "bytes": 1612
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Adaptation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt",
+      "sha256": "6acc8a2851260afee849afbf2a1f3d8202fdb0d95504fd63796e283abe860efe",
+      "bytes": 3819
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Lab.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Lab.kt",
+      "sha256": "658754a278c5afbc45a61bd295e1663b93c80a9f0abf97f7ec5adc48fa861950",
+      "bytes": 4365
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Xyz.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Xyz.kt",
+      "sha256": "97778ba13c2810d96c7f3c2f002a980a4e2706b956714ba6ce50f286332e471f",
+      "bytes": 2067
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Illuminant.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Illuminant.kt",
+      "sha256": "07182029e79db0c99a3d708241f37ae20c302214fc3817977dec63f42dd05d1b",
+      "bytes": 2831
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Float16.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Float16.kt",
+      "sha256": "fa619d5a9d29881292e6f95ad4c6e4097c11c29df0c3c4ce0f51d261acde84d2",
+      "bytes": 25169
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/GraphicsInlineClassHelper.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt",
+      "sha256": "49fc52f1ba75f646ee6909ef346542039929bb9bb224600638c3e92963f27e19"
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/UtilInlineClassHelper.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/InlineClassHelper.kt",
+      "sha256": "7426f9c2b0ee749555ce07621a063863078d7e629e1aa87e1493244c75a5f076"
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/MathHelpers.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt",
+      "sha256": "ce262ffce1cdc0ab8231e03bcd1cbf7eef0c015da84fb223552e4097057e13fa"
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/InlineClassHelper.jvmAndAndroid.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/jvmAndAndroidMain/kotlin/androidx/compose/ui/util/InlineClassHelper.jvmAndAndroid.kt",
+      "sha256": "fd37878a8d1f8d5dc270e6612910329bd7b02590f412e44541a81b0f7eb6b84f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/ColorVectorConverter.kt",
+      "sha256": "3ff31ad9217f13e9421a4dee0ad0cbf3cc8a1284879dd2b021323bba737d7f93",
+      "file": "test/fixtures/androidx/color/ColorVectorConverter.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Oklab.kt",
+      "sha256": "9a44dd54caed071c9722bf1d3dab07b3a07ffe7ae998e6e50395684b956c6075",
+      "file": "test/fixtures/androidx/color/Oklab.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt",
+      "sha256": "3b8bbdd5ccc4a3200b1cedef5ff4f91574a4db508b3ac2d9ae3e465eec8468e7",
+      "file": "test/fixtures/androidx/color/Color.kt"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationVectors.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationVectors.kt",
+      "sha256": "ec86b71dc22e8e4e47e7d9f48e9687e05d5e4e8e33af1b71e69bbd86dfe83e90"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/VectorConverters.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/VectorConverters.kt",
+      "sha256": "6cf233e50830c83521a9a4bc8ec7e76f1217fd45f4b6d6d3133ac4d3e938c901"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-color/generate-operations.mjs",
+      "sha256": "43c05802f20c99edda3225742faeb00707618e45e6d170618f8b9e24bd072bb6"
+    },
+    {
+      "file": "tools/androidx-color/packed-runtime.mjs",
+      "sha256": "e59e0d92ba223515d49d34fd3d8684c4932d11c629a3c1f70b6d6effcad1a2ce"
+    },
+    {
+      "file": "tools/androidx-color/AnnotationHost.kt",
+      "sha256": "d8f336a6fd6a88b7ff136eb553d39041fc02c2584209ac89db80b02c413c1f30"
+    },
+    {
+      "file": "tools/androidx-color/AnimationPreconditionHost.kt",
+      "sha256": "a9dc4b656e29a75016ea8597770fe8c5a239055aae943784663cd4b5be6e0be1"
+    },
+    {
+      "file": "tools/androidx-color/PackedColorOperationsProbe.kt",
+      "sha256": "203b3a033f1ef2d4002b6583ec15fc7af308a7a1d45898d37a733816932979d6"
+    },
+    {
+      "file": "tools/androidx-motion/finite-runtime.mjs",
+      "sha256": "6d810f49d746ef7c5b44f7e4af8915cf521a4ad644285532ab9559659c43834c"
+    }
+  ],
+  "compiler": {
+    "version": "1.9.24",
+    "frontend": "K2 experimental language2.0",
+    "originalBuildVersion": "2.4.20"
+  },
+  "libraries": [
+    {
+      "file": "stdlib.jar",
+      "sha256": "858b902696da9cf585ab9d98ffc1c2712269828354dfe9107e3711b084a36468"
+    },
+    {
+      "file": "collection.jar",
+      "sha256": "d5cf7b72647c7995071588fe870450ff9c8f127f253d2d4851e161b800f67ae0"
+    },
+    {
+      "file": "androidx-annotation.jar",
+      "sha256": "9aab326d9492800991854360ac248f493ce7f7c3183519309b78ace9e240f6f6"
+    }
+  ],
+  "scope": "Unchanged original Color.copy(alpha)/Color.lerp, packed Color with all20 ColorSpaces/conversions/Float16/math/JVM helpers. Explicit annotation and expect/actual linkage only. No finite runtime/native component tree/renderer/full original compiler build in this probe."
+}

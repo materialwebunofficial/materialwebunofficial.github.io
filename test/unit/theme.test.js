@@ -13,7 +13,9 @@ import {
   generateM3Scheme,
   createTonalPalettes,
   MD3_PRESETS,
-  TonalPalette
+  TonalPalette,
+  PALETTE_VARIANTS,
+  resolvePaletteVariant
 } from '../../src/theme/hct-color-engine.js';
 
 console.log('================================================================');
@@ -90,9 +92,9 @@ test('MD3_PRESETS contains showcase seed suggestions', () => {
   }
 });
 
-test('128 dynamic schemes match published MCU 0.4.0 / spec 2025', () => {
+test('576 dynamic schemes (9 variants) match published MCU 0.4.0 / spec 2025', () => {
   const fixture = JSON.parse(fs.readFileSync(new URL('../fixtures/material-color-utilities/schemes.json', import.meta.url)));
-  assert.equal(fixture.cases.length, 128);
+  assert.equal(fixture.cases.length, 576);
   for (const sample of fixture.cases) {
     const actual = generateM3Scheme(sample.seed, sample.dark, sample.variant, sample.contrast);
     const rgb = hexToRgb(sample.seed);
@@ -103,6 +105,16 @@ test('128 dynamic schemes match published MCU 0.4.0 / spec 2025', () => {
     }
     assert.equal(Object.keys(actual).length, Object.keys(sample.colors).length + 3);
   }
+});
+
+test('Tonal spot is the default palette variant, independent of theme scheme', () => {
+  assert.deepEqual(generateM3Scheme('#6750a4', false), generateM3Scheme('#6750a4', false, 'tonal-spot'));
+  assert.deepEqual(generateM3Scheme('#6750a4', true, 'standard'), generateM3Scheme('#6750a4', true, 'tonal-spot'));
+  assert.equal(resolvePaletteVariant('Fruit Salad'), 'fruit-salad');
+  assert.equal(resolvePaletteVariant('unknown'), 'tonal-spot');
+  assert.deepEqual(PALETTE_VARIANTS, ['tonal-spot','neutral','vibrant','expressive','fidelity','content','monochrome','rainbow','fruit-salad']);
+  assert.notEqual(generateM3Scheme('#6750a4', false, 'expressive')['--md-sys-color-secondary-container'],
+    generateM3Scheme('#6750a4', false)['--md-sys-color-secondary-container']);
 });
 
 test('HCT resolves saturated RGB without the previous Lab clipping', () => {

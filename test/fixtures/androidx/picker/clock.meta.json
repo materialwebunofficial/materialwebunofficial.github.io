@@ -1,0 +1,78 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "count": 7244,
+  "sha256": "4a2dbb28e745fd96862e25370c0f01b0051de33fefbb68633822fee7663e7bdb",
+  "sources": [
+    {
+      "file": "test/fixtures/androidx/picker/DatePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/DatePicker.kt",
+      "sha256": "6d80d7ba27b052beaac1628458dc41621e02093d36c5d2691234d0931ca3ea22"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TimePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TimePicker.kt",
+      "sha256": "787e55e79a94b58775567110b2b27c74834529b643960cb0ff86589930e3f221"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/DatePickerModalTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/DatePickerModalTokens.kt",
+      "sha256": "f3f7d43cafd3769803283fcf77f01da2106b25acfbc0a9debfe46ad2dcfb14d5"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TimePickerTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TimePickerTokens.kt",
+      "sha256": "c5fc3f727d18098c95be81d09863b8274a36554e49eb26a14ac3fc7d8dd9884e"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/ComposeMaterial3Flags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
+      "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    },
+    {
+      "file": "test/fixtures/androidx/sliders/Slider.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Slider.kt",
+      "sha256": "b26b472f358d33f852044fbf36f7cc851960a02df8475cc012bd0d6556b3fe01"
+    },
+    {
+      "file": "test/fixtures/androidx/sliders/SliderTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SliderTokens.kt",
+      "sha256": "40089ceef55302211cc6e1812b69560ea1e362d85a742c9c79abb1f4076e26ff"
+    },
+    {
+      "file": "test/fixtures/androidx/sliders/Draggable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/Draggable.kt",
+      "sha256": "b39ec8e3b85ab3b4783f24e34986b72eaa08c3fd1881b6b416c128450ce23783"
+    },
+    {
+      "file": "test/fixtures/androidx/sliders/DragGestureDetector.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/DragGestureDetector.kt",
+      "sha256": "0f0dd9dfb274a6f1f04183dc5c9a1faf552bd75b29817a703594f2d4cd008557"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/FloatAnimationSpec.kt",
+      "sha256": "7ffb94a9a8b62bbb65d653bdb21a71d974e57174513aae8fddb68cd183a33513",
+      "file": "test/fixtures/androidx/motion/FloatAnimationSpec.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SpringSimulation.kt",
+      "sha256": "78ccee541bba54e71666376819ec8b5e961421f0ea21ec34965da493827bf721",
+      "file": "test/fixtures/androidx/motion/SpringSimulation.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SpringEstimation.kt",
+      "sha256": "7527111793fa8946d37fa684421f245a8d38b9c2445619a9bc784ca5c7367b12",
+      "file": "test/fixtures/androidx/motion/SpringEstimation.kt"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-picker/generate-clock.mjs",
+      "sha256": "ebaffdcef4232cb4e475de7c5833f5cf64ac0fdaeba08a8909385cdc9bde0b41"
+    },
+    {
+      "file": "tools/androidx-motion/FloatPacking.kt",
+      "sha256": "112617f0bbe8db05b62b06b7e8cb073672880ac578ddc8fa3814c68018746c54"
+    }
+  ],
+  "scope": "Complete unchanged TimePickerState interface/default input setters/extensions, StateImpl/Saver, AnalogTimePickerState, onTap/moveSelector/selectorPos/dist/atan, CircularLayout and TouchSlopDetector bodies. Separately complete FloatSpringSpec, SpringSimulation and SpringEstimation bodies execute with packing/isFinite hosts. Float Dp/scalar state, Saver constructor, target-recording Animatable/priority/delay, immediate suspend continuation, constrained 48px leaves and placement are explicit hosts. Scalar samples do not execute native Animatable frame-clock ownership, MutatorMutex cancellation, coroutine delay timing, gesture dispatch, Compose composition, font or raster."
+}

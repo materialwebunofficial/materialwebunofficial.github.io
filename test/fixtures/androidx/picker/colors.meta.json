@@ -1,0 +1,38 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sha256": "25f91dfe16f9335f6b6772ea34729260b50333c2712f485e5e8fea7e6b803aa5",
+  "sources": [
+    {
+      "file": "DatePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/DatePicker.kt",
+      "sha256": "6d80d7ba27b052beaac1628458dc41621e02093d36c5d2691234d0931ca3ea22"
+    },
+    {
+      "file": "TimePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TimePicker.kt",
+      "sha256": "787e55e79a94b58775567110b2b27c74834529b643960cb0ff86589930e3f221"
+    },
+    {
+      "file": "DatePickerModalTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/DatePickerModalTokens.kt",
+      "sha256": "f3f7d43cafd3769803283fcf77f01da2106b25acfbc0a9debfe46ad2dcfb14d5"
+    },
+    {
+      "file": "TimePickerTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TimePickerTokens.kt",
+      "sha256": "c5fc3f727d18098c95be81d09863b8274a36554e49eb26a14ac3fc7d8dd9884e"
+    },
+    {
+      "file": "ComposeMaterial3Flags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
+      "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-picker/generate-colors.mjs",
+      "sha256": "667c95e6fdbfc705ea3c248c7067223e99e436f89207450033a10a077a546763"
+    }
+  ],
+  "scope": "Complete original Date/TimePicker default color factories, vibrant color and shape factories, DatePicker day content/container branches. Original token getters execute. Named constructor records, symbolic Color/alpha-copy, cached factory fields, State/animation targets are explicit host boundaries. This does not execute native layout, interpolation, input, full composition or raster."
+}

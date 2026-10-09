@@ -1,3 +1,8 @@
+:root {
+  /* Icon font used by every component. Material 3 Expressive uses rounded symbols. */
+  --md-icon-font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+}
+
 @font-face {
   font-family: "Material Symbols Outlined";
   font-style: normal;

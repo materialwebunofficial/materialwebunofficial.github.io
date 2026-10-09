@@ -1,0 +1,58 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {spawnSync} from 'node:child_process';import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../../',import.meta.url)),here=fileURLToPath(new URL('./',import.meta.url));
+const read=file=>fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n'),hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const cache=path.join(root,'research/progress-circular-motion-generator'),runtime=path.join(root,'research/kotlin-runtime');fs.mkdirSync(cache,{recursive:true});
+const sources=[];
+for(const [directory,manifestFile]of[['test/fixtures/androidx/progress-indicators','test/fixtures/androidx/progress-indicators/sources.json'],['test/fixtures/androidx/progress-indicators','test/fixtures/androidx/progress-indicators/circular-motion-sources.json'],['test/fixtures/androidx/motion','tools/androidx-motion/sources.json'],['test/fixtures/androidx/navigation-drawer','test/fixtures/androidx/navigation-drawer/sources.json']]){
+ const manifest=JSON.parse(read(manifestFile)),entries=manifest.sources||Object.entries(manifest.files||manifest).map(([file,entry])=>({file,...entry}));
+ for(const entry of entries){const file=directory+'/'+entry.file,bytes=fs.readFileSync(path.join(root,file));if(hash(bytes)!==entry.sha256)throw new Error('Original SHA mismatch: '+file);sources.push({file,sha256:entry.sha256});}
+}
+function block(text,marker){const start=text.indexOf(marker);if(start<0)throw new Error('Missing original '+marker);const opening=text.indexOf('{',start);let end=opening+1,depth=1;while(depth&&end<text.length){depth+=(text[end]==='{')-(text[end]==='}');end++;}if(depth)throw new Error('Unclosed original '+marker);return text.slice(start,end);}
+function expression(text,marker){const start=text.indexOf(marker);if(start<0)throw new Error('Missing original '+marker);return text.slice(start,text.indexOf('\n\n',start));}
+function call(text,marker){const start=text.indexOf(marker);if(start<0)throw new Error('Missing original '+marker);let end=text.indexOf('(',start)+1,depth=1;while(depth&&end<text.length){depth+=(text[end]==='(')-(text[end]===')');end++;}if(depth)throw new Error('Unclosed original '+marker);return text.slice(start,end);}
+function save(name,source){fs.writeFileSync(path.join(cache,name),source);}
+const vector=read('test/fixtures/androidx/motion/VectorizedAnimationSpec.kt'),license=vector.slice(0,vector.indexOf('package '));
+const vectorBodies=['public interface VectorizedAnimationSpec<','public interface VectorizedFiniteAnimationSpec<','public interface VectorizedDurationBasedAnimationSpec<','internal fun VectorizedDurationBasedAnimationSpec<*>.clampPlayTime','public class VectorizedKeyframesSpec<','public class VectorizedInfiniteRepeatableSpec<'].map(marker=>block(vector,marker));
+const info=vector.match(/internal data class VectorizedKeyframeSpecElementInfo<V : AnimationVector>\([\s\S]*?\n\)/)?.[0];if(!info)throw new Error('Missing keyframe info');
+save('VectorizedOriginal.kt',license+'package androidx.compose.animation.core\nimport androidx.collection.*\nimport androidx.compose.ui.util.*\n'+vectorBodies.join('\n')+'\n'+info+'\n'+expression(vector,'internal fun <V : AnimationVector> VectorizedAnimationSpec<V>.getValueFromMillis(')+'\n'+vector.slice(vector.indexOf('private val EmptyIntArray:')));
+const progress=read('test/fixtures/androidx/progress-indicators/ProgressIndicator.kt');
+const first=progress.indexOf('internal val circularIndeterminateGlobalRotationAnimationSpec'),last=progress.indexOf('// LinearProgressIndicator Material specs',first);
+if(first<0||last<0)throw new Error('Missing circular descriptors');
+const constants=progress.split('\n').filter(line=>/^internal (?:const )?val (?:Circular(?:ProgressEasing|IndeterminateMinProgress|IndeterminateMaxProgress|AnimationProgressDuration|AnimationAdditionalRotationDelay|AnimationAdditionalRotationDuration|AdditionalRotationDegreesTarget|GlobalRotationDegreesTarget)|LinearAnimationDuration|LinearIndeterminateProgressEasing|(?:First|Second)Line(?:Head|Tail)(?:Duration|Delay))\b/.test(line));if(constants.length!==18)throw new Error('Missing original progress constants');
+const tokens=read('test/fixtures/androidx/progress-indicators/MotionTokens.kt'),tokenFields=['EasingEmphasizedDecelerateCubicBezier','EasingEmphasizedAccelerateCubicBezier','EasingStandardCubicBezier'].map(name=>expression(tokens,'inline val '+name+':'));
+const duration=tokens.split('\n').find(line=>/const val DurationLong2\b/.test(line));if(!duration)throw new Error('Missing amplitude duration');
+const wavy=read('test/fixtures/androidx/progress-indicators/WavyProgressIndicator.kt'),amplitude=['IncreasingAmplitudeAnimationSpec','DecreasingAmplitudeAnimationSpec'].map(name=>expression(wavy,'internal val '+name+':'));
+save('DescriptorsOriginal.kt',progress.slice(0,progress.indexOf('package '))+'package androidx.compose.animation.core\ninternal object MotionTokens{\n'+tokenFields.join('\n')+'\n'+duration+'\n}\n'+constants.join('\n')+'\n'+progress.slice(first,last)+'\n'+amplitude.join('\n'));
+const offsetCalls=[['LinearWavyProgressModifiers.kt','protected fun updateOffsetAnimation()'],['CircularWavyProgressModifiers.kt','protected fun startOffsetAnimation()']].map(([file,marker])=>call(block(read('test/fixtures/androidx/progress-indicators/'+file),marker),'infiniteRepeatable('));
+if(offsetCalls[0].replace(/\s/g,'')!==offsetCalls[1].replace(/\s/g,''))throw new Error('Offset descriptors diverge');
+save('OffsetDescriptorOriginal.kt',license+'package androidx.compose.animation.core\ninternal fun offsetAnimationSpec(durationMillis:Int):HostInfiniteSpec<Float> = '+offsetCalls[0]+'\n');
+const drawingRotation=read('test/fixtures/androidx/progress-indicators/CircularWavyProgressModifiers.kt').match(/degrees = (currentGlobalRotation \+ currentAdditionalRotation \+ 90f)/)?.[1];if(!drawingRotation)throw new Error('Missing original circular drawing rotation');
+save('DrawingRotationOriginal.kt',license+'package androidx.compose.animation.core\ninternal fun drawingRotation(currentGlobalRotation:Float,currentAdditionalRotation:Float):Float = '+drawingRotation+'\n');
+const easing=read('test/fixtures/androidx/navigation-drawer/Easing.kt').replaceAll('import androidx.compose.runtime.Immutable\n','').replaceAll('import androidx.compose.runtime.Stable\n','').replaceAll('@Stable\n','').replaceAll('@Immutable\n','');save('Easing.kt',easing);
+const tween=block(read('test/fixtures/androidx/motion/FloatAnimationSpec.kt'),'public class FloatTweenSpec(');save('TweenOriginal.kt',license+'package androidx.compose.animation.core\nimport androidx.compose.ui.util.*\n'+tween);
+// Reuse previously prepared helpers only after checking every upstream numerical body.
+const helperOrigins=[['Bezier.kt','Bezier.kt',['private fun evaluateCubic(p0:','public fun evaluateCubic(p1:','public fun findFirstCubicRoot(','private fun findQuadraticRoots(','public fun computeCubicVerticalBounds(','private inline fun clampValidRootInUnitRange(','private fun writeValidRootInUnitRange(']],['Math.kt','MathHelpers.kt',['public fun fastCbrt(','public fun lerp(start: Float,']]];
+for(const [file,original,markers]of helperOrigins){const text=read('research/button-elevation-generator/'+file),source=read('test/fixtures/androidx/navigation-drawer/'+original);for(const marker of markers)if(!text.includes(block(source,marker)))throw new Error('Altered helper '+marker);save(file,text);}
+save('Bridge.kt',read('research/button-elevation-generator/Bridge.kt'));
+const list=read('test/fixtures/androidx/progress-indicators/IntList.kt'),search=block(list,'public fun binarySearch(');
+// Older cached collection storage lacks this member. Only bind it as an extension;
+// the original range checks/search/return body is unchanged and reads copied storage.
+save('SearchOriginal.kt',list.slice(0,list.indexOf('package '))+'package androidx.compose.animation.core\nimport androidx.collection.IntList\nimport kotlin.contracts.ExperimentalContracts\nprivate val IntList._size get()=size\nprivate val IntList.content get()=IntArray(size){this[it]}\n'+search.replace('public fun binarySearch(','internal fun IntList.binarySearch('));
+const cp=['stdlib.jar','collection.jar','androidx-annotation.jar'].map(name=>path.join(runtime,name)).join(path.delimiter);
+const files=['VectorizedOriginal.kt','DescriptorsOriginal.kt','OffsetDescriptorOriginal.kt','DrawingRotationOriginal.kt','Easing.kt','TweenOriginal.kt','Bezier.kt','Math.kt','Bridge.kt','SearchOriginal.kt'].map(name=>path.join(cache,name)).concat(['CircularMotionHost.kt','CircularMotionExport.kt'].map(name=>path.join(here,name)));
+function run(args){const result=spawnSync('java',args,{cwd:root,encoding:'utf8',maxBuffer:16e6});if(result.status!==0)throw new Error(result.stderr||result.stdout);return result.stdout;}
+run(['-cp',path.join(runtime,'*'),'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler','-no-stdlib','-no-reflect','-classpath',cp,'-jvm-target','1.8','-d',path.join(cache,'oracle.jar'),...files]);
+const records=JSON.parse(run(['-cp',path.join(cache,'oracle.jar')+path.delimiter+cp,'androidx.compose.animation.core.CircularMotionExportKt']));
+const bytes=Buffer.from(JSON.stringify(records)+'\n'),fixture=path.join(root,'test/fixtures/androidx/progress-indicators/circular-motion-oracle.json.gz');
+fs.writeFileSync(fixture,zlib.gzipSync(bytes,{level:9}));fs.writeFileSync(fixture.replace('.json.gz','.meta.json'),JSON.stringify({revision:'a095da93f8e98dea8748ceed79ea8427aade245f',sha256:hash(bytes),count:records.length,sources,scope:'Unchanged circular descriptors, VectorizedKeyframesSpec, VectorizedInfiniteRepeatableSpec, FloatTweenSpec and Easing/Bezier/Math numerical bodies. Scalar record/DSL adapters and fail-closed unused ArcSpline host; no native coroutine/FrameClock/composition/Canvas/PathMeasure/raster execution.'},null,2)+'\n');
+console.log('Generated '+records.length+' circular native keyframe/tween/repetition frames; decoded SHA '+hash(bytes));
+const easingRecords=JSON.parse(run(['-cp',path.join(cache,'oracle.jar')+path.delimiter+cp,'androidx.compose.animation.core.CircularMotionExportKt','easing'])),easingBytes=Buffer.from(JSON.stringify(easingRecords)+'\n');
+fs.writeFileSync(path.join(root,'test/fixtures/androidx/progress-indicators/native-easing-oracle.json.gz'),zlib.gzipSync(easingBytes,{level:9}));
+fs.writeFileSync(path.join(root,'test/fixtures/androidx/progress-indicators/native-easing-oracle.meta.json'),JSON.stringify({sha256:hash(easingBytes),curves:easingRecords.length,count:easingRecords.reduce((sum,record)=>sum+record.samples.length,0)},null,2)+'\n');
+console.log('Generated native Easing/Bezier probes for '+easingRecords.length+' curves; decoded SHA '+hash(easingBytes));
+for(const mode of ['linear','amplitude','offset','draw-rotation']){
+ const rows=JSON.parse(run(['-cp',path.join(cache,'oracle.jar')+path.delimiter+cp,'androidx.compose.animation.core.CircularMotionExportKt',mode])),data=Buffer.from(JSON.stringify(rows)+'\n');
+ const file=path.join(root,'test/fixtures/androidx/progress-indicators/'+mode+'-motion-oracle.json.gz');fs.writeFileSync(file,zlib.gzipSync(data,{level:9}));
+ fs.writeFileSync(file.replace('.json.gz','.meta.json'),JSON.stringify({sha256:hash(data),count:rows.length,sources,scope:'Original '+mode+' descriptors, Float keyframes/tween/easing numeric values. Scalar descriptor adapter; no native Animatable/coroutine/FrameClock execution.'},null,2)+'\n');
+ console.log('Generated '+rows.length+' original '+mode+' numeric frames; decoded SHA '+hash(data));
+}

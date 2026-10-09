@@ -79,7 +79,7 @@ const itemStyle=`
    letter-spacing:var(--md-sys-typescale-body-medium-tracking,.25px); }
  .headline,.overline,.supporting-text { white-space:pre-wrap; overflow-wrap:anywhere; }
  .ico { flex:none; display:block; direction:ltr; width:24px; height:24px;
-   font:normal 24px/24px 'Material Symbols Rounded','Material Symbols Outlined',sans-serif; -webkit-font-smoothing:antialiased; }
+   font:normal 24px/24px var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif); -webkit-font-smoothing:antialiased; }
  .avatar { flex:none; display:block; width:40px; height:40px; border-radius:var(--md-sys-shape-corner-full,9999px);
    background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); object-fit:cover; }
  .image-thumb { flex:none; display:block; width:56px; height:56px; border-radius:var(--md-sys-shape-corner-small,8px); object-fit:cover; }

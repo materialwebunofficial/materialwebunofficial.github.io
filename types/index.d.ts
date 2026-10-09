@@ -73,6 +73,11 @@ export class MdButton extends HTMLElement {
   disabled: boolean;
   readonly type: 'button' | 'submit' | 'reset';
   readonly form: HTMLFormElement | null | undefined;
+  /** Renders a link-role button; activation follows the URL. A cancelable 'navigate' event fires first. */
+  href: string;
+  target: string;
+  /** Position in a connected button group; set by md-button-group. */
+  connected: '' | 'leading' | 'middle' | 'trailing';
   /** Five numeric dp/CSS-pixel targets; null removes elevation, undefined restores variant defaults. */
   elevation: ButtonElevationDefinition | null | undefined;
   connectedCallback(): void;
@@ -96,6 +101,17 @@ export class MdIconButton extends MdBaseComponent {
   toggle: boolean;
   selected: boolean;
   disabled: boolean;
+  href: string;
+  target: string;
+}
+
+/** AndroidX ButtonGroup: standard (press-to-expand) or connected (segmented shapes). */
+export class MdButtonGroup extends HTMLElement {
+  variant: 'standard' | 'connected';
+  /** Toggle behavior applied to md-button / md-icon-button children. */
+  selection: 'none' | 'single' | 'multiple';
+  /** ButtonGroupDefaults.ExpandedRatio, 0.15 by default. */
+  expandedRatio: number;
 }
 
 export class MdFab extends MdBaseComponent {
@@ -141,14 +157,23 @@ export class MdCard extends MdBaseComponent {
 }
 
 export class MdChip extends MdBaseComponent {
-  variant: 'assist' | 'filter' | 'input' | 'suggestion';
+  /** action is a compatibility alias for assist. */
+  variant: 'assist' | 'filter' | 'input' | 'suggestion' | 'action';
   elevated: boolean;
   label: string;
   icon: string;
   trailingIcon: string;
-  avatar: string;
+  /** True by default; Filter/Input use the native Expressive shape overload. */
+  expressive: boolean;
+  horizontalArrangement: 'compact' | 'start' | 'end' | 'center' | 'space-between';
+  /** Enabled-state overrides; disabled states retain the original defaults. */
+  containerColor: string;
+  contentColor: string;
+  leadingIconColor: string;
+  trailingIconColor: string;
   selected: boolean;
   disabled: boolean;
+  /** Input defaults to true; removable="false" disables the web removal adapter. */
   removable: boolean;
 }
 
@@ -197,6 +222,7 @@ export class MdSwitch extends MdBaseComponent {
 }
 
 export class MdTextField extends MdBaseComponent {
+  floatLabel: 'auto' | 'always';
   variant: 'filled' | 'outlined';
   type: string;
   label: string;
@@ -212,6 +238,60 @@ export class MdTextField extends MdBaseComponent {
   required: boolean;
   disabled: boolean;
   readOnly: boolean;
+  maxLength: number | null;
+  maxlength: number | null;
+  labelPosition: string;
+  singleLine: boolean;
+  minLines: number;
+  maxLines: number | null;
+  expandedLabelAlignment: 'start' | 'center' | 'end';
+  minimizedLabelAlignment: 'start' | 'center' | 'end';
+  readonly form: HTMLFormElement | null;
+  readonly validity: ValidityState | undefined;
+  readonly validationMessage: string;
+  readonly willValidate: boolean;
+  checkValidity(): boolean;
+  reportValidity(): boolean;
+  setCustomValidity(message: string): void;
+  formResetCallback(): void;
+  formStateRestoreCallback(state: string): void;
+  formDisabledCallback(disabled: boolean): void;
+}
+
+export interface AutocompleteOption { label?: string; value?: string; disabled?: boolean; }
+export class MdOption extends HTMLElement {
+  value: string; selected: boolean; disabled: boolean;
+  readonly displayText: string;
+}
+export class MdSelect extends MdTextField {
+  open: boolean; multiple: boolean; hideRequiredMarker: boolean; floatLabel: 'auto' | 'always';
+  readonly form: HTMLFormElement | null;
+  readonly validity: ValidityState | undefined; readonly validationMessage: string; readonly willValidate: boolean;
+  checkValidity(): boolean; reportValidity(): boolean; setCustomValidity(message: string): void;
+  formResetCallback(): void; formStateRestoreCallback(state: string): void; formDisabledCallback(disabled: boolean): void;
+}
+export class MdAutocomplete extends MdTextField {
+  open: boolean;
+  options: Array<string | AutocompleteOption>;
+  formResetCallback(): void;
+  formStateRestoreCallback(state: string): void;
+}
+
+export class MdExpansionPanel extends HTMLElement {
+  open: boolean; headline: string; supportingText: string; disabled: boolean;
+  headingLevel: number;
+  toggle(): void;
+}
+export class MdAccordion extends HTMLElement {}
+/** Web workflow composed from Material controls; not a native MD3E Stepper. */
+export class MdStep extends HTMLElement {
+  label: string; description: string; active: boolean; completed: boolean; disabled: boolean; error: boolean;
+}
+export class MdStepPanel extends MdStep {}
+export class MdStepper extends HTMLElement {
+  activeStep: number; orientation: 'horizontal' | 'vertical'; linear: boolean; disabled: boolean;
+  getSteps(): MdStep[];
+  next(): void; prev(): void; previous(): void; goTo(index: number): void; reset(): void;
 }
 
 export class MdCheckbox extends MdBaseComponent {
@@ -504,6 +584,12 @@ export class MdNavigationBar extends HTMLElement {
 }
 
 export interface NavigationDrawerItem {
+  /** A section headline (Title Small) instead of a destination. */
+  section?: string;
+  /** A divider instead of a destination. */
+  divider?: boolean;
+  /** Reported in the change event detail. */
+  value?: string;
   icon?: string;
   selectedIcon?: string;
   label?: string | null;
@@ -624,6 +710,12 @@ export class MdTimePicker extends MdBaseComponent {
   inline: boolean;
   hour: number;
   minute: number;
+  /** Native raw canonical input; may be invalid while hour/minute retain the last valid time. */
+  readonly hourInput: number;
+  readonly minuteInput: number;
+  readonly isInputValid: boolean;
+  /** Explicit browser host setting; suppresses automatic hour-input advancement. */
+  accessibilityServicesEnabled: boolean;
   is24Hour: boolean;
   richColors: boolean;
   layoutType: 'vertical' | 'horizontal';
@@ -721,7 +813,10 @@ export class MdMenu extends HTMLElement {
   anchorPosition: 'above' | 'below' | 'start' | 'end' | 'left' | 'right';
   horizontalArrangement: 'menu' | 'start' | 'end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
   show(options?: {focus?: boolean}): void;
-  close(): void; toggle(): void;
+  popupRole: 'menu' | 'listbox'; focusMode: 'menu' | 'anchor';
+  matchAnchorWidth: boolean; anchorElement: Element | null;
+  activeItem: MdMenuItem | null;
+  close(options?: {restoreFocus?: boolean}): void; toggle(): void;
 }
 export class MdMenuGroup extends HTMLElement {
   label: string; variant: MenuVariant; containerColor: string; selectionMode: MenuSelectionMode;
@@ -736,9 +831,19 @@ export class MdMenuItem extends HTMLElement {
   shapes: {shape?: MenuCornerShape; selectedShape?: MenuCornerShape};
 }
 
+export interface SearchSuggestion { label: string; icon?: string; supportingText?: string; }
+/** AndroidX DockedSearchBar with SearchBarDefaults.InputField. */
 export class MdSearchBar extends MdBaseComponent {
   placeholder: string;
   value: string;
+  query: string;
+  disabled: boolean;
+  expanded: boolean;
+  active: boolean;
+  suggestions: Array<string | SearchSuggestion>;
+  /** Presence selects ExpandedDockedSearchBarWithGap; 2dp by default. */
+  dropdownGapSize: number;
+  dropdownScrimColor: string;
 }
 
 export class MdSideSheet extends MdBaseComponent {
@@ -935,14 +1040,17 @@ export class MdFabMenu extends MdBaseComponent {
   label: string;
 }
 
+export type PaletteVariant = 'tonal-spot' | 'neutral' | 'vibrant' | 'expressive' | 'fidelity' | 'content' | 'monochrome' | 'rainbow' | 'fruit-salad';
 export class MdExpressiveTheme extends MdBaseComponent {
   scheme: 'expressive' | 'standard';
+  /** Dynamic color variant; tonal spot by default, independent from scheme. */
+  paletteVariant: PaletteVariant;
   colorMode: 'light' | 'dark' | 'auto';
   contrast: 'reduced' | 'standard' | 'medium' | 'high';
   primarySeed: string;
   customPalette: Record<string, string> | null;
   fontFamily: string;
-  static applyGlobal(options?: Partial<{ scheme: 'expressive' | 'standard'; colorMode: 'light' | 'dark'; contrast: string; motionScheme: 'expressive' | 'standard'; primarySeed: string }>): void;
+  static applyGlobal(options?: Partial<{ scheme: 'expressive' | 'standard'; paletteVariant: PaletteVariant; colorMode: 'light' | 'dark'; contrast: string; motionScheme: 'expressive' | 'standard'; primarySeed: string }>): void;
   static toggleScheme(): 'expressive' | 'standard';
   static toggleColorMode(): 'light' | 'dark';
   static getTheme(): { scheme: string; colorMode: string; contrast: string; motionScheme: string; primarySeed: string };
@@ -982,7 +1090,11 @@ export function hctToRgb(hue: number, chroma: number, tone: number): RGB;
 export function hctToHex(hue: number, chroma: number, tone: number): string;
 export function hexToRgb(hex: string): RGB;
 export function rgbToHex(r: number, g: number, b: number): string;
-export function createTonalPalettes(source: string | HCT, schemeType?: 'expressive' | 'standard', isDark?: boolean, contrastLevel?: number): {
+export const PALETTE_VARIANTS: readonly PaletteVariant[];
+export const DEFAULT_PALETTE_VARIANT: 'tonal-spot';
+/** Normalizes a variant name; 'standard' is accepted as the former name of tonal spot. */
+export function resolvePaletteVariant(variant?: string | null): PaletteVariant;
+export function createTonalPalettes(source: string | HCT, variant?: PaletteVariant | 'standard', isDark?: boolean, contrastLevel?: number): {
   primary: TonalPalette;
   secondary: TonalPalette;
   tertiary: TonalPalette;
@@ -990,10 +1102,11 @@ export function createTonalPalettes(source: string | HCT, schemeType?: 'expressi
   neutralVariant: TonalPalette;
   error: TonalPalette;
   hct: HCT;
-  schemeType: string;
+  variant: PaletteVariant;
 };
-export function generateM3Scheme(sourceHexOrHct: string | HCT, isDark?: boolean, schemeType?: 'expressive' | 'standard', contrastLevel?: number): DynamicSchemeTokens;
-export function applyDynamicTheme(sourceColor: string | HCT, isDark?: boolean | null, schemeType?: 'expressive' | 'standard' | null, target?: HTMLElement | null, contrastLevel?: number | null): DynamicSchemeTokens;
+export function generateM3Scheme(sourceHexOrHct: string | HCT, isDark?: boolean, variant?: PaletteVariant | 'standard', contrastLevel?: number): DynamicSchemeTokens;
+/** A null variant reads data-palette-variant from the target or document (tonal spot by default). */
+export function applyDynamicTheme(sourceColor: string | HCT, isDark?: boolean | null, variant?: PaletteVariant | 'standard' | null, target?: HTMLElement | null, contrastLevel?: number | null): DynamicSchemeTokens;
 export function getActiveSeedHex(target?: HTMLElement | null): string;
 export function getActiveHct(target?: HTMLElement | null): HCT;
 
@@ -1012,6 +1125,7 @@ export function safeJsonParse(val: any, fallback?: any): any;
 declare global {
   interface HTMLElementTagNameMap {
     'md-button': MdButton;
+    'md-button-group': MdButtonGroup;
     'md-split-button': MdSplitButton;
     'md-icon-button': MdIconButton;
     'md-fab': MdFab;
@@ -1020,6 +1134,14 @@ declare global {
     'md-slider': MdSlider;
     'md-switch': MdSwitch;
     'md-text-field': MdTextField;
+    'md-autocomplete': MdAutocomplete;
+    'md-select': MdSelect;
+    'md-option': MdOption;
+    'md-expansion-panel': MdExpansionPanel;
+    'md-accordion': MdAccordion;
+    'md-stepper': MdStepper;
+    'md-step': MdStep;
+    'md-step-panel': MdStepPanel;
     'md-checkbox': MdCheckbox;
     'md-radio-button': MdRadioButton;
     'md-progress-indicator': MdProgressIndicator;

@@ -133,7 +133,7 @@ const defaultStyle = `
   }
 
   .icon, .material-symbols-rounded, .material-symbols-outlined {
-    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-weight: normal;
     font-style: normal;
     font-size: 24px; width: 24px; height: 24px; line-height: 24px;

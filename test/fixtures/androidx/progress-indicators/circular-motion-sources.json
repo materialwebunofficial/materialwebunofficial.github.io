@@ -1,0 +1,10 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "IntList.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/collection/collection/src/commonMain/kotlin/androidx/collection/IntList.kt",
+      "sha256": "6d5857980be756b78d9be3f7f7c780525df42f3b6786e3f96d0347456e569864"
+    }
+  ]
+}

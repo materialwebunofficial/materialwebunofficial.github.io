@@ -11,7 +11,8 @@
  */
 
 import { SpringPhysics } from '../motion/spring-physics.js';
-import { applyDynamicTheme, generateM3Scheme, getActiveSeedHex, hexToRgb, rgbToHct, hctToHex } from '../theme/hct-color-engine.js';
+import { applyDynamicTheme, generateM3Scheme, getActiveSeedHex, hexToRgb, rgbToHct, hctToHex,
+  resolvePaletteVariant, DEFAULT_PALETTE_VARIANT } from '../theme/hct-color-engine.js';
 import { themeParent, themeSetting, observeThemeContext, setThemeLayer, removeThemeLayer } from '../theme/theme-context.js';
 import { typographyOverrides } from '../theme/typography.js';
 import { safeJsonParse } from '../utils/security.js';
@@ -29,7 +30,7 @@ const themeSheet = createComponentSheet(defaultStyle);
 
 export class MdExpressiveTheme extends HTMLElement {
   static get observedAttributes() {
-    return ['scheme', 'color-mode', 'contrast', 'motion-scheme', 'primary-seed', 'custom-palette', 'font-family', 'global'];
+    return ['scheme', 'palette-variant', 'color-mode', 'contrast', 'motion-scheme', 'primary-seed', 'custom-palette', 'font-family', 'global'];
   }
 
   constructor() {
@@ -78,6 +79,15 @@ export class MdExpressiveTheme extends HTMLElement {
   }
   set scheme(v) {
     this.setAttribute('scheme', v);
+  }
+
+  /** Dynamic color variant (tonal-spot by default); independent from scheme. */
+  get paletteVariant() {
+    return resolvePaletteVariant(this.getAttribute('palette-variant')
+      || this._inheritedSetting('data-palette-variant', DEFAULT_PALETTE_VARIANT));
+  }
+  set paletteVariant(v) {
+    this.setAttribute('palette-variant', v);
   }
 
   get colorMode() {
@@ -129,24 +139,26 @@ export class MdExpressiveTheme extends HTMLElement {
    * Apply global theme state to the document root element
    */
   static applyGlobal(options = {}) {
-    const { scheme, colorMode, contrast, motionScheme, primarySeed } = { ...this.getTheme(), ...options };
+    const { scheme, colorMode, contrast, motionScheme, primarySeed, paletteVariant } = { ...this.getTheme(), ...options };
     const root = document.documentElement;
+    const variant = resolvePaletteVariant(paletteVariant);
     root.setAttribute('data-theme', colorMode);
     root.setAttribute('data-theme-scheme', scheme);
+    root.setAttribute('data-palette-variant', variant);
     root.setAttribute('data-contrast', contrast);
     root.setAttribute('data-motion-scheme', motionScheme || scheme);
 
     // If dynamic primarySeed is specified or active, re-calculate and apply HCT tokens
     const activeSeed = primarySeed || root.getAttribute('data-seed-color') || getActiveSeedHex();
     if (activeSeed) {
-      applyDynamicTheme(activeSeed, colorMode === 'dark', scheme, root);
+      applyDynamicTheme(activeSeed, colorMode === 'dark', variant, root);
     }
 
     // Sync SpringPhysics solver scheme
     SpringPhysics.setScheme(motionScheme || scheme);
 
     const event = new CustomEvent('theme-change', {
-      detail: { scheme, colorMode, contrast, motionScheme: motionScheme || scheme, primarySeed: activeSeed },
+      detail: { scheme, paletteVariant: variant, colorMode, contrast, motionScheme: motionScheme || scheme, primarySeed: activeSeed },
       bubbles: true,
       composed: true
     });
@@ -179,6 +191,7 @@ export class MdExpressiveTheme extends HTMLElement {
   static getTheme() {
     return {
       scheme: document.documentElement.getAttribute('data-theme-scheme') || 'expressive',
+      paletteVariant: resolvePaletteVariant(document.documentElement.getAttribute('data-palette-variant')),
       colorMode: document.documentElement.getAttribute('data-theme') || 'dark',
       contrast: document.documentElement.getAttribute('data-contrast') || 'standard',
       motionScheme: document.documentElement.getAttribute('data-motion-scheme') || 'expressive',
@@ -193,23 +206,24 @@ export class MdExpressiveTheme extends HTMLElement {
     if (!this._target) {
       this._target = target;
       if (target === document.documentElement) {
-        const defaults = { 'data-theme': 'light', 'data-theme-scheme': 'expressive',
+        const defaults = { 'data-theme': 'light', 'data-theme-scheme': 'expressive', 'data-palette-variant': DEFAULT_PALETTE_VARIANT,
           'data-contrast': 'standard', 'data-motion-scheme': 'expressive', 'data-seed-color': getActiveSeedHex() };
-        this._globalDefaults = Object.fromEntries(['data-theme','data-theme-scheme','data-contrast','data-motion-scheme','data-seed-color']
+        this._globalDefaults = Object.fromEntries(['data-theme','data-theme-scheme','data-palette-variant','data-contrast','data-motion-scheme','data-seed-color']
           .map(name => [name,target.getAttribute(name) ?? defaults[name]]));
       }
     }
     const scheme = this.scheme;
+    const paletteVariant = this.paletteVariant;
     const colorMode = this.colorMode === 'auto' ? (this._media.matches ? 'dark' : 'light') : this.colorMode;
     const contrast = this.contrast;
     const contrastLevel = ({ reduced: -1, standard: 0, medium: 0.5, high: 1 })[contrast] ?? (Number(contrast) || 0);
     const motionScheme = this.motionScheme;
     const rgb = hexToRgb(this.primarySeed), hct = rgbToHct(rgb.r,rgb.g,rgb.b);
     const primarySeed = hctToHex(hct.hue,hct.chroma,hct.tone);
-    const tokens = generateM3Scheme(primarySeed, colorMode === 'dark', scheme, contrastLevel);
+    const tokens = generateM3Scheme(primarySeed, colorMode === 'dark', paletteVariant, contrastLevel);
     // Nested themes inherit the actual parent palette, including custom roles.
     // Regenerate only when an explicit color input requests a new color scheme.
-    const inheritColors = target === this && !['primary-seed','scheme','color-mode','contrast'].some(name => this.hasAttribute(name));
+    const inheritColors = target === this && !['primary-seed','palette-variant','color-mode','contrast'].some(name => this.hasAttribute(name));
     if (inheritColors) {
       const parent = themeParent(this);
       if (parent) {
@@ -223,13 +237,13 @@ export class MdExpressiveTheme extends HTMLElement {
     }
     const styles = { ...tokens };
     if (this.fontFamily && CSS.supports('font-family', this.fontFamily)) Object.assign(styles, typographyOverrides(this.fontFamily));
-    const attributes = { 'data-theme': colorMode, 'data-theme-scheme': scheme,
+    const attributes = { 'data-theme': colorMode, 'data-theme-scheme': scheme, 'data-palette-variant': paletteVariant,
       'data-contrast': contrast, 'data-motion-scheme': motionScheme, 'data-seed-color': primarySeed };
     const signature = JSON.stringify({styles,attributes});
     if (this._signature === signature) return;
     this._signature = signature;
     setThemeLayer(target, this, {styles,attributes});
-    const detail = { target, scheme, colorMode, contrast, motionScheme, primarySeed, seedHex: primarySeed, hct, tokens };
+    const detail = { target, scheme, paletteVariant, colorMode, contrast, motionScheme, primarySeed, seedHex: primarySeed, hct, tokens };
     // Notify after generated roles, overrides and typography are all in place.
     target.dispatchEvent(new CustomEvent('theme-color-change', { detail, bubbles: true, composed: true }));
     this.dispatchEvent(new CustomEvent('theme-change', { detail, bubbles: true, composed: true }));

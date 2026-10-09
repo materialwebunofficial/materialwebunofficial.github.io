@@ -207,6 +207,15 @@ element.animate(keyframes, { duration, fill: 'forwards' });
 | **Containment** | `<md-card>`, `<md-carousel>`, `<md-bottom-sheet>`, `<md-side-sheet>`, `<md-list>`, `<md-list-item>`, `<md-menu>`, `<md-menu-group>`, `<md-menu-item>`, `<md-divider>`, `<md-chip>` |
 | **Layout & Theme** | `<md-toolbar>`, `<md-theme>` |
 
+Time input keeps invalid text visible while `hour`, `minute` and `value` retain
+the last valid time. Read `hourInput`, `minuteInput` and `isInputValid` to validate
+the current input; `hourInput` uses the canonical AM/PM hour. Set
+`accessibility-services-enabled` (or `accessibilityServicesEnabled = true`) when
+your environment reports an active accessibility service to suppress automatic
+hour-input advancement. Mode changes preserve the shared input state. The hour/minute
+fields use the same theme roles and container/border spring owners as outlined
+text fields, including normal and vibrant input palettes.
+
 Sliders use the AndroidX 16dp default track, a 4×44dp handle and 6dp gaps.
 Focus and press halve the inner handle width while its layout stays fixed.
 `steps` counts interior stops; `step` is a web convenience that distributes
@@ -795,6 +804,77 @@ toolbar's measured cross size. Their native controls remain mounted and inert;
 a fresh entry uses the current constrained full size. Source vector/composition
 fixtures and exact host boundaries are in `tools/androidx-toolbar-size-motion/README.md`.
 
+## Text fields
+
+`md-text-field` uses `variant="outlined"` by default; `variant="filled"` uses
+the shared SurfaceContainerHighest role and bottom indicator. Containers have a
+56px minimum and grow with multiline content. Cutout labels, labels above the
+container and supporting text allocate additional space.
+Labels minimize on focus or a nonempty value. An empty unfocused label hides
+the placeholder and prefix/suffix; `float-label="always"` keeps the label
+minimized, including when empty. The existing `label-position="always"` alias
+does the same.
+
+Text fields are multiline by default. `min-lines="2" max-lines="4"` reserves two
+lines, grows to four and then scrolls within the editor. Without `max-lines`,
+content keeps growing. `single-line` uses a horizontal editor; `type="email"`,
+`type="password"` and other HTML input types also use that editor. Switching modes
+retains value, focus and selection. Single-line presentation converts newlines
+to spaces while retaining the programmatic model/form value until a user edit.
+Select and Autocomplete always use a single-line combobox editor.
+
+`label-position="inside"`, `"cutout"` and `"above"` select the corresponding
+placement policies, independently of the container variant. The default is
+inside for filled and cutout for outlined. `expanded-label-alignment` and
+`minimized-label-alignment` accept `start`, `center` or `end` in logical direction;
+Above uses the minimized alignment. `minLines` normalizes to at least one and
+`maxLines` to at least `minLines`; invalid maximums mean no cap. This normalization
+and HTML editing/validation are web API adaptations.
+
+Colors resolve live theme roles per enabled/error/focus state. Disabled fields
+use each original role's packed alpha instead of fading the whole field.
+The label cuts the outlined border through a measured mask and remains
+transparent. Label, placeholder, affix, indicator thickness and animated colors
+share retained motion controllers; there is no competing CSS transition.
+
+The form-associated field forwards `input`/`change`, native required/type/custom
+validation, readonly, fieldset-disabled state, reset and state restoration.
+Programmatic values set before connection are retained. `maxLength`/`maxlength`
+use the same attribute; a zero limit still displays an accessible counter.
+Select and Autocomplete reuse this field foundation. Reference provenance,
+browser checks and remaining native input/font/runtime/constraint boundaries are in
+[the TextField reference notes](tools/androidx-text-field/README.md).
+Run `npm run test:text-fields` or `node scripts/test-text-fields.mjs --source`.
+
+## Chips
+
+Filter and Input chips use the Expressive shape overload by default: medium
+corners at rest, fully rounded when selected, and small corners during press.
+Leading/trailing visibility uses retained size and opacity springs. Assist and
+Suggestion chips retain the original fixed small corners. `expressive="false"`
+selects the source's baseline selectable overload, including its color/spacing
+and visibility-spec differences.
+
+`leading-icon`, `trailing-icon`, `avatar` and default label slots preserve caller
+nodes. Avatars take precedence over Input leading icons. `horizontal-arrangement`
+defaults to the original compact three-child arrangement; explicit `start`,
+`end`, `center` and `space-between` adapt ordinary Row arrangements.
+
+Colors and borders resolve live system roles. `container-color`, `content-color`,
+`leading-icon-color` and `trailing-icon-color` independently override enabled
+roles; disabled states retain the original default roles and packed alpha.
+Input has no native elevated variant, so its `elevated` attribute adds no
+invented elevation or container style.
+
+Automatic selection/checkmarks, Input's default removal action and the keyboard
+outline are web caller-policy adapters. Custom leading content replaces the
+automatic checkmark; `removable="false"` disables removal. `change` emits once
+per activation. Preventing the cancelable `remove` event keeps the chip.
+The painted body has a 32px minimum height, with a centered 48px minimum
+interaction allocation. Reference provenance and remaining native boundaries
+are in [the Chip reference notes](tools/androidx-chip/README.md).
+Run `npm run test:chips` or `node scripts/test-chips.mjs --source`.
+
 ## Progress indicators
 
 `md-progress-indicator` defaults to `type="linear" variant="standard"`. Use
@@ -816,6 +896,12 @@ Set `wave-speed="0"` to stop phase motion. `amplitude` is now the native **0–1
 fraction of available wave height**, rather than the previous pixel override;
 omit it to use the native progress-dependent amplitude. Path adapter and source
 verification boundaries are documented in `tools/androidx-progress/README.md`.
+
+Wave phase is retained across detach and follows the source wavelength/speed,
+amplitude and vertex-cache restart rules in the verified histories. Progress and
+Loading pause through a shared browser visibility subscription that consumes the
+latest queued state and ignores callbacks from a previous connection. Remaining
+native cache/runtime and rendering boundaries are recorded in the parity ledger.
 
 ### Button sizing and press motion
 

@@ -1,0 +1,87 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "count": 28000,
+  "sha256": "3236b84f4c4aa6289b2fafabad48088cccb637d62cd5d8ef8eb2922e12a2fb98",
+  "sources": [
+    {
+      "file": "test/fixtures/androidx/picker/DatePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/DatePicker.kt",
+      "sha256": "6d80d7ba27b052beaac1628458dc41621e02093d36c5d2691234d0931ca3ea22"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TimePicker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TimePicker.kt",
+      "sha256": "787e55e79a94b58775567110b2b27c74834529b643960cb0ff86589930e3f221"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/DatePickerModalTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/DatePickerModalTokens.kt",
+      "sha256": "f3f7d43cafd3769803283fcf77f01da2106b25acfbc0a9debfe46ad2dcfb14d5"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TimePickerTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TimePickerTokens.kt",
+      "sha256": "c5fc3f727d18098c95be81d09863b8274a36554e49eb26a14ac3fc7d8dd9884e"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/ComposeMaterial3Flags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ComposeMaterial3Flags.kt",
+      "sha256": "4218cb959d0bfc617dd512ba89a223ed30546b1383011fd4dd0ba6c4adb12d40"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TextFieldBuffer.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/TextFieldBuffer.kt",
+      "sha256": "8883bb98d2f7e6e945e5b6fc0bc3e2b682c1361f82535bd1390634fa56b8fb34"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TextRange.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/TextRange.kt",
+      "sha256": "e76c394ccffac8c40d20210d8d95b91cf6dca0e2aaf6fd212c03d40eac480609"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/GapBuffer.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/GapBuffer.kt",
+      "sha256": "24e6fe7a32032043abf7a99165518e3f60cde4c5f3a3852956060aa0299ee44c"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/ChangeTracker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/ChangeTracker.kt",
+      "sha256": "7cfc5d388d2922ba96628a494533eedee35346636211cb2dcbad896c8bf3824f"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TextFieldCharSequence.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/TextFieldCharSequence.kt",
+      "sha256": "e0050b1ccb2640106253c6aca26fb727cb82b8d1210c12fe5f59566765c1dc1d"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/ComposeFoundationFlags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ComposeFoundationFlags.kt",
+      "sha256": "2d99c9eda3f34dc5bb67a41d2b199bdfc83ed707c163e5e583ad773d920a6083"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/TimeInputTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TimeInputTokens.kt",
+      "sha256": "bd6e73db781faa7d684bdef699d7bde2ba6212730c08eb11a46132f7dbcfe269"
+    },
+    {
+      "file": "test/fixtures/androidx/picker/strings.xml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/androidMain/res/values/strings.xml",
+      "sha256": "a308bd47d25df7f7d52f96c43fd5050c3eaa535868d3068dd4b63f0c3d3212eb"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-picker/generate-input.mjs",
+      "sha256": "4f7642e330881271cd7bcf60a4dbace253749b6c19577e8860776fce9b421f39"
+    },
+    {
+      "file": "tools/androidx-picker/InputPlatformHost.kt",
+      "sha256": "4c55e5ac48da4b55ccb0111eae5fa99509dcb3f4560cbb83861f33e6b9a74bb0"
+    },
+    {
+      "file": "tools/androidx-picker/InputProbe.kt",
+      "sha256": "316ac66dce80bfdc4ce090684ce0b263c4cdc9494f5001c1fc48979b1d325181"
+    }
+  ],
+  "scope": "Complete unchanged TimeInputTransformation and TimePickerState input setters/validity. Original plain-text TextFieldBuffer constructor, selection, replace/delete/revert/edit range paths, full GapBuffer/PartialGapBuffer, ChangeTracker, TextFieldCharSequence and TextRange bodies execute. Plain scalar state/Saver, JVM Char digit conversion, collection/packing/character-copy/precondition helpers and unused style/mapping leaves are explicit hosts; original style flag value is retained. Styled annotation APIs, native TextFieldState transactions/recomposition, IME/keyboard/focus dispatch, platform error feedback, locale and raster are not executed."
+}

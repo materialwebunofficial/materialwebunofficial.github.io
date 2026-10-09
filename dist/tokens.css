@@ -636,8 +636,10 @@
   --md-sys-shape-expressive-card-default: 12px;
   --md-sys-shape-expressive-card-hover: 12px;
 
-  --md-sys-shape-expressive-chip-default: 8px;
-  --md-sys-shape-expressive-chip-selected: 8px;
+  /* Expressive Filter/Input ChipShapes; Assist/Suggestion use CornerSmall. */
+  --md-sys-shape-expressive-chip-default: var(--md-sys-shape-corner-medium);
+  --md-sys-shape-expressive-chip-selected: var(--md-sys-shape-corner-full);
+  --md-sys-shape-expressive-chip-pressed: var(--md-sys-shape-corner-small);
 
   /* Deprecated fixed-size web clip paths; use md-shape mask for source-generated MaterialShapes. */
   --md-sys-shape-mask-clover: path('M 50,0 C 70,0 80,10 80,30 C 80,45 100,50 100,50 C 100,50 80,55 80,70 C 80,90 70,100 50,100 C 30,100 20,90 20,70 C 20,55 0,50 0,50 C 0,50 20,45 20,30 C 20,10 30,0 50,0 Z');
@@ -838,6 +840,11 @@
 
 
 /* --- src/icons/material-symbols.css --- */
+:root {
+  /* Icon font used by every component. Material 3 Expressive uses rounded symbols. */
+  --md-icon-font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+}
+
 @font-face {
   font-family: "Material Symbols Outlined";
   font-style: normal;

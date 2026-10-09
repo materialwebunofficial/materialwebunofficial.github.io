@@ -1,0 +1,10 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "ExposedDropdownMenu.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ExposedDropdownMenu.kt",
+      "sha256": "a4e8d897e848757df5241875d6aefd86c2f718fcaef12258daa4fb732d0ebcd0"
+    }
+  ]
+}

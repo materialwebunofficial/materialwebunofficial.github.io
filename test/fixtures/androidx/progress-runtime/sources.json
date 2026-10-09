@@ -1,0 +1,80 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Animatable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Animatable.kt",
+      "sha256": "1561378b721a147fd9b016fc1ec70cfe7bd3f89f64abf0aac92ebb538179bcc7"
+    },
+    {
+      "file": "AnimationState.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationState.kt",
+      "sha256": "39dde170279e858e17efc5490a90a4fd62248040ad38ccc35b7d9bfb5705c1c9"
+    },
+    {
+      "file": "SuspendAnimation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SuspendAnimation.kt",
+      "sha256": "4301f943eae91b09f85855e889b1cf96f35c59bb3aafbd4809650de2ecde911a"
+    },
+    {
+      "file": "Animation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Animation.kt",
+      "sha256": "8d396494fd09afc5dda90b6e48327cf86f07b823539e25cbfac9248e23dae6ca"
+    },
+    {
+      "file": "AnimationVectors.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationVectors.kt",
+      "sha256": "ec86b71dc22e8e4e47e7d9f48e9687e05d5e4e8e33af1b71e69bbd86dfe83e90"
+    },
+    {
+      "file": "InternalMutatorMutex.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/InternalMutatorMutex.kt",
+      "sha256": "e68aa1fefb4195418f677e965d7493813c1a910802b9567dc02a3cdddce7a557"
+    },
+    {
+      "file": "VectorConverters.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/VectorConverters.kt",
+      "sha256": "6cf233e50830c83521a9a4bc8ec7e76f1217fd45f4b6d6d3133ac4d3e938c901"
+    },
+    {
+      "file": "AnimationSpec.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationSpec.kt",
+      "sha256": "62d3f0ca78b6620e8b220990036a9da083c7bd959f5a54945c60e449379a8884"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/MonotonicFrameClock.kt",
+      "sha256": "3700d936837fae6d98252ec44e4c9c9b002912e40df9134cd6943e337fa2c1f1",
+      "file": "MonotonicFrameClock.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/MotionDurationScale.kt",
+      "sha256": "f3c4211bbd3e4f4b647f7b5d3fcf1edf7352d78fb97f485821549e3d4257aca5",
+      "file": "MotionDurationScale.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/InfiniteAnimationPolicy.kt",
+      "sha256": "8971153b6127fbdbcf9e1cb13fd45d1226d3a84f92fe2099e30ec738eeacdf8e",
+      "file": "InfiniteAnimationPolicy.kt"
+    },
+    {
+      "file": "AnimationEndReason.kt",
+      "sha256": "ec51f94e02bd6c2fa50b0a65c8cbe9a78594bc7a0bc9c24e4f3a775d0be4260c",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationEndReason.kt"
+    },
+    {
+      "file": "PlatformInfiniteAnimationPolicy.kt",
+      "sha256": "0cefbefd1fc522c223522b608c6c5980cbe90b55367e699f5210459ad7ff5c28",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/InfiniteAnimationPolicy.kt"
+    },
+    {
+      "file": "InfiniteTransition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/InfiniteTransition.kt",
+      "sha256": "570ff75ce3e826eb0ed0cc14e5db98cabf2f02885afa1f70216aa7cf267fc801"
+    },
+    {
+      "file": "libs.versions.toml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/gradle/libs.versions.toml",
+      "sha256": "46e5ee0848d0e78561f93c4c1d9c6d7319dd1221cbb29fd408ff77b308febcbf"
+    }
+  ]
+}

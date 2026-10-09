@@ -4,6 +4,821 @@ Status: in progress. Passing tests below verify the listed scope; they do not es
 
 Reference: [AndroidX revision a095da93](https://github.com/androidx/androidx/tree/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3). Motion token fixtures retain their Apache license in `test/fixtures/androidx`. Local research copies live in ignored `research/official-2026-09`.
 
+## Packed Color, native conversion and field applying runtime, 2026-10-09
+
+The field animateColorAsState binding now retains the actual Compose Color
+encoding. sRGB uses its native 8-bit ARGB layout; other spaces use Float16
+channels and 10-bit alpha with the space id. Equality compares the packed
+value. A restart samples the retained packed color and the native converted
+initial velocity, including quantization and gamut conversion. Finishing stores
+the original target Color exactly. It no longer paints the raw unquantized CSS
+input at rest.
+
+New production modules compose-color.js, color-spaces.generated.js,
+animatable-packed-color.js and compose-color-css.js provide the shared color
+math and CSS binding. animate-as-state.js selects the packed owner for Color
+values. TextField and TimeInput container/border animations use this path,
+including semantic role changes through valid/invalid input and both motion
+schemes. Palette roles are not replaced with literal colors. Generated matrices
+are color-space coefficients read from the original compiled classes.
+
+The independent reference compiles unchanged Color, Float16, ColorSpace,
+ColorSpaces, Rgb, Connector, all non-RGB models, original math/bit helpers and
+ColorVectorConverter. It includes the native JVM bit bindings and collection
+connector cache. Common expect declarations and JVM actual markers are the
+platform linkage boundary; numerical bodies are unchanged. All sources have
+revision URLs and SHA manifests. Original Color's halfway rounding, signed
+zero, fastCbrt and Float16 overflow branch are preserved as written.
+
+values.json contains 259,690 bit-exact records, SHA
+`a8b385b43feb3c2f90c6ae924ac974d30f80d57881a6319f5f4aa04c1a4ebdf0`:
+all 65,536 half patterns, rounding boundaries and float special cases, native
+construction/conversion/vector round trips across all 20 spaces and 4 intents.
+Fresh --check compilation reproduces the fixture and generated coefficients.
+
+runtime.json adds 86,000 original applying/runtime records, SHA
+`ea9fa6b783636411722d9abe4ec4a40212fa12e3f2be597f835d02bdba30ac94`.
+It executes real packed Color with original animateColorAsState/value wrappers,
+finite Animatable/spring/Snap/state/TargetBased/SuspendAnimation/internal mutex,
+remembered scope, BroadcastFrameClock/AwaiterQueue and AndroidUiDispatcher.
+Both schemes and all 20 spaces cover retargeting between delivered frames,
+rapid queued/separated updates, packed-equal targets, spec/label/space changes,
+Snap, overshoot, duration scale changes and cancelled/forgotten scopes. Stored
+color/target bits match exactly; raw/converted vector floats are compared with
+small tolerances for native decimal serialization. The joint group adds 1,343
+unchanged original sibling-write/completion/cancellation/spawn records, SHA
+`a91bf031bdfaeb2a298d073de8c37dfeb76b9b0bf7bf123ca178414abf888f58`.
+Older Float Color proxy fixtures remain diagnostic coverage for that explicit
+leaf, and no longer serve as the field's packed-color proof.
+
+Real field DOM checks use the new packed fixtures: 7,168 single-owner snapshots,
+6,472 SVG/color paints and 84 disposal histories; 1,084 joint snapshots, 252 paints
+and 10 controlled/real RAF completion-order checks. CSS binding checks 27 native
+packed inputs and paint round trips plus 9 browser syntax inputs, with native
+packed colors retained at rest and Snap. Chromium resolves variables/named/hex/
+HSL/color-mix/relative and CSS-only spaces; supported canonical native spaces
+are preserved. This does not establish every CSS syntax or native raster path.
+
+The reference's plain State/slots/commit, Android OS/frame/handler driving,
+annotations, Dp and synchronization are explicit hosts. Compiler 1.9.24 uses
+experimental K2/language 2.0; the original build declares 2.4.20. Full Recomposer,
+snapshot scheduling, native component trees, Android rendering and original
+compiler build are still open. Web reduced-motion's immediate finish binding,
+direct disabled-color branches and legacy ColorMotion consumers are separate
+remaining work. Passing this scope does not establish whole-library parity.
+
+Validation: complete npm unit/component checks, complete source and bundle
+TextField/consumer gates, complete source and bundle dialog/picker gates, and
+all three fresh native --check compilations exited0. The guarded build passed;
+16 current field/color/clock modules match their source-map content, tracked
+diff and15 new owned sources pass whitespace checks, graph is16755 nodes/88228
+edges, and the existing preview responds HTTP200. The whole expressive browser
+gate was not run in this scope.
+
+## Clock applying scope, outer mutex admission and displayed time, 2026-10-09
+
+PickerClockAnimation now defaults to the same composition BroadcastFrameClock
+as field owners. A launch enters through the applying trampoline. Foundation's
+currentMutator priority and its admitted writer are separate: cancellation
+replaces the priority owner immediately, but a new block waits for the old
+writer's cleanup before sampling Animatable's retained value/velocity/frame
+origin. This corrects the earlier synchronous entry and captures zero velocity
+after outer-mutex interruption, including before the first delivered frame.
+
+An original Foundation waiter cancelled before admission does not enter the
+withLock block's finally. Its priority remains until an eligible replacement;
+the web mutex now preserves this ordering rather than clearing that priority
+from every Promise.finally. The independent reference exposed the difference:
+the old port admitted a later UserInput and changed minute17 to40, while the
+original rejected it and retained17. An equal-priority replacement recovers in
+both runtimes. Already admitted writers still release their priority normally.
+
+A waiting tap no longer publishes the old displayed hour while its new selector
+motion runs. PickerClock publishes the admitted rotateTo state mutation. This
+updates the visible digits, accessible hour/minute labels and change payload
+before the new animation's first frame; a rejected mutation does not publish.
+
+Fresh compilation executes unchanged original AnalogTimePickerState/onTap and
+finite Animatable bodies, both Foundation/animation-core mutation mutexes,
+BroadcastFrameClock/AwaiterQueue, RememberedCoroutineScope/factory and the
+AndroidUiDispatcher trampoline. Explicit commit/frame/handler driving, plain
+scalar State, Float Dp/Saver/FocusRequester, atomics/synchronization and Android
+OS leaves are hosts. Delay's deterministic timer dispatcher delegates dispatch
+to the unchanged AndroidUiDispatcher. This is not the Android OS delay loop or
+a complete native component/Recomposer execution. The compiler remains1.9.24
+with experimental K2/language2.0 for scope code; original build declares2.4.20.
+
+The new clock-broadcast-runtime fixture has6,592 original snapshots,
+SHA60cc44215e1b54db634c1186b211daef7851cf48ab6121d620f8fa68765f8fc3.
+Both schemes cover queued launch, retained frame values, rapid queued/separated
+taps, first-frame interruption, priority rejection, cancelled pending admission
+and recovery, Snap, Animatable replacement, cancellation/forgotten scopes,
+duration scales and unlocked100ms delay overlap. The prior1,025 immediate-host
+records remain separate, with an explicit immediate dispatch binding in their
+web test. Native source/host/compiler/coroutine hashes accompany each fixture.
+
+Actual trusted pointer/drag controls add3,636 native launch/frame/job/Delay
+snapshots and32,872 displayed-time/selector/mask paint checks across1000/390px,
+light/dark and both schemes. Digit text and accessible labels are read directly
+from the DOM. After the original onTap auto-switch, the web selection node
+starts its minute animation; scalar reference comparisons stop at that node
+boundary and check the actual selection update separately. The existing native
+layout/gesture/keyboard and retained-frame DOM gates remain in place.
+
+All normal npm units, a fresh clock-broadcast native --check, guarded build and
+complete source/bundle picker/dialog gates exited0. These include the existing
+field container/broadcast, picker input/period/color and actual showcase gates.
+All12 current clock/field production modules exactly match the bundle source
+map. Global diff and owned new/source whitespace checks pass. The graph was
+refreshed (16,746 nodes,88,179 edges); the preview respondsHTTP200. No validation,
+generator or build process remains running. The full expressive browser suite
+is wired to this new gate but was not rerun in this scope.
+
+Open: full Recomposer/snapshot/structured child-job continuation interleavings,
+native focus/IME/gesture/component nodes, original compiler/tooling and raster,
+clock spec capture across pending mutations and external hoisted-state integration,
+packed Color/ColorSpace and web duration-scale
+bindings, TimeInput vibrant shape/layout overloads and remaining picker interiors.
+The complete component/system/showcase goal remains active.
+
+## Remembered field scope and broadcast delivery, 2026-10-09
+
+The shared field owners now use one BroadcastFrameClock web binding. One RAF
+updates all current awaiters before the applying trampoline resumes jobs. A
+new awaiter created within a frame belongs to the next frame; cancellation can
+retire a sibling still in the current batch. Cancelled entries release their
+callback captures, including when cancellation leaves no further RAF scheduled.
+The pending count/version and spare-batch ordering follow AwaiterQueue.
+
+Native finishedListener runs within its coroutine continuation while that Job
+is still active. The web owner now invokes it in the same position and completes
+the Job after it returns, instead of adding a Promise.then boundary. If the
+listener cancels a sibling whose frame continuation is already queued, that
+continuation consumes prompt cancellation in its existing trampoline position.
+This prevents cancellation cleanup/new admission from changing sibling order.
+Float/Dp and the current Float Color leaf compare targets with boxed-value
+semantics, including distinct negative/positive zero. Reference JSON transport
+preserves negative zero rather than silently normalizing it during serialization.
+
+Fresh compilation executes the complete original BroadcastFrameClock,
+AwaiterQueue/AtomicAwaitersCount, CancellationHandle/OneShotCancellationHandle,
+RememberedCoroutineScope, createCompositionCoroutineScope and rememberCoroutineScope
+bodies with the original finite animate-as-state runtime and AndroidUiDispatcher.
+Native child Jobs inherit the applying dispatcher and broadcast clock; the
+probe verifies lazy creation, inherited clock identity, separate parent/child Jobs
+and forgotten unused scopes. Effects/Recomposer source confirms the default
+applyCoroutineContext/broadcast-clock wiring, but the full Recomposer is not
+executed. Slot/commit/Composer, plain State and value-assignment observation,
+atomic/synchronization and OS leaves are explicit hosts. Tracing diagnostics
+are absent in the supplied context and verbose tooling is disabled.
+
+The new single-owner broadcast fixture has11,826 records,
+SHAb58c0e2f0804c241ed79d376011659ffb4da3f3d75eadbb2e1fb976f608c6cbe.
+The combined width/container/border fixture has1,343 interleaved value-assignment,
+frame/trampoline/finished-callback histories,
+SHAf260ac8ce72947aa2473ceaef669f7f61c0606d03e54ee1162d6338ffe9028dc.
+It exercises joint completion, callback retargets, same-frame sibling
+cancellation/spawn, forgotten active/unused scopes and both motion schemes.
+All26,802 single-owner snapshots and1,343 combined histories pass against the
+web owners. The earlier immediate/AndroidUiFrameClock fixtures remain separate
+host profiles; their numeric hashes are unchanged.
+
+The checked AndroidX libs.versions.toml declares coroutines1.9.0, matching the
+SHA-pinned runtime. The reference compiler is1.9.24; modern scope code compiles
+unchanged with its experimental K2/language2.0 frontend. The original AndroidX
+build declares Kotlin2.4.20. Compiler/frontend details and original/host hashes
+are recorded; this is not an execution of that complete Android build.
+
+Actual time input adds1,084 joint native state/callback snapshots,252 SVG/theme
+paint checks and10 controlled/real browser RAF completion-order checks across
+1000/390px, light/dark and both motion schemes. A fresh control starts at its
+resolved semantic colors with no color job; trusted invalid input drives the
+three retained owners. Actual callbacks see the sibling's current-frame target
+before that sibling completes. Default field owners share the same clock and
+use at most one RAF per batch. Pure native scope cancellation maps to explicit
+container disposal before DOM removal; ordinary DOM focus/blur remains a
+separate integration boundary. Existing field/picker/consumer gates remain.
+
+All normal unit tests, fresh native --check for all four dispatcher/group
+profiles, guarded build, complete picker/dialog source and bundle gates, and
+complete text-field plus select/autocomplete/stepper consumer source and bundle
+gates exited0. All9 current production modules match the bundle source map.
+Global diff and new-owned-file whitespace checks pass. The graph was refreshed
+(16,735 nodes,88,101 edges). No reference/test/build process remains running.
+
+Open: full Recomposer/snapshot/modifier/focus/IME and native render trees,
+original-build compiler/tooling paths, packed Color/ColorSpace conversion and
+raster. The clock's queued applying/broadcast scope and outer Foundation mutex
+were extended by the later clock section above. Native duration-scale versus web
+reduced-motion binding, TimeInput vibrant shape/layout overloads, wider picker
+interiors and the whole component/system/showcase objective remain required.
+
+## Field animate-as-state and Android dispatch ownership, 2026-10-09
+
+The shared TextFieldContainerMotion now owns finite animate-as-state jobs for
+container/border colors and border thickness. It retains values from delivered
+frames rather than extrapolating at focus/error updates. Same-target/spec-only
+updates retain the current job; label/converter changes replace the Animatable.
+Disabled border/thickness remove their remembered animation branches; enabling
+creates fresh owners. Colors and thickness keep their independent lifetimes.
+
+Fresh compilation executes the complete pinned Float/Dp/Color public wrappers,
+animateValueAsState and AnimateAsState class, tooling interface and original
+ColorVectorConverter, with native finite Animatable, TargetBasedAnimation,
+AnimationState, SuspendAnimation, internal mutex and spring/snap bodies. The
+original AndroidUiDispatcher and AndroidUiFrameClock execute unchanged against
+explicit Handler/Looper/Choreographer leaves and real coroutine Jobs/Mutex.
+Remember slots, plain State and SideEffect commit are an explicit composition
+host. This is not a native Recomposer, Android OS event loop or UI component tree.
+
+The Android dispatcher queues cancellation cleanup. A new undispatched animateTo
+captures retained value, converted velocity and the previous frame origin before
+waiting for the old writer's mutex release. This differs from the separately
+executed immediate JVM dispatcher, which completes cancellation before capture.
+Color's default initialVelocity passes through the original clamped converter;
+it does not reuse the raw velocityVector. Frame callbacks draw before trampoline
+continuations schedule another frame or finish the job. Duration scale is read
+before awaiting that frame. The shared web writer maps this ordering to RAF and
+microtasks. Reduced motion explicitly snaps the latest requested target even
+while the new native-style writer is awaiting admission.
+
+The SHA-verified reference fixtures contain4,758 immediate-host snapshots
+(SHA20dbd8742d4524e65d22406885d847dc945e70606d65bda3386f05e6a6d53e6e)
+and10,218 Android-dispatch snapshots (SHAc98cbf54b84a780cc9c6b30f2fda905a7d49a23a4ffd18130b51d50415601979). The unit gate compares all
+14,976 values, velocities, targets, running/pending-frame states, finished calls
+and current Job flags, including pre/post-trampoline cancellation, between-frame
+retargets, rapid same-turn and separately dispatched changes, spec/label/color
+space changes, Snap, zero/changing duration scales and disposal. The immediate
+fixture is a contrasting host profile, not evidence of Android cancellation order.
+
+Actual outlined/filled/time/vibrant controls in both motion schemes add7,168
+native state snapshots,6,472 SVG/color paint checks and84 lifetime histories.
+Trusted focus changes are captured before and after the trampoline; valid/invalid
+editor input exercises color owners through real theme roles. The native pure
+scope-cancel record is bound to explicit container disposal before DOM removal,
+because ordinary focused DOM removal can deliver blur before disconnectedCallback.
+The prior64 resolved palette branches and48 SVG stroke/focus checks remain.
+The earlier747 numerical timeline tests are superseded by this ownership gate.
+
+All normal unit tests, fresh compilation/--check for both dispatcher profiles,
+guarded build, complete picker/dialog source and bundle gates, and complete
+text-field plus select/autocomplete/stepper consumer source and bundle gates
+exited0. All8 changed production modules match the bundle source map; global
+and new-owned-file whitespace checks pass. The graph was refreshed (16,718
+nodes,88,034 edges). The local showcase responds200. No reference/test/build
+process remains running.
+
+Open: packed Color/ColorSpace conversion (the reference currently uses Float
+Oklab identity spaces), full Compose snapshot/recomposition/focus/IME and native
+component modifier trees. Effects.kt/Recomposer.kt confirm that remembered
+composition scopes inherit applyCoroutineContext and the Recomposer broadcast
+frame clock; its shared awaiter queue and multiple-owner/frame ordering remain
+a required separate scope, not established by this explicit AndroidUiFrameClock
+profile. TimeInput vibrant shape/layout overloads, typography
+and raster identity, wider picker interiors and the rest of the library/showcase.
+The earlier clock reference still has an explicitly immediate dispatcher host;
+its complete Android-dispatch behavior remains a separate required scope. The
+whole-library goal remains active and incomplete.
+
+## Time input factories and shared field containers, 2026-10-09
+
+Time input and ordinary filled/outlined text fields now share
+TextFieldContainerMotion. Container and border colors use FastEffects; border
+thickness uses FastSpatial with the original enabled/focus branch. Disabled
+border/thickness retire their animation branches while the container keeps its
+independent color owner. Thickness paints no longer remeasure label/editor
+layout on every border frame. Time input uses a continuously drawn SVG border,
+so intermediate stroke widths are not rounded by the browser's CSS border.
+The fixed96x72px editor does not change its content width during focus motion.
+Shape and paints remain semantic theme bindings.
+
+TimeInputDefaults' ordinary factory explicitly overrides the focused border to
+Outline. Its vibrant factory uses focused Primary and unfocused transparent.
+Both use ErrorContainer/Error for field errors. The actual BasicTextField's
+explicit TextStyle uses selected content or Error directly, and its explicit
+cursor brush uses Primary; those overrides remain distinct from generic
+TextFieldColors' text/cursor getters. Input-mode outer/selector colors now use
+the separately verified TimeInput factory rather than a dial-only palette.
+
+Fresh compilation and --check execute both complete original TimeInput default
+factory bodies, the complete default outlined factory and public override call,
+complete TextFieldColors/TimeInputColors classes, OutlinedTextFieldDefaults.Container
+and animateBorderStrokeAsState.18 records verify cache/copy/selection-local,
+role/getter, disabled precedence, target thickness and animation descriptors.
+SHAf2b978cf75bbd82de378a7e73c69703c0c2709d6ba098109f76526df084eeac6.
+Original and host files are SHA verified. Symbolic Color/alpha-copy, focus State,
+theme/selection locals and descriptor animation calls are explicit hosts.
+
+The actual source/bundle input controls add64 resolved theme branches,
+747 independent original scalar/ColorVector spring samples and58 SVG stroke,
+focus, continuous retarget, reduced-motion and lifetime checks. Both motion
+schemes, ordinary/vibrant palettes and light/dark states are exercised. Existing
+picker input/period/clock/runtime/modal/showcase and full text-field/consumer
+gates are retained. Source/bundle captures match and are visually inspected;
+they do not establish native raster identity.
+
+All normal unit tests, fresh input-color reference reproduction, guarded build,
+complete picker/dialog source and bundle gates, and complete text-field plus
+select/autocomplete/stepper consumer source and bundle gates exited0. The five
+changed production modules match the bundle source map; global diff and new
+owned files pass whitespace checks. The graph was refreshed (16,666 nodes,
+87,824 edges). No test/build/reference process remains running.
+
+A controlled delayed-font probe established that a fresh empty browser fixture
+could report fonts ready before the newly mounted editor requested Roboto.
+Both source and bundle remeasured after load. The finite-font layout test now
+awaits fonts after mounting; independently compiled native placements were
+reproduced with that explicit host precondition (72 inputs, decoded
+SHA590e53679d7e9c898673cfd66e865d223335be9ad06931e09105c9c278b6738f).
+
+Open: complete animateColorAsState/animateDpAsState channel, coroutine,
+retained-frame and cancellation ownership; packed native Color conversion,
+border/font raster; full TimeInputImpl/TimePickerTextField/TimeSelector composition,
+TextFieldState/IME/focus/keyboard transactions, locale/formatting and vibrant
+shape/layout overloads. The shared web spring timeline has independent numeric
+checks; those are not full Compose animation scheduling claims. The broader
+component/system/showcase goal remains active and incomplete.
+
+## Picker input transformation and actual editors, 2026-10-09
+
+The actual time input now follows the original TimeInputTransformation rather
+than clipping hours/minutes to the nearest limit. Raw invalid values remain
+visible while canonical hour/minute keep their last valid values. Blank hour
+input uses0 or12 for12h PM, blank minute uses0;12h input12, PM conversion,
+two-digit replacement at each cursor position, silent non-digit rejection,
+oversized reversion and accessibility-gated minute advancement follow source.
+The editor and dial share one PickerTimeState across mode/layout changes.
+Native raw hourInput/minuteInput/isInputValid are exposed as read-only views.
+Imperative value/hour/minute assignments now apply even when the attribute
+string is unchanged. Browser accessibility-service state is an explicit setting.
+
+The selected field is the retained HTML editor; the other field is a radio
+selector with shared Surface, press/key/ripple/state-layer and theme owners.
+The baseline native token getters establish96x72px fields, CornerSmall,
+DisplayMedium and7px supporting-text top padding; supporting text allocates two
+lines. Error text/live-region and active/inactive paints use semantic error,
+error-container and on-error-container roles. Enter maps the hour Next action;
+focus follows selection. Cancellable beforeinput handles HTML sanitization so
+rejected newline text cannot become an accepted blank edit. Abort disposal ends
+listeners, focus tickets, Surface and theme observers across rerender/detach.
+
+Fresh compilation and --check reproduction execute28,000 original transformation
+snapshots with the native plain-text TextFieldBuffer constructor, selection,
+replace/delete/revert/range methods, complete GapBuffer/PartialGapBuffer,
+ChangeTracker, TextFieldCharSequence and TextRange. The original styled-text
+flag stays true; unused style/output-mapping leaves throw. Token metric getters
+execute separately. SHA
+3236b84f4c4aa6289b2fafabad48088cccb637d62cd5d8ef8eb2922e12a2fb98.
+All original/host inputs are SHA verified; the JS unit gate also checks65,536
+UTF-16 code units against the JVM BMP digit snapshot. Scalar state/Saver,
+collection/packing/character-copy/precondition and JVM digit helpers are hosts.
+This does not execute native TextFieldState transactions or recomposition.
+
+All normal unit tests, fresh reference reproduction, guarded build and complete
+focused source/bundle picker/dialog gates exited0. Each run adds5,696 actual DOM
+input/cursor/raw/canonical/Unicode/focus/geometry/theme/lifetime assertions and
+retains180 modal,224 palette/calendar,320 period,1,975 clock and4,032 clock-runtime
+checks plus real showcase controls. All five changed input/state/clock sources
+match the bundle source map. Light/dark source/bundle captures are byte-identical
+and visually inspected; they are not native raster comparisons.
+
+Open: complete TimeInputImpl/TimePickerTextField/TimeSelector composition and
+native field color/thickness animation ownership, complete TextFieldState/IME,
+keyboard/focus transactions and selection effects, platform error feedback,
+locale/formatting, vibrant shape/layout overloads and raster. Public DOM delivery
+and same-value imperative writes are web adapters. Wider picker/calendar and
+whole-library/showcase requirements remain active.
+
+## Picker clock coroutine/frame ownership, 2026-10-09
+
+The actual DOM hand now uses a finite Float Animatable owner instead of reading
+an extrapolated shared spring getter. Its angle and selected-text mask read the
+same retained frame. Idle animation, including SnapSpec, starts at the next
+delivered frame with playtime0. Foundation mutation admission precedes clock
+state changes; PreventUserInput rejects a lower-priority drag without changing
+time or selected ring. Pointer down no longer cancels the current writer.
+Successful drag rotation completes before moveSelector and publication.
+
+The clock's outer mutex cancels the previous tap coroutine before its new
+Animatable call. Interrupted taps therefore retain the last position but restart
+with zero velocity and a new first frame. The previous checkpoint's broader
+statement about animated targets retaining velocity is superseded by this
+executed clock ownership result. The100ms auto-switch delay begins after the
+mutation unlocks; another tap does not erase that already unlocked delay.
+Native field replacement keeps the old Animatable job alive while the displayed
+new field stays separate. Public DOM value overrides and modal/owner disposal
+cancel the web owner's jobs explicitly.
+
+Fresh Kotlin compilation and --check reproduction execute1,025 snapshots with
+the complete unchanged native clock bodies, Animatable/TargetBasedAnimation,
+AnimationState/SuspendAnimation, both Foundation and animation-core mutexes,
+SpringSpec/vectorized/FloatSpringSpec, simulation/estimation and snap paths.
+Real coroutine Jobs/Mutex/Delay use deterministic JVM dispatcher/frame/delay
+hosts. Fixture SHA
+8f2f3f890aaebb0c907772dc97a0dc5d0e4726ed2981aa03c7d1391bed2a2200.
+Every original and generator/host is SHA verified. Scalar state/Dp/Saver/focus,
+annotation/expect bindings and platform delivery remain explicit hosts; complete
+Compose snapshots/recomposition/node updates, Android dispatcher, gesture passes,
+unused decay, fonts and raster are not executed.
+
+All normal unit tests, fresh reference reproduction, guarded distribution build
+and complete focused source/bundle picker/dialog gates exited0. Each browser
+run retains1,975 clock geometry/input/lifetime checks and adds4,032 actual
+retained frame/mask, trusted priority rejection and tap interruption, unlocked
+delay and disposal checks. It also retains224 palette/calendar,320 period,
+180 modal lifecycle checks and real showcase controls. The bundle source map
+contains all five current clock/frame production files exactly. Comparisons stop
+before unprobed Compose selection node updates; label fade ownership remains
+the earlier effects path.
+
+Open: native clock node updates/retained24h crossfade recomposition, gesture event
+passes/multi-pointer takeover and OS ViewConfiguration, complete ClockText and
+time-card focus/indication, vibrant shapes/layout, TimeInputTransformation and
+field/action owners, wider calendar and whole-library/showcase scope. The goal
+is active; this checkpoint establishes the finite clock runtime boundary only.
+
+## Picker clock state, geometry and web binding, earlier checkpoint 2026-10-09
+
+The dial now has the native24h outer0..11 and inner12..23 rings,101/69px radii
+and74px ring threshold at256px. Label bounds use the original CircularLayout
+integer placement and48px leaves; minute labels use the original unpadded
+values. A tap changes time on release and rounds to five-minute marks;
+dragging follows every minute after pointer slop. Drag cancellation no longer
+commits or auto-advances. Keyboard moves focus through both rings and selects
+without automatic minute advancement. The original Float angle conversions,
+shortest-path half-circle tie, canonical/input state separation and operation
+order are ported in picker-clock-state.js. Native input state is independently
+verified here; the actual DOM text editor still needs its native transformation.
+
+One retained DefaultSpatial scalar spring owns the hand. Snap input resets
+velocity; animated targets retain sampled Float position/velocity. The fixed
+180ms CSS transition and separate200/250ms auto-switch callbacks are removed.
+Tap auto-switch waits for spring settlement and the native100ms delay; drag
+switches before settlement. Label layers use DefaultEffects fading. Selected
+ink is clipped to the selector circle; the extra off-grid dot is removed.
+AM/PM updates reach the canonical clock. Mode/layout/palette changes retain
+the selected time instead of reloading the initial value attribute. Clock,
+label listeners, delays and animation owners dispose on rerender and detach.
+
+Fresh original compilation and --check reproduction execute7,214 complete
+state/angle/tap/drag/selector/layout/slop records and30 native FloatSpringSpec
+duration/trajectory/interruption records. SHA
+4a2dbb28e745fd96862e25370c0f01b0051de33fefbb68633822fee7663e7bdb.
+Unchanged native bodies and every generator host are SHA verified. State/Dp,
+Saver, target-recording Animatable/priority/delay, immediate suspend continuation,
+48px leaves and layout placement are explicit hosts. Native numerical springs
+execute separately; this is not a native Animatable coroutine/frame-loop test.
+
+Normal unit tests, fresh reference --check, guarded build and the complete
+focused source/bundle picker/dialog gates exited0. The final external modal
+close fix also passed focused clock source/bundle gates after rebuilding.
+The clock browser gate checks1,975 actual geometry, all24 trusted pointer
+selections, keyboard, continuous drag, source-derived hand/fade frames, explicit
+synthetic cancellation, external modal close/capture release and disposal across1440/390 light/dark and
+both layouts. It also retains224 palette/calendar,320 period and180 modal
+lifecycle checks and real showcase controls. Light/dark clock captures were
+visually inspected. The current distribution source map matches all three clock
+production sources. Captures are not claimed byte/raster-identical; scalar,
+geometry, semantic color and frame comparisons are the verified boundaries.
+
+Open: native full Animatable/MutatorMutex/coroutine delay/frame ownership and
+gesture event passes/multi-pointer takeover, OS ViewConfiguration, retained24h
+Crossfade recomposition, complete ClockText/time-card focus/indication owners,
+vibrant shapes/layout, native TimeInputTransformation and field/action owners.
+The broader picker/calendar and whole-library/showcase goal remains active.
+
+## Picker AM/PM controls and clock display spacing, 2026-10-09
+
+AM/PM now follows the current updated ToggleItem branch: two independent
+ToggleButtons, no shared border or divider,4px default gap, TitleMedium labels,
+ordinary full corners and12px checked/pressed corners. Each control uses the
+shared ButtonShapeComposition/FastSpatial, ButtonSurface clipping/hit geometry,
+state layer and press/ripple/keyboard owners. Press -> check -> release retains
+the shape owner; already selected periods keep their selection without a second
+change event. Explicit per-control abort ownership disposes callbacks, theme
+observers, Surface observers and animation jobs across mode changes, attribute
+changes and detach/reconnect. External value changes now parse the new attribute
+instead of reading the previous formatted state.
+
+The clock number Row is always LTR, with a24px separator and its native -4px
+text offset; the period column has4px start padding. Baseline picker spacing
+uses the actual36px clock gap and24px vertical bottom spacer from source.
+`rich-colors` remains the original vibrant color factory choice; the separate
+TimePickerShapes overload and its larger dimensions are not implied.
+
+Fresh compilation executes complete original HorizontalPeriodToggle,
+VerticalPeriodToggle and ToggleItem bodies, actual updated flag and native
+Constraints. Four constructor records and168 constrained placement cases pass
+strict JS comparisons. SHA d3203b11088e229374da8a49d5d6c1c6f5b8a5ade2332c694f3a388fd7c6a92b.
+Recording constructors/modifiers, symbolic Color/Shape, MeasureScope/place and
+fill-size leaves are explicit hosts. These do not execute the complete nested
+ToggleButton modifier/layout/composition tree or raster.
+
+Fresh --check reproduction, all normal unit tests, guarded build and full
+focused source/bundle dialog gates exited0. Each browser run checks320 period
+geometry, shape/press, trusted mouse/keyboard, external state, cancellation and
+disposal assertions in1440/390 light/dark and both layouts. Cancellation uses an
+explicit synthetic pointer event; pointer and keyboard activations are trusted.
+Both runs also retain224 palette/calendar assertions,180 modal lifecycle checks
+and real showcase viewport/dismissal controls. Source/bundle captures are byte
+identical and visually inspected; the source map matches current production.
+Full-library browser validation was not repeated in this slice.
+
+Open: complete nested modifier/composition and timed native shape frame binding,
+vibrant shapes/layout, full clock display measurement, clock state/24-hour dial,
+native angle/gesture/animation ownership, calendar color ownership and remaining
+picker header/input/action structure. No whole Picker/native raster parity claim.
+
+## Picker color factories and calendar cells, 2026-10-09
+
+Date/TimePicker now consume the original default color roles through a shared
+semantic CSS factory. `rich-colors` selects TimePickerDefaults.vibrantColors:
+SurfaceContainer container, SurfaceContainerLowest dial and time fields,
+Primary selected time text. The previous primary blend, highest-surface rich
+container and tertiary AM/PM selection are removed. Removing rich-colors now
+returns to the default palette; is-24-hour changes also update the rendered
+controls. Baseline dial time cards use CornerSmall, without inventing a border
+from a palette choice. Date weekdays/day labels use BodyLarge, weekdays use
+OnSurface, and the selected date keeps ordinary font weight. Today, selected,
+range and headline colors follow the actual DatePicker factory and branch order.
+
+Calendar ink is 40px, within 48px week slots. Each displayed month contains 42
+slots in a fixed 288px six-week grid; the modal width is 360px with the existing
+web viewport clamp. Range ink is 40px high and uses logical start/end for RTL.
+Single-day ranges suppress the half-track, and a pending range start does not
+draw a completed range. Public start-date/end-date mutations, including clearing
+an endpoint, now update state and appearance. This is an HTML adapter correction.
+
+Five licensed pinned originals have URL/SHA provenance. Fresh Kotlin compilation
+executes complete default Date/TimePicker, vibrant color and TimePicker shape
+factories, DatePicker day-color branches and original token getters. Reference
+SHA25f91dfe16f9335f6b6772ea34729260b50333c2712f485e5e8fea7e6b803aa5.
+24 Date roles,14 roles for each Time palette and32 day-state branches pass strict
+JS comparisons. Symbolic Color/alpha-copy, named constructor records, cache fields
+and State/animation targets are explicit hosts; no interpolation is claimed.
+
+Fresh --check reproduction, all normal unit tests, build and source/bundle dialog
+gates exited0. Each source/bundle run checks224 actual palette/theme-mutation,
+calendar geometry, range and month cases plus180 modal lifecycle checks and the
+real showcase controls at1440/390 light/dark. Source/bundle screenshots are byte
+identical and visually inspected; the distribution source map matches all three
+current production files. Full-library browser checks were not repeated here.
+
+Still open: complete nested AM/PM modifier/layout/composition beyond the binding
+above, vibrant layout/shapes, complete native calendar modifier/measurement
+trees, day-color interpolation, clock gesture/state/animation, locale/UTC,
+keyboard/input ownership and the remaining picker header/action structure. The
+factory fixture and browser geometry checks do not establish complete Picker
+parity. Existing shared modal shell validation remains a separate scope.
+
+## Chip content measurement and retained leaves, 2026-10-09
+
+Production Chip now uses the native content Row/Box/modifier measurement port,
+replacing handwritten icon/label width subtraction. Static Assist/Suggestion
+use weight(1f) fill; Filter/Input use fill=false. IntrinsicSize.Max versus
+widthIn(max1000), defaultMinSize, padding order, unweighted-before-weighted
+measurement, ordinary arrangements and compact three-child placement are
+preserved. Constrained labels can wrap and grow the body. Browser max-content
+font widths round outward so fractional natural widths do not invent a second
+line. Built-in content type, glyph and captured icon color remain through exit;
+completed visibility owners forget them. Avatar content inherits the outer
+label role. A retained web removal button is inert once removable=false.
+
+Fresh compilation executes complete original ChipContent/AnimatingChipContent,
+Row/Column, Box measure/place, ChipArrangement, IntrinsicWidth/IntrinsicSizeModifier,
+UnspecifiedConstraintsNode, SizeNode, PaddingValuesModifier, Constraints/Alignment
+and Placeable arithmetic. 28,160 native trees and84,480 four-intrinsic query groups
+pass strict JS comparisons. SHA253ec70d113231ff88560e6093ab50ebf383e705ccda449122d3e22216559690.
+The original leadingContent/trailingContent/rememberRetainedState bodies also
+execute48 sequential retained-closure/color/avatar-inheritance frames.
+SHA32dc1a7810c8d4eef249645d9c5b0c5871f63fc1438faed935eb6a60b51f87c7.
+Licensed Box.kt/Intrinsic.kt originals have pinned URL/SHA provenance; hosts and
+the unchanged original sources are hashed. Fresh --check reproduction exited0.
+Leaf font metrics, default-intrinsic proxies, composition-local/remember hosts
+and atomic visibility samples are explicit boundaries.
+
+All unit tests, including the shared Row/Column/toolbar regressions, exited0.
+Actual DOM checks add960 bounded/tight original content trees across four families,
+five arrangements and LTR/RTL; eight real-font multiline labels, retained exit
+color/height, completed disposal, reversal, inert removal and avatar inheritance.
+After the fractional-font correction, source foundation/content and source/bundle
+showcase gates exited0. The built source map exactly matches all four current
+production files; 1440px-light and390px-dark source/bundle captures are byte-identical
+and visually inspected. Both source/bundle shared-pointer gates exited0 with768
+native sibling and72 ancestor/disabled paths,922 trusted Mouse/Touch/Pen gestures
+and DOM top-layer/nested-clip/lifecycle cases. Nested construction now waits for
+slot/ResizeObserver measurement before taking the coordinate: diagnostics found
+the previous immediate pen check queried a0px unpainted child, including under
+the old metric method;80 measured pen cases passed. After that fixture correction,
+the complete focused bundle command exited0, including all factory/content,
+seed256, pointer922 and showcase28 scopes. Final npm test exited0 and the
+current source map/captures and whitespace checks pass. Logs:
+research/chip-layout-final-all-units.log, chip-layout-reproduce.log,
+chip-layout-final-build.log, chip-layout-final-foundation-source.log,
+chip-layout-final-pointer-source.log, chip-layout-final-showcase-source.log and
+chip-layout-final-focus-bundle.log. This scope does not prove whole Chip parity.
+Arbitrary owner-removed caller leaves, multi-leaf label/slot composition, full
+Surface/constraint ownership, native paragraph/fonts, complete Transition and
+composition scheduling/layers, custom shapes, wide-gamut colors, Android
+shadow/path/raster and wider browsers remain open. Picker interiors and the
+remaining library/showcase goal continue; both homepage wave phases are preserved.
+Next picker evidence: DatePicker's actual default-min-width is360px; its Month
+provides BodyLarge and Day requests40px. Current date styles use328px/BodyMedium/36px.
+Weekdays also use BodyLarge/OnSurface in the source. The pinned updated-timepicker
+toggle flag istrue, so period defaults use PrimaryContainer/OnPrimaryContainer
+and SurfaceContainerLowest; current web styles use the old tertiary/transparent
+roles. Original vibrantColors explicitly uses SurfaceContainerLowest dial and
+SurfaceContainer container, unlike the current rich-color blend. Exact originals
+are saved in research/picker-*.kt; native factory/layout/runtime integration is
+the next open production scope, not a completed picker change.
+
+## Chip default factories and retained component integration, 2026-10-09
+
+Production md-chip now uses the original four families' color, border, padding,
+arrangement and elevation defaults. Fixed selectable corners, competing CSS
+transitions, a measuring border, extra icon margins and the elevated-hover
+target are replaced. Expressive Filter/Input use CornerMedium at rest,
+CornerFull when selected and CornerSmall during press, with pressed priority.
+Assist/Suggestion retain CornerSmall; Input has no invented elevated family.
+The selected Input leading role deliberately remains Primary, matching the
+current public tonalInput factory. Disabled roles use packed source alpha
+through live theme variables; component color literals and whole-control fades
+are absent.
+
+Seven pinned originals freshly compile to260 foundation records: complete
+color classes/getters, default constructor/copy arguments, current border and
+elevation factory arguments, Input padding, complete ChipArrangement and
+expressive shape/default/priority bodies. Symbolic Color/alpha/shape/elevation
+descriptors plus Dp/Density/Arrangement are explicit hosts. Decoded
+SHA8d4d6ed01b1189bb9b2304f0b28ad307a8a8db59adcc9597d30a959eb4a002bb
+reproduces unchanged. A separate reference executes both complete original
+elevation classes, internal animateElevation and original FloatTween/Easing/math
+under sequential remember/effect/flow/value/frame/continuation hosts.
+Its270 histories/7560 frames cover interruption, equal targets, last completed
+interaction, input ordering and disabled/configuration changes. Decoded
+SHA722f1c3ec4d21e0c0a599b74efaa704235541f3c5f017b5d8294ae0e5839e902
+reproduces unchanged. Full coroutine scheduling is outside those hosts.
+
+The retained DOM paints its border inside the shape and follows the original
+three-child compact arrangement, including zero children and spacing. A32px
+body sits in a centered48px minimum interaction allocation without stretching
+small ink. Local leaf measurements survive caller transforms. Expressive icon
+visibility uses shared FastSpatial IntSize and DefaultEffects Float channels;
+baseline selectable mode retains its different specs. Built-in glyphs remain
+through exit. Chip's outer key(shapes) and the shape utility's inner
+remember(animationSpec) both replace state when required; reconnect initializes
+a new owner at its current target. Shared uniform AnimatedShapeState, Float
+spring and IntSize-vector numerics have separate existing native fixtures.
+
+Final source and rebuilt distribution each pass1024 rendered role/packed-alpha
+comparisons,256 original density1 compact placements and1656 border, elevation,
+shape, pointer/touch/key, cancellation, safe-text, transform, spec-replacement and
+lifetime checks at light/dark LTR/RTL. Full source/bundle gates before the final
+shape-memory/local-measurement correction also passed256 seed-choice checks and
+shared routing's768 native sibling/72 ancestor records and922 trusted gestures;
+the changed bindings then passed the final scoped gates above. The unit suite,
+reference reproduction, guarded final build and whitespace are terminal0.
+Three real showcase cards cover all four families, avatar entries and the
+corrected removable snippet;28 checks pass at1440/390 light/dark, and actual
+desktop-light/mobile-dark source/distribution captures were inspected. Evidence
+is in research/chip-*.log and [the Chip reference notes](tools/androidx-chip/README.md).
+
+This closes the scoped default factory/kernel and retained integration boundary.
+Automatic checks/selection, default Input removal, enabled-role overrides,
+ordinary arrangements, HTML slots/events and the keyboard outline are declared
+web caller-policy adapters. Arbitrary removed caller leaves cannot yet retain
+their old content through native AnimatedVisibility exit. Complete native Chip
+composables, Row/modifier/constraints/intrinsics, Transition/retained-content
+ownership, paragraph/font metrics, custom/nonuniform shapes, wide-gamut Color
+and native path/shadow/raster remain open. Picker interiors and the remaining
+library/showcase continue. The whole goal stays active and incomplete; both
+homepage wave phases remain preserved. Earlier fixed-corner Chip notes are
+superseded only within this verified scope.
+
+## TextField complete measurement policies and multiline integration, 2026-10-09
+
+Production source and the rebuilt distribution now execute the ported complete Inside/Cutout measurement and placement policies, including Above labels, logical start/center/end label alignment, native integer positions, source height easing, icon/affix/support allocation and the external Cutout label padding. Container variant still owns source surface/indicator/shape roles independently of label position. The retained outline mask now follows minimized alignment too. Browser font leaves adapt native measurable children; allocation is currently a fixed rounded CSS width with a56px minimum and unbounded parent height. This does not establish arbitrary native parent constraints or text shaping.
+
+The independent generator freshly compiles the complete unchanged TextFieldMeasurePolicy and OutlinedTextFieldMeasurePolicy classes, original Constraints/Alignment, label-position/line-limit classes, layout utilities and Float/Int lerp/easing bodies. Original URL/SHA manifests remain pinned. Density1, static leaf/intrinsic, MeasureScope/Placeable/layer/parent-data and primitive bindings are explicit hosts.2208 valid complete measurement/order/constraint/placement/label-size/four-intrinsic-query records and192 original rejected-bound histories pass strict production comparisons. The rejected artificial zero-height Above inputs are not claims about complete public composable constraints. Decoded SHA d81795b49288af7c6d2fe340aa950d91d114902f2a1665dd92e970ea8eb2ca1d reproduces unchanged.
+
+A second independent native execution accepts72 captured Chromium/Roboto leaf inputs from actual fields. Captured leaf dimensions are inputs, never expected positions; only unchanged original policy execution supplies expected results. Source and distribution each pass2016 full-policy/editor/container placement assertions at1000/390 light/dark, both directions, all three label positions, both line modes, fractional widths, wrapped labels/placeholders, icons, affixes and alignments. Its decoded SHA590e53679d7e9c898673cfd66e865d223335be9ad06931e09105c9c278b6738f reproduces unchanged. This is a finite browser/font contract, not native glyph/raster equivalence.
+
+Default fields now expose a retained multiline textarea; min/max line attributes actually reserve, grow and cap its height, then permit internal scrolling. Single-line and typed HTML fields use the retained input; Select/Autocomplete stay single-line comboboxes. Switching editors preserves raw value, form value, selection and focus without synthetic editing events. Duplicate outward focus/blur propagation during editor replacement is suppressed, and inactive editor events cannot overwrite the model. Source and distribution each pass184 trusted keyboard/newline/line-cap/scroll/resize/form/selection/readonly/typed-input/Above/counter/reconnect checks. The supporting-slot cache now includes visibility/limit changes; alpha-only frames update current layer/CSS values without remeasuring geometry. Placeholder/affix slots wrap independently of the input's single-line mode, following their separate native content slots.
+
+Both snapshots also pass1056 actual default role/packed-alpha comparisons,568 foundation checks and4032 retained SVG bindings across start/center/end cutout alignments, plus Select232, Autocomplete216, Stepper184 and dialog/picker-shell180 checks and their real showcase gates. The color gate now samples the actual separate placeholder span. The showcase includes real multiline and Above examples, and typed email/password examples use their actual HTML input types. Both declaration surfaces and normal unit/focused/full-parity registrations include the new field APIs/gates. Full units, guarded build, reference reproduction and whitespace are terminal0; source/bundle desktop-light/mobile-dark captures were inspected, without horizontal overflow or page errors. Logs are research/text-field-layout-{final-source,final-bundle,foundation-final-source,foundation-final-bundle,units,build,final-reproducible,visual}.log.
+
+This closes the scoped complete policy kernel and its actual default multiline/placement integration. Full native composable/modifier/paragraph/IME/runtime/Transition frames, arbitrary parent height and packed constraint limits, complete typography interpolation, custom leaf APIs, native wide-gamut/path/shadow/raster and other engines remain open. Chip foundations, picker interiors and the remaining library/showcase also continue. The whole goal remains active and incomplete; both homepage wave phases remain preserved. Earlier measurement/multiline/placement limitations below are superseded only within this verified scope.
+
+## TextField cutout Float and logical alignment, 2026-10-08
+
+The actual field renderer now uses the unchanged outlineCutout Float arithmetic and logical alignment rounding, including rounded inner space and label width in RTL. The independent before DOM probe records 14 mismatches in 30 default-start fractional cases; this is a numerical drawing difference, not evidence of subjective frame stutter. Production caches measured dimensions as density1 Float inputs, applies the source label-size/progress multiplication boundary and feeds the result into its retained SVG mask. The verified helper supports the original horizontal bias and asymmetric padding inputs; the public field still uses its default start alignment/padding, so this does not establish arbitrary label alignment APIs.
+
+The new generator freshly compiles the complete unchanged outlineCutout draw body, 4dp padding getter and BiasAlignment.Horizontal class from hash-pinned originals. Density1 Dp/padding/DrawScope and clip-call/count recording are hosts; finite JVM roundToInt binds fastRoundToInt. The 2016-record reference matches production raw Float bits, including signed zero, logical direction, three biases, asymmetric padding and zero/tiny/oversize/fractional dimensions. Its SHAe341eaaa14614bd70eea931078d5b01c8f4a8afb3e094364982a81f7215473be reproduces unchanged. Existing default state/source/host hashes also remain valid. No complete modifier/cache scheduling, native border/path or raster executes in this reference.
+
+Source and rebuilt distribution each pass 1344 native argument records through the actual retained SVG renderer at1000/390 light/dark LTR/RTL. These inputs enter the renderer's measurement cache; identical browser/native glyph measurement is not inferred. Nonnegative SVG extents and coordinate string serialization remain explicit web conversions. Both snapshots also pass all1056 default rendered role/alpha comparisons,568 foundation checks, Select232, Autocomplete216, Stepper184, dialog-shell180 and their real showcase gates. All four final actual TextField source/bundle desktop-light/mobile-dark captures were inspected. Full units, guarded build, reference reproduction and whitespace are terminal0; all readers are terminal. Logs are research/text-field-cutout-{final-source,final-bundle,all-unit,build,reproducible,visual}.log.
+
+This closes the scoped cutout numeric/alignment and drawing-binding boundary. Complete TextField measurement/placement/multiline, original Transition frames, font interpolation, Chip foundations, picker interiors and the remaining library/showcase stay open. The whole goal remains active and incomplete; both homepage wave phases remain preserved.
+
+## TextField default state and retained motion foundation, 2026-10-08
+
+Actual production source and the rebuilt distribution now resolve the original filled/outlined color factories and eleven getter priorities through live theme roles. Disabled alpha copies use the independently verified packed sRGB alpha path rather than fading the entire field. The filled default factory retains SurfaceContainerHighest even while disabled; leading error icons retain OnSurfaceVariant, while trailing error icons use Error. Invented hover palette changes, component color literals and a painted label-background patch are removed. Default shape, 56px container, 48px icon targets/24px glyphs, 2px affix gaps and conditional supporting text follow the scoped original defaults.
+
+Labels, placeholder and affix use original InputPhase targets and FastSpatial/FastEffects/SlowEffects spec branches through retained shared controllers. Indicator thickness uses the explicit source MotionScheme spring; its custom-spec visibility threshold is .01f, without an omitted-spec Dp threshold override. Empty unfocused labels hide placeholder/affixes. The actual showcase's float-label="always" now minimizes empty labels too, preserving the source showExpandedLabel=false behavior. A measured SVG mask cuts the border with the 4px logical-start gap; the label stays transparent. ResizeObserver and theme geometry are lifetime owned, and outline frames avoid repeated computed-style reads. Native input, label and outline nodes survive state updates and reconnects.
+
+The new independent generator hash checks six licensed originals and freshly assembles unchanged default constructor arguments, TextFieldColors getters, InputPhase and three original Transition target/spec bodies. A Kotlin/JVM1.9.24 host supplies symbolic Color/ColorScheme/selection-local, alpha-copy descriptors, State and descriptor-recording Transition; it does not execute packed native Color, complete Transition frames, text measurement or raster. The 34-record fixture verifies 176 actual production role/Float-alpha/copy selections and 54 target/spec branches. Regeneration reproduces states.json SHA584894d7e12df43a79689b0d90df07734360d4258f3e75c8e779961f6578d343, with unchanged source/host hashes. Separate shared Color-alpha units verify 48 native pack/copy inputs and 1152 Float composites.
+
+Source and distribution each pass 1056 actual rendered role/packed-alpha comparisons and 568 input, phase, placeholder, affix, measured cutout, fieldset, ARIA, retained node, custom role and lifetime checks at 1000/390 light/dark LTR/RTL. Public writable properties, detached values, required/type/custom validation, readonly, form reset/state restore and accessible maxlength=0 counters are covered. Select's always-float/open state feeds the common phase owner. Both snapshots also pass Select232, Autocomplete216, Stepper184 and dialog/picker-shell180 checks plus their real 1440/390 light/dark showcases. All four actual TextField source/bundle desktop-light/mobile-dark captures were inspected; the empty always-float example, filled field and error field fit their preview containers. Full units (98 component checks,64 audit checks and registered native units), guarded build, reference reproduction and whitespace are terminal0; all readers are terminal. Logs are research/text-field-{final-source,final-bundle,all-unit,build,reproducible,visual}.log.
+
+This closes the verified default role/phase/motion-descriptor and form integration boundary, not complete TextField parity. Browser font measurement, logical placement, SVG masking, RAF/transition binding and HTML keyboard/form semantics remain adapters. Native Inside/Cutout/Above/custom label placement and measurement, multiline policies, complete text-style interpolation, constraints/intrinsics, Transition frame scheduling, arbitrary border/path drawing and raster remain open. Chip foundations, picker interiors and the remaining library/showcase also continue. The whole goal stays active and incomplete; both homepage wave phases remain preserved.
+
+## Progress wave job ownership and indicator visibility, 2026-10-08
+
+Actual source and the rebuilt distribution now use a retained wave phase controller derived from the original linear/circular modifier owners. Original Dp/Float arithmetic and JVM rounding determine the period, including the50ms minimum. Wavelength/speed changes restart jobs even when the resulting period stays equal; equal Float values retain the job. Linear phase continues at zero amplitude. Circular phase stops at zero amplitude, starts through the source amplitude/cache guards, and retains its value across detach. A vertex-cache change preserves an active job rather than restarting it. DOM attachment, explicit cache triggers, RAF and the existing reduced-motion pose remain declared web bindings.
+
+The independent generator freshly assembles complete unchanged original setters, offset start/stop, linear attach/detach, circular indeterminate amplitude/attach/detach/three-channel launch bodies and the vertex-cache start branch. Original Dp operators/factories and JVM Float rounding execute with real pinned coroutine Jobs and the previously verified complete Animatable frame loop. The416-state reference passes strict controller comparisons, including30 active job replacements; its decoded SHA remains12e30e9c08168b0b48d4d99df414ad5a0c0ad66e8a7a04dc118aa0c89a22fca6. The104-state DOM reference (decoded SHAaca0756fbdbd28d4d2031256d5e547df88467e58c3556b0f830ec6768503e87b) supplies physically feasible public stroke/cache histories. Source and distribution each pass832 actual property/frame/Canvas/lifecycle comparisons plus32 determinate zero-amplitude and detached-target phase-retention checks, across1000/390 light/dark LTR/RTL DPR1/2. Scalar State, Unconfined dispatch, node-scope cancellation and manual frame/cache delivery remain explicit hosts; this does not execute complete Compose snapshot/cache scheduling or determinate amplitude-owner histories.
+
+Final actual showcase review exposed a separate web visibility bug. Native IntersectionObserver delivered older hidden and newer visible entries for the same target in one batch, while both indicators read only the first entry. research/progress-wave-owner-io.log records visible circular indicators with no RAF before the screenshot, so this was not a screenshot artifact. The new browser gate fails before correction (research/indicator-visibility-before.log). A shared visibility subscription now consumes the last matching queued record, ignores unchanged/unrelated/empty deliveries, and retires callbacks with their connection lifetime. Loading also prevents theme/property restarts while hidden and resets visibility on reconnect. This follows the [observer queue/delivery specification](https://www.w3.org/TR/intersection-observer/#queue-intersection-observer-entry-algo); it is a browser lifetime correction, not an Android composition behavior claim. The obsolete API-name text searches were replaced by behavior coverage in the unit and actual browser gates.
+
+Source and rebuilt distribution each pass496 batch/lifecycle/native hide-show/actual showcase checks; each actual showcase run observes88 opposite-state native batches. Both also pass the existing12048 actual Canvas/RAF frames,704 finite-amplitude frame samples,7408 separately scoped drawing-angle probes, progress/FAB live-role/CSS-color/ARIA/RTL/lifecycle checks, Loading's12 live theme scopes and retained-color-phase gate, and circular showcase1440/390 light/dark checks. All4 final source/bundle desktop-light/mobile-dark captures were inspected and retain active visible standard/wavy RAF. Full units (98 component checks,64 audit checks and all registered native units), guarded build and whitespace are terminal0. All narrower numeric/runtime/phase references reproduced unchanged in research/progress-wave-owner-reproducible.log. Final logs are research/progress-wave-visibility-{source,bundle,all-unit,build,visual}.log; all verification readers are terminal.
+
+The wave-owner integration boundary is now closed for these verified histories. Rapid determinate amplitude/cache scheduling, the default-amplitude Float threshold boundary, native durationScale0 resume, arbitrary geometry/PathMeasure/raster and other engines remain open. Shared motion owners, complete TextField/Chip foundations, picker interiors and the remaining library/showcase still require work. The whole goal stays active and incomplete; both homepage wave phases remain preserved.
+
+## Progress delivered-frame clocks, 2026-10-08
+
+Actual production source and the rebuilt distribution now establish each progress job's time zero on its first delivered animation frame, retain the last delivered state between frames, and apply SuspendAnimation/InfiniteTransition's Long-to-Float division before converting playtime back to nanoseconds. Rotation/head-tail, amplitude and wave-offset jobs use separate clocks. Attribute, theme and ResizeObserver redraws no longer sample arbitrary wall time or replace an already pending RAF. This closes the frame-origin/time-conversion boundary; it does not establish native modifier/cache/job ownership as a whole.
+
+The independent generator compiles complete unchanged active Animatable, AnimationState, InternalMutatorMutex, TargetBasedAnimation and SuspendAnimation bodies plus InfiniteTransition's complete class/run/child bodies. Real pinned coroutines1.9.0 Jobs execute finite completion, cancellation and infinite loops. Original numeric bodies and all raw upstream inputs are hash checked and freshly assembled. Hosts supply plain scalar State, immediate composition entry/launch, list storage, Unconfined dispatch and manual MonotonicFrameClock delivery. Scale1 is executed; Compose snapshots/composition/cache scheduling, Android dispatch/frame delivery, durationScale0 resume, unused spring/decay, native Matrix/PathMeasure and rasterization are separate. The private compiler is Kotlin/JVM1.9.24, not the pinned main AndroidX catalog's2.4.20 environment. Normal web builds/users need neither Kotlin nor Java.
+
+The reference contains24057 circular progress/rotation/drawing-angle/offset and linear head-tail frame states through24000ms with fractional boundaries. Strict production clock/kernel checks pass at two nonzero/zero epochs, including original InfiniteTransition values. A before probe of the narrower kernels at raw wall elapsed exposed10284 progress,11758 rotation and10913 offset mismatches; source Float playtime conversion gives zero. Periodic orientation/phase endpoints can use equivalent0 versus complete-turn representations, so the raw angular maximum is not evidence of a large visible jump. These numerical/frame-origin findings do not prove a cause or fix for subjective stutter.
+
+Source and rebuilt distribution each pass12048 actual scheduled Canvas/RAF frames against the independently executed complete native runtime,704 delivered amplitude-frame samples and7408 separately scoped numerical drawing-angle Canvas probes. Profiles cover1000/390 light/dark LTR/RTL DPR1/2, repeated cycles, retained path/Canvas identity, redraw/pending-RAF preservation, reduced-motion disposal and disconnect. Existing progress/FAB color-role/CSS-color, dimensions, ARIA, RTL pixel coverage and lifecycle checks pass. Real showcase1440/390 light/dark profiles verify visible advancing draws and viewport fit; final source/bundle desktop light/mobile dark captures were inspected. Full units, guarded build, reference reproduction and whitespace are terminal0; all readers are terminal. Logs are research/progress-runtime-{source,bundle,all-unit,build,reproducible,visual}.log. Runtime decoded SHA is82dd6e8ef27a80e5221d6f7b3efd72bd1cbf4d7f1bdd2939d9fe1c22e0101371; all six narrower numeric references reproduce unchanged.
+
+Native linear/circular modifier wave restart/cancellation/detach ownership and rapid amplitude/cache histories remain open, including zero-amplitude linear phase, parameter restarts with equal duration, retained phase on detach and circular vertex-cache changes. A fresh independent reference now executes the complete original setter/start/stop/linear lifecycle/circular indeterminate amplitude/lifecycle/launch bodies and vertex-cache start branch with original Dp and JVM Float rounding. Its416 action/frame/job-identity states (decoded SHA12e30e9c08168b0b48d4d99df414ad5a0c0ad66e8a7a04dc118aa0c89a22fca6; research/progress-phase-owner-generator.log terminal0) retain explicit scalar-state, node-scope disposal and external cache-trigger hosts; these owners are not yet integrated into production. The existing650ms reduced-motion pose remains an explicit web adapter, not verified native durationScale0 behavior. Complete TextField/Chip foundations, picker interiors, arbitrary geometry/runtime/raster and the remaining library/showcase remain open. The whole goal stays active and incomplete; both homepage wave phases remain preserved.
+
+## Progress wave-offset and drawing-angle numeric kernels, 2026-10-08
+
+This closes the numeric wave-offset boundary left open by the previous progress checkpoint. Actual production source and the rebuilt distribution now retain the native Float infinite tween's rounded starting/target values, nanosecond repetition, fraction/interpolation arithmetic and remainder. An actual-component before probe exposed19077 strict numeric mismatches in19304 samples; the same probe after correction has zero mismatches. Native endpoint rounding can represent the periodic phase as0 instead of an almost1 Double value; this is not evidence of a large visible jump or a cause/fix for subjective stutter.
+
+The generator extracts the unchanged infinite linear-tween offset descriptor from both wavy modifiers and fails if they diverge. Original FloatTweenSpec and VectorizedInfiniteRepeatableSpec execute19304 independent values across5 periods,4 retained starts and4 cycles, including fractional boundaries. Strict production units pass all values. The circular modifier's complete original `currentGlobalRotation + currentAdditionalRotation + 90f` expression also executes on the JVM at7408 timeline points. Actual wavy drawing now retains that final Float degree rounding before Canvas's declared degree/radian adapter. These descriptor/expression hosts do not execute native job ownership, coroutine scheduling, Matrix/PathMeasure or rasterization.
+
+Source and rebuilt distribution each pass12048 actual scheduled Canvas/RAF frames (including6024 wavy offset frames),704 amplitude samples and7408 direct native drawing-angle Canvas probes. Profiles cover1000/390 light/dark LTR/RTL with DPR1/2, two circular cycles, cache/Canvas identity, reduced motion and disconnect. Existing progress/FAB role/CSS-color, dimensions, ARIA, RTL coverage and lifecycle checks remain green. Real showcase1440/390 light/dark profiles explicitly select the root theme and verify visible advancing standard/wavy draws; final source/bundle desktop light/mobile dark captures were inspected. Full units, guarded build, reference reproduction and whitespace reach terminal0; all readers are terminal. Final logs are research/progress-offset-rotation-{final-source,final-bundle,all-unit,build,reproducible,visual}.log. The offset decoded SHA is97b57c83881085385d5ca83fc00d73e04bada5670d5a24776eec4f5e5a2aa95b; drawing-angle SHA is1ad9b904556b15a6729b054bf62894c8d1c0d01f9de5ff360a0ed6930ef05f72. All four previous numeric reference SHA values reproduce unchanged.
+
+Wavy cancellation/restart/lifecycle and rapid amplitude-job histories remain open. Read-only source review identifies different linear/circular zero-amplitude owners, native speed/wavelength restarts even when duration stays equal, and retained native wave-offset state across node detach. These need original owner-body execution and actual DOM integration before altering behavior; they are not yet fixed or verified. Complete TextField/Chip foundations, picker interiors, arbitrary geometry/runtime/raster behavior and the remaining library/showcase stay open. The whole goal remains active and incomplete; both homepage wave phases remain preserved.
+
+## Progress native Float numeric timelines, 2026-10-08
+
+Actual progress production code and the rebuilt distribution now use an original Float cubic-root/evaluation adapter instead of the legacy Double binary-search easing. Circular keyframes keep integer-millisecond sampling and exact-key values; global rotation preserves fractional nanoseconds through FloatTween. Lower-key easing placement, same-value Float holds, separate multiplication/addition rounding and6000ms repetition remain explicit. Linear head/tail channels and normalized500ms amplitude tweens use the same native numerical helper. DOM milliseconds map to the nearest integer nanosecond; no theme color literals or new visual style are introduced.
+
+Fresh compilation executes unchanged pinned circular/linear descriptors, amplitude specs, VectorizedKeyframesSpec, VectorizedInfiniteRepeatableSpec, FloatTweenSpec and Easing/Bezier/Math numerical bodies. Every original input SHA is checked. Scalar vector/DSL records and a fail-closed unused ArcSpline are hosts. An older cached collection implementation uses the unchanged pinned IntList.binarySearch member body bound as an extension over copied storage. Before correction,7408 native circular samples exposed4327 progress and1100 rotation Float mismatches, maximum0.000000715 and0.000244 degrees respectively. These are small numerical differences and do not establish a cause or fix for subjective stutter.
+
+Dedicated strict units now pass7408 circular,2385 linear head/tail and3530 amplitude frames plus14112 easing probes over14 source/degenerate/multiple-root/overshoot curves. Fractional boundary probes and repeated cycles are included. Regeneration reproduces all four decoded SHA values (circular f32345930e221f40d455f7987ba49a7e1313ff733cb83ffdd28665bae05df0d7; linear781b4d7386239fb2414c6dcac72a84b3e2e40321278a98bab2717bf83507a4c2; amplitude43a244b7cdf0666a5ac83e427c9b7f9b65fed76762a7f0d4537af348e0749af7; easing9264208458aed9fab738a644576b143ce28115179bc50d0dcbe67d196d4746b3).
+
+Source and rebuilt distribution each pass12048 actual Canvas/RAF frames and704 actual amplitude samples at1000/390 light/dark LTR/RTL with DPR1/2. Deterministic Playwright clock frames cross two circular cycles, and native rotation/progress/sweep reach the real Canvas adapter. Constant-amplitude wavy path caches and Canvas identity remain retained; reduced motion and disconnect retire RAF. Existing progress/FAB dimensions, live role/CSS-color, ARIA, RTL coverage and lifecycle gates also pass. Real showcase1440/390 light/dark profiles explicitly select the root theme and verify visible advancing standard/wavy draws; source/bundle desktop light and mobile dark captures were inspected. Full units, guarded build and whitespace reach terminal0; all readers are terminal. Logs are research/progress-motion-final-{source,bundle}.log, progress-showcase-final-{source,bundle}.log, progress-motion-{all-unit,build,reproducible}.log and progress-visual-review.log.
+
+This checkpoint verifies numeric kernels and their browser integration, not complete native Animatable/coroutine/FrameClock/Compose/PathMeasure/raster behavior or universal cadence. Wavy offset and rapid amplitude-job restart histories remain open, as do arbitrary constraints, other engines, complete TextField/Chip foundations, picker interiors and the remaining library/showcase. The goal stays active and incomplete. Both homepage wave phases are preserved.
+
+## Stepper shared workflow composition, 2026-10-08
+
+Stepper remains an explicit web extension. The actual source and rebuilt distribution use retained Material ListItems and Divider for navigation; the showcase uses shared filled Cards and Buttons. Separate badge/hover/palette/disabled-opacity/connector and directional CSS timelines are removed. Current/complete/error/disabled states feed the existing Material controls without wrapper color literals. Panel visibility and focus are owned by the workflow; mounted caller inputs survive navigation/reset. A shared FastEffects alpha channel supplies the web composition's entering-content fade, with initial presentation steady, no competing CSS animation, immediate reduced-motion settlement and disposal on disconnect. This choice uses the shared motion system; it is not an official native Stepper animation.
+
+The real before record research/stepper-before.log verifies missing StepPanel membership, an activatable disabled header/destination, and zero headers after reconnect. Direct-child source identity now retains headers through reconnect/reordering and isolates nested workflows. Header input emits one transition; unchanged/invalid/disabled destinations emit none. Programmatic next/previous skip disabled steps; linear mode locks future header actions while caller-controlled programmatic progression remains available. Actual current controls reference their regions, inactive panels are hidden/inert, and focus leaving a collapsed panel returns to current navigation. Horizontal focus follows logical RTL direction; vertical focus follows its axis. Showcase Back/Next now reflect workflow boundaries and its confirmation text describes the available example actions.
+
+Source and rebuilt distribution each pass184 trusted input/state/ARIA/RTL/retained/nested/reversal/lifecycle/viewport checks at1000/390 light/dark, plus real navigation/reset/boundary controls at1440/390 light/dark. Full units, guarded build and whitespace reach terminal0. Both source and distribution desktop light/mobile dark visuals were inspected; narrow fields fit their content container. Logs are research/stepper-final-* and stepper-visual-review.log; all readers are terminal. This verifies the declared web composition, not a nonexistent native Stepper or complete underlying ListItem/Card/TextField/runtime/raster parity. The whole goal remains active and incomplete; both homepage wave phases remain preserved.
+
+## Select shared exposed dropdown composition, 2026-10-08
+
+Actual source and rebuilt distribution now compose the shared read-only TextField and exposed Menu/Listbox, removing a second field/option/popup palette, border, elevation, press layer and CSS transform timeline. Declarative MdOption data maps to retained native MenuItems. Single/multiple values remain separate from displayed labels; duplicate values preserve the chosen source identity. Required validation, form reset/state restoration, fieldset disabling, preconnection values, dynamic options and reconnect are owned by the wrapper. Arrow/typeahead exploration preserves the accepted value; Enter/Space accepts, Escape dismisses and Tab advances without delayed focus recovery. These are explicit web combobox semantics, not a claim of identical Android keyboard/window behavior. The existing source-verified exposed dropdown provider, geometry and shared motion are reused.
+
+A real reconnect check exposed shared Menu's delayed return-focus stealing focus from a new Select after a sibling popup was disabled and reenabled. Disabling now requests close without return focus, and a subsequent explicit close(false) can retire pending exit recovery. The shared activeItem interface scrolls only the popup and separates committed option selection from virtual keyboard focus; Autocomplete uses the same helper. Option upgrade scheduling is batched and tolerates a parent that has not upgraded yet.
+
+Source and rebuilt distribution each pass232 trusted pointer/key/typeahead/form/ARIA/retained/options/lifecycle/viewport checks at1000/390 light/dark LTR/RTL, plus both real showcase controls at1440/390 light/dark. Both snapshots also pass complete existing Menu gates,216 Autocomplete checks/showcase,160 Paginator checks/showcase and2268 original exposed provider positions plus72 original Float height cases. Full units, guarded build and whitespace reach terminal0. Actual distribution screenshots at desktop light/mobile dark were inspected. Logs are research/select-final-* and select-menu-final-*; all verification readers are terminal. Full TextField measurement/notch/color/draw parity, complete native composable/runtime/raster behavior and the rest of the library/showcase remain open. This is a composition correction, not complete Select or whole-goal parity. Both homepage wave phases remain preserved.
+
+## Switch duplicate synchronization correction, 2026-10-08
+
+Actual checked/disabled setters no longer run an additional synchronous render after their observed attribute already updates the component. A trusted click diagnostic records checked synchronization/measurement2→1 in both source and rebuilt distribution; same-value assignments1→0. Disabled changes3→2 preserve separate browser form-disabled and attribute reactions. Shared scalar specs, pressed snaps, Int placement, input emission and color roles are unchanged. This removes concrete duplicate layout/color work; it does not establish universal frame pacing or complete native runtime/raster equivalence.
+
+Source and rebuilt distribution both pass the complete existing selection browser gates: Switch colors/motion, selection state/form/key/indication/motion/color/layout, Checkbox native/specification states, shared pointer routing/hover/capture and focus indication. Full units, guarded build and whitespace reach terminal0; all readers are terminal. Logs are research/switch-sync-before/after/final-*. The whole goal remains active and incomplete.
+
+## Showcase seed choice composition, 2026-10-08
+
+Seed presets now compose shared Filter Chips with caller-provided leading content, instead of a second38px capsule/border/hover/selected-color implementation. The leading-icon slot overrides the automatic glyph and retains its nodes across selection; removing it restores the existing automatic icon. Seed swatch hex values describe user-selectable input data, while control Surface/content/border/state colors remain system tokens. Selected controls follow SecondaryContainer/OnSecondaryContainer; the separate selected Primary outline is removed. The preset list exposes a named group and selection through shared chip semantics. Labels no longer assert that these example seed choices are official palettes. Reset composes the shared TextButton and uses the same seed-to-HCT synchronization as other inputs, removing fixed300/48/40 coordinates that previously disagreed with the actual reset theme.
+
+Source and rebuilt distribution pass256 trusted pointer/key/selection/custom-seed/reset/token/slot/retained/lifecycle/viewport checks at1440/390 light/dark LTR/RTL. Final build, full units and whitespace reach terminal0; logs are research/seed-presets-final-*. Real source and distribution were also visually inspected. This is a showcase/composition correction, not a claim of complete native Chip padding/elevation/icon-transition/composable/raster parity or of the entire HCT customizer. The whole goal remains active and incomplete.
+
+## ExpansionPanel / Accordion composition, 2026-10-08
+
+These remain explicit web extensions. Actual source and distribution compose shared filled Card and interactive ListItem, rather than duplicating header colors, state layers, indication, disabled opacity, border or elevation. A retained SelectionMotion controller owns height and chevron rotation with the shared expressive spatial roles; interruption preserves current velocity and content resize retargets natural height. There is no competing CSS height/rotation timeline. Initially open content is steady; reduced motion settles immediately; disposal cancels observers and animation. Retained header/supporting text updates preserve controls. Headings expose a configurable level, the actual control references its region, and collapsed content is inert with focus restored on programmatic collapse. Accordion's existing export and multi attribute are preserved, with connection-scoped events and independent nested groups.
+
+Source and rebuilt distribution both pass168 trusted input/ARIA/RTL/retained/reversal/content/Accordion/lifecycle checks plus all three real showcase disclosures at1440/390 light/dark. Full units, guarded build and whitespace reach terminal0; logs are research/expansion-panel-final-*. An initial source test exposed a missing MdAccordion export during the rewrite; it was restored before promotion and module readiness now has a bounded failure guard. This verifies web composition and ownership, not an official native ExpansionPanel composable or complete Card/ListItem/raster parity. The whole goal remains active and incomplete.
+
+## Autocomplete / exposed dropdown composition, 2026-10-08
+
+Actual source and rebuilt distribution now reuse MdTextField's retained field/form foundation, MdIconButton for clearing, and MdMenu/MdMenuItem for popup Surface, item states, source springs and lifecycle. MdMenu adds an opt-in external anchor/listbox/anchor-focus/matched-width profile; default Menu behavior is unchanged. Light-DOM option IDs share the input's root for actual aria-controls/activedescendant relationships. Browser semantics expose combobox/listbox/options rather than hidden menu buttons. Arrow navigation skips disabled results, preserves editing focus and commits once; Escape retains uncommitted input; Tab leaves the field and exit does not steal the next focus. Filtering retains controls and option nodes. Required value, reset/state restoration, fieldset-disabled state, duplicate option identity and reconnect are covered. Shared TextField forwards native input/change exactly once and reflects readonly/required/maxlength to its input.
+
+The unchanged original ExposedDropdownMenuPositionProvider and calculateMaxHeight are executed by tools/androidx-exposed-dropdown/generate.mjs, with source/host boundaries in its README. Actual JS matches2268 native positions/origins and72 nullable/off-window/fractional Float height records. The real popup matches anchor width, applies available-side height and16px item padding, follows visualViewport resize/scroll through a declared web adapter and scrolls only its own options surface. Source uses DropdownMenuContent's existing FastSpatial/FastEffects channels. Source SHA is a4e8d897e848757df5241875d6aefd86c2f718fcaef12258daa4fb732d0ebcd0. Current Android Tab handling can make the popup focusable; web Tab uses the W3C combobox pattern, an explicit platform adaptation.
+
+Final source and rebuilt bundle both pass216 trusted input/form/ARIA/RTL/retained/lifecycle checks, actual Autocomplete showcase1440/390 light/dark, existing complete Menu browser geometry/color/motion/input/submenu/lifecycle/showcase gates, and160 Paginator checks plus its real showcase. Final units, guarded build and whitespace reached terminal0; logs are research/autocomplete-final-* and exposed-dropdown-*. All readers are terminal. Full TextField notch/color/label/measurement/drawing parity, native window/keyboard/IME/pointer/semantics scheduling, arbitrary composable/constraint APIs and raster equivalence remain open. This checkpoint does not establish complete Autocomplete or whole-library parity. Select, ExpansionPanel and Stepper composition audits and reported frame pacing/progress observations continue next.
+
 ## Paginator composition correction, 2026-10-08
 
 Pagination remains an explicit web extension. Actual source and rebuilt distribution now compose shared md-button, md-icon-button, md-menu and md-divider instead of maintaining a separate button/menu/color/press/spring implementation. All controls remain mounted on state changes. Page-size changes preserve the first visible item's index and report the actual previousPageIndex; disabled/boundary state, validated options, current-value inclusion, RTL icons and reconnect ownership are handled by the wrapper. The real showcase data preview now consumes page events.

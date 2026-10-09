@@ -32,7 +32,7 @@ const style = `
  .label{position:absolute;margin:0;white-space:pre-wrap;overflow-wrap:normal;color:inherit;text-align:center}
  .baseline{display:inline-block;width:0;height:0;vertical-align:baseline}
  .measure{position:absolute;visibility:hidden;white-space:pre;width:max-content;pointer-events:none}
- .icon{position:absolute;width:24px;height:24px;font-family:'Material Symbols Rounded';font-weight:400;font-style:normal;font-size:24px;line-height:24px;letter-spacing:normal;text-transform:none;white-space:nowrap;word-wrap:normal;direction:ltr;font-feature-settings:'liga';-webkit-font-smoothing:antialiased}
+ .icon{position:absolute;width:24px;height:24px;font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);font-weight:400;font-style:normal;font-size:24px;line-height:24px;letter-spacing:normal;text-transform:none;white-space:nowrap;word-wrap:normal;direction:ltr;font-feature-settings:'liga';-webkit-font-smoothing:antialiased}
  .color-probe{position:absolute;visibility:hidden;pointer-events:none}
  .indicator{position:absolute;bottom:0;left:0;height:3px;border-radius:3px;background:var(--md-sys-color-primary,#6750A4);pointer-events:none}
  :host([variant=secondary]) .indicator{border-radius:0}

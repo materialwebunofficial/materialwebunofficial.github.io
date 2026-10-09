@@ -119,7 +119,7 @@ const defaultStyle = `
   }
 
   .ico {
-    font-family: 'Material Symbols Outlined';
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-size: 18px;
     line-height: 1;
     display: inline-flex;

@@ -3,7 +3,15 @@ import {ColorMotion} from './color-motion.js';
 import {observeThemeContext} from '../theme/theme-context.js';
 import {resolveColorAlpha} from '../theme/color-alpha.js';
 
-export function bindSelectionColors(element,channels,{disabled=()=>false,role=()=> 'expressiveEffectMedium',onPaint=()=>{},signal}={}){
+// rememberUpdatedState has no frame/job owner in the disabled border branch.
+class DirectColorMotion{
+  constructor(element,probe,color,draw,{role}={}){this.color=color;this.draw=draw;this.role=role;this.raf=null;this.disposed=false;draw(color);}
+  set(color){if(this.disposed||color===this.color)return;this.color=color;this.draw(color);}
+  finish(){}
+  dispose(){this.disposed=true;}
+}
+
+export function bindSelectionColors(element,channels,{disabled=()=>false,role=()=> 'expressiveEffectMedium',onPaint=()=>{},signal,motionClass=ColorMotion}={}){
   let disposed=false,previousDisabled=disabled();
   const records=channels.map(channel=>{
     const probe=document.createElement('span');probe.hidden=true;probe.setAttribute('aria-hidden','true');channel.scope.append(probe);
@@ -25,7 +33,9 @@ export function bindSelectionColors(element,channels,{disabled=()=>false,role=()
         record.color=value;record.node.style.setProperty(record.property,value);
         record.written=record.node.style.getPropertyValue(record.property);onPaint();
       };
-      if(!record.motion)record.motion=new ColorMotion(element,record.probe,color,draw,{role:role()});
+      const MotionType=record.directDisabled&&nowDisabled?DirectColorMotion:motionClass;
+      if(record.motion&&record.directDisabled&&enabledChanged){record.motion.dispose();record.motion=null;}
+      if(!record.motion)record.motion=new MotionType(element,record.probe,color,draw,{role:role()});
       else{
         record.motion.role=role();
         // animateColorAsState is inside the enabled branch for the box/border:

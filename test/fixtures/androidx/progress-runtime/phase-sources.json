@@ -1,0 +1,15 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Dp.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Dp.kt",
+      "sha256": "9173b0a7104ca22731bf185438fae68646ca6350d7a84ad610281a48fa9ad96a"
+    },
+    {
+      "file": "InlineClassHelper.jvm.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/jvmAndAndroidMain/kotlin/androidx/compose/ui/util/InlineClassHelper.jvmAndAndroid.kt",
+      "sha256": "fd37878a8d1f8d5dc270e6612910329bd7b02590f412e44541a81b0f7eb6b84f"
+    }
+  ]
+}

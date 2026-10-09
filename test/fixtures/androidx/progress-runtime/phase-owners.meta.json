@@ -1,0 +1,259 @@
+{
+  "sha256": "12e30e9c08168b0b48d4d99df414ad5a0c0ad66e8a7a04dc118aa0c89a22fca6",
+  "count": 416,
+  "sources": [
+    {
+      "file": "test/fixtures/androidx/progress-runtime/Animatable.kt",
+      "sha256": "1561378b721a147fd9b016fc1ec70cfe7bd3f89f64abf0aac92ebb538179bcc7"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationState.kt",
+      "sha256": "39dde170279e858e17efc5490a90a4fd62248040ad38ccc35b7d9bfb5705c1c9"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/SuspendAnimation.kt",
+      "sha256": "4301f943eae91b09f85855e889b1cf96f35c59bb3aafbd4809650de2ecde911a"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/Animation.kt",
+      "sha256": "8d396494fd09afc5dda90b6e48327cf86f07b823539e25cbfac9248e23dae6ca"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationVectors.kt",
+      "sha256": "ec86b71dc22e8e4e47e7d9f48e9687e05d5e4e8e33af1b71e69bbd86dfe83e90"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/InternalMutatorMutex.kt",
+      "sha256": "e68aa1fefb4195418f677e965d7493813c1a910802b9567dc02a3cdddce7a557"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/VectorConverters.kt",
+      "sha256": "6cf233e50830c83521a9a4bc8ec7e76f1217fd45f4b6d6d3133ac4d3e938c901"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationSpec.kt",
+      "sha256": "62d3f0ca78b6620e8b220990036a9da083c7bd959f5a54945c60e449379a8884"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/MonotonicFrameClock.kt",
+      "sha256": "3700d936837fae6d98252ec44e4c9c9b002912e40df9134cd6943e337fa2c1f1"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/MotionDurationScale.kt",
+      "sha256": "f3c4211bbd3e4f4b647f7b5d3fcf1edf7352d78fb97f485821549e3d4257aca5"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/InfiniteAnimationPolicy.kt",
+      "sha256": "8971153b6127fbdbcf9e1cb13fd45d1226d3a84f92fe2099e30ec738eeacdf8e"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationEndReason.kt",
+      "sha256": "ec51f94e02bd6c2fa50b0a65c8cbe9a78594bc7a0bc9c24e4f3a775d0be4260c"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/PlatformInfiniteAnimationPolicy.kt",
+      "sha256": "0cefbefd1fc522c223522b608c6c5980cbe90b55367e699f5210459ad7ff5c28"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/InfiniteTransition.kt",
+      "sha256": "570ff75ce3e826eb0ed0cc14e5db98cabf2f02885afa1f70216aa7cf267fc801"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/libs.versions.toml",
+      "sha256": "46e5ee0848d0e78561f93c4c1d9c6d7319dd1221cbb29fd408ff77b308febcbf"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/CircularProgressIndicatorTokens.kt",
+      "sha256": "19fa92975b296b5bc0a3f22ab533619c67e9747cd665e239eb4f88fcb98c013c"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/CircularWavyProgressModifiers.kt",
+      "sha256": "2c92c9765d35b2b8f0498da7ec51a8e9c7cc15da479d9c0ad2af1a691a2da88e"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/LinearProgressIndicatorTokens.kt",
+      "sha256": "43c6931eb19698ce8bc1b520882bae4d08e1bb1f7228a054664fac4090858f71"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/LinearWavyProgressModifiers.kt",
+      "sha256": "219d396a3e923ab305cf99d61cf7c6d4870244bc0e10139224088dbc079e8121"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/MotionTokens.kt",
+      "sha256": "58bf152e5f81d8bcb80f1475a2e3c54535873245f41d005ab5c797cdd5dc6ebc"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/ProgressIndicator.kt",
+      "sha256": "d8fc0fb57f963f651809736201002d322cf7c49c3fd4b401613a76513696263f"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/ProgressIndicatorTokens.kt",
+      "sha256": "6e576f0947414aee1bcf35bd291c52facc5dbcedf8ab80947aea14dd05ab2bdc"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/ShapeUtil.kt",
+      "sha256": "894f8cc0121eb13b92e7f28aaa06c04a06b89bfbb7d423f09c8787d68b02c0d5"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/WavyProgressIndicator.kt",
+      "sha256": "d968b8e289c5d1346fa3d2dc92892c9bb3c90abaa4f5a8224925abd00ad0f5d0"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-indicators/IntList.kt",
+      "sha256": "6d5857980be756b78d9be3f7f7c780525df42f3b6786e3f96d0347456e569864"
+    },
+    {
+      "file": "test/fixtures/androidx/motion/SpringEstimation.kt",
+      "sha256": "7527111793fa8946d37fa684421f245a8d38b9c2445619a9bc784ca5c7367b12"
+    },
+    {
+      "file": "test/fixtures/androidx/motion/SpringSimulation.kt",
+      "sha256": "78ccee541bba54e71666376819ec8b5e961421f0ea21ec34965da493827bf721"
+    },
+    {
+      "file": "test/fixtures/androidx/motion/FloatAnimationSpec.kt",
+      "sha256": "7ffb94a9a8b62bbb65d653bdb21a71d974e57174513aae8fddb68cd183a33513"
+    },
+    {
+      "file": "test/fixtures/androidx/motion/VectorizedAnimationSpec.kt",
+      "sha256": "2a3857a7620fcb108972c8886d18a1620fc54247216db6070750c2755c8c9cf9"
+    },
+    {
+      "file": "test/fixtures/androidx/motion/AnimateAsState.kt",
+      "sha256": "86dfadb3140e95cb5efc47ec5235885aac603d18b8290253b0f14778d40e8acc"
+    },
+    {
+      "file": "test/fixtures/androidx/motion/AnimationSpec.kt",
+      "sha256": "62d3f0ca78b6620e8b220990036a9da083c7bd959f5a54945c60e449379a8884"
+    },
+    {
+      "file": "test/fixtures/androidx/motion/Transition.kt",
+      "sha256": "5ade64fe6a15ac29a0cc5946f4cb16587a6606a1d74acc97f1412c6d66ab5787"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/NavigationDrawer.kt",
+      "sha256": "f5a53108f27288b678810d9da9f64dcf176fa7e6e2bd896cc1e6a96966f45650"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/NavigationDrawerTokens.kt",
+      "sha256": "0019bfc1ef12b72ec077a1ddc0c56ed99a52d0b8c3aeaadb9cf73ac9106ad9f6"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/ScrimTokens.kt",
+      "sha256": "820fde7f74bef2738b89e152c7a695d2946ccff084bb7c12b1e4dce8cc5e6f3c"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/AnchoredDraggable.kt",
+      "sha256": "cbf351b34fc245dfcb661e5cfbb598be3eaff9b9951a8006b158b304f9da6805"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/FloatDecayAnimationSpec.kt",
+      "sha256": "a06aa26a5b4058d36a48f34187e7b884f0ecc4a6ac00a56ada5b8382f62ccf43"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/Easing.kt",
+      "sha256": "4a00295b76f9dad81eccb3f9e36e7968bd05802a8b29451226954ecee831b755"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/Bezier.kt",
+      "sha256": "73955c0640e52d6cf63dbbd49dea475fff1ce190ac1cdfdd929c791f44b9271a"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/MathHelpers.kt",
+      "sha256": "ce262ffce1cdc0ab8231e03bcd1cbf7eef0c015da84fb223552e4097057e13fa"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/VelocityTracker.kt",
+      "sha256": "2b743d179fb001d6b0f904113e466662200df95e0be5e707d96aab4be8f2864a"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/PlatformVelocityTracker.android.kt",
+      "sha256": "8ae08642419fc884e41a6f7a68a8c7f97b265e9d750121d8105573695a60b4dc"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/PlatformVelocityTracker.kt",
+      "sha256": "e66379b2bc20b50c6ca519de8fe5780670a320760c20825dc8a7d25f7175e638"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/ComposeUiFlags.kt",
+      "sha256": "bbe6d84d8f8b5dc04aa5d41ffc60cc5cad3d8938bc66405cc1e4e83818a348ee"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/AndroidComposeUiFlags.android.kt",
+      "sha256": "75c93df7fad5f23048a55e2656c3b5b1e62abe45355c69884ba95dbd4db0c48a"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/Draggable.kt",
+      "sha256": "b39ec8e3b85ab3b4783f24e34986b72eaa08c3fd1881b6b416c128450ce23783"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/DragGestureDetector.kt",
+      "sha256": "0f0dd9dfb274a6f1f04183dc5c9a1faf552bd75b29817a703594f2d4cd008557"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/ComposeFoundationFlags.kt",
+      "sha256": "2d99c9eda3f34dc5bb67a41d2b199bdfc83ed707c163e5e583ad773d920a6083"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/ViewConfiguration.kt",
+      "sha256": "b6be6402566f7585bfec56a04ea4f0da81b53f8412013d2499891490d940cb51"
+    },
+    {
+      "file": "test/fixtures/androidx/navigation-drawer/AndroidViewConfiguration.android.kt",
+      "sha256": "85fc8ac71a6bc78fd6658410e0fa63f4925a12687b713684fbe5b364564c5123"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/Dp.kt",
+      "sha256": "9173b0a7104ca22731bf185438fae68646ca6350d7a84ad610281a48fa9ad96a"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/InlineClassHelper.jvm.kt",
+      "sha256": "fd37878a8d1f8d5dc270e6612910329bd7b02590f412e44541a81b0f7eb6b84f"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-progress/generate-runtime.mjs",
+      "sha256": "d336cb7d60856f445e121199081033816dd0ca7ff9e2ae89cb133cea7acc0be7"
+    },
+    {
+      "file": "tools/androidx-progress/RuntimeStateHost.kt",
+      "sha256": "d99f75f64fe5816e47194cb3f38c54853096224098199b257f8af7ef6943068e"
+    },
+    {
+      "file": "tools/androidx-progress/RuntimeVectorHost.kt",
+      "sha256": "d5f2460781eb0ed8b99ca94fe92c6ed1009b87315923ef34cee8b5c3db28c3c4"
+    },
+    {
+      "file": "tools/androidx-progress/ProgressRuntimeHost.kt",
+      "sha256": "dbf8253e6fb7838c272315b542ac58dab8880a4e36c541e64fca5280b6fe6885"
+    },
+    {
+      "file": "tools/androidx-progress/RuntimeProbe.kt",
+      "sha256": "40c78588af003fc9f088bb96ce381d6aec0f43ab06ada5d36e894bf75d73ab12"
+    },
+    {
+      "file": "tools/androidx-progress/CircularMotionHost.kt",
+      "sha256": "a7fcf57a214f5ae4eb08c4f49fd49ac1c335b7ca19533bb16f25b0867475e031"
+    },
+    {
+      "file": "tools/androidx-progress/generate-phase-owners.mjs",
+      "sha256": "4e00b004e7c99c2bfc620414e1f44598a87187fe68816449621999e7046026dc"
+    },
+    {
+      "file": "tools/androidx-progress/PhaseOwnerHost.kt",
+      "sha256": "71b1b6b52fdb7ca28b295b326682846f204bb26541824191522df84df715bc9d"
+    },
+    {
+      "file": "tools/androidx-progress/PhaseOwnerExport.kt",
+      "sha256": "e6d131dd097ad3c759ed495360e0efae9e9b4148df7bd6d8b89a0875a0e21060"
+    }
+  ],
+  "coroutines": {
+    "version": "1.9.0",
+    "sha256": "ad89c2892235e670f222d819cb3d81188143cb19a05b59df9889ae4269f5c70a",
+    "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.9.0/kotlinx-coroutines-core-jvm-1.9.0.jar"
+  },
+  "compiler": "Private cached Kotlin/JVM1.9.24; pinned AndroidX main catalog2.4.20 is not the executed build environment.",
+  "scope": "Unchanged complete linear/circular offset start/stop methods, wavelength/speed setters, linear attach/detach, circular indeterminate amplitude/attach/detach/start methods and vertex/cache offset-start branch. Original Dp class/operators/factories and JVM Float rounding. Complete original Animatable/frame loop with real Coroutine Jobs. Explicit node scope/cancellation, scalar float state, cache invalidation counters and externally supplied vertex-cache triggers; no Compose snapshot/cache/composition scheduler, determinate amplitude-owner history, geometry/raster or durationScale0."
+}

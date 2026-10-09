@@ -5056,6 +5056,36 @@ function getSpec2(specVersion) {
   return specVersion === "2025" ? spec20252 : spec20212;
 }
 
+// research/material-color-utilities-0.4.0/package/scheme/scheme_content.js
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var SchemeContent = class extends DynamicScheme {
+  constructor(sourceColorHct, isDark, contrastLevel, specVersion = DynamicScheme.DEFAULT_SPEC_VERSION, platform = DynamicScheme.DEFAULT_PLATFORM) {
+    super({
+      sourceColorHct,
+      variant: Variant.CONTENT,
+      contrastLevel,
+      isDark,
+      platform,
+      specVersion
+    });
+  }
+};
+
 // research/material-color-utilities-0.4.0/package/scheme/scheme_expressive.js
 /**
  * @license
@@ -5086,6 +5116,156 @@ var SchemeExpressive = class extends DynamicScheme {
   }
 };
 
+// research/material-color-utilities-0.4.0/package/scheme/scheme_fidelity.js
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var SchemeFidelity = class extends DynamicScheme {
+  constructor(sourceColorHct, isDark, contrastLevel, specVersion = DynamicScheme.DEFAULT_SPEC_VERSION, platform = DynamicScheme.DEFAULT_PLATFORM) {
+    super({
+      sourceColorHct,
+      variant: Variant.FIDELITY,
+      contrastLevel,
+      isDark,
+      platform,
+      specVersion
+    });
+  }
+};
+
+// research/material-color-utilities-0.4.0/package/scheme/scheme_fruit_salad.js
+/**
+ * @license
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var SchemeFruitSalad = class extends DynamicScheme {
+  constructor(sourceColorHct, isDark, contrastLevel, specVersion = DynamicScheme.DEFAULT_SPEC_VERSION, platform = DynamicScheme.DEFAULT_PLATFORM) {
+    super({
+      sourceColorHct,
+      variant: Variant.FRUIT_SALAD,
+      contrastLevel,
+      isDark,
+      platform,
+      specVersion
+    });
+  }
+};
+
+// research/material-color-utilities-0.4.0/package/scheme/scheme_monochrome.js
+/**
+ * @license
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var SchemeMonochrome = class extends DynamicScheme {
+  constructor(sourceColorHct, isDark, contrastLevel, specVersion = DynamicScheme.DEFAULT_SPEC_VERSION, platform = DynamicScheme.DEFAULT_PLATFORM) {
+    super({
+      sourceColorHct,
+      variant: Variant.MONOCHROME,
+      contrastLevel,
+      isDark,
+      platform,
+      specVersion
+    });
+  }
+};
+
+// research/material-color-utilities-0.4.0/package/scheme/scheme_neutral.js
+/**
+ * @license
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var SchemeNeutral = class extends DynamicScheme {
+  constructor(sourceColorHct, isDark, contrastLevel, specVersion = DynamicScheme.DEFAULT_SPEC_VERSION, platform = DynamicScheme.DEFAULT_PLATFORM) {
+    super({
+      sourceColorHct,
+      variant: Variant.NEUTRAL,
+      contrastLevel,
+      isDark,
+      platform,
+      specVersion
+    });
+  }
+};
+
+// research/material-color-utilities-0.4.0/package/scheme/scheme_rainbow.js
+/**
+ * @license
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var SchemeRainbow = class extends DynamicScheme {
+  constructor(sourceColorHct, isDark, contrastLevel, specVersion = DynamicScheme.DEFAULT_SPEC_VERSION, platform = DynamicScheme.DEFAULT_PLATFORM) {
+    super({
+      sourceColorHct,
+      variant: Variant.RAINBOW,
+      contrastLevel,
+      isDark,
+      platform,
+      specVersion
+    });
+  }
+};
+
 // research/material-color-utilities-0.4.0/package/scheme/scheme_tonal_spot.js
 /**
  * @license
@@ -5108,6 +5288,36 @@ var SchemeTonalSpot = class extends DynamicScheme {
     super({
       sourceColorHct,
       variant: Variant.TONAL_SPOT,
+      contrastLevel,
+      isDark,
+      platform,
+      specVersion
+    });
+  }
+};
+
+// research/material-color-utilities-0.4.0/package/scheme/scheme_vibrant.js
+/**
+ * @license
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var SchemeVibrant = class extends DynamicScheme {
+  constructor(sourceColorHct, isDark, contrastLevel, specVersion = DynamicScheme.DEFAULT_SPEC_VERSION, platform = DynamicScheme.DEFAULT_PLATFORM) {
+    super({
+      sourceColorHct,
+      variant: Variant.VIBRANT,
       contrastLevel,
       isDark,
       platform,
@@ -5176,8 +5386,15 @@ function parseIntHex(value) {
 }
 export {
   Hct,
+  SchemeContent,
   SchemeExpressive,
+  SchemeFidelity,
+  SchemeFruitSalad,
+  SchemeMonochrome,
+  SchemeNeutral,
+  SchemeRainbow,
   SchemeTonalSpot,
+  SchemeVibrant,
   TonalPalette,
   argbFromHex,
   argbFromRgb,

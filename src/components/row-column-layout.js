@@ -85,7 +85,7 @@ function crossPosition(input,size,item,vertical,rtl,before,line,defaultAlignment
  return round(f(f((size-item)/2)*f(1+(vertical&&rtl?-bias:bias))));
 }
 export function measureRowColumn(o,measure=(input,c,i)=>measureLayoutLeaf('c'+i,input,c,!!o.vertical)){
- const vertical=!!o.vertical,rtl=!!o.rtl,b=bounds(o),inputs=o.children||[],spacing=o.arrangement==='spaced'?round(o.spacing??7):0;
+ const vertical=!!o.vertical,rtl=!!o.rtl,b=bounds(o),inputs=o.children||[],spacing=o.arrange?round(o.spacing??0):o.arrangement==='spaced'?round(o.spacing??7):0;
  const nodes=inputs.map(()=>null),mainSizes=inputs.map(()=>0),crossSizes=inputs.map(()=>0);
  let totalWeight=0,fixed=0,cross=0,weightedCount=0,lastSpacing=0,relative=false;
  const measureChild=(i,minMain,maxMain)=>{
@@ -112,7 +112,7 @@ export function measureRowColumn(o,measure=(input,c,i)=>measureLayoutLeaf('c'+i,
  let before=0,after=0;
  if(relative)for(let i=0;i<inputs.length;i++)if(inputs[i].align==='line'){const line=nodes[i].line??null;if(line!==null){before=Math.max(before,line);after=Math.max(after,crossSizes[i]-line);}}
  const main=Math.max(Math.max(0,fixed+weighted),b.minMain),breadth=Math.max(cross,b.minCross,before+after);
- const positions=arrange(main,mainSizes,o.arrangement||'start',rtl,vertical,spacing);
+ const positions=o.arrange?o.arrange(main,mainSizes,rtl):arrange(main,mainSizes,o.arrangement||'start',rtl,vertical,spacing);
  const children=nodes.map((node,i)=>{const c=crossPosition(inputs[i],breadth,crossSizes[i],vertical,rtl,before,node.line??null,o.crossAlignment??'center');return{node,x:vertical?c:positions[i],y:vertical?positions[i]:c};});
  const requested=vertical?{width:breadth,height:main}:{width:main,height:breadth};
  return layoutPlaceable(o.id||'row',requested,axisConstraints(b,vertical),children,{fullTargets:nodes.map(n=>n.size[vertical?'height':'width'])});
@@ -125,7 +125,7 @@ export function rowColumnIntrinsic(o,available,query=(input,axis,space,kind)=>{
  const value=kind==='min'?(input[axis==='main'?'intrinsicMinMain':'intrinsicMinCross']??input[axis]):input[axis];
  return axis==='cross'&&input.wrap?value*Math.max(1,Math.ceil(input.main/Math.max(1,space))):value;
 }){
- const children=o.children||[],spacing=o.arrangement==='spaced'?7:0;
+ const children=o.children||[],spacing=o.arrange?(o.spacing??0):o.arrangement==='spaced'?(o.spacing??7):0;
  const main=kind=>{
   if(!children.length)return 0;let unit=0,fixed=0,total=0;
   for(const child of children){const weight=f(child.weight||0),size=query(child,'main',available,kind);if(weight===0)fixed+=size;else if(weight>0){total=f(total+weight);unit=Math.max(unit,round(f(f(size)/weight)));}}

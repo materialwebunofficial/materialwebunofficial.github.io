@@ -81,7 +81,18 @@ export class MdCard extends HTMLElement {
 }
 
 export class MdChip extends HTMLElement {
-  variant: 'assist' | 'filter' | 'input' | 'suggestion';
+  variant: 'assist' | 'filter' | 'input' | 'suggestion' | 'action';
+  label: string;
+  icon: string;
+  trailingIcon: string;
+  elevated: boolean;
+  expressive: boolean;
+  horizontalArrangement: 'compact' | 'start' | 'end' | 'center' | 'space-between';
+  containerColor: string;
+  contentColor: string;
+  leadingIconColor: string;
+  trailingIconColor: string;
+  removable: boolean;
   selected: boolean;
   disabled: boolean;
 }
@@ -137,6 +148,15 @@ export class MdTextField extends HTMLElement {
   disabled: boolean;
   error: boolean;
   errorText?: string;
+  variant: 'filled' | 'outlined';
+  type: string;
+  readOnly: boolean;
+  singleLine: boolean;
+  minLines: number;
+  maxLines: number | null;
+  labelPosition: string;
+  expandedLabelAlignment: 'start' | 'center' | 'end';
+  minimizedLabelAlignment: 'start' | 'center' | 'end';
 }
 
 export class MdCheckbox extends HTMLElement {
@@ -498,9 +518,21 @@ export class MdDatePicker extends HTMLElement {
 }
 
 export class MdTimePicker extends HTMLElement {
-  value?: string;
-  type: 'dial' | 'input';
-  use24Hour: boolean;
+  value: string;
+  open: boolean;
+  inline: boolean;
+  hour: number;
+  minute: number;
+  readonly hourInput: number;
+  readonly minuteInput: number;
+  readonly isInputValid: boolean;
+  accessibilityServicesEnabled: boolean;
+  is24Hour: boolean;
+  richColors: boolean;
+  layoutType: 'vertical' | 'horizontal';
+  mode: 'dial' | 'input';
+  show(): void;
+  close(): void;
 }
 
 export interface ListItemColorsOptions {
@@ -610,6 +642,16 @@ export class MdMenuItem extends HTMLElement {
 export class MdSearchBar extends HTMLElement {
   value: string;
   placeholder?: string;
+  expanded: boolean;
+  suggestions: Array<string | { label: string; icon?: string; supportingText?: string }>;
+  dropdownGapSize: number;
+  dropdownScrimColor: string;
+}
+
+export class MdButtonGroup extends HTMLElement {
+  variant: 'standard' | 'connected';
+  selection: 'none' | 'single' | 'multiple';
+  expandedRatio: number;
 }
 
 export interface TabItemData {
@@ -812,6 +854,7 @@ export class MdTheme extends MdExpressiveTheme {}
 declare global {
   interface HTMLElementTagNameMap {
     'md-button': MdButton;
+    'md-button-group': MdButtonGroup;
     'md-split-button': MdSplitButton;
     'md-icon-button': MdIconButton;
     'md-fab': MdFab;

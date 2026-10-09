@@ -59,7 +59,7 @@ const defaultStyle = `
   .btn-left::after, .btn-right::after { content: ''; position: absolute; width: 100%; height: max(100%, 48px); min-width: 48px; }
 
   .material-symbols-outlined {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-weight: normal;
     font-style: normal;
     font-size: var(--split-icon, 22px);
@@ -151,7 +151,7 @@ const defaultStyle = `
   }
   .menu-item:hover { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
   .menu-item:focus-visible { outline: 3px solid var(--md-sys-color-primary, #6750A4); outline-offset: -3px; background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
-  .menu-item .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 18px; }
+  .menu-item .material-symbols-outlined { font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif); font-size: 18px; }
 `;
 
 const splitButtonSheet = createComponentSheet(defaultStyle);

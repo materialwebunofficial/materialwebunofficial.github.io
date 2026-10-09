@@ -1,0 +1,15 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "LayoutUtil.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/LayoutUtil.kt",
+      "sha256": "50c5f0c0aa836de01a7f01e0339595e153b7bec8c3cddb9fdfbf7bc7530e10ad"
+    },
+    {
+      "file": "TextFieldLineLimits.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/TextFieldLineLimits.kt",
+      "sha256": "ef656a474bb33d2a84628cc6d04f3da032e7c830c537143ea1b42c145795092a"
+    }
+  ]
+}

@@ -1,8 +1,11 @@
 import {observeThemeContext} from '../theme/theme-context.js';
-import {cubicBezier} from '../motion/easing.js';
+import {tweenFraction} from '../motion/native-easing.js';
+import {AnimationClock} from '../motion/animation-clock.js';
+import {ProgressWaveMotion} from './progress-wave-motion.js';
+import {observeElementVisibility} from '../utils/visibility.js';
 import {createComponentSheet, adoptSheet} from '../utils/styles.js';
 import {linearIndeterminateFractions, circularIndeterminateState, standardLinearLayout,
-  standardCircularLayout, linearWavyLayout, linearWaveSegments} from './progress-indicator-layout.js';
+  standardCircularLayout, linearWavyLayout, linearWaveSegments,progressAmplitudeValue} from './progress-indicator-layout.js';
 import {circularProgressCubics, centerProgressCubics, measureProgressPath, progressPathSegment} from './progress-indicator-path.js';
 
 /** AndroidX progress defaults, drawing geometry and animation schedules adapted to Canvas. */
@@ -27,20 +30,18 @@ export class MdProgressIndicator extends HTMLElement {
     super();this.attachShadow({mode:'open'});adoptSheet(this.shadowRoot,sheet);
     this._rafId=null;this._isVisible=true;this._cachedWidth=240;this._colorDirty=true;
     this._motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
-    this._onMotionChange=()=>this._startAnimation();
+    this._onMotionChange=()=>{this._motionClock?.reset();if(!this._motionPreference.matches)this._waveMotion?.restart();this._startAnimation();};
     this._onThemeChange=()=>{this._colorDirty=true;this._startAnimation();};
   }
   connectedCallback() {
     if(!this._canvas)this.render();
-    this._resetMotion();this._colorDirty=true;
+    this._resetMotion(this._mode===this.type+'/'+this.variant+'/'+this.indeterminate);this._colorDirty=true;this._isVisible=true;
     this._stopThemeWatch=observeThemeContext(this,this._onThemeChange);
     this._motionPreference.addEventListener('change',this._onMotionChange);
-    if(typeof IntersectionObserver!=='undefined'){
-      this._observer=new IntersectionObserver(entries=>{
-        this._isVisible=entries[0]?.isIntersecting??true;
-        if(this._isVisible)this._startAnimation();else this._stopAnimation();
-      });this._observer.observe(this);
-    }
+    this._observer=observeElementVisibility(this,visible=>{
+      this._isVisible=visible;
+      if(visible)this._startAnimation();else this._stopAnimation();
+    });
     if(typeof ResizeObserver!=='undefined'){
       this._resizeObserver=new ResizeObserver(()=>this._startAnimation());this._resizeObserver.observe(this);
     }
@@ -50,11 +51,14 @@ export class MdProgressIndicator extends HTMLElement {
     this._stopAnimation();this._observer?.disconnect();this._resizeObserver?.disconnect();
     this._observer=null;this._resizeObserver=null;this._stopThemeWatch?.();this._stopThemeWatch=null;
     this._motionPreference.removeEventListener('change',this._onMotionChange);
+    this._waveMotion?.detach();this._amplitudeRun=null;
   }
   attributeChangedCallback(name,oldValue,newValue) {
     if(!this._canvas||oldValue===newValue)return;
     const mode=this.type+'/'+this.variant+'/'+this.indeterminate;
     if(this._mode!==mode)this._resetMotion();
+    this._syncWaveParameters();
+    if(this.type==='circular'&&this.indeterminate)this._waveMotion?.setAmplitude(this.amplitude??1);
     if(name==='color'||name==='track-color'||name==='type'||name==='variant'||name==='indeterminate'||name==='value'||name==='progress'||name==='dir')this._colorDirty=true;
     this._syncDimensions();this._startAnimation();
   }
@@ -80,11 +84,21 @@ export class MdProgressIndicator extends HTMLElement {
   get color(){return this.getAttribute('color')||'var(--md-sys-color-primary)';}set color(v){this._optional('color',v);}
   get trackColor(){return this.getAttribute('track-color')||(this.type==='circular'&&this.variant==='standard'&&this.indeterminate?'transparent':'var(--md-sys-color-secondary-container)');}set trackColor(v){this._optional('track-color',v);}
 
-  _resetMotion() {
-    this._mode=this.type+'/'+this.variant+'/'+this.indeterminate;this._startTime=performance.now();
-    this._animatedAmplitude=null;this._amplitudeRun=null;this._waveRun=null;this._waveOffset=0;
-    this._morphRequired=false;this._circleCache=null;
+  _resetMotion(retainWave=false) {
+    this._mode=this.type+'/'+this.variant+'/'+this.indeterminate;this._motionClock=new AnimationClock();this._startTime=null;
+    if(!retainWave){
+      this._waveMotion?.detach();
+      const p=this.fraction,amplitude=this.amplitude??(this.indeterminate?1:p<=.1||p>=.95?0:1);
+      this._waveMotion=this.variant==='wavy'?new ProgressWaveMotion({circular:this.type==='circular',wavelength:this.wavelength,speed:this.waveSpeed,amplitude}):null;
+      this._morphRequired=false;
+    }
+    this._syncWaveParameters();
+    if(this.isConnected)this._waveMotion?.attach();
+    this._animatedAmplitude=null;this._amplitudeRun=null;this._circleCache=null;
   }
+  _syncWaveParameters(){this._waveMotion?.setWavelength(this.wavelength);this._waveMotion?.setSpeed(this.waveSpeed);}
+  get _waveRun(){return this._waveMotion?.run??null;}
+  get _waveOffset(){return this._waveMotion?.value??0;}
   _getWidth(){
     if(this.type==='circular')return this.variant==='wavy'?48:40;
     const width=this.clientWidth;if(width>0)this._cachedWidth=width;return this._cachedWidth;
@@ -109,43 +123,50 @@ export class MdProgressIndicator extends HTMLElement {
     this._activeColor=resolve(this.color);this._trackColor=resolve(this.trackColor);this._colorDirty=false;
   }
   _amplitudeAt(target,now){
+    target=Math.fround(target);
     if(this._animatedAmplitude===null||this._motionPreference.matches){this._amplitudeRun=null;return this._animatedAmplitude=target;}
     if(this._amplitudeRun){
-      const run=this._amplitudeRun,t=clamp((now-run.start)/500);
-      this._animatedAmplitude=run.from+(run.to-run.from)*cubicBezier(...(run.to>run.from?[.2,0,0,1]:[.3,0,.8,.15]),t);
+      const run=this._amplitudeRun,t=tweenFraction(run.clock.milliseconds,500);
+      this._animatedAmplitude=progressAmplitudeValue(run.from,run.to,run.clock.milliseconds);
       if(t<1)return this._animatedAmplitude;
       this._animatedAmplitude=run.to;this._amplitudeRun=null;
     }
     // Native amplitude jobs finish before accepting a subsequent target.
-    if(this._animatedAmplitude!==target){this._amplitudeRun={from:this._animatedAmplitude,to:target,start:now};this._morphRequired=true;}
+    if(this._animatedAmplitude!==target){this._amplitudeRun={from:this._animatedAmplitude,to:target,clock:new AnimationClock()};this._morphRequired=true;}
     return this._animatedAmplitude;
   }
   _offsetAt(amplitude,now,vertices=1){
-    if(this._motionPreference.matches||this.waveSpeed<=0){this._waveRun=null;return this._waveOffset=0;}
-    if(amplitude<=0){this._waveRun=null;return this._waveOffset;}
-    const duration=Math.max(50,Math.round(Math.fround(Math.fround(Math.fround(this.wavelength/this.waveSpeed)*1000)*vertices)));
-    if(this._waveRun){const run=this._waveRun;this._waveOffset=(run.from+Math.max(0,now-run.start)/run.duration)%1;}
-    if(!this._waveRun||this._waveRun.duration!==duration)this._waveRun={from:this._waveOffset,start:now,duration};
-    return this._waveOffset;
+    const motion=this._waveMotion;
+    if(this._motionPreference.matches){motion.settle();return motion.value;}
+    // Determinate amplitude is resolved before the native cache starts phase.
+    if(this.type==='circular'&&!this.indeterminate)motion.setVertices(vertices);
+    motion.setAmplitude(amplitude);motion.cache(vertices);
+    return motion.value;
   }
   _startAnimation(){
-    this._stopAnimation();if(!this.isConnected||!this._canvas)return;
+    if(!this.isConnected||!this._canvas)return;
     this._syncDimensions();this._draw(this._canvas.getContext('2d'),performance.now());
-    if(!this._motionPreference.matches&&this._isVisible&&this._needsAnimation())this._rafId=requestAnimationFrame(now=>this._frame(now));
+    if(!this._motionPreference.matches&&this._isVisible&&this._needsAnimation()){
+      if(this._rafId===null)this._rafId=requestAnimationFrame(now=>this._frame(now));
+    }else this._stopAnimation();
   }
   _frame(now){
     this._rafId=null;if(!this.isConnected||!this._isVisible)return;
+    // A source animation job consumes delivered frames. Theme, attribute and
+    // ResizeObserver redraws read the retained value without advancing time.
+    if(this.indeterminate){this._motionClock.frame(now);this._startTime=this._motionClock.startNanos/1e6;}
+    this._amplitudeRun?.clock.frame(now);this._waveMotion?.frame(now);
     this._draw(this._canvas.getContext('2d'),now);
     if(!this._motionPreference.matches&&this._needsAnimation())this._rafId=requestAnimationFrame(time=>this._frame(time));
   }
-  _needsAnimation(){return this.indeterminate||this.variant==='wavy'&&(!!this._amplitudeRun||this._animatedAmplitude>0&&this.waveSpeed>0);}
+  _needsAnimation(){return this.indeterminate||this.variant==='wavy'&&(!!this._amplitudeRun||this._waveMotion.active);}
   _stopAnimation(){if(this._rafId!==null)cancelAnimationFrame(this._rafId);this._rafId=null;}
   _draw(ctx, now) {
     if(!ctx)return;this._resolveColors();
     const w=this._width,h=this._height,sw=this.strokeWidth,ts=this.trackStrokeWidth;
-    const elapsed=this._motionPreference.matches?650:Math.max(0,now-this._startTime);
+    const elapsed=this._motionPreference.matches?650:this._motionClock.milliseconds;
     const indet=this.indeterminate,p=this.fraction;
-    const target=this.amplitude??(indet?1:p<=.1||p>=.95?0:1);
+    const target=Math.fround(this.amplitude??(indet?1:p<=.1||p>=.95?0:1));
     const amplitude=this.variant==='wavy'?(this.type==='circular'&&indet?target:this._amplitudeAt(target,now)):0;
     const dpr=devicePixelRatio||1;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.save();
     if(this.type==='linear'){
@@ -201,9 +222,9 @@ export class MdProgressIndicator extends HTMLElement {
     const {progress,track}=this._circleCache,state=this.indeterminate?circularIndeterminateState(elapsed):{progress:this.fraction,rotation:0};
     const stop=state.progress*progress.length,cap=(this.strokeCap==='butt'&&this.trackStrokeCap==='butt')?0:Math.max(sw/2,ts/2);
     const spacing=2*Math.min(stop,cap)+Math.min(stop,this.gapSize);
-    const offset=amplitude>0?this._offsetAt(amplitude,now,vertices):0;
+    const offset=this._offsetAt(amplitude,now,vertices);
     this._lastLayout={vertices,amplitude,offset,progress:state.progress,spacing};
-    if(this.indeterminate){ctx.translate(size/2,size/2);ctx.rotate((state.rotation+90)*Math.PI/180);ctx.translate(-size/2,-size/2);}
+    if(this.indeterminate){ctx.translate(size/2,size/2);ctx.rotate(Math.fround(state.rotation+90)*Math.PI/180);ctx.translate(-size/2,-size/2);}
     this._cubics(ctx,progressPathSegment(track,state.progress*track.length+spacing,track.length-spacing),this._trackColor,ts,this.trackStrokeCap);
     ctx.save();ctx.translate(size/2,size/2);ctx.rotate(-offset*2*Math.PI);ctx.translate(-size/2,-size/2);
     this._cubics(ctx,progressPathSegment(progress,offset*progress.length,(offset+state.progress)*progress.length),this._activeColor,sw,this.strokeCap);ctx.restore();

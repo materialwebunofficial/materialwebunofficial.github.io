@@ -5,11 +5,13 @@ const root=new URL('../fixtures/androidx/navigation-rail/',import.meta.url);
 const manifest=JSON.parse(fs.readFileSync(new URL('sources.json',root)));
 for(const[name,entry]of Object.entries(manifest.files))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(new URL(name,root))).digest('hex'),entry.sha256);
 const oracle=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/motion/spring-oracle.json',import.meta.url)));
-const colorOracle=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/motion/color-vector-oracle.json',import.meta.url)));
+const operations=JSON.parse(fs.readFileSync(new URL('../fixtures/androidx/color/packed/operations.json',import.meta.url)));
+import {floatBits,floatFromBits,composeFloatToHalf,composeHalfToFloat} from '../../src/motion/compose-color.js';
 export async function testNavigationRailParity(browser,base){
  const page=await browser.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  try{
   await page.goto(base,{waitUntil:'domcontentloaded'});await page.evaluate(()=>document.fonts.ready);
+  await page.evaluate(async()=>{window.colorRoleTestBinding=await import('/src/motion/compose-color-css.js');});
   await page.clock.install({time:new Date('2026-10-02T10:00:00Z')});await page.clock.pauseAt(new Date('2026-10-02T10:00:01.008Z'));
   await page.evaluate(()=>{
    const fixture=document.createElement('div');fixture.id='rail-fixture';fixture.setAttribute('data-motion-scheme','expressive');
@@ -45,32 +47,20 @@ export async function testNavigationRailParity(browser,base){
    el.style.setProperty('--md-sys-color-on-secondary-container','oklab(.45 .03 .02)');
    el._syncLabelColors();el._records.forEach(r=>r.colorMotion?.finish());el.selected=1;
   });
-  const colorCase=colorOracle.find(c=>c.stiffness===1600&&c.from[1]===.5&&c.to[1]===.7);
-  let colorElapsed=0;
-  for(const time of[16,32,64,80,128,160]){
-   await page.clock.runFor(time-colorElapsed);colorElapsed=time;
-   const state=await rail.evaluate(el=>{
-    const color=el._records[1].colorMotion;
-    return{...color.vector.sample(performance.now()),duration:color.vector.animation?.duration,
-      stiffness:color.vector.animation?.channels[0].stiffness,paint:getComputedStyle(el._records[1].label).color};
-   });
-   const expected=colorCase.samples.find(s=>s.time===time);
-   for(const key of['value','velocity'])state[key].forEach((value,index)=>assert.ok(Math.abs(value-expected[key][index])<2e-6,`label ${key}[${index}] ${time}ms`));
-   const paint=state.paint.match(/-?[\d.]+(?:e[+-]?\d+)?/g).map(Number);
-   [paint[3]??1,paint[0],paint[1],paint[2]].forEach((value,index)=>assert.ok(Math.abs(value-expected.value[index])<2e-6,`painted label color[${index}] ${time}ms`));
-   if(time<colorCase.duration){assert.equal(state.duration,colorCase.duration);assert.equal(state.stiffness,1600);assert.ok(state.paint.startsWith('oklab('));}
-  }
+  // Packed applying frame/paint trajectories are compared to original native
+  // records in packed-color-consumers.mjs, including this1600 effects profile.
+  await page.clock.runFor(256);
   await rail.evaluate(el=>el.selected=0);await page.clock.runFor(32);
   const colorRetarget=await rail.evaluate(el=>{
-   const color=el._records[1].colorMotion,current=color.vector.sample(performance.now());el.selected=1;
-   return{current,from:color.vector.animation.channels.map(c=>c.from),velocity:color.vector.animation.channels.map(c=>c.velocity)};
-  });assert.deepEqual(colorRetarget.from,colorRetarget.current.value);assert.deepEqual(colorRetarget.velocity,colorRetarget.current.velocity);
+   const owner=el._records[1].colorMotion.owner,current=owner.value.toVector(),convertedVelocity=owner.state.velocityColor.toVector();el.selected=1;const operation=owner.state.pending??owner.state.operation;
+   return{current,convertedVelocity,from:operation.vector.animation.channels.map(c=>c.from),velocity:operation.velocity};
+  });assert.deepEqual(colorRetarget.from,colorRetarget.current);assert.deepEqual(colorRetarget.velocity,colorRetarget.convertedVelocity);
   await rail.evaluate(el=>{el._records.forEach(r=>r.motion.finish());el.disabled=true;});await page.clock.runFor(32);
   const disabledColor=await rail.evaluate(el=>{
    const motion=el._records[1].colorMotion;
-   return{alpha:motion.vector.sample(performance.now()).value[0],targetAlpha:motion.vector.target[0],
+   return{alpha:motion.vector.sample(performance.now()).value[0],targetAlpha:motion.owner.requestedTarget.toVector()[0],
     disabled:el._records[1].button.disabled,pillOpacity:el._records[1].indicator.style.opacity};
-  });assert.equal(disabledColor.targetAlpha,Math.fround(.38));assert.ok(disabledColor.alpha>.38&&disabledColor.alpha<1);
+  });const copiedAlpha=floatFromBits(operations.find(row=>row.type==='copy'&&row.input.space===19&&row.alpha===floatBits(.38)).value.bits[3]);assert.equal(disabledColor.targetAlpha,copiedAlpha);assert.ok(disabledColor.alpha>copiedAlpha&&disabledColor.alpha<1);
   assert.equal(disabledColor.disabled,true);assert.equal(disabledColor.pillOpacity,'1');
   await rail.evaluate(el=>el.disabled=false);
   await page.emulateMedia({reducedMotion:'reduce'});
@@ -84,7 +74,7 @@ export async function testNavigationRailParity(browser,base){
   // A token change inherited through the normal theme observer must animate too.
   await rail.evaluate(el=>el.parentElement.style.setProperty('--md-sys-color-secondary','oklab(.8 .02 .02)'));
   await page.clock.runFor(16);
-  assert.equal(await rail.evaluate(el=>el._records[0].colorMotion.vector.target[1]),Math.fround(.8));
+  assert.equal(await rail.evaluate(el=>el._records[0].colorMotion.owner.requestedTarget.toVector()[1]),composeHalfToFloat(composeFloatToHalf(.8)));
   assert.ok(await rail.evaluate(el=>!!el._records[0].colorMotion.vector.animation));
   await rail.evaluate(el=>el.parentElement.style.removeProperty('--md-sys-color-secondary'));
   await page.clock.runFor(320);
@@ -141,19 +131,21 @@ export async function testNavigationRailParity(browser,base){
   await rail.evaluate(el=>{el.expanded=false;el._railMotion.finish();el._records.forEach(r=>r.motion.finish());});g=await bounds();
   assert.equal(g.items[0].ripple.y,4);assert.equal(g.items[0].item.height,64);
   await rail.evaluate(el=>{el.arrangement='top';el.querySelector('[slot="header"]')?.remove();el.items=[{icon:'home',label:'Home',disabled:true},{icon:'search',label:'Search'},{icon:'mail',label:'Mail',enabled:false}];el.selected=0;el._records.forEach(r=>r.motion.finish());});
-  const colors=await rail.evaluate(el=>{
+  const colors=await rail.evaluate(async el=>{
+   const {composeColorWithAlpha}=window.colorRoleTestBinding;
    const r=el._records[0],probe=document.createElement('span');document.body.append(probe);
-   probe.style.color='color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent)';
+   probe.style.color=composeColorWithAlpha(probe,'var(--md-sys-color-on-surface-variant)',.38);
    const expected=getComputedStyle(probe).color;probe.remove();
    return[getComputedStyle(r.icon).color,getComputedStyle(r.label).color,expected,getComputedStyle(r.button).opacity,getComputedStyle(r.indicator).opacity];
   });assert.equal(colors[0],colors[2]);assert.equal(colors[1],colors[2]);assert.deepEqual(colors.slice(3),['1','1']);
   for(const mode of ['light','dark'])for(const expanded of [false,true]){
-   const roles=await rail.evaluate((el,{mode,expanded})=>{
+   const roles=await rail.evaluate(async(el,{mode,expanded})=>{
+    const {resolveComposeColor,composeColorCSS,composeColorWithAlpha}=window.colorRoleTestBinding;
     document.documentElement.setAttribute('data-theme',mode);el.expanded=expanded;
     el._railMotion.finish();el._records.forEach(r=>{r.motion.finish();r.colorMotion?.finish();});
     const probe=document.createElement('span');document.body.append(probe);
-    const resolve=color=>{probe.style.color=color;return getComputedStyle(probe).color;};
-    const disabled=resolve('color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent)'),first=el._records[0];
+    const resolve=color=>{probe.style.color=composeColorCSS(resolveComposeColor(probe,color));return getComputedStyle(probe).color;};
+    const disabled=resolve(composeColorWithAlpha(probe,'var(--md-sys-color-on-surface-variant)',.38)),first=el._records[0];
     const result=[getComputedStyle(first.icon).color===disabled,getComputedStyle(first.label).color===disabled,
      getComputedStyle(first.indicator).backgroundColor===resolve('var(--md-sys-color-secondary-container)'),
      getComputedStyle(el.shadowRoot.querySelector('.rail')).backgroundColor===resolve('var(--md-sys-color-surface)')];

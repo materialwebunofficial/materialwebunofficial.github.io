@@ -19,6 +19,7 @@
  */
 
 import { observeThemeContext } from '../theme/theme-context.js';
+import { observeElementVisibility } from '../utils/visibility.js';
 import { LOADING_MORPHS } from '../tokens/loading-morphs.js';
 import { drawMorph } from '../motion/cubic-morph.js';
 import { SpringPhysics } from '../motion/spring-physics.js';
@@ -94,6 +95,7 @@ export class MdLoadingIndicator extends HTMLElement {
       this._rendered = true;
     }
     this._colorDirty = true;
+    this._isVisible = true;
     this._stopThemeWatch = observeThemeContext(this, this._onThemeChange);
     this._motionPreference.addEventListener('change', this._onMotionChange);
     this._setupIntersectionObserver();
@@ -112,17 +114,14 @@ export class MdLoadingIndicator extends HTMLElement {
   }
 
   _setupIntersectionObserver() {
-    if (typeof IntersectionObserver === 'undefined') return;
-    this._observer = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      this._isVisible = entry ? entry.isIntersecting : true;
-      if (this._isVisible) {
+    this._observer = observeElementVisibility(this, visible => {
+      this._isVisible = visible;
+      if (visible) {
         if (!this._rafId) this._startAnimation();
       } else {
         this._stopAnimation();
       }
-    }, { threshold: 0 });
-    this._observer.observe(this);
+    });
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
@@ -232,7 +231,7 @@ export class MdLoadingIndicator extends HTMLElement {
 
   _startAnimation() {
     this._stopAnimation();
-    if (!this.isConnected) return;
+    if (!this.isConnected || !this._isVisible) return;
     this._startTime = performance.now();
     this._lastStepTime = this._startTime;
     this._currentMorphIndex = 0;

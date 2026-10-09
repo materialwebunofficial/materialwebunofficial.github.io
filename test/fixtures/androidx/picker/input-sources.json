@@ -1,0 +1,45 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "TextFieldBuffer.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/TextFieldBuffer.kt",
+      "sha256": "8883bb98d2f7e6e945e5b6fc0bc3e2b682c1361f82535bd1390634fa56b8fb34"
+    },
+    {
+      "file": "TextRange.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/TextRange.kt",
+      "sha256": "e76c394ccffac8c40d20210d8d95b91cf6dca0e2aaf6fd212c03d40eac480609"
+    },
+    {
+      "file": "GapBuffer.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/GapBuffer.kt",
+      "sha256": "24e6fe7a32032043abf7a99165518e3f60cde4c5f3a3852956060aa0299ee44c"
+    },
+    {
+      "file": "ChangeTracker.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/ChangeTracker.kt",
+      "sha256": "7cfc5d388d2922ba96628a494533eedee35346636211cb2dcbad896c8bf3824f"
+    },
+    {
+      "file": "TextFieldCharSequence.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/TextFieldCharSequence.kt",
+      "sha256": "e0050b1ccb2640106253c6aca26fb727cb82b8d1210c12fe5f59566765c1dc1d"
+    },
+    {
+      "file": "ComposeFoundationFlags.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ComposeFoundationFlags.kt",
+      "sha256": "2d99c9eda3f34dc5bb67a41d2b199bdfc83ed707c163e5e583ad773d920a6083"
+    },
+    {
+      "file": "TimeInputTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TimeInputTokens.kt",
+      "sha256": "bd6e73db781faa7d684bdef699d7bde2ba6212730c08eb11a46132f7dbcfe269"
+    },
+    {
+      "file": "strings.xml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/androidMain/res/values/strings.xml",
+      "sha256": "a308bd47d25df7f7d52f96c43fd5050c3eaa535868d3068dd4b63f0c3d3212eb"
+    }
+  ]
+}

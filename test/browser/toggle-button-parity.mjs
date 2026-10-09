@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {assertSameColor} from './color-equal.mjs';
 import fs from 'node:fs';
 import {testButtonComposition} from './button-composition.mjs';
 import {testToggleBorder} from './toggle-border.mjs';
@@ -31,7 +32,7 @@ export async function testToggleButtonParity(browser,base){
       assert.deepEqual(result.actual,result.want,`${variant}/${disabled}/${checked}/${palette} original ToggleButtonColors`);
       assert.equal(result.role,'checkbox');assert.equal(result.checked,String(checked));assert.deepEqual(result.transitions,[],'native content/container colors resolve directly');
       assert.equal(result.outline,variant==='outlined'&&!checked?expected.borderWidth:0,'native outlined default border is absent when checked');
-      if(result.wantedBorder!==null)assert.equal(result.border,result.wantedBorder,'original border color/disabled alpha');pairs++;
+      if(result.wantedBorder!==null)assertSameColor(result.border,result.wantedBorder,'original border color/disabled alpha');pairs++;
     }
     // With no text width, the original height-only Row minimum leaves the
     // public content padding as the body width. Surface reserves a 48dp target.

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {assertSameColor} from './color-equal.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
@@ -83,7 +84,7 @@ export async function testTopAppBarParity(browser,base){
     const color=await bar.evaluate((n,{slot,token})=>{const probe=document.createElement('span');n.shadowRoot.append(probe);probe.style.color=`var(--md-sys-color-${token})`;const expected=getComputedStyle(probe).color;probe.remove();return {actual:getComputedStyle(n.querySelector(`[slot="${slot}"]`).shadowRoot.querySelector('button')).color,expected};},{slot,token});assert.equal(color.actual,color.expected,'native local content '+mode+'/'+token);
     await bar.evaluate((n,property)=>n[property]='rgb(31 63 95 / .6)',property);assert.equal(await bar.evaluate((n,slot)=>getComputedStyle(n.querySelector(`[slot="${slot}"]`).shadowRoot.querySelector('button')).color,slot),'rgba(31, 63, 95, 0.6)');
     await bar.evaluate((n,slot)=>n.querySelector(`[slot="${slot}"]`).disabled=true,slot);
-    const disabled=await bar.evaluate((n,slot)=>{const probe=document.createElement('span');n.shadowRoot.append(probe);probe.style.color='rgb(from rgb(31,63,95) r g b / .38)';const expected=getComputedStyle(probe).color;probe.remove();return {actual:getComputedStyle(n.querySelector(`[slot="${slot}"]`).shadowRoot.querySelector('button')).color,expected};},slot);assert.equal(disabled.actual,disabled.expected,'source .38 alpha replacement through CSS relative-color adapter');
+    const disabled=await bar.evaluate((n,slot)=>{const probe=document.createElement('span');n.shadowRoot.append(probe);probe.style.color='rgb(from rgb(31,63,95) r g b / .38)';const expected=getComputedStyle(probe).color;probe.remove();return {actual:getComputedStyle(n.querySelector(`[slot="${slot}"]`).shadowRoot.querySelector('button')).color,expected};},slot);assertSameColor(disabled.actual,disabled.expected,'source .38 alpha replacement through CSS relative-color adapter');
     await bar.evaluate((n,{slot,property})=>{n.querySelector(`[slot="${slot}"]`).disabled=false;n[property]=null;},{slot,property});
    }
   }

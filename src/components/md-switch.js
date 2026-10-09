@@ -119,7 +119,7 @@ const defaultStyle = `
 
   /* Handle icon */
   .icon {
-    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined';
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-size: 16px;
     line-height: 1;
     color: inherit;
@@ -242,14 +242,12 @@ export class MdSwitch extends HTMLElement {
     this._reflectingChecked = true;
     this.toggleAttribute('checked', Boolean(val));
     this._reflectingChecked = false;
-    this._sync();
   }
 
   get disabled() { return this.hasAttribute('disabled') || !!this._formDisabled; }
   set disabled(val) {
     if (val) this.setAttribute('disabled', '');
     else this.removeAttribute('disabled');
-    this._sync();
   }
 
   get icon() { return this.getAttribute('icon') || ''; }

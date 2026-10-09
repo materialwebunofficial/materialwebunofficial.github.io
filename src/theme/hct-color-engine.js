@@ -2,11 +2,17 @@
  * Material HCT and dynamic color adapter.
  * Algorithms: Google Material Color Utilities 0.4.0, Apache-2.0.
  * Dynamic palettes explicitly use the 2025 specification (phone platform).
- * MCU SchemeExpressive is a palette variant, not MaterialExpressiveTheme's
- * default static color scheme. See tools/material-color-utilities/README.md.
+ *
+ * The palette variant is independent from the theme flavor. Tonal spot is the
+ * Material dynamic color default (Android wallpaper default and the scheme
+ * dynamicLightColorScheme/dynamicDarkColorScheme resolve to). MaterialExpressiveTheme
+ * changes motion, not the palette variant; MCU SchemeExpressive is one of the
+ * opt-in variants. See tools/material-color-utilities/README.md.
  */
 import {
-  Hct, TonalPalette as MaterialTonalPalette, SchemeExpressive, SchemeTonalSpot,
+  Hct, TonalPalette as MaterialTonalPalette,
+  SchemeContent, SchemeExpressive, SchemeFidelity, SchemeFruitSalad, SchemeMonochrome,
+  SchemeNeutral, SchemeRainbow, SchemeTonalSpot, SchemeVibrant,
   argbFromHex, hexFromArgb, argbFromRgb, redFromArgb, greenFromArgb, blueFromArgb,
 } from './material-color-utilities.js';
 import { themeSetting } from './theme-context.js';
@@ -65,19 +71,36 @@ export class TonalPalette {
   }
 }
 
-function dynamicScheme(source, isDark, schemeType, contrastLevel) {
-  const Scheme = schemeType === 'standard' ? SchemeTonalSpot : SchemeExpressive;
+/** Official MCU dynamic scheme variants, keyed by their Material names. */
+const VARIANTS = {
+  'tonal-spot': SchemeTonalSpot, neutral: SchemeNeutral, vibrant: SchemeVibrant,
+  expressive: SchemeExpressive, fidelity: SchemeFidelity, content: SchemeContent,
+  monochrome: SchemeMonochrome, rainbow: SchemeRainbow, 'fruit-salad': SchemeFruitSalad,
+};
+export const PALETTE_VARIANTS = Object.freeze(Object.keys(VARIANTS));
+export const DEFAULT_PALETTE_VARIANT = 'tonal-spot';
+
+/** Normalizes a variant name; 'standard' is the former alias of tonal spot. */
+export function resolvePaletteVariant(variant) {
+  const name = String(variant ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+  if (name === 'standard' || name === 'tonalspot') return DEFAULT_PALETTE_VARIANT;
+  if (name === 'fruitsalad') return 'fruit-salad';
+  return Object.hasOwn(VARIANTS, name) ? name : DEFAULT_PALETTE_VARIANT;
+}
+
+function dynamicScheme(source, isDark, variant, contrastLevel) {
+  const Scheme = VARIANTS[resolvePaletteVariant(variant)];
   return new Scheme(sourceHct(source), isDark, clamp(finite(contrastLevel, 0), -1, 1), '2025', 'phone');
 }
 
-export function createTonalPalettes(source, schemeType = 'expressive', isDark = false, contrastLevel = 0) {
-  const scheme = dynamicScheme(source, isDark, schemeType, contrastLevel);
+export function createTonalPalettes(source, variant = DEFAULT_PALETTE_VARIANT, isDark = false, contrastLevel = 0) {
+  const scheme = dynamicScheme(source, isDark, variant, contrastLevel);
   const result = {};
   for (const role of ['primary', 'secondary', 'tertiary', 'neutral', 'neutralVariant', 'error']) {
     const palette = scheme[role + 'Palette'];
     result[role] = new TonalPalette(palette.hue, palette.chroma);
   }
-  return { ...result, hct: describe(scheme.sourceColorHct), schemeType };
+  return { ...result, hct: describe(scheme.sourceColorHct), variant: resolvePaletteVariant(variant) };
 }
 
 const COLOR_ROLES = [
@@ -96,8 +119,8 @@ const COLOR_ROLES = [
   ]),
 ];
 
-export function generateM3Scheme(source, isDark = false, schemeType = 'expressive', contrastLevel = 0) {
-  const scheme = dynamicScheme(source, isDark, schemeType, contrastLevel);
+export function generateM3Scheme(source, isDark = false, variant = DEFAULT_PALETTE_VARIANT, contrastLevel = 0) {
+  const scheme = dynamicScheme(source, isDark, variant, contrastLevel);
   const tokens = Object.fromEntries(COLOR_ROLES.map(role => [
     '--md-sys-color-' + role.replace(/[A-Z]/g, c => '-' + c.toLowerCase()), hexFromArgb(scheme[role]),
   ]));
@@ -118,7 +141,7 @@ export const MD3_PRESETS = [
 
 let globalActiveHct = describe(sourceHct(DEFAULT_SEED));
 
-export function applyDynamicTheme(source, isDark = null, schemeType = null, target = null, contrastLevel = null) {
+export function applyDynamicTheme(source, isDark = null, variant = null, target = null, contrastLevel = null) {
   if (!target && typeof document !== 'undefined') {
     target = document.documentElement;
   }
@@ -128,9 +151,7 @@ export function applyDynamicTheme(source, isDark = null, schemeType = null, targ
   const setting = name => themeSetting(target, name,
     typeof document !== 'undefined' ? document.documentElement.getAttribute(name) : null);
   if (isDark === null) isDark = setting('data-theme') === 'dark';
-  if (schemeType === null) {
-    schemeType = setting('data-theme-scheme') || 'expressive';
-  }
+  variant = resolvePaletteVariant(variant ?? setting('data-palette-variant'));
   if (contrastLevel === null) {
     const contrast = setting('data-contrast');
     contrastLevel = ({ reduced: -1, standard: 0, medium: 0.5, high: 1 })[contrast] ?? finite(contrast, 0);
@@ -144,7 +165,7 @@ export function applyDynamicTheme(source, isDark = null, schemeType = null, targ
   }
   target._activeHct = { ...resolvedHct };
 
-  const tokens = generateM3Scheme(resolvedHct, isDark, schemeType, contrastLevel);
+  const tokens = generateM3Scheme(resolvedHct, isDark, variant, contrastLevel);
   if (target.style) {
     for (const [key, value] of Object.entries(tokens)) {
       target.style.setProperty(key, value);
@@ -156,7 +177,7 @@ export function applyDynamicTheme(source, isDark = null, schemeType = null, targ
 
   if (typeof window !== 'undefined') {
     const event = new CustomEvent('theme-color-change', {
-      detail: { hct: resolvedHct, seedHex, isDark, schemeType, contrastLevel, tokens, target },
+      detail: { hct: resolvedHct, seedHex, isDark, variant, contrastLevel, tokens, target },
       bubbles: true,
       composed: true
     });

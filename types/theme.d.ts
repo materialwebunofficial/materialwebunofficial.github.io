@@ -39,7 +39,12 @@ export function rgbToHct(r: number, g: number, b: number): HctColor;
 export function hctToRgb(hue: number, chroma: number, tone: number): RgbColor;
 export function hctToHex(hue: number, chroma: number, tone: number): string;
 
-export function createTonalPalettes(source: string | HctColor, schemeType?: 'expressive' | 'standard', isDark?: boolean, contrastLevel?: number): {
+export type PaletteVariant = 'tonal-spot' | 'neutral' | 'vibrant' | 'expressive' | 'fidelity' | 'content' | 'monochrome' | 'rainbow' | 'fruit-salad';
+export const PALETTE_VARIANTS: readonly PaletteVariant[];
+export const DEFAULT_PALETTE_VARIANT: 'tonal-spot';
+export function resolvePaletteVariant(variant?: string | null): PaletteVariant;
+
+export function createTonalPalettes(source: string | HctColor, variant?: PaletteVariant | 'standard', isDark?: boolean, contrastLevel?: number): {
   primary: TonalPalette;
   secondary: TonalPalette;
   tertiary: TonalPalette;
@@ -47,11 +52,11 @@ export function createTonalPalettes(source: string | HctColor, schemeType?: 'exp
   neutralVariant: TonalPalette;
   error: TonalPalette;
   hct: HctColor;
-  schemeType: string;
+  variant: PaletteVariant;
 };
 
-export function generateM3Scheme(source: string | HctColor, isDark?: boolean, schemeType?: 'expressive' | 'standard', contrastLevel?: number): M3SchemeTokens;
-export function applyDynamicTheme(source: string | HctColor, isDark?: boolean | null, schemeType?: 'expressive' | 'standard' | null, target?: HTMLElement | null, contrastLevel?: number | null): M3SchemeTokens;
+export function generateM3Scheme(source: string | HctColor, isDark?: boolean, variant?: PaletteVariant | 'standard', contrastLevel?: number): M3SchemeTokens;
+export function applyDynamicTheme(source: string | HctColor, isDark?: boolean | null, variant?: PaletteVariant | 'standard' | null, target?: HTMLElement | null, contrastLevel?: number | null): M3SchemeTokens;
 
 export const MD3_PRESETS: M3Preset[];
 export function getActiveSeedHex(target?: HTMLElement | null): string;

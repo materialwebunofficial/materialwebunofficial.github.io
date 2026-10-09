@@ -12,28 +12,48 @@
  * revision a095da93f8e98dea8748ceed79ea8427aade245f. Canvas path measurement is
  * a browser adapter, not Android's Skia PathMeasure rasterization.
  */
-import {cubicBezier} from '../motion/easing.js';
+import {CubicBezierEasing,floatLerp,animationNanos,tweenFraction} from '../motion/native-easing.js';
 
 const f = Math.fround;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-const phase = (ms, period) => ((Math.max(0, ms) % period) + period) % period;
+const linearEasing=new CubicBezierEasing(.3,0,.8,.15),progressEasing=new CubicBezierEasing(.2,0,0,1),rotationHoldEasing=new CubicBezierEasing(.05,.7,.1,1);
+function keyframeSample(keys,time){
+ if(time<=keys[0][0])return keys[0][1];
+ for(let index=1;index<keys.length;index++){
+  const[stop,to]=keys[index], [start,from,easing]=keys[index-1];
+  if(time===stop)return to;
+  if(time<stop){const fraction=f((time-start)/(stop-start));return floatLerp(from,to,easing?easing.transform(fraction):fraction);}
+ }
+ return keys.at(-1)[1];
+}
+const circularRotationKeys=[[0,0],[300,90,rotationHoldEasing],[1500,90],[1800,180],[3000,180],[3300,270],[4500,270],[4800,360],[6000,360]];
+const circularProgressKeys=[[0,f(.1)],[3000,f(.87),progressEasing],[6000,f(.1)]];
+
+/** Source 500ms Float tween for normalized wavy amplitude. */
+export function progressAmplitudeValue(from,to,elapsed){
+  from=f(from);to=f(to);
+  return floatLerp(from,to,(to>from?progressEasing:linearEasing).transform(tweenFraction(elapsed,500)));
+}
+
+/** Source infinite FloatTween offset, including its rounded target and remainder. */
+export function progressWaveOffset(from,elapsed,duration){
+  from=f(from);const nanos=animationNanos(elapsed)%(duration*1e6);
+  return f(floatLerp(from,f(from+1),tweenFraction(nanos/1e6,duration))%1);
+}
 
 /** Source keyframes, including their delays and the easing on each lower key. */
 export function linearIndeterminateFractions(elapsed) {
-  const t = Math.floor(phase(elapsed, 1750));
-  const sample = (delay, duration) => f(cubicBezier(.3, 0, .8, .15, f(clamp((t - delay) / duration, 0, 1))));
+  const t = Math.floor((animationNanos(elapsed) % 1750000000)/1e6);
+  const sample = (delay, duration) => linearEasing.transform(f(clamp((t - delay) / duration, 0, 1)));
   return [sample(250, 1000), sample(0, 1000), sample(900, 850), sample(650, 850)];
 }
 
 export function circularIndeterminateState(elapsed) {
-  const elapsedCycle = phase(elapsed, 6000), t = Math.floor(elapsedCycle);
+  const nanos=animationNanos(elapsed)%6000000000,t=Math.floor(nanos/1e6);
   // Keyframes without an explicit lower-key easing use LinearEasing. The source's
   // decelerate easing is attached to the subsequent hold, not the 300ms ramp.
-  const step = Math.floor(t / 1500), ramp = Math.min(1, (t % 1500) / 300);
-  const additional = f((step + ramp) * 90);
-  const progress = t <= 3000 ? f(f(.1) + f(f(f(.87)-f(.1))*f(t/3000)))
-    : f(f(.87) + f(f(f(.1)-f(.87))*f(cubicBezier(.2, 0, 0, 1, f((t-3000)/3000)))));
-  return {progress, rotation: f(f(f(elapsedCycle/6000)*1080) + additional)};
+  const additional=keyframeSample(circularRotationKeys,t),progress=keyframeSample(circularProgressKeys,t);
+  return {progress,rotation:f(floatLerp(0,1080,tweenFraction(nanos/1e6,6000))+additional)};
 }
 
 export function standardLinearLayout({width, height, progress, fractions, gap = 4, stop = 4, cap = 'round'}) {

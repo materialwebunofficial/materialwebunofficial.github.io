@@ -1,250 +1,92 @@
 /**
- * Material Design 3 Expressive (MD3E) Web Component: <md-expansion-panel>
- *
- * Spec: MD3E-OFFICIAL-RESEARCH-AND-INTEGRATION-PLAN.md §4.7.2
- *
- * Features:
- *  - Spring height animation using CSS grid rows (0fr -> 1fr).
- *  - Non-destructive attribute changes to preserve active transition.
- *  - Header with headline, supporting text, and rotating chevron.
- *  - WAI-ARIA role="region", aria-expanded, aria-controls parity.
+ * Web disclosure composed from Material Card/ListItem and shared motion.
+ * ExpansionPanel itself is a web extension, not a native MD3E composable.
  */
+import './md-card.js';
+import './md-list.js';
+import {SelectionMotion} from '../motion/selection-motion.js';
+import {themeParent} from '../theme/theme-context.js';
+import {createComponentSheet,adoptSheet} from '../utils/styles.js';
 
-import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
-import { createComponentSheet, adoptSheet } from '../utils/styles.js';
-import { bindPress } from '../motion/interactions.js';
-
-const defaultStyle = `
-  :host {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-  }
-
-  .panel-root {
-    box-sizing: border-box;
-    border-radius: var(--md-sys-shape-corner-medium, 16px);
-    background-color: var(--md-sys-color-surface-container, #F3EDF7);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    overflow: hidden;
-    transition:
-      box-shadow 250ms cubic-bezier(0.2, 0, 0, 1),
-      background-color 200ms ease;
-  }
-
-  :host([open]) .panel-root {
-    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-    box-shadow: var(--md-sys-elevation-level-1, 0 1px 3px 1px rgba(0,0,0,0.12));
-  }
-
-  .header-btn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    min-height: 56px;
-    padding: 0 20px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    text-align: start;
-    user-select: none;
-    outline: none;
-    gap: 16px;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    transition: background-color 150ms ease;
-  }
-  .header-btn:hover:not([disabled]) {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 6%, transparent);
-  }
-  .header-btn:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #6750A4);
-    outline-offset: -2px;
-  }
-
-  .header-titles {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .headline {
-    font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-  }
-  .supporting-text {
-    font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-  }
-  .supporting-text:empty { display: none; }
-
-  .expand-icon {
-    font-size: 13px;
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-    transition: transform 300ms cubic-bezier(0.2, 0, 0, 1.2);
-  }
-  :host([open]) .expand-icon {
-    transform: rotate(180deg);
-  }
-
-  /* CSS Grid 0fr -> 1fr smooth spring collapse/expand */
-  .content-animator {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 300ms cubic-bezier(0.2, 0, 0, 1);
-  }
-  :host([open]) .content-animator {
-    grid-template-rows: 1fr;
-  }
-
-  .content-overflow {
-    overflow: hidden;
-    min-height: 0;
-  }
-
-  .content-body {
-    padding: 0 20px 20px;
-    font: var(--md-sys-typescale-body-large, 400 15px/22px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface-variant, #49454F);
-  }
-
-  :host([disabled]) {
-    opacity: 0.38;
-    pointer-events: none;
-  }
+let panelId=0;
+const style=String.raw`
+ :host{display:block;width:100%;box-sizing:border-box}
+ md-card{--md-card-padding:8px;--md-card-gap:0}
+ .heading{margin:0}
+ .content-animator{overflow:hidden;height:0}
+ .content-body{padding:0 16px 16px;font:var(--md-sys-typescale-body-large,400 16px/24px Roboto,sans-serif);
+  letter-spacing:var(--md-sys-typescale-body-large-tracking,.5px);color:var(--md-sys-color-on-surface-variant)}
 `;
-
-const sheet = createComponentSheet(defaultStyle);
-
+const sheet=createComponentSheet(style);
 export class MdExpansionPanel extends HTMLElement {
-  static get observedAttributes() {
-    return ['open', 'headline', 'supporting-text', 'disabled'];
+ static get observedAttributes(){return ['open','headline','supporting-text','disabled','heading-level'];}
+ constructor(){super();this.attachShadow({mode:'open'});adoptSheet(this.shadowRoot,sheet);this._panelId='md-expansion-'+ ++panelId;}
+ get open(){return this.hasAttribute('open');}set open(value){this.toggleAttribute('open',!!value);}
+ get headline(){return this.getAttribute('headline')||'';}set headline(value){this.setAttribute('headline',value??'');}
+ get supportingText(){return this.getAttribute('supporting-text')||'';}set supportingText(value){this.setAttribute('supporting-text',value??'');}
+ get disabled(){return this.hasAttribute('disabled');}set disabled(value){this.toggleAttribute('disabled',!!value);}
+ get headingLevel(){const level=Number(this.getAttribute('heading-level'));return Number.isInteger(level)&&level>=1&&level<=6?level:3;}set headingLevel(value){this.setAttribute('heading-level',String(value));}
+ connectedCallback(){
+  if(!this._header)this._render();
+  this._abort?.abort();this._abort=new AbortController();const{signal}=this._abort;
+  this._header.addEventListener('action',event=>{if(event.target!==this._header)return;event.stopPropagation();this.toggle();},{signal});
+  this._resize?.disconnect();this._resize=new ResizeObserver(()=>this._syncMotion());this._resize.observe(this._body);
+  this._sync();
+ }
+ disconnectedCallback(){this._abort?.abort();this._abort=null;this._resize?.disconnect();this._resize=null;this._motion?.dispose();this._motion=null;}
+ attributeChangedCallback(name,oldValue,newValue){if(this._header&&oldValue!==newValue)this._sync();}
+ toggle(){if(this.disabled)return;this.open=!this.open;this.dispatchEvent(new CustomEvent('toggle',{detail:{open:this.open},bubbles:true,composed:true}));}
+ _render(){
+  this.shadowRoot.innerHTML=(this.shadowRoot.adoptedStyleSheets?.length?'':'<style>'+style+'</style>')+
+   '<md-card variant="filled" part="root" exportparts="card:container"><div class="heading" role="heading">'+
+    '<md-list-item interactive aria-label="" colors=\'{"containerColor":"transparent","disabledContainerColor":"transparent"}\' id="'+this._panelId+'-header" part="header">'+
+     '<slot name="leading-icon" slot="start"></slot><slot name="trailing-icon" slot="end"></slot>'+
+    '</md-list-item></div><div class="content-animator" id="'+this._panelId+'-content" role="region" aria-labelledby="'+this._panelId+'-header">'+
+     '<div class="content-body" part="content"><slot></slot></div></div></md-card>';
+  this._header=this.shadowRoot.querySelector('md-list-item');this._region=this.shadowRoot.querySelector('.content-animator');this._body=this.shadowRoot.querySelector('.content-body');
+  this._header.setAttribute('trailing-icon','expand_more');
+ }
+ _sync(){
+  if(!this.isConnected)return;
+  this._header.setAttribute('headline',this.headline);
+  if(this.supportingText)this._header.setAttribute('supporting-text',this.supportingText);else this._header.removeAttribute('supporting-text');
+  this._header.setAttribute('aria-label',this.headline||'Details');this._header.disabled=this.disabled;
+  this.shadowRoot.querySelector('.heading').setAttribute('aria-level',String(this.headingLevel));
+  const button=this._header._item;
+  button.setAttribute('aria-expanded',String(this.open));
+  button.ariaControlsElements=[this._region];
+  if(!this.open){
+   let active=this.ownerDocument.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;
+   for(let node=active;node;node=themeParent(node))if(node===this._region){if(!this.disabled)button.focus();break;}
   }
-
-  #abortController = null;
-  #panelId = 'md-exp-' + Math.random().toString(36).slice(2, 9);
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    adoptSheet(this.shadowRoot, sheet);
-  }
-
-  get open() { return this.hasAttribute('open'); }
-  set open(v) { v ? this.setAttribute('open', '') : this.removeAttribute('open'); }
-
-  get headline() { return this.getAttribute('headline') || ''; }
-  set headline(v) { this.setAttribute('headline', v); }
-
-  get supportingText() { return this.getAttribute('supporting-text') || ''; }
-  set supportingText(v) { this.setAttribute('supporting-text', v); }
-
-  get disabled() { return this.hasAttribute('disabled'); }
-  set disabled(v) { v ? this.setAttribute('disabled', '') : this.removeAttribute('disabled'); }
-
-  connectedCallback() {
-    this.#abortController = new AbortController();
-    this.#render();
-    this.#setupEvents();
-  }
-
-  disconnectedCallback() {
-    this.#abortController?.abort();
-    this.#abortController = null;
-  }
-
-  attributeChangedCallback(name, oldVal, newVal) {
-    if (oldVal !== newVal && this.shadowRoot && this.isConnected) {
-      if (name === 'open') {
-        const btn = this.shadowRoot.querySelector('.header-btn');
-        if (btn) btn.setAttribute('aria-expanded', this.open ? 'true' : 'false');
-        return;
-      }
-      this.#render();
-      this.#setupEvents();
-    }
-  }
-
-  toggle() {
-    if (this.disabled) return;
-    this.open = !this.open;
-    this.dispatchEvent(new CustomEvent('toggle', {
-      bubbles: true,
-      composed: true,
-      detail: { open: this.open }
-    }));
-  }
-
-  #render() {
-    const headline = this.headline;
-    const supportingText = this.supportingText;
-    const isOpen = this.open;
-    const contentId = this.#panelId + '-content';
-
-    this.shadowRoot.innerHTML = `
-      <div class="panel-root" part="root">
-        <button class="header-btn" type="button"
-          aria-expanded="${isOpen ? 'true' : 'false'}"
-          aria-controls="${contentId}"
-          ${this.disabled ? 'disabled' : ''}
-          part="header">
-          <slot name="leading-icon"></slot>
-          <div class="header-titles">
-            <span class="headline">${escapeHtml(headline)}</span>
-            <span class="supporting-text">${escapeHtml(supportingText)}</span>
-          </div>
-          <slot name="trailing-icon"></slot>
-          <span class="expand-icon" aria-hidden="true">▼</span>
-        </button>
-        <div class="content-animator" id="${contentId}" role="region">
-          <div class="content-overflow">
-            <div class="content-body" part="content">
-              <slot></slot>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  #setupEvents() {
-    if (!this.#abortController) return;
-    const { signal } = this.#abortController;
-
-    const btn = this.shadowRoot.querySelector('.header-btn');
-    if (!btn) return;
-
-    bindPress(btn, { signal });
-
-    btn.addEventListener('click', () => {
-      this.toggle();
-    }, { signal });
-  }
+  this._region.inert=!this.open;this._region.setAttribute('aria-hidden',String(!this.open));
+  this._syncMotion();
+ }
+ _syncMotion(){
+  if(!this.isConnected||!this._body)return;
+  const target={height:this.open?this._body.offsetHeight:0,rotation:this.open?180:0};
+  if(!this._motion)this._motion=new SelectionMotion(this,target,values=>{
+   if(!this.isConnected)return;
+   this._region.style.height=Math.max(0,Math.round(values.height))+'px';
+   const icon=this._header.shadowRoot.querySelector('.trailing > .ico');if(icon)icon.style.transform='rotate('+values.rotation+'deg)';
+  });
+  else this._motion.set({height:{value:target.height,role:'expressiveSpatialMedium',roundInitial:true},rotation:{value:target.rotation,role:'expressiveSpatialFast'}});
+ }
 }
-
-if (!customElements.get('md-expansion-panel')) {
-  customElements.define('md-expansion-panel', MdExpansionPanel);
-}
+if(!customElements.get('md-expansion-panel'))customElements.define('md-expansion-panel',MdExpansionPanel);
 
 export class MdAccordion extends HTMLElement {
-  connectedCallback() {
-    this.addEventListener('toggle', (e) => {
-      if (e.target.open && !this.hasAttribute('multi')) {
-        const panels = this.querySelectorAll('md-expansion-panel');
-        panels.forEach(p => {
-          if (p !== e.target && p.open) {
-            p.open = false;
-          }
-        });
-      }
-    });
-  }
+ connectedCallback(){
+  this._abort?.abort();this._abort=new AbortController();
+  this.addEventListener('toggle',event=>{
+   const panel=event.target;
+   if(!(panel instanceof MdExpansionPanel)||panel.closest('md-accordion')!==this||!panel.open||this.hasAttribute('multi'))return;
+   for(const other of this.querySelectorAll('md-expansion-panel')){
+    if(other!==panel&&other.closest('md-accordion')===this&&other.open)other.open=false;
+   }
+  },{signal:this._abort.signal});
+ }
+ disconnectedCallback(){this._abort?.abort();this._abort=null;}
 }
-
-if (!customElements.get('md-accordion')) {
-  customElements.define('md-accordion', MdAccordion);
-}
+if(!customElements.get('md-accordion'))customElements.define('md-accordion',MdAccordion);
 

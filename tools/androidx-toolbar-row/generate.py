@@ -74,6 +74,9 @@ placeable = read('Placeable.kt')
 for marker, prefix in [('SOURCE_COERCION', 'private fun onMeasuredSizeChanged()'), ('SOURCE_MIRRORING', 'internal inline fun Placeable.placeAutoMirrored('), ('SOURCE_PLACEMENT', 'internal inline fun Placeable.placeApparentToRealOffset(')]:
     adapter = adapter.replace('// ' + marker, block(placeable, placeable.index(prefix)))
 (CACHE / 'Tree.kt').write_text(adapter)
+if '--policies-only' in sys.argv:
+    # Consumers compile these SHA-checked original policies with their own hosts.
+    sys.exit(0)
 cp = str(RUNTIME / 'stdlib.jar')
 subprocess.run(['java', '-cp', str(RUNTIME / '*'), 'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler', '-no-stdlib', '-no-reflect', '-classpath', cp, '-jvm-target', '1.8', '-d', str(CACHE / 'oracle.jar'), *map(str, [CACHE / 'Policy.kt', CACHE / 'Constraints.kt', CACHE / 'Tree.kt', HERE / 'Adapter.kt', HERE / 'Harness.kt'])], check=True)
 for mode in (['icon-expressive'] if '--icon-expressive-only' in sys.argv else ['row', 'toolbar', 'icon', 'icon-expressive']):

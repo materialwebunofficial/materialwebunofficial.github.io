@@ -37,6 +37,10 @@ const defaultStyle=`
    letter-spacing:var(--md-sys-typescale-title-small-tracking,.1px); color:var(--md-sys-color-on-surface-variant,#49454F); }
  .headline:empty { display:none; }
  .items { padding-inline:12px; }
+ .section { margin:0; padding:16px; font:var(--md-sys-typescale-title-small,500 14px/20px Roboto,sans-serif);
+   letter-spacing:var(--md-sys-typescale-title-small-tracking,.1px); color:var(--md-sys-color-on-surface-variant,#49454F);
+   white-space:pre-wrap; overflow-wrap:anywhere; }
+ .divider { height:1px; margin:8px 16px; background:var(--md-sys-color-outline-variant,#CAC4D0); }
  .item { position:relative; display:flex; box-sizing:border-box; align-items:center; gap:12px;
    width:100%; min-height:56px; padding:0 24px 0 16px; padding-inline:16px 24px;
    border:0; border-radius:var(--md-sys-shape-corner-full,9999px); background:transparent;
@@ -52,7 +56,7 @@ const defaultStyle=`
  .item:disabled { cursor:default; }
  .item:disabled .icon, .item:disabled .label, .item:disabled .badge {
    color:color-mix(in srgb,var(--md-sys-color-on-surface-variant,#49454F) 38%,transparent); }
- .icon { flex:none; display:block; font:normal 24px/24px 'Material Symbols Rounded','Material Symbols Outlined',sans-serif;
+ .icon { flex:none; display:block; font:normal 24px/24px var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
    width:24px; height:24px; white-space:nowrap; direction:ltr; -webkit-font-smoothing:antialiased; }
  .label { flex:1; min-width:0; white-space:pre-wrap; overflow-wrap:anywhere; }
  .badge { flex:none; white-space:pre-wrap; }
@@ -62,6 +66,9 @@ const defaultStyle=`
 `;
 const navigationDrawerSheet=createComponentSheet(defaultStyle);
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+// Drawer sheets compose section headlines and dividers between destinations.
+const isDivider=item=>item.divider===true;
+const isSection=item=>!isDivider(item)&&typeof item.section==='string';
 const gestureOwners=new WeakMap();
 
 export class MdNavigationDrawer extends HTMLElement {
@@ -109,7 +116,9 @@ export class MdNavigationDrawer extends HTMLElement {
      <nav class="drawer" part="drawer" tabindex="-1"><div class="drawer-content">
      <slot name="header"></slot><div class="headline">${escapeHtml(this.headline)}</div>
      <div class="items" part="items" role="tablist" aria-orientation="vertical">
-      ${items.map((item,index)=>`<button class="item" type="button" role="tab" data-index="${index}"
+      ${items.map((item,index)=>isDivider(item)?'<div class="divider" part="divider" role="none"></div>'
+       :isSection(item)?`<div class="section" part="section" role="none">${escapeHtml(item.section)}</div>`
+       :`<button class="item" type="button" role="tab" data-index="${index}"
        aria-label="${escapeHtml(item.ariaLabel??item.label??item.icon??'')}">
        ${item.icon==null?'':`<span class="icon" aria-hidden="true">${escapeHtml(item.icon)}</span>`}
        <span class="label">${escapeHtml(item.label??'')}</span>
@@ -117,19 +126,28 @@ export class MdNavigationDrawer extends HTMLElement {
      </div><slot></slot></div></nav></${tag}>`;
    this._layer=this.shadowRoot.querySelector('.layer');this._drawer=this.shadowRoot.querySelector('.drawer');
    this._content=this.shadowRoot.querySelector('.drawer-content');this._scrim=this.shadowRoot.querySelector('.scrim');
-   this._records=[...this.shadowRoot.querySelectorAll('.item')].map((button,index)=>({button,item:items[index]}));
+   this._records=[...this.shadowRoot.querySelectorAll('.item')].map(button=>({button,index:Number(button.dataset.index),item:items[Number(button.dataset.index)]}));
    this._rendered=true;this._syncSurface();}
  _syncSurface(){const label=this.getAttribute('aria-label')||'Navigation drawer';
    for(const node of[this._layer,this._drawer,this.shadowRoot.querySelector('.items')])node.setAttribute('aria-label',label);
    for(const[name,value,node]of[['--drawer-container',this.drawerContainerColor,this._drawer],['--drawer-content',this.drawerContentColor,this._drawer],['--drawer-scrim',this.scrimColor,this._scrim]]){
      if(!node)continue;if(value&&CSS.supports('color',value))node.style.setProperty(name,value);else node.style.removeProperty(name);}}
  _applySelection(){if(!this.enabled)this._cancelDrag();const enabled=r=>this.enabled&&!r.item.disabled&&r.item.enabled!==false;
-   const entry=enabled(this._records[this.selected]??{item:{disabled:true}})?this.selected:this._records.findIndex(enabled);
-   this._records.forEach((r,index)=>{const selected=index===this.selected;r.button.disabled=!enabled(r);r.button.tabIndex=index===entry?0:-1;
+   const current=this._records.find(r=>r.index===this.selected),entry=current&&enabled(current)?current:this._records.find(enabled);
+   this._records.forEach(r=>{const selected=r.index===this.selected;r.button.disabled=!enabled(r);r.button.tabIndex=r===entry?0:-1;
      r.button.setAttribute('aria-selected',String(selected));if(selected)r.button.setAttribute('aria-current','page');else r.button.removeAttribute('aria-current');
-     const icon=r.button.querySelector('.icon');if(icon)icon.textContent=String(selected?r.item.selectedIcon??r.item.icon:r.item.icon);});}
- _select(index){const r=this._records[index];if(!r||r.button.disabled||this.selected===index)return;
-   this.selected=index;this.dispatchEvent(new CustomEvent('change',{detail:{index},bubbles:true,composed:true}));}
+     const icon=r.button.querySelector('.icon');if(icon)icon.textContent=String(selected?r.item.selectedIcon??r.item.icon:r.item.icon);});
+   this._revealSelected();}
+ /** Keeps the selected destination inside the sheet's own scroll viewport. */
+ _revealSelected(){const button=this._records.find(r=>r.index===this.selected)?.button,content=this._content;
+   if(!button||!content||!this.isConnected||content.scrollHeight<=content.clientHeight)return;
+   const top=button.offsetTop,bottom=top+button.offsetHeight,margin=button.offsetHeight;
+   let target=content.scrollTop;
+   if(top-margin<content.scrollTop)target=Math.max(0,top-margin);
+   else if(bottom+margin>content.scrollTop+content.clientHeight)target=bottom+margin-content.clientHeight;
+   if(Math.abs(target-content.scrollTop)>=1)content.scrollTo({top:target,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
+ _select(index){const r=this._records.find(record=>record.index===index);if(!r||r.button.disabled||this.selected===index)return;
+   this.selected=index;this.dispatchEvent(new CustomEvent('change',{detail:{index,value:r.item.value??null,item:r.item},bubbles:true,composed:true}));}
  _syncOpen(animate){if(!this.isConnected||!this._drawer)return;
    if(this.variant==='dismissible'){
      const style=getComputedStyle(this),requested=parseFloat(style.getPropertyValue('--md-navigation-drawer-width'))||(this.items.length?360:240);
@@ -174,8 +192,8 @@ export class MdNavigationDrawer extends HTMLElement {
    this._layer.addEventListener('keydown',event=>this._key(event),{signal});
    this._layer.addEventListener('cancel',event=>{event.preventDefault();this.close();},{signal});
    this._scrim?.addEventListener('click',()=>{if(this.gesturesEnabled)this.close();},{signal});
-   for(const[index,r]of this._records.entries()){
-     bindPress(r.button,{signal,disabled:()=>r.button.disabled,onPress:event=>createRipple(event,r.button.querySelector('.ripple')),onActivate:()=>this._select(index)});
+   for(const r of this._records){
+     bindPress(r.button,{signal,disabled:()=>r.button.disabled,onPress:event=>createRipple(event,r.button.querySelector('.ripple')),onActivate:()=>this._select(r.index)});
      r.button.addEventListener('keydown',event=>{const enabled=this._records.filter(item=>!item.button.disabled),current=enabled.indexOf(r);let next;
        if(event.key==='ArrowDown')next=(current+1)%enabled.length;else if(event.key==='ArrowUp')next=(current-1+enabled.length)%enabled.length;
        else if(event.key==='Home')next=0;else if(event.key==='End')next=enabled.length-1;else return;

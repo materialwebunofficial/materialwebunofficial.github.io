@@ -1,544 +1,208 @@
 /**
- * Material Design 3 Expressive (MD3E) Web Component: <md-stepper> & <md-step>
+ * Stepper: a web extension; Material 3 has no native stepper composable.
+ * Step headers follow the Material web stepper anatomy (a 24dp step icon,
+ * a Title Small label, optional Body Small supporting text and 1dp
+ * connectors) with Material 3 color roles, state layers and ripples.
  *
- * Spec: MD3E-OFFICIAL-RESEARCH-AND-INTEGRATION-PLAN.md §4.7.1
- *
- * Features:
- *  - Persistent DOM headers with stable geometry (no jumping on step change).
- *  - Animated connecting progress lines with scaleX spring transitions.
- *  - Supports arbitrary & unlimited steps dynamically.
- *  - Linear & non-linear workflow progression.
- *  - Material Symbols checkmark glyph for completed steps.
- *  - Smooth directional slide/fade transitions for step panels.
- *  - Fully functional programmatic API: next(), prev(), goTo(), reset().
+ * Step icon colors:  pending  OnSurfaceVariant / Surface
+ *                    current  Primary / OnPrimary
+ *                    done     Primary / OnPrimary, with a check
+ *                    error    Error, shown as an error icon
  */
+import {SelectionMotion} from '../motion/selection-motion.js';
+import {bindPress,createRipple} from '../motion/interactions.js';
+import {themeParent} from '../theme/theme-context.js';
+import {createComponentSheet,adoptSheet} from '../utils/styles.js';
 
-import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
-import { createComponentSheet, adoptSheet } from '../utils/styles.js';
-
-/* --- MD-STEP COMPONENT --- */
-const stepStyle = `
-  :host {
-    display: block;
-    box-sizing: border-box;
-    width: 100%;
-  }
-  :host(:not([active])) {
-    display: none !important;
-  }
-  .step-content-root {
-    width: 100%;
-    box-sizing: border-box;
-    animation: stepSlideIn 300ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1)) forwards;
-  }
-
-  :host([data-direction="forward"]) .step-content-root {
-    animation-name: stepSlideInForward;
-  }
-  :host([data-direction="backward"]) .step-content-root {
-    animation-name: stepSlideInBackward;
-  }
-
-  @keyframes stepSlideInForward {
-    from {
-      opacity: 0;
-      transform: translateX(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes stepSlideInBackward {
-    from {
-      opacity: 0;
-      transform: translateX(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-`;
-
-const stepSheet = createComponentSheet(stepStyle);
-
+let stepId=0;
+const stepStyle=':host{display:block;width:100%;box-sizing:border-box}:host([hidden]){display:none!important}.step-content-root{width:100%;box-sizing:border-box}';
+const stepSheet=createComponentSheet(stepStyle);
 export class MdStep extends HTMLElement {
-  static get observedAttributes() {
-    return ['label', 'description', 'completed', 'active', 'disabled', 'error'];
-  }
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    adoptSheet(this.shadowRoot, stepSheet);
-  }
-
-  get label() { return this.getAttribute('label') || ''; }
-  set label(v) { this.setAttribute('label', v); }
-
-  get description() { return this.getAttribute('description') || ''; }
-  set description(v) { this.setAttribute('description', v); }
-
-  get active() { return this.hasAttribute('active'); }
-  set active(v) { v ? this.setAttribute('active', '') : this.removeAttribute('active'); }
-
-  get completed() { return this.hasAttribute('completed'); }
-  set completed(v) { v ? this.setAttribute('completed', '') : this.removeAttribute('completed'); }
-
-  get disabled() { return this.hasAttribute('disabled'); }
-  set disabled(v) { v ? this.setAttribute('disabled', '') : this.removeAttribute('disabled'); }
-
-  connectedCallback() {
-    this.shadowRoot.innerHTML = `<div class="step-content-root"><slot></slot></div>`;
-  }
+ static get observedAttributes(){return ['label','description','completed','active','disabled','error'];}
+ constructor(){super();this.attachShadow({mode:'open'});adoptSheet(this.shadowRoot,stepSheet);this._stepId='md-step-'+ ++stepId;}
+ get label(){return this.getAttribute('label')||'';}set label(value){this.setAttribute('label',value??'');}
+ get description(){return this.getAttribute('description')||'';}set description(value){this.setAttribute('description',value??'');}
+ get active(){return this.hasAttribute('active');}set active(value){this.toggleAttribute('active',!!value);}
+ get completed(){return this.hasAttribute('completed');}set completed(value){this.toggleAttribute('completed',!!value);}
+ get disabled(){return this.hasAttribute('disabled');}set disabled(value){this.toggleAttribute('disabled',!!value);}
+ get error(){return this.hasAttribute('error');}set error(value){this.toggleAttribute('error',!!value);}
+ connectedCallback(){
+  if(!this._body){this.shadowRoot.innerHTML=(this.shadowRoot.adoptedStyleSheets?.length?'':'<style>'+stepStyle+'</style>')+'<div class="step-content-root"><slot></slot></div>';this._body=this.shadowRoot.querySelector('.step-content-root');}
+  if(!this.id)this.id=this._stepId;this.setAttribute('role','region');this._sync();this.closest('md-stepper')?._scheduleSteps?.();
+ }
+ disconnectedCallback(){this._motion?.dispose();this._motion=null;}
+ attributeChangedCallback(name,oldValue,newValue){
+  if(oldValue===newValue)return;if(this._body)this._sync();
+  if(['label','description','disabled','error'].includes(name))this.closest('md-stepper')?._scheduleSteps?.();
+ }
+ _sync(){
+  if(!this.isConnected||!this._body)return;
+  this.hidden=!this.active;this.inert=!this.active;this.setAttribute('aria-hidden',String(!this.active));this.setAttribute('aria-label',this.label||'Step');
+  const alpha=this.active?1:0;
+  if(!this._motion)this._motion=new SelectionMotion(this,{alpha},values=>{if(this.isConnected)this._body.style.opacity=String(Math.max(0,Math.min(1,values.alpha)));});
+  else this._motion.set({alpha:{value:alpha,role:'expressiveEffectsFast',snap:!this.active||!!this._initializing}});
+ }
 }
-
-if (!customElements.get('md-step')) {
-  customElements.define('md-step', MdStep);
-}
-
+if(!customElements.get('md-step'))customElements.define('md-step',MdStep);
 export class MdStepPanel extends MdStep {}
-if (!customElements.get('md-step-panel')) {
-  customElements.define('md-step-panel', MdStepPanel);
-}
+if(!customElements.get('md-step-panel'))customElements.define('md-step-panel',MdStepPanel);
 
-
-/* --- MD-STEPPER COMPONENT --- */
-const stepperStyle = `
-  :host {
-    display: block;
-    width: 100%;
-    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-    box-sizing: border-box;
-  }
-
-  .stepper-root {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .header-bar {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 12px 0 20px;
-    box-sizing: border-box;
-  }
-
-  :host([orientation="vertical"]) .header-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .step-header-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    user-select: none;
-    background: transparent;
-    border: none;
-    padding: 8px 16px;
-    border-radius: var(--md-sys-shape-corner-full, 9999px);
-    outline: none;
-    flex-shrink: 0;
-    font-family: var(--md-sys-typescale-font-family, Roboto, system-ui, sans-serif);
-    transition: background-color 150ms ease;
-  }
-  .step-header-item:hover:not([disabled]) {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 8%, transparent);
-  }
-  .step-header-item:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #D0BCFF);
-  }
-  .step-header-item[disabled] {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    border-radius: 9999px;
-    background-color: var(--md-sys-color-surface-container-high, #2B2930);
-    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1;
-    transition:
-      background-color 250ms var(--md-sys-motion-easing-expressive-spatial, ease),
-      color 250ms ease,
-      transform 250ms cubic-bezier(0.34, 1.35, 0.64, 1);
-  }
-
-  .step-header-item.active .badge {
-    background-color: var(--md-sys-color-primary, #6750A4);
-    color: var(--md-sys-color-on-primary, #FFFFFF);
-    transform: scale(1.08);
-  }
-  .step-header-item.completed .badge {
-    background-color: var(--md-sys-color-primary, #6750A4);
-    color: var(--md-sys-color-on-primary, #FFFFFF);
-    transform: scale(1.0);
-  }
-
-  .check-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    fill: currentColor;
-  }
-
-  .step-texts {
-    display: flex;
-    flex-direction: column;
-    text-align: start;
-    font-family: inherit;
-  }
-
-  /* Fixed text layout with official MD3E typescale */
-  .step-title {
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-    letter-spacing: 0.1px;
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    transition: color 200ms ease;
-    white-space: nowrap;
-  }
-  .step-header-item.active .step-title {
-    color: var(--md-sys-color-primary, #D0BCFF);
-    font-weight: 600;
-  }
-  .step-header-item.completed .step-title {
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-  }
-  .step-desc {
-    font-family: inherit;
-    font-size: 12px;
-    line-height: 16px;
-    letter-spacing: 0.2px;
-    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-    white-space: nowrap;
-  }
-  .step-desc:empty { display: none; }
-
-  /* Animated progress connector lines with smooth scaleX interpolation */
-  .connector-line {
-    position: relative;
-    flex: 1 1 0%;
-    height: 2px;
-    background-color: var(--md-sys-color-outline-variant, rgba(255, 255, 255, 0.15));
-    margin: 0 16px;
-    min-width: 32px;
-    border-radius: 1px;
-    overflow: hidden;
-  }
-  .connector-line::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: var(--md-sys-color-primary, #6750A4);
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform 400ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.34, 1.35, 0.64, 1));
-  }
-  .connector-line.completed::after {
-    transform: scaleX(1);
-  }
-
-  :host([orientation="vertical"]) .connector-line {
-    width: 2px;
-    height: 24px;
-    margin: 4px 0 4px 23px;
-    flex: none;
-  }
-
-  .panels-box {
-    width: 100%;
-    min-height: 160px;
-    box-sizing: border-box;
-    position: relative;
-  }
+const stepperStyle=`
+ :host{display:block;width:100%;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ .stepper-root{display:flex;flex-direction:column;width:100%}
+ .header-bar{display:flex;align-items:center;margin:0;padding:0;list-style:none}
+ .step-item{display:flex;align-items:center;flex:none;min-width:0}
+ .step-item:not(:last-child){flex:1 1 auto}
+ .connector{flex:1 1 24px;min-width:16px;height:1px;margin-inline:8px;background:var(--md-sys-color-outline-variant,#CAC4D0)}
+ .step-item:last-child .connector{display:none}
+ .step-header{position:relative;display:flex;align-items:center;gap:12px;box-sizing:border-box;min-height:72px;max-width:100%;
+   padding:12px 16px;margin:0;border:0;border-radius:var(--md-sys-shape-corner-full,9999px);background:transparent;
+   color:var(--md-sys-color-on-surface-variant,#49454F);text-align:start;font:inherit;cursor:pointer;outline:none;overflow:hidden}
+ .step-header::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--md-sys-color-on-surface,#1D1B20);opacity:0;pointer-events:none}
+ .step-header:not(:disabled):hover::before{opacity:var(--md-sys-state-hover-state-layer-opacity,.08)}
+ .step-header:not(:disabled):focus-visible::before,.step-header:not(:disabled).pressed::before{opacity:var(--md-sys-state-focus-state-layer-opacity,.1)}
+ .step-header:focus-visible{outline:3px solid var(--md-sys-color-secondary,#625B71);outline-offset:-3px}
+ .step-header:disabled{cursor:default}
+ .step-icon{position:relative;display:inline-flex;flex:none;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--md-sys-shape-corner-full,9999px);
+   background:var(--md-sys-color-on-surface-variant,#49454F);color:var(--md-sys-color-surface,#FEF7FF);
+   font:var(--md-sys-typescale-label-medium,500 12px/16px Roboto,sans-serif);letter-spacing:var(--md-sys-typescale-label-medium-tracking,.5px)}
+ .step-icon .glyph{display:none;font-family:var(--md-icon-font-family,'Material Symbols Rounded','Material Symbols Outlined',sans-serif);font-size:18px;line-height:18px;font-weight:normal;font-feature-settings:'liga';-webkit-font-smoothing:antialiased}
+ .step-header[data-state="current"] .step-icon,.step-header[data-state="done"] .step-icon{background:var(--md-sys-color-primary,#6750A4);color:var(--md-sys-color-on-primary,#FFFFFF)}
+ .step-header[data-state="done"] .glyph,.step-header[data-state="error"] .glyph{display:block}
+ .step-header[data-state="done"] .number,.step-header[data-state="error"] .number{display:none}
+ .step-header[data-state="error"] .step-icon{background:transparent;color:var(--md-sys-color-error,#B3261E)}
+ .step-header[data-state="error"] .glyph{font-size:24px;line-height:24px}
+ .step-text{display:flex;flex-direction:column;min-width:0}
+ .step-label{font:var(--md-sys-typescale-title-small,500 14px/20px Roboto,sans-serif);letter-spacing:var(--md-sys-typescale-title-small-tracking,.1px);overflow-wrap:anywhere}
+ .step-description{font:var(--md-sys-typescale-body-small,400 12px/16px Roboto,sans-serif);letter-spacing:var(--md-sys-typescale-body-small-tracking,.4px);color:var(--md-sys-color-on-surface-variant,#49454F);overflow-wrap:anywhere}
+ .step-description:empty{display:none}
+ .step-header[data-state="current"] .step-label,.step-header[data-state="done"] .step-label{color:var(--md-sys-color-on-surface,#1D1B20)}
+ .step-header[data-state="error"] .step-label,.step-header[data-state="error"] .step-description{color:var(--md-sys-color-error,#B3261E)}
+ .step-header:disabled .step-icon{background:color-mix(in srgb,var(--md-sys-color-on-surface,#1D1B20) 38%,transparent);color:var(--md-sys-color-surface,#FEF7FF)}
+ .step-header:disabled .step-label,.step-header:disabled .step-description{color:color-mix(in srgb,var(--md-sys-color-on-surface,#1D1B20) 38%,transparent)}
+ .panels-box{width:100%;min-width:0;padding-top:24px;box-sizing:border-box}
+ .md-ripple-effect{position:absolute;border-radius:50%;background:currentColor;opacity:0;animation:stepper-ripple 450ms linear;pointer-events:none}
+ @keyframes stepper-ripple{from{transform:scale(0);opacity:.1}to{transform:scale(1);opacity:0}}
+ /* Compact horizontal headers show the label of the current step only. */
+ :host(:not([orientation="vertical"])) .stepper-root.compact .step-header:not([data-state="current"]) .step-text{display:none}
+ /* Vertical: each step's content follows its header, beside a 1dp connector. */
+ :host([orientation="vertical"]) .header-bar{flex-direction:column;align-items:stretch}
+ :host([orientation="vertical"]) .step-item{flex-direction:column;align-items:stretch}
+ :host([orientation="vertical"]) .connector{display:none}
+ :host([orientation="vertical"]) .step-header{align-self:flex-start}
+ :host([orientation="vertical"]) .panels-box{display:none}
+ .vertical-panel{display:none}
+ :host([orientation="vertical"]) .vertical-panel{display:block;position:relative;margin-inline-start:28px;padding:0 0 16px 36px;min-height:24px}
+ :host([orientation="vertical"]) .vertical-panel::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:1px;background:var(--md-sys-color-outline-variant,#CAC4D0)}
+ :host([orientation="vertical"]) .step-item:last-child .vertical-panel::before{display:none}
 `;
-
-const stepperSheet = createComponentSheet(stepperStyle);
-
-const CHECK_SVG = `<svg class="check-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
-
+const stepperSheet=createComponentSheet(stepperStyle);
 export class MdStepper extends HTMLElement {
-  static get observedAttributes() {
-    return ['active-step', 'orientation', 'linear'];
-  }
-
-  #abortController = null;
-  #prevStep = 0;
-  #mutationObserver = null;
-  #stepCount = -1;
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    adoptSheet(this.shadowRoot, stepperSheet);
-  }
-
-  get activeStep() {
-    const v = parseInt(this.getAttribute('active-step'), 10);
-    return isNaN(v) ? 0 : Math.max(0, v);
-  }
-  set activeStep(v) {
-    this.setAttribute('active-step', String(v));
-  }
-
-  get orientation() {
-    return this.getAttribute('orientation') || 'horizontal';
-  }
-  set orientation(v) {
-    this.setAttribute('orientation', v);
-  }
-
-  get linear() {
-    return this.hasAttribute('linear');
-  }
-  set linear(v) {
-    v ? this.setAttribute('linear', '') : this.removeAttribute('linear');
-  }
-
-  connectedCallback() {
-    this.#abortController = new AbortController();
-    this.#render();
-    this.#setupEvents();
-    this.#buildHeaderDOM();
-    this.#syncStepStates();
-
-    // Observe dynamic addition/removal of steps
-    this.#mutationObserver = new MutationObserver(() => {
-      this.#buildHeaderDOM();
-      this.#syncStepStates();
-    });
-    this.#mutationObserver.observe(this, { childList: true, subtree: false });
-  }
-
-  disconnectedCallback() {
-    this.#abortController?.abort();
-    this.#abortController = null;
-    this.#mutationObserver?.disconnect();
-    this.#mutationObserver = null;
-  }
-
-  attributeChangedCallback(name, oldVal, newVal) {
-    if (oldVal !== newVal && this.shadowRoot) {
-      if (name === 'active-step') {
-        const fromIdx = parseInt(oldVal, 10) || 0;
-        const toIdx = parseInt(newVal, 10) || 0;
-        this.#prevStep = fromIdx;
-      }
-      this.#syncStepStates();
-    }
-  }
-
-  getSteps() {
-    return Array.from(this.querySelectorAll('md-step'));
-  }
-
-  next() {
-    const steps = this.getSteps();
-    if (this.activeStep < steps.length - 1) {
-      const old = this.activeStep;
-      this.activeStep = old + 1;
-      this.dispatchEvent(new CustomEvent('step-change', {
-        bubbles: true,
-        composed: true,
-        detail: { activeStep: this.activeStep, previousStep: old }
-      }));
-    }
-  }
-
-  prev() {
-    if (this.activeStep > 0) {
-      const old = this.activeStep;
-      this.activeStep = old - 1;
-      this.dispatchEvent(new CustomEvent('step-change', {
-        bubbles: true,
-        composed: true,
-        detail: { activeStep: this.activeStep, previousStep: old }
-      }));
-    }
-  }
-
-  previous() {
-    this.prev();
-  }
-
-  goTo(stepIndex) {
-    const steps = this.getSteps();
-    if (stepIndex >= 0 && stepIndex < steps.length) {
-      const old = this.activeStep;
-      this.activeStep = stepIndex;
-      this.dispatchEvent(new CustomEvent('step-change', {
-        bubbles: true,
-        composed: true,
-        detail: { activeStep: stepIndex, previousStep: old }
-      }));
-    }
-  }
-
-  reset() {
-    const steps = this.getSteps();
-    steps.forEach((s, i) => {
-      s.completed = false;
-      s.active = (i === 0);
-      s.setAttribute('data-direction', 'backward');
-    });
-    this.activeStep = 0;
-    this.#syncStepStates();
-    this.dispatchEvent(new CustomEvent('reset', { bubbles: true, composed: true }));
-  }
-
-  #render() {
-    this.shadowRoot.innerHTML = `
-      <div class="stepper-root">
-        <div class="header-bar" part="header-bar"></div>
-        <div class="panels-box" part="panels">
-          <slot></slot>
-        </div>
-      </div>
-    `;
-  }
-
-  #buildHeaderDOM() {
-    const steps = this.getSteps();
-    const headerBar = this.shadowRoot.querySelector('.header-bar');
-    if (!headerBar) return;
-
-    if (this.#stepCount === steps.length) {
-      // Just update labels if step count hasn't changed
-      steps.forEach((step, idx) => {
-        const itemBtn = headerBar.querySelector(`.step-header-item[data-index="${idx}"]`);
-        if (itemBtn) {
-          const title = itemBtn.querySelector('.step-title');
-          const desc = itemBtn.querySelector('.step-desc');
-          if (title) title.textContent = step.label || `Step ${idx + 1}`;
-          if (desc) desc.textContent = step.description || '';
-        }
-      });
-      return;
-    }
-
-    this.#stepCount = steps.length;
-    headerBar.innerHTML = '';
-
-    steps.forEach((step, idx) => {
-      const itemBtn = document.createElement('button');
-      itemBtn.className = 'step-header-item';
-      itemBtn.type = 'button';
-      itemBtn.setAttribute('data-index', String(idx));
-      itemBtn.innerHTML = `
-        <div class="badge">${idx + 1}</div>
-        <div class="step-texts">
-          <span class="step-title">${escapeHtml(step.label || `Step ${idx + 1}`)}</span>
-          <span class="step-desc">${escapeHtml(step.description || '')}</span>
-        </div>
-      `;
-      headerBar.appendChild(itemBtn);
-
-      if (idx < steps.length - 1) {
-        const line = document.createElement('div');
-        line.className = 'connector-line';
-        line.setAttribute('data-line-index', String(idx));
-        headerBar.appendChild(line);
-      }
-    });
-  }
-
-  #syncStepStates() {
-    const steps = this.getSteps();
-    const curIdx = this.activeStep;
-    const headerBar = this.shadowRoot.querySelector('.header-bar');
-    if (!headerBar) return;
-
-    const isMovingForward = curIdx >= this.#prevStep;
-    const direction = isMovingForward ? 'forward' : 'backward';
-
-    steps.forEach((step, idx) => {
-      const isAct = idx === curIdx;
-      const isComp = idx < curIdx;
-
-      step.active = isAct;
-      step.completed = isComp;
-      step.setAttribute('data-direction', direction);
-
-      const itemBtn = headerBar.querySelector(`.step-header-item[data-index="${idx}"]`);
-      if (itemBtn) {
-        itemBtn.classList.toggle('active', isAct);
-        itemBtn.classList.toggle('completed', isComp);
-        itemBtn.setAttribute('aria-current', isAct ? 'step' : 'false');
-
-        if (this.linear && idx > curIdx && !isComp) {
-          itemBtn.setAttribute('disabled', '');
-        } else {
-          itemBtn.removeAttribute('disabled');
-        }
-
-        const badge = itemBtn.querySelector('.badge');
-        if (badge) {
-          if (isComp) {
-            badge.innerHTML = CHECK_SVG;
-          } else {
-            badge.textContent = String(idx + 1);
-          }
-        }
-      }
-    });
-
-    // Update connector lines with in-place class toggle to trigger CSS transition
-    const lines = headerBar.querySelectorAll('.connector-line');
-    lines.forEach((line, idx) => {
-      const isCompleted = idx < curIdx;
-      line.classList.toggle('completed', isCompleted);
-    });
-  }
-
-  #setupEvents() {
-    this.#abortController?.abort();
-    this.#abortController = new AbortController();
-    const { signal } = this.#abortController;
-
-    const headerBar = this.shadowRoot.querySelector('.header-bar');
-    if (!headerBar) return;
-
-    headerBar.addEventListener('click', (e) => {
-      const btn = e.target.closest('.step-header-item');
-      if (btn && !btn.hasAttribute('disabled')) {
-        const idx = parseInt(btn.getAttribute('data-index'), 10);
-        if (!isNaN(idx)) {
-          this.goTo(idx);
-        }
-      }
-    }, { signal });
-
-    // Handle slot changes
-    const slot = this.shadowRoot.querySelector('slot');
-    slot?.addEventListener('slotchange', () => {
-      this.#buildHeaderDOM();
-      this.#syncStepStates();
-    }, { signal });
-  }
+ static get observedAttributes(){return ['active-step','orientation','linear','disabled','aria-label'];}
+ constructor(){super();this.attachShadow({mode:'open'});adoptSheet(this.shadowRoot,stepperSheet);this._records=[];}
+ get activeStep(){const number=Number(this.getAttribute('active-step'));return Math.min(Number.isFinite(number)?Math.max(0,Math.floor(number)):0,Math.max(0,this.getSteps().length-1));}
+ set activeStep(value){const number=Number(value);this.setAttribute('active-step',String(Number.isFinite(number)?Math.max(0,Math.floor(number)):0));}
+ get orientation(){return this.getAttribute('orientation')==='vertical'?'vertical':'horizontal';}set orientation(value){this.setAttribute('orientation',value??'horizontal');}
+ get linear(){return this.hasAttribute('linear');}set linear(value){this.toggleAttribute('linear',!!value);}
+ get disabled(){return this.hasAttribute('disabled');}set disabled(value){this.toggleAttribute('disabled',!!value);}
+ connectedCallback(){
+  if(!this._header)this._render();this._abort?.abort();this._abort=new AbortController();const{signal}=this._abort;
+  this._header.addEventListener('keydown',event=>this._key(event),{signal});
+  this._observer?.disconnect();this._observer=new MutationObserver(()=>this._scheduleSteps());this._observer.observe(this,{childList:true});
+  this._resize?.disconnect();this._resize=new ResizeObserver(()=>this._syncCompact());this._resize.observe(this);
+  for(const record of this._records)this._bindRecord(record);
+  this._sync();
+ }
+ disconnectedCallback(){this._abort?.abort();this._abort=null;this._observer?.disconnect();this._observer=null;this._resize?.disconnect();this._resize=null;for(const record of this._records)record.binding=null;}
+ attributeChangedCallback(name,oldValue,newValue){if(this._header&&oldValue!==newValue)this._sync();}
+ getSteps(){return [...this.children].filter(step=>step instanceof MdStep);}
+ _scheduleSteps(){
+  if(this._stepsQueued)return;this._stepsQueued=true;const signal=this._abort?.signal;
+  queueMicrotask(()=>{this._stepsQueued=false;if(this.isConnected&&!signal?.aborted)this._sync();});
+ }
+ _render(){
+  this.shadowRoot.innerHTML=(this.shadowRoot.adoptedStyleSheets?.length?'':'<style>'+stepperStyle+'</style>')+
+   '<div class="stepper-root"><ol class="header-bar" part="header-bar"></ol><div class="panels-box" part="panels"></div></div>';
+  this._root=this.shadowRoot.querySelector('.stepper-root');this._header=this.shadowRoot.querySelector('.header-bar');this._panels=this.shadowRoot.querySelector('.panels-box');
+ }
+ _createRecord(step){
+  const wrapper=document.createElement('li');wrapper.className='step-item';
+  const control=document.createElement('button');control.type='button';control.className='step-header';control.setAttribute('part','step-header');
+  control.innerHTML='<span class="step-icon" aria-hidden="true"><span class="number"></span><span class="glyph"></span></span><span class="step-text"><span class="step-label"></span><span class="step-description"></span></span>';
+  const connector=document.createElement('span');connector.className='connector';connector.setAttribute('aria-hidden','true');
+  const panel=document.createElement('div');panel.className='vertical-panel';const slot=document.createElement('slot');panel.append(slot);
+  wrapper.append(control,panel,connector);
+  const record={step,wrapper,control,connector,panel,slot,number:control.querySelector('.number'),glyph:control.querySelector('.glyph'),
+   label:control.querySelector('.step-label'),description:control.querySelector('.step-description'),binding:null};
+  step._initializing=true;return record;
+ }
+ _bindRecord(record){
+  if(!this._abort||record.binding)return;
+  record.binding=bindPress(record.control,{signal:this._abort.signal,disabled:()=>record.control.disabled,
+   onPress:event=>createRipple(event,record.control),onActivate:()=>{if(!record.control.disabled)this.goTo(this._records.indexOf(record));}});
+ }
+ _sync(){
+  if(!this.isConnected||this._syncing)return;this._syncing=true;
+  try{
+   const steps=this.getSteps(),previous=new Map(this._records.map(record=>[record.step,record]));
+   this._records=steps.map(step=>previous.get(step)??this._createRecord(step));
+   for(const record of previous.values())if(!steps.includes(record.step)){record.wrapper.remove();if(record.step.slot===record.slot.name)record.step.removeAttribute('slot');}
+   const vertical=this.orientation==='vertical';
+   this._records.forEach((record,index)=>{
+    if(this._header.children[index]!==record.wrapper)this._header.insertBefore(record.wrapper,this._header.children[index]||null);
+    // Each step is assigned to its own slot: below its header (vertical) or in the shared panel area.
+    const name='step-'+index;record.slot.name=name;
+    if(record.step.slot!==name)record.step.slot=name;
+    const target=vertical?record.panel:this._panels;
+    if(record.slot.parentElement!==target||target===this._panels&&this._panels.children[index]!==record.slot)target===this._panels?this._panels.insertBefore(record.slot,this._panels.children[index]||null):target.append(record.slot);
+    this._bindRecord(record);
+   });
+   let current=this.activeStep;
+   if(steps[current]?.disabled){current=steps.findIndex(step=>!step.disabled);if(current>=0)this.activeStep=current;}
+   let focused=this.ownerDocument.activeElement;while(focused?.shadowRoot?.activeElement)focused=focused.shadowRoot.activeElement;
+   let leavingFocused=false;
+   for(let node=focused;node;node=themeParent(node))if(steps.includes(node)&&steps.indexOf(node)!==current){leavingFocused=true;break;}
+   const assign=(node,name,value)=>{if(value==null)node.removeAttribute(name);else if(node.getAttribute(name)!==String(value))node.setAttribute(name,String(value));};
+   this._header.setAttribute('aria-label',this.getAttribute('aria-label')||'Steps');
+   this._records.forEach(({step,control,number,glyph,label,description},index)=>{
+    const active=index===current&&!step.disabled,completed=index<current&&!step.disabled,text=step.label||'Step '+(index+1);
+    step.active=active;step.completed=completed;
+    control.disabled=this.disabled||step.disabled||(this.linear&&index>current);
+    control.dataset.state=step.error?'error':active?'current':completed?'done':'pending';
+    number.textContent=String(index+1);glyph.textContent=step.error?'error':'check';
+    if(label.textContent!==text)label.textContent=text;if(description.textContent!==step.description)description.textContent=step.description;
+    assign(control,'aria-label','Step '+(index+1)+' of '+steps.length+': '+text+(step.description?'. '+step.description:'')+(step.error?'. Error':completed?'. Completed':''));
+    control.ariaControlsElements=[step];assign(control,'aria-current',active?'step':null);step._initializing=false;
+   });
+   this._syncCompact();
+   if(leavingFocused&&!this.disabled)this._records[current]?.control.focus();
+  }finally{this._syncing=false;}
+ }
+ /** Horizontal headers keep only the current label when the labels do not fit. */
+ _syncCompact(){
+  if(!this._root||this.orientation==='vertical'){this._root?.classList.remove('compact');return;}
+  this._root.classList.remove('compact');
+  if(this._header.scrollWidth>this._header.clientWidth+1)this._root.classList.add('compact');
+ }
+ goTo(index){
+  if(this.disabled||!Number.isInteger(index)||index<0||index>=this.getSteps().length||this.getSteps()[index].disabled||index===this.activeStep)return;
+  const previousStep=this.activeStep;this.activeStep=index;
+  this.dispatchEvent(new CustomEvent('step-change',{detail:{activeStep:index,previousStep},bubbles:true,composed:true}));
+ }
+ next(){const steps=this.getSteps();for(let index=this.activeStep+1;index<steps.length;index++)if(!steps[index].disabled){this.goTo(index);return;}}
+ prev(){const steps=this.getSteps();for(let index=this.activeStep-1;index>=0;index--)if(!steps[index].disabled){this.goTo(index);return;}}
+ previous(){this.prev();}
+ reset(){
+  if(this.disabled)return;this.activeStep=Math.max(0,this.getSteps().findIndex(step=>!step.disabled));this._sync();
+  this.dispatchEvent(new CustomEvent('reset',{bubbles:true,composed:true}));
+ }
+ _key(event){
+  const record=this._records.find(record=>event.composedPath().includes(record.control));if(!record||event.altKey||event.ctrlKey||event.metaKey)return;
+  const vertical=this.orientation==='vertical',back=vertical?'ArrowUp':getComputedStyle(this).direction==='rtl'?'ArrowRight':'ArrowLeft',forward=vertical?'ArrowDown':back==='ArrowLeft'?'ArrowRight':'ArrowLeft';
+  if(!['Home','End',back,forward].includes(event.key))return;event.preventDefault();
+  const enabled=this._records.filter(record=>!record.control.disabled),current=enabled.indexOf(record);
+  const index=event.key==='Home'?0:event.key==='End'?enabled.length-1:event.key===forward?Math.min(enabled.length-1,current+1):Math.max(0,current-1);
+  enabled[index]?.control.focus();
+ }
 }
-
-if (!customElements.get('md-stepper')) {
-  customElements.define('md-stepper', MdStepper);
-}
+if(!customElements.get('md-stepper'))customElements.define('md-stepper',MdStepper);

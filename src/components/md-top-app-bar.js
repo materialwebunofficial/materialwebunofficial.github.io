@@ -5,7 +5,9 @@
  */
 import {createComponentSheet,adoptSheet} from '../utils/styles.js';
 import {observeThemeContext} from '../theme/theme-context.js';
-import {ColorMotion,colorVector,vectorColor} from '../motion/color-motion.js';
+import {AsStateColorMotion as ColorMotion} from '../motion/animate-as-state.js';
+import {resolveComposeColor,composeColorCSS,composeColorWithAlpha} from '../motion/compose-color-css.js';
+import {ComposeColor} from '../motion/compose-color.js';
 import {topAppBarContentLayout} from './top-app-bar-layout.js';
 import {topAppBarColorFraction,topAppBarTitleAlpha} from '../motion/top-app-bar-motion.js';
 import {minimumInteractiveLayout} from './row-column-layout.js';
@@ -129,18 +131,18 @@ export class MdTopAppBar extends HTMLElement{
   }finally{if(position===this._scrollPosition)position?.restoreLayout(before);}
  }
  _colors(){
-  const css=getComputedStyle(this),resolve=(value,fallback)=>{this._probe.style.color=validColor(value,fallback);return getComputedStyle(this._probe).color;};
+  const css=getComputedStyle(this),resolve=(value,fallback)=>{return composeColorCSS(resolveComposeColor(this._probe,validColor(value,fallback)));};
   const role=name=>css.getPropertyValue('--md-sys-color-'+name).trim();
   const container=resolve(this.containerColor,role('surface')),scrolled=resolve(this.scrolledContainerColor,role('surface-container'));
   for(const[node,value,fallback]of [[this._leading,this.navigationIconContentColor,'on-surface'],[this._trailing,this.actionIconContentColor,'on-surface-variant']]){
    const color=resolve(value,validColor(this.contentColor,role(fallback)));write(node,'color',color);
-   node.style.setProperty('--md-icon-button-content-color',color);node.style.setProperty('--md-icon-button-outline-color',color);node.style.setProperty('--md-icon-button-disabled-content-color',`rgb(from ${color} r g b / .38)`);
+   node.style.setProperty('--md-icon-button-content-color',color);node.style.setProperty('--md-icon-button-outline-color',color);node.style.setProperty('--md-icon-button-disabled-content-color',composeColorWithAlpha(this._probe,color,.38));
   }
   for(const title of Object.values(this._titles))for(const record of title.records)write(record.line,'color',resolve(record.kind==='headline'?this.titleContentColor:this.subtitleContentColor,validColor(this.contentColor,role(record.kind==='headline'?'on-surface':'on-surface-variant'))));
   if(this.twoRows){
    this._color?.dispose();this._color=null;
-   const fraction=this.scrolled?1:this.collapsedFraction,progress=topAppBarColorFraction(fraction),a=colorVector(this._probe,container),b=colorVector(this._probe,scrolled);
-   write(this._bar,'backgroundColor',fraction===0?container:fraction===1?scrolled:vectorColor(a.map((v,i)=>f(f(f(1-progress)*v)+f(progress*b[i])))));
+   const fraction=this.scrolled?1:this.collapsedFraction,progress=topAppBarColorFraction(fraction),a=resolveComposeColor(this._probe,container),b=resolveComposeColor(this._probe,scrolled);
+   write(this._bar,'backgroundColor',composeColorCSS(ComposeColor.lerp(a,b,progress)));
    write(this._titles.top.group,'opacity',String(topAppBarTitleAlpha(this.collapsedFraction)));write(this._titles.bottom.group,'opacity',String(f(1-this.collapsedFraction)));
    this._titles.top.group.setAttribute('aria-hidden',String(this.collapsedFraction<.5));this._titles.bottom.group.setAttribute('aria-hidden',String(this.collapsedFraction>=.5));
    this._titles.top.group.inert=this.collapsedFraction<.5;this._titles.bottom.group.inert=this.collapsedFraction>=.5;

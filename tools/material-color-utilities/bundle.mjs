@@ -7,8 +7,15 @@ await build({
   stdin: { contents: `
     export { Hct } from './hct/hct.js';
     export { TonalPalette } from './palettes/tonal_palette.js';
+    export { SchemeContent } from './scheme/scheme_content.js';
     export { SchemeExpressive } from './scheme/scheme_expressive.js';
+    export { SchemeFidelity } from './scheme/scheme_fidelity.js';
+    export { SchemeFruitSalad } from './scheme/scheme_fruit_salad.js';
+    export { SchemeMonochrome } from './scheme/scheme_monochrome.js';
+    export { SchemeNeutral } from './scheme/scheme_neutral.js';
+    export { SchemeRainbow } from './scheme/scheme_rainbow.js';
     export { SchemeTonalSpot } from './scheme/scheme_tonal_spot.js';
+    export { SchemeVibrant } from './scheme/scheme_vibrant.js';
     export { argbFromHex, hexFromArgb } from './utils/string_utils.js';
     export { argbFromRgb, redFromArgb, greenFromArgb, blueFromArgb } from './utils/color_utils.js';
   `, resolveDir: source },

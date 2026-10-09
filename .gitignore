@@ -39,5 +39,12 @@ Thumbs.db
 !scripts/test-cards.mjs
 !scripts/test-dialogs.mjs
 !scripts/test-paginator.mjs
+!scripts/test-autocomplete.mjs
+!scripts/test-expansion-panels.mjs
+!scripts/test-seed-presets.mjs
+!scripts/test-select.mjs
+!scripts/test-stepper.mjs
+!scripts/test-progress.mjs
+!scripts/test-text-fields.mjs
 !scripts/test-selection.mjs
 !scripts/browser-test-server.mjs

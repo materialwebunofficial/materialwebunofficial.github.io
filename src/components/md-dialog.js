@@ -21,7 +21,7 @@ const defaultStyle=MODAL_STYLE+`
     background:var(--_md-dialog-container,var(--md-sys-color-surface-container-high));
     color:var(--md-sys-color-on-surface); transform-origin:center; }
   .icon { align-self:center; flex:none; margin-bottom:16px;
-    font-family:'Material Symbols Rounded','Material Symbols Outlined',sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-weight:normal; font-style:normal; font-size:24px; width:24px; height:24px;
     line-height:24px; color:var(--_md-dialog-icon,var(--md-sys-color-secondary)); }
   .headline { flex:none; margin:0 0 16px; align-self:flex-start;

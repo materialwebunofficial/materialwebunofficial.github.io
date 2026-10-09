@@ -11,11 +11,13 @@
  *   - Form association (attachInternals), toggle mode, single-click guarantee
  */
 
+import { followHref } from '../utils/navigation.js';
 import { bindPress, createRipple, nestedInteractiveEvent } from '../motion/interactions.js';
 import { sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
-import { ColorMotion } from '../motion/color-motion.js';
+import { AsStateColorMotion as ColorMotion } from '../motion/animate-as-state.js';
+import {composeColorWithAlpha} from '../motion/compose-color-css.js';
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { ButtonShapeComposition, buttonCornerRadius } from './button-shape.js';
 import { buttonBorderStroke } from './button-border.js';
@@ -51,6 +53,8 @@ const defaultStyle = `
     justify-content: center;
     box-sizing: border-box;
     border: none;
+    /* A standard button group animates each item's width on press. */
+    width: var(--md-button-group-item-width, auto);
     min-width: 58px;
     max-width: 100%;
     outline: none;
@@ -207,7 +211,8 @@ const defaultStyle = `
   /* MDC DockedToolbar's theme overlay for ordinary/text buttons. */
   .btn.text {
     background-color: var(--md-toolbar-button-container, transparent);
-    color: var(--md-toolbar-button-content, var(--md-sys-color-primary));
+    /* textButtonColors(contentColor = ...) for callers such as the date picker menus. */
+    color: var(--md-button-content-color, var(--md-toolbar-button-content, var(--md-sys-color-primary)));
   }
   :host(:not([variant])) .btn.filled {
     background-color: var(--md-toolbar-button-container, var(--md-sys-color-primary));
@@ -301,7 +306,7 @@ const defaultStyle = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Google Symbols', sans-serif;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     line-height: 1;
     flex: 0 0 auto;
     pointer-events: none;
@@ -337,7 +342,7 @@ export class MdButton extends HTMLElement {
   static formAssociated = true;
 
   static get observedAttributes() {
-    return ['variant', 'size', 'shape', 'disabled', 'toggle', 'selected', 'icon', 'trailing-icon', 'label', 'type', 'aria-label'];
+    return ['variant', 'size', 'shape', 'connected', 'disabled', 'toggle', 'selected', 'icon', 'trailing-icon', 'label', 'type', 'href', 'target', 'aria-label'];
   }
 
   constructor() {
@@ -405,6 +410,9 @@ export class MdButton extends HTMLElement {
   }
   get size() { return Object.hasOwn(SIZES, this.getAttribute('size')) ? this.getAttribute('size') : 's'; }
   get shape() { return this.getAttribute('shape') === 'square' ? 'square' : 'round'; }
+  /** Position in a connected button group: 'leading', 'middle', 'trailing' or ''. */
+  get connected() { const value = this.getAttribute('connected'); return ['leading', 'middle', 'trailing'].includes(value) ? value : ''; }
+  set connected(v) { v ? this.setAttribute('connected', v) : this.removeAttribute('connected'); }
   get disabled() { return this.hasAttribute('disabled') || !!this._formDisabled; }
   set disabled(v) { v ? this.setAttribute('disabled', '') : this.removeAttribute('disabled'); }
   get toggle() { return this.hasAttribute('toggle'); }
@@ -422,6 +430,11 @@ export class MdButton extends HTMLElement {
     const value = this.getAttribute('type');
     return value === 'submit' || value === 'reset' ? value : 'button';
   }
+  /** Renders a link-role button that navigates on activation. */
+  get href() { return this.getAttribute('href') || ''; }
+  set href(v) { v ? this.setAttribute('href', v) : this.removeAttribute('href'); }
+  get target() { return this.getAttribute('target') || ''; }
+  set target(v) { v ? this.setAttribute('target', v) : this.removeAttribute('target'); }
   get form() { return this._internals?.form; }
   formDisabledCallback(disabled) {
     this._formDisabled = disabled;
@@ -465,6 +478,13 @@ export class MdButton extends HTMLElement {
   }
   _buttonShapes() {
     const css = getComputedStyle(this.shadowRoot.querySelector('.btn'));
+    if (this.connected) {
+      // ButtonGroupDefaults.connected*ButtonShapes: inner corners use
+      // ConnectedButtonGroupSmallTokens (Small, pressed ExtraSmall); checked is full.
+      const shapes = {shape: this._cornerRole(css, 'small', 8), pressedShape: this._cornerRole(css, 'extra-small', 4)};
+      if (this.toggle) shapes.checkedShape = {unit: 'percent', value: 50};
+      return shapes;
+    }
     const [squareRole, pressedRole] = SHAPE_ROLES[this.size], s = SIZES[this.size];
     const square = this._cornerRole(css, squareRole, s.square), round = {unit: 'percent', value: 50};
     const shapes = {
@@ -494,13 +514,30 @@ export class MdButton extends HTMLElement {
       this._shapeState = state;
       this._shapeMotion = new SelectionMotion(this, {progress: state.progress.sample(now).position}, values => {
         const shape = state.getMorphedShape(null, values.progress);
-        btn.style.borderRadius = `${Math.max(0, buttonCornerRadius(shape, btn.offsetWidth, btn.offsetHeight))}px`;
+        this._applyRadius(btn, Math.max(0, buttonCornerRadius(shape, btn.offsetWidth, btn.offsetHeight)));
         this._surface?.clip();
       });
       this._shapeMotion.channels.progress = state.progress;
     }
     if (this._shapeMotion.media?.matches) this._shapeMotion.finish();
     else this._shapeMotion.tick(now);
+  }
+
+  /** Uniform corners, or a connected group's fixed full outer corners and morphing inner corners. */
+  _applyRadius(btn, radius) {
+    const position = this.connected;
+    if (!position) {
+      for (const name of ['border-start-start-radius', 'border-end-start-radius', 'border-start-end-radius', 'border-end-end-radius']) btn.style.removeProperty(name);
+      btn.style.borderRadius = `${radius}px`;
+      return;
+    }
+    const full = Math.min(btn.offsetWidth, btn.offsetHeight) / 2;
+    const start = position === 'leading' ? full : radius, end = position === 'trailing' ? full : radius;
+    btn.style.removeProperty('border-radius');
+    btn.style.setProperty('border-start-start-radius', `${start}px`);
+    btn.style.setProperty('border-end-start-radius', `${start}px`);
+    btn.style.setProperty('border-start-end-radius', `${end}px`);
+    btn.style.setProperty('border-end-end-radius', `${end}px`);
   }
 
   _disposeBorder() {
@@ -553,7 +590,7 @@ export class MdButton extends HTMLElement {
       btn.style.borderColor = previous;
     } else {
       this._borderProbe.style.color = !width ? 'transparent' : this.disabled
-        ? `color-mix(in srgb, ${role} 10%, transparent)` : role;
+        ? composeColorWithAlpha(this._borderProbe,role,.1) : role;
     }
     const color = getComputedStyle(this._borderProbe).color;
     if (!this._borderWidthMotion) {
@@ -618,13 +655,15 @@ export class MdButton extends HTMLElement {
         this._pressed = false;
         this._updateShape();
       },
-      onActivate: () => {
+      onActivate: (e) => {
         if (this.disabled) return;
         if (this.toggle) {
           this.selected = !this.selected;
           this.dispatchEvent(new CustomEvent('change', { detail: { selected: this.selected }, bubbles: true, composed: true }));
         }
-        if (this.type === 'submit' && this._internals?.form) {
+        if (this.href && !this.toggle) {
+          followHref(this, e, this.href, this.target);
+        } else if (this.type === 'submit' && this._internals?.form) {
           this._internals.form.requestSubmit();
         } else if (this.type === 'reset' && this._internals?.form) {
           this._internals.form.reset();
@@ -648,7 +687,7 @@ export class MdButton extends HTMLElement {
     btn.disabled = this.disabled;
     btn.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
     btn.setAttribute('tabindex', this.disabled ? '-1' : '0');
-    btn.setAttribute('role', this.toggle ? 'checkbox' : 'button');
+    btn.setAttribute('role', this.toggle ? 'checkbox' : this.href ? 'link' : 'button');
     if (this.hasAttribute('aria-label')) btn.setAttribute('aria-label', this.getAttribute('aria-label'));
     else btn.removeAttribute('aria-label');
     btn.removeAttribute('aria-pressed');

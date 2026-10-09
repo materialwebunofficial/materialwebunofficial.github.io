@@ -1,0 +1,376 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "count": 86000,
+  "sha256": "ea9fa6b783636411722d9abe4ec4a40212fa12e3f2be597f835d02bdba30ac94",
+  "sources": [
+    {
+      "file": "test/fixtures/androidx/progress-runtime/Animatable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Animatable.kt",
+      "sha256": "1561378b721a147fd9b016fc1ec70cfe7bd3f89f64abf0aac92ebb538179bcc7"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationState.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationState.kt",
+      "sha256": "39dde170279e858e17efc5490a90a4fd62248040ad38ccc35b7d9bfb5705c1c9"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/SuspendAnimation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SuspendAnimation.kt",
+      "sha256": "4301f943eae91b09f85855e889b1cf96f35c59bb3aafbd4809650de2ecde911a"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/Animation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Animation.kt",
+      "sha256": "8d396494fd09afc5dda90b6e48327cf86f07b823539e25cbfac9248e23dae6ca"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationVectors.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationVectors.kt",
+      "sha256": "ec86b71dc22e8e4e47e7d9f48e9687e05d5e4e8e33af1b71e69bbd86dfe83e90"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/InternalMutatorMutex.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/InternalMutatorMutex.kt",
+      "sha256": "e68aa1fefb4195418f677e965d7493813c1a910802b9567dc02a3cdddce7a557"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/VectorConverters.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/VectorConverters.kt",
+      "sha256": "6cf233e50830c83521a9a4bc8ec7e76f1217fd45f4b6d6d3133ac4d3e938c901"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationSpec.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationSpec.kt",
+      "sha256": "62d3f0ca78b6620e8b220990036a9da083c7bd959f5a54945c60e449379a8884"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/MonotonicFrameClock.kt",
+      "sha256": "3700d936837fae6d98252ec44e4c9c9b002912e40df9134cd6943e337fa2c1f1",
+      "file": "test/fixtures/androidx/progress-runtime/MonotonicFrameClock.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/MotionDurationScale.kt",
+      "sha256": "f3c4211bbd3e4f4b647f7b5d3fcf1edf7352d78fb97f485821549e3d4257aca5",
+      "file": "test/fixtures/androidx/progress-runtime/MotionDurationScale.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/InfiniteAnimationPolicy.kt",
+      "sha256": "8971153b6127fbdbcf9e1cb13fd45d1226d3a84f92fe2099e30ec738eeacdf8e",
+      "file": "test/fixtures/androidx/progress-runtime/InfiniteAnimationPolicy.kt"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationEndReason.kt",
+      "sha256": "ec51f94e02bd6c2fa50b0a65c8cbe9a78594bc7a0bc9c24e4f3a775d0be4260c",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationEndReason.kt"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/PlatformInfiniteAnimationPolicy.kt",
+      "sha256": "0cefbefd1fc522c223522b608c6c5980cbe90b55367e699f5210459ad7ff5c28",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/InfiniteAnimationPolicy.kt"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/InfiniteTransition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/InfiniteTransition.kt",
+      "sha256": "570ff75ce3e826eb0ed0cc14e5db98cabf2f02885afa1f70216aa7cf267fc801"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/libs.versions.toml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/gradle/libs.versions.toml",
+      "sha256": "46e5ee0848d0e78561f93c4c1d9c6d7319dd1221cbb29fd408ff77b308febcbf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SpringEstimation.kt",
+      "sha256": "7527111793fa8946d37fa684421f245a8d38b9c2445619a9bc784ca5c7367b12",
+      "file": "test/fixtures/androidx/motion/SpringEstimation.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/SpringSimulation.kt",
+      "sha256": "78ccee541bba54e71666376819ec8b5e961421f0ea21ec34965da493827bf721",
+      "file": "test/fixtures/androidx/motion/SpringSimulation.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/FloatAnimationSpec.kt",
+      "sha256": "7ffb94a9a8b62bbb65d653bdb21a71d974e57174513aae8fddb68cd183a33513",
+      "file": "test/fixtures/androidx/motion/FloatAnimationSpec.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/VectorizedAnimationSpec.kt",
+      "sha256": "2a3857a7620fcb108972c8886d18a1620fc54247216db6070750c2755c8c9cf9",
+      "file": "test/fixtures/androidx/motion/VectorizedAnimationSpec.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimateAsState.kt",
+      "sha256": "86dfadb3140e95cb5efc47ec5235885aac603d18b8290253b0f14778d40e8acc",
+      "file": "test/fixtures/androidx/motion/AnimateAsState.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationSpec.kt",
+      "sha256": "62d3f0ca78b6620e8b220990036a9da083c7bd959f5a54945c60e449379a8884",
+      "file": "test/fixtures/androidx/motion/AnimationSpec.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/Transition.kt",
+      "sha256": "5ade64fe6a15ac29a0cc5946f4cb16587a6606a1d74acc97f1412c6d66ab5787",
+      "file": "test/fixtures/androidx/motion/Transition.kt"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/SingleValueAnimation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/SingleValueAnimation.kt",
+      "sha256": "e9e130f48de5a411abb21c7c1055e43ee8af5f37a9d76828d14cfbaaf6c478d8"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/AnimationTooling.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/tooling/AnimationTooling.kt",
+      "sha256": "f66f0085e9212484de358522d3b36b5af4814130e1e3ace2ebdecf4382df8142"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/AndroidUiDispatcher.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/AndroidUiDispatcher.android.kt",
+      "sha256": "48ef248c7d25086c4c0f6716c123f0dee1ae0f3dc867667bc061d0e01f2fc19c"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/AndroidUiFrameClock.android.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/AndroidUiFrameClock.android.kt",
+      "sha256": "84da45b04e25fa64a5d2e9b0dafc9e223990a30c102228fffa0d6a546e31bbb8"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/BroadcastFrameClock.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/BroadcastFrameClock.kt",
+      "sha256": "b2c327f8d949c9c27c70087bb1573f8048da049105dc1ad03a4960ecef9a99ca"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/AwaiterQueue.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/internal/AwaiterQueue.kt",
+      "sha256": "c787c7c5c226d475d0e6ff84ce72972bd099f1ba316d7b79e37e948c9c522ba9"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/CancellationHandle.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/CancellationHandle.kt",
+      "sha256": "b745d4ddd31e151192100ee0c8e75fbe05642c3b6df352f53b98b97657da3678"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/Effects.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/Effects.kt",
+      "sha256": "e888128ec8581f2b718545bb2805246988a7dcc36661c6e71f66d3cc2e1bf575"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/Recomposer.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/Recomposer.kt",
+      "sha256": "bc3893ce682af392bbd27b5157671f2aa774a806f8d5be755fe0f744f92268a3"
+    },
+    {
+      "file": "test/fixtures/androidx/text-field/AndroidX-libs.versions.toml",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/gradle/libs.versions.toml",
+      "sha256": "46e5ee0848d0e78561f93c4c1d9c6d7319dd1221cbb29fd408ff77b308febcbf"
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/ColorSpace.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpace.kt",
+      "sha256": "f6a937d920188b8f9a3236c73513141fd446ca2dad14e33b688d1bef213d7d45",
+      "bytes": 26906
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/ColorSpaces.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpaces.kt",
+      "sha256": "0646b25223bd32f3818f0651f99d883281f9c5b6fbb856273ad6f5bf1d2751d7",
+      "bytes": 16476
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/ColorModel.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorModel.kt",
+      "sha256": "64016fc1f2f16feaeb48570bf60e3d83531fcb79064b7de0fe5943a9bcaeeeb8",
+      "bytes": 3007
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Rgb.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Rgb.kt",
+      "sha256": "1994720f9c2cca4ca1f7f6fe3ce0d1803a2e2c99818096dd96966a147b979bf5",
+      "bytes": 54036
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Connector.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Connector.kt",
+      "sha256": "044837f674a3886f6cc2b669f0201e56e73ae9ed24ed1265177d91b72547e702",
+      "bytes": 13268
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/RenderIntent.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/RenderIntent.kt",
+      "sha256": "cc97098b45e36f4dc13a4d47d1ebf2fdd0fe8225a941e55ee3473d679334b157",
+      "bytes": 2898
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/TransferParameters.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/TransferParameters.kt",
+      "sha256": "ddbb9a6295dfd203a6d90b670d508e72c2fdbbd3456fac6aa44eeda907641988",
+      "bytes": 4021
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/WhitePoint.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/WhitePoint.kt",
+      "sha256": "291d963e891eb49297b3701b46e98c7f3f39b094a0124a84934703686edf043f",
+      "bytes": 1612
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Adaptation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt",
+      "sha256": "6acc8a2851260afee849afbf2a1f3d8202fdb0d95504fd63796e283abe860efe",
+      "bytes": 3819
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Lab.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Lab.kt",
+      "sha256": "658754a278c5afbc45a61bd295e1663b93c80a9f0abf97f7ec5adc48fa861950",
+      "bytes": 4365
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Xyz.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Xyz.kt",
+      "sha256": "97778ba13c2810d96c7f3c2f002a980a4e2706b956714ba6ce50f286332e471f",
+      "bytes": 2067
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Illuminant.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Illuminant.kt",
+      "sha256": "07182029e79db0c99a3d708241f37ae20c302214fc3817977dec63f42dd05d1b",
+      "bytes": 2831
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/Float16.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Float16.kt",
+      "sha256": "fa619d5a9d29881292e6f95ad4c6e4097c11c29df0c3c4ce0f51d261acde84d2",
+      "bytes": 25169
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/GraphicsInlineClassHelper.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt",
+      "sha256": "49fc52f1ba75f646ee6909ef346542039929bb9bb224600638c3e92963f27e19"
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/UtilInlineClassHelper.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/InlineClassHelper.kt",
+      "sha256": "7426f9c2b0ee749555ce07621a063863078d7e629e1aa87e1493244c75a5f076"
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/MathHelpers.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt",
+      "sha256": "ce262ffce1cdc0ab8231e03bcd1cbf7eef0c015da84fb223552e4097057e13fa"
+    },
+    {
+      "file": "test/fixtures/androidx/color/packed/InlineClassHelper.jvmAndAndroid.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/jvmAndAndroidMain/kotlin/androidx/compose/ui/util/InlineClassHelper.jvmAndAndroid.kt",
+      "sha256": "fd37878a8d1f8d5dc270e6612910329bd7b02590f412e44541a81b0f7eb6b84f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/ColorVectorConverter.kt",
+      "sha256": "3ff31ad9217f13e9421a4dee0ad0cbf3cc8a1284879dd2b021323bba737d7f93",
+      "file": "test/fixtures/androidx/color/ColorVectorConverter.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Oklab.kt",
+      "sha256": "9a44dd54caed071c9722bf1d3dab07b3a07ffe7ae998e6e50395684b956c6075",
+      "file": "test/fixtures/androidx/color/Oklab.kt"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt",
+      "sha256": "3b8bbdd5ccc4a3200b1cedef5ff4f91574a4db508b3ac2d9ae3e465eec8468e7",
+      "file": "test/fixtures/androidx/color/Color.kt"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/AnimationVectors.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/AnimationVectors.kt",
+      "sha256": "ec86b71dc22e8e4e47e7d9f48e9687e05d5e4e8e33af1b71e69bbd86dfe83e90"
+    },
+    {
+      "file": "test/fixtures/androidx/progress-runtime/VectorConverters.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/VectorConverters.kt",
+      "sha256": "6cf233e50830c83521a9a4bc8ec7e76f1217fd45f4b6d6d3133ac4d3e938c901"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-color/generate-runtime.mjs",
+      "sha256": "1622a43ac26ea38a4e208b3852e07f6fb9f8259e8f3cce95d93608c1a4eb9f31"
+    },
+    {
+      "file": "tools/androidx-color/packed-runtime.mjs",
+      "sha256": "e59e0d92ba223515d49d34fd3d8684c4932d11c629a3c1f70b6d6effcad1a2ce"
+    },
+    {
+      "file": "tools/androidx-color/AnnotationHost.kt",
+      "sha256": "d8f336a6fd6a88b7ff136eb553d39041fc02c2584209ac89db80b02c413c1f30"
+    },
+    {
+      "file": "tools/androidx-color/PackedColorRuntimeProbe.kt",
+      "sha256": "d0a53905136d4459f0cbad38cfc6a2a3ef675dcd847a21297d0c05000a6388a0"
+    },
+    {
+      "file": "tools/androidx-motion/finite-runtime.mjs",
+      "sha256": "6d810f49d746ef7c5b44f7e4af8915cf521a4ad644285532ab9559659c43834c"
+    },
+    {
+      "file": "tools/androidx-picker/ClockRuntimeHost.kt",
+      "sha256": "f98bd4058170cacc560de911680be429fe446bbd94ca2515266a87af907cd064"
+    },
+    {
+      "file": "tools/androidx-text-field/ContainerBroadcastCompositionHost.kt",
+      "sha256": "7d215e132bf122d2df8c873a8a36ff91a00780ba7c045abe2f5cb7b4831ad491"
+    },
+    {
+      "file": "tools/androidx-text-field/ContainerValueHost.kt",
+      "sha256": "5c772e6d062e414ae21b5e264b85ef031fe5a69c855254dc94a49f8818f3ee63"
+    },
+    {
+      "file": "tools/androidx-text-field/AndroidLooperHost.kt",
+      "sha256": "cc9c43796ab9b31596186bbbe6478794dd9115761ee1230584e55b77f1892c36"
+    },
+    {
+      "file": "tools/androidx-text-field/AndroidChoreographerHost.kt",
+      "sha256": "29ccc767eda560b0fd5cb3b7fb9aa9bfb6bd5bfbf4263cbd485d3b7a7118ff84"
+    },
+    {
+      "file": "tools/androidx-text-field/AndroidHandlerCompatHost.kt",
+      "sha256": "295d98d4fb610cdf934a58c0e6256901b1e73666ad44a68d7d231d175fe010e2"
+    },
+    {
+      "file": "tools/androidx-text-field/AndroidClockHost.kt",
+      "sha256": "0afa113d26d1ee364aff15cbc66d171e31844ebc58e15a5d431531af1d3e2c2e"
+    },
+    {
+      "file": "tools/androidx-text-field/BroadcastAtomicHost.kt",
+      "sha256": "cb3ab802716f0a9c298c2b03c4658c4f77b009c680292f56dffc3ac51539db9d"
+    },
+    {
+      "file": "tools/androidx-text-field/BroadcastSynchronizationHost.kt",
+      "sha256": "89c813bca5a64e823ed599c9d56eddf45fe6b08937f3fe30cf86a7399b6b39e3"
+    },
+    {
+      "file": "tools/androidx-text-field/BroadcastClockHost.kt",
+      "sha256": "477b1592ee52963e9a041d60ad650cb51063f0f5d0c80c3ff71eecfd31516820"
+    }
+  ],
+  "compiler": {
+    "version": "1.9.24",
+    "frontend": "K2 experimental language2.0",
+    "originalBuildVersion": "2.4.20"
+  },
+  "libraries": [
+    {
+      "file": "stdlib.jar",
+      "sha256": "858b902696da9cf585ab9d98ffc1c2712269828354dfe9107e3711b084a36468"
+    },
+    {
+      "file": "collection.jar",
+      "sha256": "d5cf7b72647c7995071588fe870450ff9c8f127f253d2d4851e161b800f67ae0"
+    },
+    {
+      "file": "androidx-annotation.jar",
+      "sha256": "9aab326d9492800991854360ac248f493ce7f7c3183519309b78ace9e240f6f6"
+    },
+    {
+      "file": "coroutines-1.9.0.jar",
+      "sha256": "ad89c2892235e670f222d819cb3d81188143cb19a05b59df9889ae4269f5c70a"
+    }
+  ],
+  "scope": "Complete original packed Color/ColorSpaces/all conversions/Float16/math/JVM bindings and ColorVectorConverter with Color animate-as-state/value wrappers/AnimateAsState, finite Animatable/spring/snap/AnimationState/TargetBasedAnimation/SuspendAnimation/internal mutex, original remembered coroutine scope, BroadcastFrameClock/AwaiterQueue and AndroidUiDispatcher. Full native packed color is used, no Float Color proxy. Plain scalar State/slots/commit/frame/handler/OS/synchronization and annotation/Dp leaves are hosts. Full Recomposer/snapshot/real component trees/OS delay/native raster/original compiler build remain separate."
+}

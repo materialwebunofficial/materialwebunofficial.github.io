@@ -1,0 +1,145 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "count": 28160,
+  "sha256": "253ec70d113231ff88560e6093ab50ebf383e705ccda449122d3e22216559690",
+  "sources": [
+    {
+      "file": "test/fixtures/androidx/chip/Chip.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Chip.kt",
+      "sha256": "d3f1c95d15522e08a2b8222956ff0503c346f97aab670741ab8b7aedcfe538d9"
+    },
+    {
+      "file": "test/fixtures/androidx/chip/AssistChipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/AssistChipTokens.kt",
+      "sha256": "8ea69b2b3996905eb6b447347746d143877ca588887077af80d84c2c77381fa5"
+    },
+    {
+      "file": "test/fixtures/androidx/chip/FilterChipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FilterChipTokens.kt",
+      "sha256": "6a718caa30f5ce889889bb20eae01f9fa9bf2400c36c1c8d8856b1dedc95a61a"
+    },
+    {
+      "file": "test/fixtures/androidx/chip/InputChipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/InputChipTokens.kt",
+      "sha256": "5592a6e747c423b9e8c82a4ab3eeb07383fb925288519687bad2c0d13c999b15"
+    },
+    {
+      "file": "test/fixtures/androidx/chip/SuggestionChipTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/SuggestionChipTokens.kt",
+      "sha256": "69bb0710c284abf90b044c738d0b94b07e3d5989c9ac88c5836afd7124f630d8"
+    },
+    {
+      "file": "test/fixtures/androidx/chip/ChipsTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ChipsTokens.kt",
+      "sha256": "2b2a4dedec98b42017ac89cea5a1e6a505fdc9ce27560abf83ca6219bbdd9dec"
+    },
+    {
+      "file": "test/fixtures/androidx/chip/ElevationTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ElevationTokens.kt",
+      "sha256": "b0613cc2c1e30fb62da126f82f5870f7231e3cf4117f36132e466e1827de0a3c"
+    },
+    {
+      "file": "test/fixtures/androidx/chip/Box.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt",
+      "sha256": "3990421e443b0130835f286f0d4b9d8f2127fa7b2b4efa8054b39896646b36c3"
+    },
+    {
+      "file": "test/fixtures/androidx/chip/Intrinsic.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Intrinsic.kt",
+      "sha256": "1802d181243ba75f8a2876ac493f36d58615c16eaa074a3249245d44d0ebac63"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/Row.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Row.kt",
+      "sha256": "7c2df523eb76856789670f8352a14657a65f43e39d4ec3a83b02e86924a8ac09"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/Column.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt",
+      "sha256": "508d56ac5e7a494b6c6a8a0376cf6f606ee6e91287735fccf64e19dace1a0af8"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/RowColumnMeasurePolicy.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt",
+      "sha256": "ed3c0e8a7c053bdd595bd5955bb445b96c0b3bbfc39f434a2ba5f48af706096b"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/Arrangement.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Arrangement.kt",
+      "sha256": "5c472ce87f456cd5b6c176088aab58dd18f1343b1a25c41c6ec0495d2d55d0d2"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/RowColumnImpl.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt",
+      "sha256": "7a729096aa4f8fa7fae498eb4a727c1103580ef778afd8df1503b20f18143fb4"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/Alignment.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Alignment.kt",
+      "sha256": "bf2e150a8f21de8088dba5f7007c5e2afd5e4ee2c73eca6c43d93a0132977fc1"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/FloatingToolbar.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/FloatingToolbar.kt",
+      "sha256": "7c014d29baef68f505a624b26e4c264bce2e7f72726d29dfcc09869c81142598"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/Placeable.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Placeable.kt",
+      "sha256": "3cad263d6cb7b61c391156ead157ec81e61f83d5b7f9455bb300c527d46387b5"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/Constraints.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Constraints.kt",
+      "sha256": "c9337b89da4fa61175cea4f15ec4a602049e5c91015153c90f479a6bdf4b340c"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/Size.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Size.kt",
+      "sha256": "9395b271dbb93f6b0038f5af0b96ed50ec6aa3ff257c20eac5d748465bcab15f"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/Padding.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Padding.kt",
+      "sha256": "0298988edd2e18978fbfea177e5b69526acabe7de1621cb8dc5e866df4e31a55"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/EnterExitTransition.kt",
+      "path": "compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/EnterExitTransition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/EnterExitTransition.kt",
+      "sha256": "4b395c9289a7f678ad748a0f61a256789c9988309a919b0ab16a4066f9d70f03"
+    },
+    {
+      "file": "test/fixtures/androidx/toolbar-row/InteractiveComponentSize.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/InteractiveComponentSize.kt",
+      "sha256": "fb19262a174f765f71ac43a7a44c3398d40b8b550043c034bcd0700b5799245a"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-chip/generate-layout.mjs",
+      "sha256": "fc4df1ccfc799d59792768e3ffb1fc9c2cdd8885b6d9123c908601dcddac1463"
+    },
+    {
+      "file": "tools/androidx-chip/LayoutHost.kt",
+      "sha256": "4ebfc17d76a08a38db4765ffb9ded336f2a5390d13605dda2b71d7b5b5315496"
+    },
+    {
+      "file": "tools/androidx-toolbar-row/generate.py",
+      "sha256": "56a882c84cd9d184011991f4fb8d079d3f6bdebd527509cf04e4beb70585b736"
+    },
+    {
+      "file": "tools/androidx-toolbar-row/Adapter.kt",
+      "sha256": "dcdddbdee073a1527a2f3bdcf66ae49b9027d4aa2c2e1af4614adb4b0bea1729"
+    },
+    {
+      "file": "tools/androidx-toolbar-row/VisibilityAdapter.kt",
+      "sha256": "5d08e89795084b7586add33ebc514747cb87b1c30513c7f68a283072ba741441"
+    },
+    {
+      "file": "tools/androidx-toolbar-constraints/Adapter.kt",
+      "sha256": "1a4d3d9cb7538f349d4c103a17894d4bb3f5ee86d79178c2a2622dc992e4f9e8"
+    }
+  ],
+  "scope": "Complete original ChipContent and AnimatingChipContent bodies execute in a recording composable DSL. Complete original Row/Column, Box measure/place, ChipArrangement, IntrinsicWidth/IntrinsicSizeModifier, UnspecifiedConstraintsNode, SizeNode, PaddingValuesModifier, Constraints/Alignment and Placeable arithmetic execute. Fixed/wrapping leaf and default-intrinsic proxy, composition locals and atomic visibility samples are explicit host boundaries. No Android text/font/raster, full Compose composition/Transition or real event scheduling."
+}

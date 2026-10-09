@@ -117,7 +117,7 @@ const defaultStyle = `
   }
 
   .material-symbols-rounded, .mat-sym, .close-icon {
-    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', sans-serif !important;
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif) !important;
     font-size: 24px;
     line-height: 1;
     display: inline-block;

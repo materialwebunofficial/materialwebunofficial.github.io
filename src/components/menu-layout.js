@@ -38,6 +38,29 @@ export function calculateMenuPosition({anchor,windowSize,size,position='below',r
  const x=choose(xs,windowSize.width,size.width,horizontalMargin,Math.round(offsetX)*(rtl?-1:1)),y=choose(ys,windowSize.height,size.height,verticalMargin,Math.round(offsetY));
  return{x,y,origin:menuTransformOrigin(anchor,{left:x,top:y,right:x+size.width,bottom:y+size.height})};
 }
+// Exposed dropdowns use their own native candidate order and fit criteria.
+export function calculateExposedMenuPosition({anchor,windowSize,size,rtl=false,topWindowInsets=0,verticalMargin=48}){
+ const height=windowSize.height+topWindowInsets;
+ const xs=[rtl?anchor.right-size.width:anchor.left,rtl?anchor.left:anchor.right-size.width,
+  Math.trunc((anchor.left+anchor.right)/2)<Math.trunc(windowSize.width/2)?0:windowSize.width-size.width];
+ const ys=[anchor.bottom,anchor.top-size.height,
+  Math.trunc((anchor.top+anchor.bottom)/2)<Math.trunc(height/2)?0:height-size.height];
+ const x=xs.find((value,index)=>index===xs.length-1||value>=0&&value+size.width<=windowSize.width);
+ let y=0;
+ for(let index=0;index<ys.length;index++){
+  let candidate=ys[index];
+  if(index===ys.length-1)candidate=size.height>=height-2*verticalMargin?Math.round((height-size.height)/2):Math.max(verticalMargin,Math.min(height-verticalMargin-size.height,candidate));
+  if(index===ys.length-1||candidate>=0&&candidate+size.height<=height){y=candidate;break;}
+ }
+ return{x,y,origin:menuTransformOrigin(anchor,{left:x,top:y,right:x+size.width,bottom:y+size.height})};
+}
+export function calculateExposedMenuMaxHeight({windowBounds,anchor,verticalMargin=48}){
+ if(!anchor)return 0;
+ const top=windowBounds.top+verticalMargin,bottom=windowBounds.bottom-verticalMargin,f=Math.fround;
+ const available=f(anchor.top)>windowBounds.bottom||f(anchor.bottom)<windowBounds.top?bottom-top:
+  Math.round(Math.max(f(f(anchor.top)-top),f(bottom-f(anchor.bottom))));
+ return Math.max(available,0);
+}
 export function arrangeMenuChildren({width,sizes,leading=true,trailing=true,spacing=8,rtl=false}){
  return sizes.map((size,index)=>{const x=index===0?0:index===1&&leading?sizes[0]+Math.round(spacing):index===1&&!leading&&trailing||index===2?width-size:0;return rtl?width-x-size:x;});
 }

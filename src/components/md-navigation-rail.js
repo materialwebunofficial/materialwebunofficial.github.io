@@ -1,7 +1,8 @@
 /** Web adaptation of AndroidX public WideNavigationRail / WideNavigationRailItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f. */
 import { SelectionMotion } from '../motion/selection-motion.js';
-import { ColorMotion } from '../motion/color-motion.js';
+import { AsStateColorMotion as ColorMotion } from '../motion/animate-as-state.js';
+import {resolveComposeColor,composeColorCSS,composeColorWithAlpha} from '../motion/compose-color-css.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -33,7 +34,7 @@ const defaultStyle = `
   .item:not(:disabled):hover .ripple::before { opacity:.08; }
   .item:not(:disabled):focus-visible .ripple::before, .item:not(:disabled).pressed .ripple::before { opacity:.1; }
   .item:focus-visible .ripple { outline:3px solid var(--md-sys-color-secondary, #625B71); outline-offset:2px; }
-  .icon { font-family:'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+  .icon { font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-size:24px; font-weight:normal; font-style:normal; line-height:24px; width:24px; height:24px;
     white-space:nowrap; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     color:var(--md-sys-color-on-surface-variant, #49454F); }
@@ -50,6 +51,7 @@ const defaultStyle = `
   .item:not(:disabled)[aria-selected="true"][data-icon-position="start"] .label,
   .item:not(:disabled)[aria-selected="true"][data-icon-position="start"] .label-color { color:var(--md-sys-color-on-secondary-container, #1D192B); }
   .item[disabled] .icon, .item[disabled] .label, .item[disabled] .label-color { color:color-mix(in srgb, var(--md-sys-color-on-surface-variant, #49454F) 38%, transparent); }
+  .item[disabled] .label-color { color:var(--md-sys-color-on-surface-variant, #49454F); }
   .label-color { display:none; }
   .measure { position:absolute; inset:0 auto auto 0; pointer-events:none; visibility:hidden; }
   .md-ripple-effect { position:absolute; border-radius:50%; background:currentColor; opacity:0; animation:rail-ripple 450ms linear; }
@@ -146,7 +148,7 @@ export class MdNavigationRail extends HTMLElement {
         aria-label="${escapeHtml(item.ariaLabel??item.label??item.icon??'')}">
         <span class="indicator" aria-hidden="true"></span><span class="ripple" aria-hidden="true"></span>
         <span class="icon" aria-hidden="true"><span class="glyph">${escapeHtml(item.icon??'')}</span></span>
-        ${item.label==null?'':`<span class="label">${escapeHtml(item.label)}</span><span class="measure" aria-hidden="true">${escapeHtml(item.label)}</span><span class="label-color" aria-hidden="true"></span>`}
+        ${item.label==null?'':`<span class="label">${escapeHtml(item.label)}</span><span class="measure" aria-hidden="true">${escapeHtml(item.label)}</span>`}<span class="label-color" aria-hidden="true"></span>
       </button>`).join('')}</div><slot></slot></nav>`;
     this._records=[...this.shadowRoot.querySelectorAll('.item')].map((button,index)=>({item:items[index],button,
       indicator:button.querySelector('.indicator'),ripple:button.querySelector('.ripple'),icon:button.querySelector('.icon'),
@@ -171,9 +173,12 @@ export class MdNavigationRail extends HTMLElement {
   }
   _syncLabelColors() {for(const r of this._records)this._syncLabelColor(r);}
   _syncLabelColor(record) {
-    if(!record.label||!this.isConnected)return;
+    if(!this.isConnected)return;
     record.colorProbe.style.removeProperty('color');
-    const color=getComputedStyle(record.colorProbe).color;
+    const source=getComputedStyle(record.colorProbe).color,color=record.button.disabled?composeColorWithAlpha(record.colorProbe,source,.38):source;
+    record.icon.style.removeProperty('color');
+    record.icon.style.color=record.button.disabled?color:composeColorCSS(resolveComposeColor(record.colorProbe,getComputedStyle(record.icon).color));
+    if(!record.label)return;
     if(!record.colorMotion)record.colorMotion=new ColorMotion(this,record.colorProbe,color,value=>record.label.style.color=value);
     else record.colorMotion.set(color);
   }

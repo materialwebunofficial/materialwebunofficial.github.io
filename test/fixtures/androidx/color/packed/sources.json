@@ -1,0 +1,103 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "ColorSpace.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpace.kt",
+      "sha256": "f6a937d920188b8f9a3236c73513141fd446ca2dad14e33b688d1bef213d7d45",
+      "bytes": 26906
+    },
+    {
+      "file": "ColorSpaces.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpaces.kt",
+      "sha256": "0646b25223bd32f3818f0651f99d883281f9c5b6fbb856273ad6f5bf1d2751d7",
+      "bytes": 16476
+    },
+    {
+      "file": "ColorModel.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorModel.kt",
+      "sha256": "64016fc1f2f16feaeb48570bf60e3d83531fcb79064b7de0fe5943a9bcaeeeb8",
+      "bytes": 3007
+    },
+    {
+      "file": "Rgb.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Rgb.kt",
+      "sha256": "1994720f9c2cca4ca1f7f6fe3ce0d1803a2e2c99818096dd96966a147b979bf5",
+      "bytes": 54036
+    },
+    {
+      "file": "Connector.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Connector.kt",
+      "sha256": "044837f674a3886f6cc2b669f0201e56e73ae9ed24ed1265177d91b72547e702",
+      "bytes": 13268
+    },
+    {
+      "file": "RenderIntent.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/RenderIntent.kt",
+      "sha256": "cc97098b45e36f4dc13a4d47d1ebf2fdd0fe8225a941e55ee3473d679334b157",
+      "bytes": 2898
+    },
+    {
+      "file": "TransferParameters.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/TransferParameters.kt",
+      "sha256": "ddbb9a6295dfd203a6d90b670d508e72c2fdbbd3456fac6aa44eeda907641988",
+      "bytes": 4021
+    },
+    {
+      "file": "WhitePoint.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/WhitePoint.kt",
+      "sha256": "291d963e891eb49297b3701b46e98c7f3f39b094a0124a84934703686edf043f",
+      "bytes": 1612
+    },
+    {
+      "file": "Adaptation.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt",
+      "sha256": "6acc8a2851260afee849afbf2a1f3d8202fdb0d95504fd63796e283abe860efe",
+      "bytes": 3819
+    },
+    {
+      "file": "Lab.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Lab.kt",
+      "sha256": "658754a278c5afbc45a61bd295e1663b93c80a9f0abf97f7ec5adc48fa861950",
+      "bytes": 4365
+    },
+    {
+      "file": "Xyz.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Xyz.kt",
+      "sha256": "97778ba13c2810d96c7f3c2f002a980a4e2706b956714ba6ce50f286332e471f",
+      "bytes": 2067
+    },
+    {
+      "file": "Illuminant.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Illuminant.kt",
+      "sha256": "07182029e79db0c99a3d708241f37ae20c302214fc3817977dec63f42dd05d1b",
+      "bytes": 2831
+    },
+    {
+      "file": "Float16.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Float16.kt",
+      "sha256": "fa619d5a9d29881292e6f95ad4c6e4097c11c29df0c3c4ce0f51d261acde84d2",
+      "bytes": 25169
+    },
+    {
+      "file": "GraphicsInlineClassHelper.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt",
+      "sha256": "49fc52f1ba75f646ee6909ef346542039929bb9bb224600638c3e92963f27e19"
+    },
+    {
+      "file": "UtilInlineClassHelper.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/InlineClassHelper.kt",
+      "sha256": "7426f9c2b0ee749555ce07621a063863078d7e629e1aa87e1493244c75a5f076"
+    },
+    {
+      "file": "MathHelpers.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt",
+      "sha256": "ce262ffce1cdc0ab8231e03bcd1cbf7eef0c015da84fb223552e4097057e13fa"
+    },
+    {
+      "file": "InlineClassHelper.jvmAndAndroid.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/ui/ui-util/src/jvmAndAndroidMain/kotlin/androidx/compose/ui/util/InlineClassHelper.jvmAndAndroid.kt",
+      "sha256": "fd37878a8d1f8d5dc270e6612910329bd7b02590f412e44541a81b0f7eb6b84f"
+    }
+  ]
+}

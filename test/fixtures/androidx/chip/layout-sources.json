@@ -1,0 +1,15 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Box.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt",
+      "sha256": "3990421e443b0130835f286f0d4b9d8f2127fa7b2b4efa8054b39896646b36c3"
+    },
+    {
+      "file": "Intrinsic.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Intrinsic.kt",
+      "sha256": "1802d181243ba75f8a2876ac493f36d58615c16eaa074a3249245d44d0ebac63"
+    }
+  ]
+}

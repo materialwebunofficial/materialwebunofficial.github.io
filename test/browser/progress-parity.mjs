@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 export async function testProgressParity(browser,base){
  const page=await browser.newPage({viewport:{width:960,height:800}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.goto(base+'/test/browser/fixtures/toolbars.html');await page.evaluate(async()=>{await customElements.whenDefined('md-progress-indicator');await document.fonts.ready;});
+  await page.goto(base+'/test/browser/fixtures/toolbars.html');await page.waitForFunction(()=>customElements.get('md-progress-indicator')&&document.fonts.status==='loaded',null,{timeout:10000});
   await page.evaluate(()=>{document.querySelector('#fixture').innerHTML=`<md-theme id="scope" style="display:block;width:280px"><md-progress-indicator id="linear" value="65"></md-progress-indicator><md-progress-indicator id="wave" type="linear" variant="wavy" value="75"></md-progress-indicator><md-progress-indicator id="circle" type="circular" value="75"></md-progress-indicator><md-progress-indicator id="spin" type="circular" indeterminate></md-progress-indicator><md-progress-indicator id="cookie" type="circular" variant="wavy" value="70"></md-progress-indicator><md-progress-indicator id="cookie-spin" type="circular" variant="wavy" indeterminate></md-progress-indicator><md-fab id="fab" size="baseline" icon="add" aria-label="Create"></md-fab></md-theme>`;});
   await page.waitForTimeout(100);
   const widths=await page.locator('md-progress-indicator').evaluateAll(nodes=>nodes.map(n=>[n._width,n._height]));

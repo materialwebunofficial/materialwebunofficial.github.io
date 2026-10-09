@@ -5,6 +5,7 @@
 export { SpringPhysics } from './motion/spring-physics.js';
 export { MdButton } from './components/md-button.js';
 export { MdSplitButton } from './components/md-split-button.js';
+export { MdButtonGroup } from './components/md-button-group.js';
 export { MdIconButton } from './components/md-icon-button.js';
 export { MdFab } from './components/md-fab.js';
 export { MdCard } from './components/md-card.js';
@@ -63,7 +64,10 @@ export {
   MD3_PRESETS,
   getActiveSeedHex,
   getActiveHct,
-  TonalPalette
+  TonalPalette,
+  PALETTE_VARIANTS,
+  DEFAULT_PALETTE_VARIANT,
+  resolvePaletteVariant
 } from './theme/hct-color-engine.js';
 export { escapeHtml, sanitizeAttribute, safeJsonParse } from './utils/security.js';
 export { createComponentSheet, adoptSheet } from './utils/styles.js';

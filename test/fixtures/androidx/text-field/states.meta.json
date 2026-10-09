@@ -1,0 +1,48 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "count": 34,
+  "sha256": "584894d7e12df43a79689b0d90df07734360d4258f3e75c8e779961f6578d343",
+  "sources": [
+    {
+      "file": "TextFieldDefaults.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TextFieldDefaults.kt",
+      "sha256": "862b2e5705f879402c62c6dc30844ff2e40b0dcbcf56b868c0f84bffe3d32a41"
+    },
+    {
+      "file": "TextField.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TextField.kt",
+      "sha256": "00ed832c27f1dd8f2f6a57b9f8ecaf13be43e08cf96c79ca5b989a5fe5855ceb"
+    },
+    {
+      "file": "OutlinedTextField.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/OutlinedTextField.kt",
+      "sha256": "41426cc018ae1ec5d4cf590d550e3e9d1e072bb69c8096935f07556a5965c86d"
+    },
+    {
+      "file": "TextFieldImpl.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/TextFieldImpl.kt",
+      "sha256": "6490160723b2e07790cbcae86db014b494aa45b4f5f13402ebfc5597d94b2253"
+    },
+    {
+      "file": "FilledTextFieldTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/FilledTextFieldTokens.kt",
+      "sha256": "3cceaa2d42662fbd200b1ed543de1abfd5e727baade052ab446e35669350cc11"
+    },
+    {
+      "file": "OutlinedTextFieldTokens.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/OutlinedTextFieldTokens.kt",
+      "sha256": "04ffa7424f96b8ad0e82dfcf2bfbeb122a509c5b26478633ce56077018863fa6"
+    }
+  ],
+  "hosts": [
+    {
+      "file": "tools/androidx-text-field/generate.mjs",
+      "sha256": "7cc12b4ed2397ee5d61109607edcda716d094010a35083ad2922cdaf2a3b3f7a"
+    },
+    {
+      "file": "tools/androidx-text-field/ReferenceHost.kt",
+      "sha256": "1dbf0f14284ee590c2a8153503bee2e992bde8b863367cd7aa62af05ccbcbfb1"
+    }
+  ],
+  "scope": "Unchanged default color constructor arguments, Color getter bodies and label/placeholder/affix Transition target/spec branches. Symbolic Color/ColorScheme/selection-local, State and descriptor-recording Transition hosts. No native packed Color/raster, actual Compose transition frame scheduling or measurement."
+}

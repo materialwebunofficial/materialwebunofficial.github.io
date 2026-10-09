@@ -1,0 +1,5 @@
+import fs from 'node:fs';import crypto from 'node:crypto';
+const revision='a095da93f8e98dea8748ceed79ea8427aade245f',directory=new URL('../../test/fixtures/androidx/text-field/',import.meta.url);
+const paths=['compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/LayoutUtil.kt','compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/TextFieldLineLimits.kt'];
+const sources=await Promise.all(paths.map(async path=>{const url='https://raw.githubusercontent.com/androidx/androidx/'+revision+'/'+path,response=await fetch(url);if(!response.ok)throw Error(url+' '+response.status);const bytes=Buffer.from(await response.arrayBuffer()),file=path.split('/').at(-1);fs.writeFileSync(new URL(file,directory),bytes);return{file,url,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};}));
+fs.writeFileSync(new URL('layout-input-sources.json',directory),JSON.stringify({revision,sources},null,2)+'\n');console.log('Pinned '+sources.length+' original text-field layout/input sources.');
