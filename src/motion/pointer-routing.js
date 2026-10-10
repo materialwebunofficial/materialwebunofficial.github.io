@@ -56,13 +56,24 @@ class PointerRouter{
   geometry(entry,event){return entry.input?.(event)??{...domPointerInput(entry.el,event),radius:0,clipping:false,target:0};}
   tree(event,{painted=false}={}){
     const styles=new Map(),style=node=>{let css=styles.get(node);if(!css){css=getComputedStyle(node);styles.set(node,css);}return css;};
-    const paths=new Map([...this.entries].map(entry=>[entry,paintAncestors(entry.el,style)]));
+    // Like Compose hit testing, only nodes whose bounds reach the pointer take
+    // part: a touch may extend a small control to its 48dp minimum (at most
+    // 24dp beyond its box). Every other node is skipped before any style,
+    // clip or paint-order work, so a page of controls costs what the few
+    // under the pointer cost.
+    const reach=event.pointerType==='touch'?24:8;
+    const candidates=[...this.entries].filter(entry=>{
+      // Content skipped by content-visibility (off screen) cannot be under the pointer.
+      if(entry.el.checkVisibility&&!entry.el.checkVisibility({contentVisibilityAuto:true}))return false;
+      const r=entry.el.getBoundingClientRect();
+      return event.clientX>=r.left-reach&&event.clientX<=r.right+reach&&event.clientY>=r.top-reach&&event.clientY<=r.bottom+reach;});
+    const paths=new Map(candidates.map(entry=>[entry,paintAncestors(entry.el,style)]));
     const layer=path=>{const root=path.at(-1);return root&&renderedTopLayer(root,style(root))?root:null;};
     const hitLayer=layer(paintAncestors(deepHit(this.document,event),style));
     // Top-layer boxes are root siblings, independent of their DOM ancestors.
     // Their controls cannot be clipped by, or compete with, another layer.
     // getClientRects also excludes display:none shadow-including ancestors.
-    let entries=[...this.entries].filter(entry=>layer(paths.get(entry))===hitLayer&&visible(entry,event,paths.get(entry),style));
+    let entries=candidates.filter(entry=>layer(paths.get(entry))===hitLayer&&visible(entry,event,paths.get(entry),style));
     const nodes=new Map(),stacks=new Map(),rendered=new Map();
     const rank=entry=>{
       const ranks=[];let present=true;
@@ -88,6 +99,11 @@ class PointerRouter{
     if(!this.hoverObservers.size||!event.isTrusted||event.pointerType==='touch')return;
     this.retireUnpressedHover(event.pointerId);
     if(event.buttons){this.capturedHover(event);return;}
+    // One input dispatches pointerout, pointerover and pointermove with the
+    // same time and position; its hover path is resolved once.
+    const input=`${event.pointerId}|${event.timeStamp}|${event.clientX}|${event.clientY}`;
+    if(this.hoverInput===input)return;
+    this.hoverInput=input;
     const hit=deepHit(this.document,event),physical=ancestors(hit).map(node=>this.byElement.get(node)).find(Boolean);
     let path=this.tree(event,{painted:true});const owner=path.at(-1);
     if(owner&&!physical&&!ancestors(owner.el).includes(hit)&&!ancestors(hit).includes(owner.el))path=[];
@@ -100,6 +116,7 @@ class PointerRouter{
     for(const id of this.hoverPaths.keys())if(id!==pointerId){const record=this.pointers.get(id);if(!record?.pressed||record.hoverCanceled)this.hoverPaths.delete(id);}
   }
   capturedHover(event){
+    this.hoverInput=null;
     const record=this.pointers.get(event.pointerId);
     if(!record)return;
     const root=this.document.documentElement;
@@ -113,7 +130,7 @@ class PointerRouter{
     });
     this.hoverPaths.set(event.pointerId,new Set(path));this.paintHover(event);
   }
-  clearHover(id,event){this.hoverPaths.delete(id);this.paintHover(event);}
+  clearHover(id,event){this.hoverInput=null;this.hoverPaths.delete(id);this.paintHover(event);}
   paintHover(event){
     for(const [el,observers]of this.hoverObservers){
       const entry=this.byElement.get(el),active=!!entry&&[...this.hoverPaths.values()].some(path=>path.has(entry));
@@ -192,7 +209,7 @@ class PointerRouter{
     this.retire();
   }
   remove(entry){
-    this.entries.delete(entry);this.byElement.delete(entry.el);
+    this.entries.delete(entry);this.byElement.delete(entry.el);this.hoverInput=null;
     for(const path of this.hoverPaths.values())path.delete(entry);
     for(const observer of this.hoverObservers.get(entry.el)??[])observer(false);
     for(const record of this.pointers.values()){record.receivers.delete(entry);if(record.owner===entry){record.owner=null;record.blocked=true;}}
@@ -208,11 +225,11 @@ class PointerRouter{
 export function registerPointerBinding(el,{input,precise=false,disabled=()=>false,pointerNode=()=>true,ignoreEvent=()=>false,handlers,canActivate,signal}={}){
   const document=el.ownerDocument;if(!document?.defaultView||signal?.aborted)return {handle:()=>false,cancel(){},ownsAt:()=>null,acceptClick:()=>true};
   let router=routers.get(document);if(!router){router=new PointerRouter(document);routers.set(document,router);}
-  const entry={el,input,precise,disabled,enabled:!disabled(),pointerNode,ignoreEvent,handlers,canActivate};router.entries.add(entry);router.byElement.set(el,entry);
+  const entry={el,input,precise,disabled,enabled:!disabled(),pointerNode,ignoreEvent,handlers,canActivate};router.entries.add(entry);router.byElement.set(el,entry);router.hoverInput=null;
   signal?.addEventListener('abort',()=>router.remove(entry),{once:true});
   return {
     refresh(){
-      const enabled=!disabled();if(enabled===entry.enabled)return;entry.enabled=enabled;
+      const enabled=!disabled();if(enabled===entry.enabled)return;entry.enabled=enabled;router.hoverInput=null;
       // AbstractClickableNode disposes hover interactions on disable while
       // HitPathTracker retains its geometric in/out state. Re-enable does not
       // manufacture a second Enter for a pointer which has never left.

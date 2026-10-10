@@ -1,5 +1,6 @@
 /** Web adaptation of AndroidX NavigationDrawer/DrawerSheet/NavigationDrawerItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f. */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
 import { DrawerOffset, drawerTarget } from '../motion/drawer-motion.js';
 import { PointerVelocityTracker } from '../motion/velocity-tracker.js';
@@ -99,13 +100,15 @@ export class MdNavigationDrawer extends HTMLElement {
  attributeChangedCallback(name,oldValue,newValue){if(!this._rendered||oldValue===newValue)return;
    if(name==='items'||name==='modal'||name==='variant'){this.render();if(this.isConnected){this.setupInteractions();this._resizeObserver?.disconnect();this._resizeObserver?.observe(this._drawer);}
      this._applySelection();this._syncOpen(false);}
-   else if(name==='open')this._syncOpen(true);
+   else if(name==='open')this._syncOpen(!this._snapping);
    else if(name==='selected'||name==='disabled'||name==='enabled')this._applySelection();
    else if(name==='headline')this.shadowRoot.querySelector('.headline').textContent=this.headline;
    else if(name==='dir')this._drawOffset(this._offset);
    else if(name==='gestures-enabled'){if(!this.gesturesEnabled)this._cancelDrag();}
    else this._syncSurface();}
  show(){this.open=true;}
+ /** DrawerState.snapTo: moves to open or closed at once, without the sheet motion. */
+ snapTo(value){this._snapping=true;try{this.open=value===true||value==='open';}finally{this._snapping=false;}}
  close(){if(!this.open)return;this.open=false;this.dispatchEvent(new CustomEvent('close',{bubbles:true,composed:true}));}
  render(){this._abortController?.abort();this._drag=null;this._releaseGestureOwner();if(this._layer?.localName==='dialog'&&this._layer.open)this._layer.close();
    this.dataset.variant=this.variant;const items=this.items,tag=this.modal?'dialog':'div';
@@ -137,7 +140,8 @@ export class MdNavigationDrawer extends HTMLElement {
    this._records.forEach(r=>{const selected=r.index===this.selected;r.button.disabled=!enabled(r);r.button.tabIndex=r===entry?0:-1;
      r.button.setAttribute('aria-selected',String(selected));if(selected)r.button.setAttribute('aria-current','page');else r.button.removeAttribute('aria-current');
      const icon=r.button.querySelector('.icon');if(icon)icon.textContent=String(selected?r.item.selectedIcon??r.item.icon:r.item.icon);});
-   this._revealSelected();}
+   // Scrolling reads layout, so it waits for the frame that lays the sheet out.
+   if(this._revealFrame==null)this._revealFrame=requestAnimationFrame(()=>{this._revealFrame=null;this._revealSelected();});}
  /** Keeps the selected destination inside the sheet's own scroll viewport. */
  _revealSelected(){const button=this._records.find(r=>r.index===this.selected)?.button,content=this._content;
    if(!button||!content||!this.isConnected||content.scrollHeight<=content.clientHeight)return;
@@ -248,4 +252,4 @@ export class MdNavigationDrawer extends HTMLElement {
  _cancelDrag(){const drag=this._drag;this._drag=null;this._releaseGestureOwner();if(!drag?.started)return;
    this._settleDrag(0,drag.id);}
 }
-if(!customElements.get('md-navigation-drawer'))customElements.define('md-navigation-drawer',MdNavigationDrawer);
+if(!customElements.get('md-navigation-drawer'))customElements.define('md-navigation-drawer',delegateHostAria(MdNavigationDrawer));

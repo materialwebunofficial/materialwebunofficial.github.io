@@ -85,7 +85,10 @@ export class MdTopAppBar extends HTMLElement{
  get titleContentColor(){return this.getAttribute('title-content-color')||'';} set titleContentColor(v){this._set('title-content-color',v);}
  get actionIconContentColor(){return this.getAttribute('action-icon-content-color')||'';} set actionIconContentColor(v){this._set('action-icon-content-color',v);}
  get subtitleContentColor(){return this.getAttribute('subtitle-content-color')||'';} set subtitleContentColor(v){this._set('subtitle-content-color',v);}
- connectedCallback(){if(!this._rendered)this.render();this._measuredScrollSize=null;this.setupInteractions();this._bindScrollState();this._sync();this._configureScroll();}
+ // A bar that has never been laid out creates its state and color owners while
+ // connecting but is measured by its first resize observation (before it is
+ // painted), so connecting does not force a layout. A reconnected bar lays out at once.
+ connectedCallback(){if(!this._rendered)this.render();this._measuredScrollSize=null;this.setupInteractions();this._bindScrollState();this._sync({layout:!!this._laidOut});this._configureScroll();}
  disconnectedCallback(){this._abort?.abort();this._abort=null;this._resize?.disconnect();this._mutation?.disconnect();this._color?.dispose();this._color=null;this._stopState?.();this._stopState=null;this._scrollAbort?.abort();this._cancelScrollSettle();}
  attributeChangedCallback(name,oldValue,value){if(oldValue===value)return;if(name==='height-offset'&&this._scrollBehavior)this._scrollBehavior.state.heightOffset=value===null?0:Number(value);if(this._rendered&&this.isConnected)this._sync();}
  render(){
@@ -109,7 +112,7 @@ export class MdTopAppBar extends HTMLElement{
  }
  _queue(){if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{if(!this._queued)return;this._queued=false;if(this.isConnected)this._sync();});}
  _clearRules(){while(this._sizes.sheet.cssRules.length>1)this._sizes.sheet.deleteRule(1);}
- _sync(){
+ _sync({layout=true}={}){
   // A synchronous pre/post-scroll render already consumes queued state work.
   this._queued=false;
   if(!this._rendered||!this.isConnected)return;
@@ -127,7 +130,7 @@ export class MdTopAppBar extends HTMLElement{
    if(record.slot.name!==slotName)record.slot.name=slotName;
    if(name==='bottom'&&!this.twoRows)record.slot.name='unused-'+record.kind;
   }
-  this._layout();this._colors();
+  if(layout){this._layout();this._laidOut=true;}this._colors();
   }finally{if(position===this._scrollPosition)position?.restoreLayout(before);}
  }
  _colors(){

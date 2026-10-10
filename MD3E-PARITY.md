@@ -4,7 +4,185 @@ Status: in progress. Passing tests below verify the listed scope; they do not es
 
 Reference: [AndroidX revision a095da93](https://github.com/androidx/androidx/tree/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3). Motion token fixtures retain their Apache license in `test/fixtures/androidx`. Local research copies live in ignored `research/official-2026-09`.
 
-## Packed Color, native conversion and field applying runtime, 2026-10-09
+## Animation frame cost and page-wide per-frame work, 2026-10-10
+
+Measured in Chromium at 4x CPU throttling (a mid-range laptop), per animation
+frame of the catalog. None of these change what is drawn or when; they remove
+work the browser repeated on every frame.
+
+- Deferred theme updates (src/theme/theme-context.js) waited with one
+  intersection target per component (433 in the catalog), computed on every
+  frame. Waiting components are now grouped under the container that hides
+  them: a content-visibility:auto container reports its own skipped state
+  (contentvisibilityautostatechange), and a hidden subtree is watched once.
+  Intersection work per frame 1.7ms to 0.8ms. Catalog sections whose cards
+  are all created are no longer observed.
+- Buttons, split buttons and segmented buttons kept `will-change: transform`
+  although their box is never transformed, which made every button a
+  compositor layer candidate. They use `isolation: isolate` (the same stacking
+  context, no layer). Layerization per frame 4.8ms to 2.1ms.
+- Floating toolbar (row layout) probed its incoming minimum and maximum
+  constraints with zero and unbounded sizes on every frame (six forced
+  layouts), rewrote its control placement rules on every frame, and its
+  resize observer re-measured all content whenever the frame it had just drawn
+  changed size. The probes are taken again only when the host's resolved
+  min/max/padding, its parent's size or display change, or after a
+  measurement; rules are rewritten when they change; sizes the
+  toolbar drew itself do not trigger a measurement. Expand/collapse frames
+  50-190ms to 9-20ms.
+- Extended FAB expansion read the direction and forced a layout for the hit
+  area on every frame, and its resize observer repeated the hit-area pass. The
+  direction is read once per layout, an unconstrained body's hit area uses the
+  width just drawn, and the repeated pass is skipped. 77ms to 17ms of script
+  per expansion.
+- Scrollable tabs: frame cost now 19-20ms (was 23-24ms) at 4x and within
+  budget at 2x. Selecting a tab scrolls with the source DefaultSpatial spring
+  on every frame.
+- Hover routing resolves one path per pointer input: pointerout, pointerover
+  and pointermove of one input share time and position.
+- Slider accessible names follow changes to their label elements, ids and
+  label associations only, instead of every document mutation.
+
+Modal scroll lock (src/utils/scroll-lock.js). Dialogs, bottom sheets and side
+sheets lock page scrolling through one owner-counted lock; the sheets used to
+write `body.style.overflow` directly, so closing one of two open modals
+unlocked the page. When the page shows a classic scrollbar, its gutter stays
+reserved while locked (`scrollbar-gutter: stable`), so the content no longer
+shifts when a sheet opens and closes.
+
+Inline time input focus. TimeInput requests focus for its selected field when
+it is composed; in a dialog that is the picker's own window. An inline picker
+is part of a page, and taking focus when it is created moved the page's focus
+to a picker far down the catalog while it was built in idle time. An inline
+picker now takes that first focus only when the author marks it `autofocus`
+(the web's request for initial focus), and never from another focused part of
+the page; later selection changes request focus as before. The parity tests
+that follow the source's initial request use `autofocus`.
+
+Showcase. The color lab moves its slider thumb and HCT values on every pointer
+move and re-themes the page when the thumb rests or is released. The inline
+date range picker keeps its 360dp width whatever the selection; the clock dial
+clips its rotated hand, so dragging no longer adds horizontal overflow.
+
+## Pointer hit testing scale, host ARIA, selection menus and catalog layout, 2026-10-10
+
+Hover and press routing (src/motion/pointer-routing.js) built its hit tree from
+every registered control on each trusted pointermove, with style, clip and
+per-shadow-root elementsFromPoint work for all of them. Scrolling the catalog
+moves content under a still mouse, and every resulting hover update took 1.3 to
+2.3 seconds. Like Compose hit testing, the tree now holds only nodes whose
+bounds reach the pointer (a touch may reach 24dp beyond a small control's box
+for its 48dp minimum); everything else is skipped before any style or
+paint-order work. Wheel scrolling the full catalog: p90 frame 16.7ms (was
+1550ms), worst frame 33ms, no long tasks.
+
+Host ARIA (src/utils/host-aria.js). A custom element host has no role, so
+aria-label/labelledby on it are prohibited and states such as aria-expanded,
+aria-controls or aria-haspopup are not allowed; assistive technology ignores
+them. Components that render a native control or semantic container keep host
+ARIA as their own state (getAttribute/setAttribute/ariaLabel still work on the
+host) and apply it to that control; the host carries none except aria-hidden.
+aria-describedby (tooltips) reaches the inner control by element reflection.
+Buttons, FABs and icon buttons now forward aria-expanded, aria-controls and
+aria-haspopup; the loading indicator's progressbar and the segmented button's
+group take the author's label (aria-labelledby is resolved in the host's tree).
+The range picker's month list is a labelled group, not a grid without rows.
+
+Selection menus. md-select, md-autocomplete and the paginator's page-size menu
+used the baseline DropdownMenu container (ExtraSmall, SurfaceContainer) with the
+expressive selected-item color, a mix of both. They now use the Material 3
+Expressive vertical menu from the same source (DropdownMenuPopup,
+DropdownMenuGroup, selectable DropdownMenuItem): a 16dp SurfaceContainerLow
+group, items inset 4dp, the selected item in a 12dp TertiaryContainer.
+md-navigation-drawer gains snapTo (DrawerState.snapTo).
+
+Showcase layout. A docked catalog drawer is placed with snapTo instead of
+sliding in; the address's view is shown and the docked drawer's space kept from
+the first paint, so loading the catalog no longer shifts the content (CLS 0.267
+to 0). The page has a Material shape favicon and theme-color, so browsers no
+longer log a missing icon.
+
+## Loading performance, layout-free connection and catalog fixes, 2026-10-09
+
+Connecting components no longer forces a layout per element. A button, chip or
+top app bar that has never been laid out still creates its remembered owners
+(shape, content, border and color motions) while connecting, but paints what
+needs geometry from its first resize observation, which runs after layout and
+before the first paint. Reconnected elements repaint at once, as before. A new
+toggle button layout measures in its first observation; Surface clipping waits
+for its first measurement; the drawer scrolls its selected destination in the
+next frame. Elevation reads only the shadow levels a frame needs, and unchanged
+frames write nothing. A loading indicator is a 48dp box (its root no longer
+sits on a text baseline, which added 7px). Before definitions load, components
+reserve their container or 48dp minimum size (src/tokens/upgrade.css), so the
+page does not shift when they upgrade. Plain theme colors (hex, rgb, hsl) resolved through the
+probe for Surface, Compose Color and Oklab vectors are shared between elements,
+so one theme role is resolved once instead of once per component. Values with
+var(), currentColor or relative syntax are still resolved per element.
+
+The icon font is a local subset of Material Symbols Rounded built by
+tools/material-symbols/subset.py from the full font in the repository: the
+symbols in icons.txt, with FILL (selected icons) and wght kept variable, opsz
+pinned at 24 and GRAD at 0 as Compose icons draw. It replaces the static
+15 KB subset, which had no FILL axis, and the showcase's render-blocking Google
+Fonts request. Icon faces use font-display: block. Roboto is split by script
+into Latin and Greek/Cyrillic files declared with unicode-range, so a Latin page
+loads 133 KB instead of 217 KB; both keep the wght and wdth axes. The ESM bundle
+is minified with its source map.
+
+Showcase: catalog examples are inert templates, created as their section nears
+the viewport and in idle time while the catalog is open (never while a scroll
+is running). A card created above the viewport scrolls by the change in its
+grid's height; the catalog opts out of native scroll anchoring so the two never
+adjust together. The homepage waves stop drawing while off screen and between
+passes. The modal catalog drawer follows drags only while open, so a drag on the
+page cannot pull it open. The last generated color roles are applied before the
+first paint on the next visit; stored colors from older releases are rewritten.
+
+Components: md-fab-menu follows FloatingActionButtonMenu and
+ToggleFloatingActionButton (FastSpatial size/corner/color/icon progress, 56dp
+full items 4dp apart and 8dp above the FAB, Int stagger with SlowEffects, width
+FastSpatial, alpha FastEffects). The range date picker uses the
+DateRangePicker vertical month list: fixed weekdays over a scrolling list of
+Title Small month subheads (24/20/8dp padding) and six-week grids, starting at
+the displayed month and extended in blocks of twelve over 1900-2100. The docked
+picker is 360dp with month and year menus on one line. Date fields are single
+line. A step joins its stepper while connecting, so content inserted together
+with a stepper is slotted before it measures; previously its computed styles
+were empty. Like TimeInputTextField, the selected time field still requests
+focus on first composition, but an inline picker does not take focus that is
+already elsewhere on the page.
+
+Tests: navigation, chips, stepper, seed presets, dialogs, app bars, FABs,
+progress, selection, cards, drawer, autocomplete, expansion panels, lists,
+menus, navigation, paginator, snackbar, tabs, tooltip, select, text fields and
+toolbars exited 0 in --source. Stale expectations were updated where the
+current behavior is the source's: a fresh document for the catalog drawer
+check, waiting for the modal layer to close before checking returned focus,
+clickable cards for disabled card colors (only Card(onClick, enabled) has a
+disabled state), packed 8-bit alpha for disabled roles, the default palette
+variant for md-theme contrast, the chip's trailing icon class and a test switch
+id that collided with the catalog's #switch section.
+
+ToggleButton border color scope. Border.kt runs the original AnimateAsState
+bodies over an explicit host Animatable that samples wall-clock time and
+retargets at the event, without packed Color (tools/androidx-toggle-button
+README). The border color is applied by the original frame-based Animatable
+with packed Color, whose retarget starts from the last frame time; with the
+oracle's sparse frames the two models diverge (for example a theme change 144ms
+after the last delivered frame). The packed owner's values, velocities, frame
+origins and jobs for this button are checked against the compiled runtime in
+packed-color-consumers.mjs. toggle-border.mjs therefore keeps every width,
+pixel-ceiled stroke, duration and retention check exact, and checks that the
+paint is the owner's packed value and that the resting color is the oracle's
+target. buttons and color-consumers exit 0.
+
+Showcase tokens: scripts/audit-showcase-tokens.mjs (first step of npm test)
+fails on literal colors, shadows, corner radii, motion curves or durations and
+type metrics in styles/showcase.css and in inline styles of index.html. Code
+samples use Body Medium metrics in a monospace face; icon glyphs use the
+library's icon font family.
+
 
 The field animateColorAsState binding now retains the actual Compose Color
 encoding. sRGB uses its native 8-bit ARGB layout; other spaces use Float16

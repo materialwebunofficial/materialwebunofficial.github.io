@@ -1,4 +1,5 @@
 /** AndroidX Snackbar/SnackbarHost a095da93, with HTML positioning/event adapters. */
+import { delegateHostAria } from '../utils/host-aria.js';
 import {SelectionMotion} from '../motion/selection-motion.js';
 import {SnackbarHostState, snackbarTimeoutMillis} from './snackbar-host-state.js';
 import {snackbarPresenterLayout} from './snackbar-layout.js';
@@ -12,8 +13,8 @@ import {materialString} from './material-strings.js';
 import {normalizeCornerShape, cornerShapeOutline} from '../shapes/corner-shape.js';
 import {OutlineShadow, parseBoxShadow} from '../shapes/outline-shadow.js';
 
-if (!customElements.get('md-button')) customElements.define('md-button', MdButton);
-if (!customElements.get('md-icon-button')) customElements.define('md-icon-button', MdIconButton);
+if (!customElements.get('md-button')) customElements.define('md-button', delegateHostAria(MdButton));
+if (!customElements.get('md-icon-button')) customElements.define('md-icon-button', delegateHostAria(MdIconButton));
 
 const defaultStyle = `
   :host { display: contents; outline: none; -webkit-tap-highlight-color: transparent; }

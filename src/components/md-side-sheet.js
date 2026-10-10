@@ -1,135 +1,140 @@
 /**
  * Material Design 3 Expressive (MD3E) Web Component: <md-side-sheet>
  *
- * Spec: M3 Side Sheet (spec §6)
- * 360dp width, CornerLargeEnd mirrored (16/0/0/16) for right-side, modal surface-container-low / Level1.
- * Features:
- *  - Slide-in from right edge (or left if position="left") with MD3E spring physics.
- *  - Slide-out to right edge on close with smooth scrim fade.
- *  - role=dialog + aria-modal, Escape closes, scrim click closes, focus trap.
+ * Modal side sheet. Jetpack Compose Material 3 has no side sheet; the source is
+ * Material Components for Android (SideSheetBehavior, SideSheetDialog,
+ * SheetDialog, RightSheetDelegate/LeftSheetDelegate and the md.comp.sheet.side
+ * tokens), with androidx ViewDragHelper settling.
+ *
+ * - Window. SideSheetDialog is a window above the app with a dimmed
+ *   background. On the web the scrim and the sheet live in a modal <dialog> in
+ *   the top layer, so no ancestor can clip or contain them and the page behind
+ *   is inert while the sheet is open.
+ * - Surface. 256dp wide, full height, SurfaceContainerLow, elevation Level 1,
+ *   CornerLarge on the inner edge (all corners and a 16dp margin when
+ *   detached). End aligned; position="left" places it at the start edge.
+ * - Window motion. Enter and exit translate the window by its full width over
+ *   275ms with the emphasized path; the scrim (Scrim role at 32%) fades with it.
+ *   Tapping the scrim or Escape cancels the dialog with the exit animation.
+ * - Drag. ViewDragHelper moves the sheet horizontally between its expanded and
+ *   hidden offsets. On release: an outward velocity keeps it expanded; an
+ *   inward horizontal swipe over 500px/s, or a release past halfway, hides it;
+ *   otherwise it settles back. Settling uses ViewDragHelper's duration (256ms
+ *   base, 600ms cap, from distance and velocity) and quintic interpolator.
+ * - Header. Headline (Title Large) and a standard close icon button.
  */
 
-import { SpringPhysics } from '../motion/spring-physics.js';
+import './md-icon-button.js';
+import { lockPageScroll, unlockPageScroll } from '../utils/scroll-lock.js';
+import { emphasizedEasing } from '../motion/path-easing.js';
+import { PointerVelocityTracker } from '../motion/velocity-tracker.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
-const defaultStyle = `
-  :host {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    outline: none;
-    display: contents;
-  }
-  :host(:not([open])) .scrim,
-  :host(:not([open])) .sheet {
-    display: none !important;
-  }
-  :host([open]) .scrim {
-    display: block !important;
-  }
+const WINDOW_DURATION = 275;
+const SIGNIFICANT_VELOCITY = 500;
+const TOUCH_SLOP = 8;
+const MIN_FLING_VELOCITY = 50;
+const MAX_FLING_VELOCITY = 8000;
+const BASE_SETTLE_DURATION = 256;
+const MAX_SETTLE_DURATION = 600;
 
-  .scrim {
+const quintic = t => { t -= 1; return t * t * t * t * t + 1; };
+
+/** ViewDragHelper.computeAxisDuration for a horizontal settle. */
+function settleDuration(delta, velocity, range, parentWidth) {
+  if (delta === 0) return 0;
+  velocity = Math.abs(velocity) < MIN_FLING_VELOCITY ? 0 : Math.min(Math.abs(velocity), MAX_FLING_VELOCITY);
+  const half = parentWidth / 2, ratio = Math.min(1, Math.abs(delta) / parentWidth);
+  const distance = half + half * Math.sin((ratio - 0.5) * 0.3 * Math.PI / 2);
+  const duration = velocity > 0
+    ? 4 * Math.round(1000 * Math.abs(distance / velocity))
+    : Math.trunc((Math.abs(delta) / range + 1) * BASE_SETTLE_DURATION);
+  return Math.min(duration, MAX_SETTLE_DURATION);
+}
+
+const defaultStyle = `
+  :host { display: contents; -webkit-tap-highlight-color: transparent; }
+
+  .window {
     position: fixed;
     inset: 0;
-    background-color: var(--md-sys-color-scrim, #000);
-    opacity: 0.4;
-    z-index: 2000;
-    touch-action: none;
-    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    background: transparent;
+    color: inherit;
+    outline: none;
+  }
+  .window::backdrop { background: transparent; }
+
+  .scrim {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background-color: var(--_scrim-color, var(--md-sys-color-scrim));
     -webkit-tap-highlight-color: transparent;
   }
 
   .sheet {
-    box-sizing: border-box;
-    position: fixed;
-    inset-block: 0;
+    position: absolute;
     top: 0;
     bottom: 0;
-    z-index: 2001;
+    right: 0;
+    box-sizing: border-box;
+    width: 256px;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
-    width: 360px;
-    max-width: 100vw;
-    padding: 20px;
-    background-color: var(--md-sys-color-surface-container-low, #211F26);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.25));
-    overflow-y: auto;
-    will-change: transform;
+    background-color: var(--_container-color, var(--md-sys-color-surface-container-low));
+    color: var(--_content-color, var(--md-sys-color-on-surface));
+    box-shadow: var(--md-sys-elevation-level-1);
+    border-radius: var(--md-sys-shape-corner-large) 0 0 var(--md-sys-shape-corner-large);
+    touch-action: pan-y;
   }
-
-  /* Right-side: CornerLargeStart 28/0/0/28 */
-  :host([position="right"]) .sheet,
-  :host(:not([position])) .sheet {
-    right: 0;
-    left: auto;
-    border-radius: var(--md-sys-shape-corner-extra-large, 28px) 0 0 var(--md-sys-shape-corner-extra-large, 28px);
-  }
-
-  /* Left-side: CornerLargeEnd 0/28/28/0 */
   :host([position="left"]) .sheet {
-    left: 0;
     right: auto;
-    border-radius: 0 var(--md-sys-shape-corner-extra-large, 28px) var(--md-sys-shape-corner-extra-large, 28px) 0;
+    left: 0;
+    border-radius: 0 var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0;
   }
+  :host([detached]) .sheet {
+    top: 16px;
+    bottom: 16px;
+    right: 16px;
+    max-width: calc(100% - 32px);
+    border-radius: var(--md-sys-shape-corner-large);
+  }
+  :host([detached][position="left"]) .sheet { right: auto; left: 16px; }
 
   .header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-height: 48px;
-    margin-bottom: 12px;
+    gap: 12px;
+    flex: none;
+    min-height: 72px;
+    padding: 12px 12px 12px 24px;
+    box-sizing: border-box;
   }
-
   .headline {
     flex: 1 1 auto;
-    font: var(--md-sys-typescale-title-medium, 500 16px/24px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
+    min-width: 0;
+    font: var(--md-sys-typescale-title-large-weight) var(--md-sys-typescale-title-large-size)/var(--md-sys-typescale-title-large-line-height) var(--md-sys-typescale-title-large-font);
+    letter-spacing: var(--md-sys-typescale-title-large-tracking);
+    color: var(--md-sys-color-on-surface-variant);
   }
-
-  .close {
-    width: 40px;
-    height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    outline: none;
-    border-radius: var(--md-sys-shape-corner-full, 9999px);
-    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
-    transition: background-color var(--md-sys-motion-duration-short2, 100ms) ease,
-                color var(--md-sys-motion-duration-short2, 100ms) ease,
-                transform 120ms cubic-bezier(0.2, 0, 0, 1.2);
-  }
-  .close:hover {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 10%, transparent);
-    color: var(--md-sys-color-on-surface, #E6E0E9);
-  }
-  .close:active {
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface, #E6E0E9) 15%, transparent);
-    transform: scale(0.92);
-  }
-  .close:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary, #D0BCFF);
-  }
-
-  .material-symbols-rounded, .mat-sym, .close-icon {
-    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif) !important;
-    font-size: 24px;
-    line-height: 1;
-    display: inline-block;
-    text-transform: none !important;
-    font-feature-settings: 'liga' 1;
-    -webkit-font-smoothing: antialiased;
-  }
+  .close { flex: none; }
 
   .content {
     flex: 1 1 auto;
-    font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
-    color: var(--md-sys-color-on-surface-variant, #CAC4D0);
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 24px 24px;
   }
 `;
 
@@ -138,7 +143,7 @@ const sideSheetSheet = createComponentSheet(defaultStyle);
 export class MdSideSheet extends HTMLElement {
   static get observedAttributes() {
     return [
-      'open', 'modal', 'headline', 'position', 'gestures-enabled',
+      'open', 'modal', 'headline', 'position', 'gestures-enabled', 'detached',
       'scrim-color', 'drawer-container-color', 'drawer-content-color', 'selected'
     ];
   }
@@ -148,8 +153,11 @@ export class MdSideSheet extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     adoptSheet(this.shadowRoot, sideSheetSheet);
     this._rendered = false;
-    this._onKeydown = this._onKeydown.bind(this);
     this._abortController = null;
+    this._offset = 0;
+    this._motion = null;
+    this._drag = null;
+    this._closing = false;
   }
 
   get open() { return this.hasAttribute('open'); }
@@ -171,10 +179,7 @@ export class MdSideSheet extends HTMLElement {
   }
 
   get gesturesEnabled() { return this.getAttribute('gestures-enabled') !== 'false'; }
-  set gesturesEnabled(v) {
-    if (v) this.setAttribute('gestures-enabled', 'true');
-    else this.setAttribute('gestures-enabled', 'false');
-  }
+  set gesturesEnabled(v) { this.setAttribute('gestures-enabled', v ? 'true' : 'false'); }
 
   get scrimColor() { return this.getAttribute('scrim-color') || ''; }
   set scrimColor(v) {
@@ -198,56 +203,47 @@ export class MdSideSheet extends HTMLElement {
     if (!this._rendered) {
       this.render();
       this._rendered = true;
-      this.setupInteractions();
     }
-    if (this.open) this._activate();
+    this._bind();
+    if (this.open) this._present();
   }
 
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
-    this._deactivate();
+    this._stopMotion();
+    this._drag = null;
+    if (this._window?.open) this._window.close();
+    unlockPageScroll(this);
   }
 
   attributeChangedCallback(name, oldV, newV) {
     if (!this._rendered || oldV === newV) return;
     if (name === 'open') {
-      this.open ? this._activate() : this._deactivate();
-    } else if (name === 'headline' || name === 'position' || name === 'drawer-container-color' || name === 'drawer-content-color') {
-      this.render();
-      this.setupInteractions();
+      if (this.open) this._present();
+      else if (!this._closing) this._remove();
+      return;
     }
+    this._applyStyle();
+    if (name === 'headline') {
+      this._headline.textContent = this.headline;
+      this._window.setAttribute('aria-label', this.headline || 'Side Sheet');
+    }
+    if (this._window?.open && !this._motion) { this._offset = 0; this._draw(); }
   }
 
   show() { this.open = true; }
 
+  /** SheetDialog.cancel: the window's exit animation, then dismissal. */
   close() {
-    if (!this.open) return;
-    const sheet = this.shadowRoot.querySelector('.sheet');
-    const scrim = this.shadowRoot.querySelector('.scrim');
-
-    if (sheet && scrim) {
-      const isLeft = this.position === 'left';
-      const exitTransform = isLeft ? 'translateX(-100%)' : 'translateX(100%)';
-      sheet.style.transition = 'transform 250ms cubic-bezier(0.3, 0, 0, 1)';
-      sheet.style.transform = exitTransform;
-      scrim.style.transition = 'opacity 250ms linear';
-      scrim.style.opacity = '0';
-
-      setTimeout(() => {
-        this.open = false;
-        sheet.style.transform = '';
-        sheet.style.transition = '';
-        scrim.style.opacity = '';
-        scrim.style.transition = '';
-        this._deactivate();
-        this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
-      }, 250);
-    } else {
-      this.open = false;
-      this._deactivate();
-      this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
-    }
+    if (!this.open || this._closing) return;
+    this._closing = true;
+    const from = this._offset, to = this._windowWidth();
+    this._run(WINDOW_DURATION, emphasizedEasing, value => {
+      this._offset = from + (to - from) * value;
+      this._scrimFraction = 1 - value;
+      this._draw();
+    }, () => this._dismiss());
   }
 
   toggle() { this.open ? this.close() : this.show(); }
@@ -255,102 +251,173 @@ export class MdSideSheet extends HTMLElement {
   render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
     const headline = this.headline;
-    const drawerContainerColor = this.drawerContainerColor;
-    const drawerContentColor = this.drawerContentColor;
-
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="scrim" part="scrim"></div>
-      <aside class="sheet" role="dialog" aria-modal="true"
-        aria-label="${escapeHtml(headline || 'Side Sheet')}"
-        style="${drawerContainerColor ? `background-color: ${sanitizeAttribute(drawerContainerColor)};` : ''}${drawerContentColor ? `color: ${sanitizeAttribute(drawerContentColor)};` : ''}"
-        part="sheet">
-        <div class="header" part="header">
-          <span class="headline" part="headline">${escapeHtml(headline)}</span>
-          <button class="close" type="button" aria-label="Close" part="close-button">
-            <span class="close-icon material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div class="content" part="content"><slot></slot></div>
-      </aside>
+      <dialog class="window" part="window" aria-label="${escapeHtml(headline || 'Side Sheet')}">
+        <div class="scrim" part="scrim" aria-hidden="true"></div>
+        <aside class="sheet" part="sheet">
+          <div class="header" part="header">
+            <span class="headline" part="headline">${escapeHtml(headline)}</span>
+            <md-icon-button class="close" icon="close" aria-label="Close" part="close-button"></md-icon-button>
+          </div>
+          <div class="content" part="content"><slot></slot></div>
+        </aside>
+      </dialog>
     `;
+    this._window = this.shadowRoot.querySelector('.window');
+    this._scrim = this.shadowRoot.querySelector('.scrim');
+    this._sheet = this.shadowRoot.querySelector('.sheet');
+    this._headline = this.shadowRoot.querySelector('.headline');
+    this._close = this.shadowRoot.querySelector('.close');
+    this._applyStyle();
   }
 
-  _focusable() {
-    const s = this.shadowRoot.querySelector('.sheet');
-    if (!s) return [];
-    return [...s.querySelectorAll('button:not([disabled]),[tabindex]:not([tabindex="-1"]),a[href],input,select,textarea')];
+  _applyStyle() {
+    const set = (name, value) => value ? this._window.style.setProperty(name, sanitizeAttribute(value)) : this._window.style.removeProperty(name);
+    set('--_container-color', this.drawerContainerColor);
+    set('--_content-color', this.drawerContentColor);
+    set('--_scrim-color', this.scrimColor);
   }
 
-  _activate() {
-    document.removeEventListener('keydown', this._onKeydown);
-    document.addEventListener('keydown', this._onKeydown);
-    document.body.style.overflow = 'hidden';
-
-    const sheet = this.shadowRoot.querySelector('.sheet');
-    const scrim = this.shadowRoot.querySelector('.scrim');
-
-    if (scrim) {
-      scrim.style.opacity = '0';
-      scrim.style.transition = 'opacity 250ms ease';
-      requestAnimationFrame(() => {
-        scrim.style.opacity = '0.4';
-      });
-    }
-
-    if (sheet) {
-      const isLeft = this.position === 'left';
-      const enterFrom = isLeft ? 'translateX(-100%)' : 'translateX(100%)';
-      sheet.style.transform = enterFrom;
-      sheet.style.transition = 'transform 350ms var(--md-sys-motion-easing-expressive-spatial, cubic-bezier(0.2, 0, 0, 1))';
-      requestAnimationFrame(() => {
-        sheet.style.transform = 'translateX(0)';
-      });
-      setTimeout(() => {
-        sheet.style.transition = '';
-        if (scrim) scrim.style.transition = '';
-      }, 350);
-    }
-
-    const f = this._focusable();
-    if (f.length) f[0].focus({ preventScroll: true });
-  }
-
-  _deactivate() {
-    document.removeEventListener('keydown', this._onKeydown);
-    document.body.style.overflow = '';
-  }
-
-  _onKeydown(e) {
-    if (!this.open) return;
-    if (e.key === 'Escape') { e.preventDefault(); this.close(); return; }
-    if (e.key === 'Tab') {
-      const f = this._focusable();
-      if (!f.length) return;
-      const first = f[0], last = f[f.length - 1];
-      const active = this.shadowRoot.activeElement;
-      if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
-    }
-  }
-
-  setupInteractions() {
+  _bind() {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
+    this._window.addEventListener('cancel', event => { event.preventDefault(); this.close(); }, { signal });
+    this._scrim.addEventListener('click', () => this.close(), { signal });
+    this._close.addEventListener('click', () => this.close(), { signal });
+    this._sheet.addEventListener('pointerdown', event => this._pointerDown(event), { signal });
+    this._sheet.addEventListener('pointermove', event => this._pointerMove(event), { signal });
+    this._sheet.addEventListener('pointerup', event => this._pointerUp(event), { signal });
+    this._sheet.addEventListener('pointercancel', event => this._pointerUp(event, true), { signal });
+    window.addEventListener('resize', () => { if (this._window.open && !this._motion && !this._drag) this._draw(); }, { signal });
+  }
 
-    const scrim = this.shadowRoot.querySelector('.scrim');
-    if (scrim) {
-      const onScrimDismiss = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.close();
-      };
-      scrim.addEventListener('click', onScrimDismiss, { signal });
+  /* ---------------------------------------------------------------- window -- */
+
+  _direction() { return this.position === 'left' ? -1 : 1; }
+  _windowWidth() { return this._window.clientWidth || innerWidth; }
+  /** Distance from the expanded to the hidden offset (sheet width plus inner margin). */
+  _range() { return this._sheet.offsetWidth + (this.hasAttribute('detached') ? 16 : 0); }
+
+  _present() {
+    this._closing = false;
+    if (this._window.open) return;
+    this._window.showModal();
+    lockPageScroll(this);
+    // The window enters from one window width away.
+    const from = this._windowWidth();
+    this._offset = from;
+    this._scrimFraction = 0;
+    this._draw();
+    this._run(WINDOW_DURATION, emphasizedEasing, value => {
+      this._offset = from * (1 - value);
+      this._scrimFraction = value;
+      this._draw();
+    });
+  }
+
+  _remove() {
+    this._stopMotion();
+    this._drag = null;
+    if (this._window.open) this._window.close();
+    unlockPageScroll(this);
+  }
+
+  _dismiss() {
+    this._closing = true;
+    this.open = false;
+    this._remove();
+    this._closing = false;
+    this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+  }
+
+  /* ---------------------------------------------------------------- motion -- */
+
+  _stopMotion() {
+    if (this._motion) cancelAnimationFrame(this._motion.frame);
+    this._motion = null;
+  }
+
+  _run(duration, easing, apply, done) {
+    this._stopMotion();
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motion = { frame: 0, start: performance.now() };
+    const step = now => {
+      if (this._motion !== motion) return;
+      const fraction = reduced || duration <= 0 ? 1 : Math.min(1, (now - motion.start) / duration);
+      apply(easing(fraction));
+      if (fraction >= 1) { this._motion = null; done?.(); return; }
+      motion.frame = requestAnimationFrame(step);
+    };
+    this._motion = motion;
+    if (reduced || duration <= 0) step(motion.start);
+    else motion.frame = requestAnimationFrame(step);
+  }
+
+  _draw() {
+    this._sheet.style.transform = `translateX(${this._direction() * this._offset}px)`;
+    const opacity = Math.min(1, Math.max(0, this._scrimFraction ?? 1)) * (this.scrimColor ? 1 : 0.32);
+    this._scrim.style.opacity = String(opacity);
+  }
+
+  /* ------------------------------------------------------------------ drag -- */
+
+  _pointerDown(event) {
+    if (!this.gesturesEnabled || this._closing || event.button > 0) return;
+    const tracker = new PointerVelocityTracker();
+    tracker.down(event.timeStamp, event.clientX);
+    this._drag = { id: event.pointerId, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, moved: false, tracker, yTracker: new PointerVelocityTracker() };
+    this._drag.yTracker.down(event.timeStamp, event.clientY);
+  }
+
+  _pointerMove(event) {
+    const drag = this._drag;
+    if (!drag || drag.id !== event.pointerId) return;
+    drag.tracker.move(event.timeStamp, event.clientX);
+    drag.yTracker.move(event.timeStamp, event.clientY);
+    if (!drag.moved) {
+      const dx = event.clientX - drag.startX, dy = event.clientY - drag.startY;
+      // ViewDragHelper captures a horizontal drag past the touch slop.
+      if (Math.abs(dx) < TOUCH_SLOP || Math.abs(dx) <= Math.abs(dy)) {
+        if (Math.abs(dy) >= TOUCH_SLOP) this._drag = null;
+        return;
+      }
+      drag.moved = true;
+      drag.x = event.clientX;
+      this._stopMotion();
+      this._sheet.setPointerCapture?.(event.pointerId);
+      return;
     }
+    event.preventDefault();
+    const delta = (event.clientX - drag.x) * this._direction();
+    drag.x = event.clientX;
+    this._offset = Math.min(this._range(), Math.max(0, this._offset + delta));
+    this._draw();
+  }
 
-    const closeBtn = this.shadowRoot.querySelector('.close');
-    closeBtn?.addEventListener('click', () => this.close(), { signal });
+  _pointerUp(event, cancelled = false) {
+    const drag = this._drag;
+    if (!drag || drag.id !== event.pointerId) return;
+    this._drag = null;
+    if (!drag.moved) return;
+    this._sheet.releasePointerCapture?.(event.pointerId);
+    // Velocity toward the hidden (inner) edge is positive.
+    const xVelocity = cancelled ? 0 : drag.tracker.up(event.timeStamp, MAX_FLING_VELOCITY) * this._direction();
+    const yVelocity = cancelled ? 0 : drag.yTracker.up(event.timeStamp, MAX_FLING_VELOCITY);
+    const range = this._range();
+    let hide;
+    if (xVelocity < 0) hide = false;
+    else {
+      const significant = Math.abs(xVelocity) > Math.abs(yVelocity) && Math.abs(xVelocity) > SIGNIFICANT_VELOCITY;
+      hide = significant || this._offset > range / 2;
+    }
+    const from = this._offset, to = hide ? range : 0;
+    const duration = settleDuration(to - from, xVelocity, range, this._windowWidth());
+    this._run(duration, quintic, value => {
+      this._offset = from + (to - from) * value;
+      this._draw();
+    }, hide ? () => this._dismiss() : null);
   }
 }
 

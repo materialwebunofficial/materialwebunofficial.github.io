@@ -1,5 +1,6 @@
 /** Web adaptation of AndroidX public WideNavigationRail / WideNavigationRailItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f. */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
 import { AsStateColorMotion as ColorMotion } from '../motion/animate-as-state.js';
 import {resolveComposeColor,composeColorCSS,composeColorWithAlpha} from '../motion/compose-color-css.js';
@@ -273,4 +274,4 @@ export class MdNavigationRail extends HTMLElement {
     }
   }
 }
-if(!customElements.get('md-navigation-rail'))customElements.define('md-navigation-rail',MdNavigationRail);
+if(!customElements.get('md-navigation-rail'))customElements.define('md-navigation-rail',delegateHostAria(MdNavigationRail));

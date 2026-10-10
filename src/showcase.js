@@ -3,11 +3,11 @@
  * catalog, copy actions, and the wiring of interactive examples.
  */
 
-import { SpringPhysics } from './motion/spring-physics.js';
-import { applyDynamicTheme, rgbToHct, hexToRgb, hctToHex, resolvePaletteVariant } from './theme/hct-color-engine.js';
-import {FloatingToolbarScrollBehavior,ToolbarScrollExpansion} from './components/toolbar-scroll.js';
-import {TopAppBarScrollBehavior} from './components/top-app-bar-scroll.js';
-import {BottomAppBarScrollBehavior} from './components/bottom-app-bar-scroll.js';
+// One module graph: the showcase uses the same bundle that defines the components.
+import {
+  SpringPhysics, applyDynamicTheme, rgbToHct, hexToRgb, hctToHex, resolvePaletteVariant,
+  FloatingToolbarScrollBehavior, ToolbarScrollExpansion, TopAppBarScrollBehavior, BottomAppBarScrollBehavior
+} from '../dist/md3-expressive.esm.js';
 
 const STORAGE_KEYS = {
   THEME_MODE: 'md3e_theme_mode',
@@ -17,7 +17,9 @@ const STORAGE_KEYS = {
   HCT_VERSION: 'md3e_hct_version',
   SEED_HEX: 'md3e_seed_hex',
   PALETTE_VARIANT: 'md3e_palette_variant',
-  CONTRAST: 'md3e_contrast'
+  CONTRAST: 'md3e_contrast',
+  // The last generated color roles, applied before the first paint on the next visit.
+  SCHEME_CACHE: 'md3e_scheme_cache'
 };
 
 // Example seed colors for the showcase. They are inputs, not official palettes.
@@ -53,6 +55,7 @@ export function initShowcase() {
     contrast: CONTRAST_LEVELS.includes(storage.get(STORAGE_KEYS.CONTRAST)) ? storage.get(STORAGE_KEYS.CONTRAST) : 'standard',
     hct: rgbToHct(103, 80, 164)
   };
+  let migrated = false;
   try {
     const raw = JSON.parse(storage.get(STORAGE_KEYS.HCT_STATE) || 'null');
     if (raw && ['hue', 'chroma', 'tone'].every(key => Number.isFinite(raw[key]))) theme.hct = raw;
@@ -60,10 +63,13 @@ export function initShowcase() {
     if (storage.get(STORAGE_KEYS.HCT_VERSION) !== 'mcu-0.4.0') {
       const rgb = hexToRgb(storage.get(STORAGE_KEYS.SEED_HEX) || '#6750a4');
       theme.hct = rgbToHct(rgb.r, rgb.g, rgb.b);
+      migrated = storage.get(STORAGE_KEYS.HCT_STATE) !== null || storage.get(STORAGE_KEYS.SEED_HEX) !== null;
     }
   } catch {}
 
   const seedHex = () => hctToHex(theme.hct.hue, theme.hct.chroma, theme.hct.tone);
+  // Stored colors from an older release are rewritten once in the current format.
+  if (migrated) persistColor();
 
   function applyTheme() {
     root.setAttribute('data-theme', theme.dark ? 'dark' : 'light');
@@ -75,7 +81,14 @@ export function initShowcase() {
     root.setAttribute('data-contrast', theme.contrast);
     SpringPhysics.setScheme(theme.motion);
     applyDynamicTheme(theme.hct, theme.dark, theme.variant);
+    cacheScheme();
     syncThemeControls();
+  }
+
+  function cacheScheme() {
+    const roles = {};
+    for (const name of root.style) if (name.startsWith('--md-sys-color-')) roles[name] = root.style.getPropertyValue(name);
+    storage.set(STORAGE_KEYS.SCHEME_CACHE, JSON.stringify({ dark: theme.dark, roles }));
   }
 
   function persistColor() {
@@ -161,13 +174,16 @@ export function initShowcase() {
       drawer.open = false;
       drawer.variant = variant;
     }
-    if (docked) drawer.open = drawerPinned;
-    drawer.gesturesEnabled = !docked;
+    // A docked catalog is part of the layout: it is in place, not slid in.
+    if (docked && drawer.open !== drawerPinned) drawer.snapTo(drawerPinned);
     syncDrawerToggles();
   }
 
   function syncDrawerToggles() {
     drawerToggles.forEach(button => button.setAttribute('aria-expanded', String(drawer.open)));
+    // The modal sheet follows drags only while it is open (swipe to close), so a
+    // horizontal drag on the page never pulls the catalog open by accident.
+    drawer.gesturesEnabled = drawer.variant === 'modal' && drawer.open;
   }
 
   new MutationObserver(syncDrawerToggles).observe(drawer, { attributes: true, attributeFilter: ['open'] });
@@ -176,6 +192,124 @@ export function initShowcase() {
     if (drawer.variant === 'dismissible') drawerPinned = !drawer.open;
     if (drawer.open) drawer.close(); else drawer.show();
   }));
+
+  // =========================================================================
+  // Deferred catalog examples
+  // =========================================================================
+  // Every example card is parsed as an inert template. Cards are created as
+  // they approach the viewport and then, card by card, in idle time while the
+  // catalog is open, so no single task creates hundreds of components.
+  const pending = new Set(document.querySelectorAll('template[data-defer]'));
+  const mountHooks = [];
+  let nearViewport = null;
+  function mountTemplate(template) {
+    if (!pending.delete(template)) return;
+    const grid = template.parentElement, section = template.closest('.category-section');
+    const fragment = template.content;
+    const card = fragment.firstElementChild;
+    template.replaceWith(fragment);
+    if (!grid.querySelector('template[data-defer]')) {
+      grid.removeAttribute('data-deferred');
+      grid.style.removeProperty('--deferred-one');
+      grid.style.removeProperty('--deferred-two');
+    }
+    // A section with every card created no longer needs to be watched.
+    if (section && !section.querySelector('template[data-defer]')) nearViewport?.unobserve(section);
+    if (card) for (const hook of mountHooks) hook(card);
+  }
+  // A grid above the viewport that changes height (a card created, or drawn
+  // for the first time) moves everything below it. Keep what is on screen
+  // still by scrolling by that change, after layout and before paint.
+  const gridHeights = new WeakMap();
+  const gridSizes = new ResizeObserver(entries => {
+    let delta = 0;
+    // A section scroll follows its target's live position itself.
+    const following = !!sectionScroll;
+    for (const entry of entries) {
+      const height = entry.borderBoxSize?.[0]?.blockSize ?? entry.target.offsetHeight, previous = gridHeights.get(entry.target);
+      gridHeights.set(entry.target, height);
+      if (previous === undefined || activeTab !== 'components' || !height && !previous) continue;
+      if (entry.target.getBoundingClientRect().bottom <= 0) delta += height - previous;
+    }
+    if (delta && !following) { window.scrollBy({ top: delta, behavior: 'instant' }); compensatedY = Math.round(window.scrollY); }
+  });
+  document.querySelectorAll('#tab-view-components .cards-grid').forEach(grid => gridSizes.observe(grid));
+  function mountSection(section) {
+    section?.querySelectorAll('template[data-defer]').forEach(mountTemplate);
+  }
+  // Sections approaching the viewport are created ahead of idle work, a few
+  // cards per task, so scrolling never waits on one long task.
+  const soon = [];
+  let soonScheduled = false;
+  function mountSoon(section) {
+    for (const template of section.querySelectorAll('template[data-defer]')) if (!soon.includes(template)) soon.push(template);
+    if (!soonScheduled) { soonScheduled = true; setTimeout(drainSoon, 0); }
+  }
+  function drainSoon() {
+    soonScheduled = false;
+    const start = performance.now();
+    do mountTemplate(soon.shift()); while (soon.length && performance.now() - start < 12);
+    if (soon.length) { soonScheduled = true; setTimeout(drainSoon, 0); }
+  }
+  nearViewport = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      nearViewport.unobserve(entry.target);
+      mountSoon(entry.target);
+    }
+  }, { rootMargin: '1200px 0px' });
+  document.querySelectorAll('#tab-view-components .category-section').forEach(section => {
+    if (section.querySelector('template[data-defer]')) nearViewport.observe(section);
+  });
+  const requestIdle = window.requestIdleCallback
+    ? callback => requestIdleCallback(callback, { timeout: 1500 })
+    : callback => setTimeout(() => callback({ timeRemaining: () => 0 }), 32);
+  let idleScheduled = false;
+  // Cards that grow above the viewport while a scroll is running would move its
+  // destination, so idle mounting waits until scrolling has settled.
+  let lastScroll = 0, compensatedY = null;
+  window.addEventListener('scroll', () => {
+    // The compensation for a card mounted above is not a reader's scroll.
+    if (Math.round(window.scrollY) === compensatedY) { compensatedY = null; return; }
+    lastScroll = performance.now();
+  }, { passive: true });
+  function mountInIdle() {
+    if (idleScheduled || !pending.size) return;
+    idleScheduled = true;
+    requestIdle(deadline => {
+      idleScheduled = false;
+      if (performance.now() - lastScroll < 200) { setTimeout(mountInIdle, 200); return; }
+      // One card per idle period, more while the period lasts, so the catalog
+      // keeps filling in even while animations leave only short idle periods.
+      do mountTemplate(pending.values().next().value);
+      while (pending.size && deadline.timeRemaining() > 12);
+      mountInIdle();
+    });
+  }
+  /** Finds an element by id, creating its card first if it is still deferred. */
+  function findTarget(id) {
+    const found = document.getElementById(id);
+    if (found) return found;
+    for (const template of pending) {
+      if (template.content.getElementById(id)) {
+        mountSection(template.closest('.category-section'));
+        return document.getElementById(id);
+      }
+    }
+    return null;
+  }
+  /** Mounts a section and its neighbours before scrolling to it. */
+  function prepareSection(target) {
+    const section = target?.closest('.category-section');
+    if (!section) return;
+    mountSection(section);
+    let previous = section.previousElementSibling;
+    while (previous && !previous.classList.contains('category-section')) previous = previous.previousElementSibling;
+    mountSection(previous);
+    let next = section.nextElementSibling;
+    while (next && !next.classList.contains('category-section')) next = next.nextElementSibling;
+    mountSection(next);
+  }
 
   function setTabSelection(tabId) {
     const index = PRIMARY_TABS.indexOf(tabId);
@@ -186,10 +320,12 @@ export function initShowcase() {
   function switchTab(tabId, { scroll = true, hash = true } = {}) {
     activeTab = tabId;
     document.body.setAttribute('data-active-tab', tabId);
+    document.body.setAttribute('data-routed', '');
     tabViews.forEach(view => view.classList.toggle('active', view.id === `tab-view-${tabId}`));
     setTabSelection(tabId);
     if (drawer.variant === 'modal') drawer.close();
     syncDrawerVariant();
+    if (tabId === 'components') mountInIdle();
     if (scroll) window.scrollTo({ top: 0, behavior: 'instant' });
     if (hash) history.replaceState(null, '', `#${tabId}`);
   }
@@ -202,9 +338,50 @@ export function initShowcase() {
   function navigateToSection(id, smooth = true) {
     if (activeTab !== 'components') switchTab('components', { scroll: false, hash: false });
     history.replaceState(null, '', `#${id}`);
-    const target = document.getElementById(id);
-    if (target) target.scrollIntoView({ behavior: smooth && !reducedMotion.matches ? 'smooth' : 'instant', block: 'start' });
-    selectCatalogEntry(id);
+    const target = findTarget(id);
+    prepareSection(target);
+    if (target) scrollToSection(target, smooth);
+    selectCatalogEntry(target?.closest('.category-section')?.id ?? id);
+  }
+
+  // Cards the scroll passes are laid out on the way and replace their
+  // estimated heights with real ones, so a section's position moves while the
+  // page scrolls to it. The scroll follows the section's live position (a
+  // critically damped spring, or a direct jump with reduced motion) until it
+  // rests on it; any wheel, touch, key or pointer input hands control back.
+  let sectionScroll = null;
+  function scrollToSection(target, smooth) {
+    sectionScroll?.stop();
+    const root = document.documentElement, animate = smooth && !reducedMotion.matches;
+    const destination = () => {
+      const margin = (parseFloat(getComputedStyle(target).scrollMarginTop) || 0) + (parseFloat(getComputedStyle(root).scrollPaddingTop) || 0);
+      return Math.max(0, Math.min(root.scrollHeight - innerHeight, window.scrollY + target.getBoundingClientRect().top - margin));
+    };
+    let frame = 0, position = window.scrollY, velocity = 0, last = performance.now(), settled = 0;
+    const began = last, inputs = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+    const stop = () => {
+      cancelAnimationFrame(frame);
+      for (const type of inputs) window.removeEventListener(type, stop, true);
+      if (sectionScroll === control) sectionScroll = null;
+      selectCatalogEntry(target.closest('.category-section')?.id ?? target.id);
+    };
+    const control = { stop };
+    const step = now => {
+      const to = destination();
+      if (animate) {
+        const state = SpringPhysics.solve({ from: position, to, velocity, dampingRatio: 1, stiffness: 200, time: Math.min(64, now - last) / 1000 });
+        position = state.position; velocity = state.velocity;
+      } else position = to;
+      last = now;
+      window.scrollTo({ top: position, behavior: 'instant' });
+      if (Math.abs(window.scrollY - position) > 2) position = window.scrollY;
+      settled = Math.abs(to - position) < 1 && Math.abs(velocity) < 2 ? settled + 1 : 0;
+      if (settled >= 6 || now - began > 4000) { if (settled) window.scrollTo({ top: to, behavior: 'instant' }); stop(); return; }
+      frame = requestAnimationFrame(step);
+    };
+    sectionScroll = control;
+    for (const type of inputs) window.addEventListener(type, stop, true);
+    frame = requestAnimationFrame(step);
   }
 
   rail?.addEventListener('change', event => {
@@ -239,7 +416,7 @@ export function initShowcase() {
     const anchor = event.target.closest?.('a[href^="#"]');
     if (!anchor) return;
     const id = anchor.getAttribute('href').slice(1);
-    if (!id || !document.getElementById(id)) return;
+    if (!id || !findTarget(id)) return;
     event.preventDefault();
     routeTo(id, true);
   });
@@ -253,7 +430,7 @@ export function initShowcase() {
     if (!id || id === 'home') return switchTab('home', { hash: id === 'home' });
     if (id === 'get-started' || id === 'getstarted') return switchTab('get-started');
     if (id === 'components') return switchTab('components');
-    const target = document.getElementById(id);
+    const target = findTarget(id);
     if (!target) return switchTab('home', { hash: false });
     const view = target.closest('.tab-view');
     if (view?.id === 'tab-view-get-started') {
@@ -275,7 +452,7 @@ export function initShowcase() {
   // Scroll spy for the catalog.
   const spyTargets = [document.getElementById('overview'), ...document.querySelectorAll('#tab-view-components .category-section')].filter(Boolean);
   const spy = new IntersectionObserver(entries => {
-    if (activeTab !== 'components') return;
+    if (activeTab !== 'components' || sectionScroll) return;
     for (const entry of entries) if (entry.isIntersecting) selectCatalogEntry(entry.target.id);
   }, { rootMargin: '-20% 0px -70% 0px' });
   spyTargets.forEach(target => spy.observe(target));
@@ -320,14 +497,17 @@ export function initShowcase() {
   // =========================================================================
   // 5. Seed color chips, color lab
   // =========================================================================
-  const chipSets = [document.getElementById('preset-swatches'), document.getElementById('home-seed-chips')].filter(Boolean);
-  chipSets.forEach(set => {
+  function populateSeedChips(set) {
+    if (!set || set.dataset.populated) return;
+    set.dataset.populated = 'true';
     for (const preset of SEED_PRESETS) {
       const chip = document.createElement('md-chip');
       chip.className = 'preset-swatch-item';
       chip.setAttribute('variant', 'filter');
       chip.setAttribute('label', preset.name);
       chip.dataset.hex = preset.hex;
+      // Selected before it connects, so the chip is laid out once in its final state.
+      chip.selected = preset.hex.toLowerCase() === seedHex().toLowerCase();
       const swatch = document.createElement('span');
       swatch.slot = 'leading-icon';
       swatch.className = 'seed-swatch';
@@ -336,34 +516,28 @@ export function initShowcase() {
       chip.addEventListener('change', () => setSeedHex(preset.hex));
       set.append(chip);
     }
-  });
+  }
+  populateSeedChips(document.getElementById('home-seed-chips'));
 
-  const hueSlider = document.getElementById('hue-slider');
-  const chromaSlider = document.getElementById('chroma-slider');
-  const toneSlider = document.getElementById('tone-slider');
-  const hueValue = document.getElementById('hue-val-display');
-  const chromaValue = document.getElementById('chroma-val-display');
-  const toneValue = document.getElementById('tone-val-display');
-  const hexInput = document.getElementById('hex-code-input');
-  const variantSelect = document.getElementById('palette-variant-select');
-  const contrastControl = document.getElementById('contrast-segmented');
+  // Color lab controls exist once the Color section is mounted.
+  const lab = {};
 
   function syncColorControls({ fromSlider = null } = {}) {
     const hex = seedHex().toLowerCase();
     document.querySelectorAll('.preset-swatch-item').forEach(chip => {
       chip.selected = chip.dataset.hex.toLowerCase() === hex;
     });
-    if (hexInput && document.activeElement !== hexInput) hexInput.value = hex.toUpperCase();
-    if (hueSlider && fromSlider !== hueSlider) hueSlider.value = theme.hct.hue;
-    if (chromaSlider && fromSlider !== chromaSlider) chromaSlider.value = theme.hct.chroma;
-    if (toneSlider && fromSlider !== toneSlider) toneSlider.value = theme.hct.tone;
-    if (hueValue) hueValue.textContent = `${Math.round(theme.hct.hue)}°`;
-    if (chromaValue) chromaValue.textContent = `${Math.round(theme.hct.chroma)}`;
-    if (toneValue) toneValue.textContent = `${Math.round(theme.hct.tone)}`;
-    if (variantSelect && variantSelect.value !== theme.variant) variantSelect.value = theme.variant;
-    if (contrastControl) {
+    if (lab.hexInput && document.activeElement !== lab.hexInput) lab.hexInput.value = hex.toUpperCase();
+    if (lab.hueSlider && fromSlider !== lab.hueSlider) lab.hueSlider.value = theme.hct.hue;
+    if (lab.chromaSlider && fromSlider !== lab.chromaSlider) lab.chromaSlider.value = theme.hct.chroma;
+    if (lab.toneSlider && fromSlider !== lab.toneSlider) lab.toneSlider.value = theme.hct.tone;
+    if (lab.hueValue) lab.hueValue.textContent = `${Math.round(theme.hct.hue)}°`;
+    if (lab.chromaValue) lab.chromaValue.textContent = `${Math.round(theme.hct.chroma)}`;
+    if (lab.toneValue) lab.toneValue.textContent = `${Math.round(theme.hct.tone)}`;
+    if (lab.variantSelect && lab.variantSelect.value !== theme.variant) lab.variantSelect.value = theme.variant;
+    if (lab.contrastControl) {
       const index = CONTRAST_LEVELS.indexOf(theme.contrast);
-      if (contrastControl.getAttribute('selected-index') !== String(index)) contrastControl.setAttribute('selected-index', String(index));
+      if (lab.contrastControl.getAttribute('selected-index') !== String(index)) lab.contrastControl.setAttribute('selected-index', String(index));
     }
   }
 
@@ -374,49 +548,67 @@ export function initShowcase() {
     applyTheme();
   }
 
-  let colorFrame = 0;
-  function scheduleColor(fromSlider) {
-    cancelAnimationFrame(colorFrame);
+  // A slider re-themes the page once per frame with its latest value.
+  let colorFrame = 0, colorSlider = null;
+  function applyColor(fromSlider) {
+    colorSlider = fromSlider;
+    if (colorFrame) return;
     colorFrame = requestAnimationFrame(() => {
-      persistColor();
+      colorFrame = 0;
       applyDynamicTheme(theme.hct, theme.dark, theme.variant);
-      syncColorControls({ fromSlider });
+      syncColorControls({ fromSlider: colorSlider });
+      persistColorSoon();
     });
   }
-
-  for (const [slider, key] of [[hueSlider, 'hue'], [chromaSlider, 'chroma'], [toneSlider, 'tone']]) {
-    slider?.addEventListener('input', event => {
-      theme.hct = { ...theme.hct, [key]: typeof event.detail?.value === 'number' ? event.detail.value : Number(slider.value) };
-      scheduleColor(slider);
-    });
+  const scheduleColor = applyColor;
+  // Storage writes and the cached scheme wait until the value rests.
+  let persistTimer = 0;
+  function persistColorSoon() {
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => { persistColor(); cacheScheme(); }, 250);
   }
 
-  hexInput?.addEventListener('input', () => {
-    let value = String(hexInput.value || '').trim();
-    if (!value.startsWith('#')) value = `#${value}`;
-    if (/^#[0-9a-f]{6}$/i.test(value)) setSeedHex(value);
-  });
-
-  variantSelect?.addEventListener('change', () => {
-    theme.variant = resolvePaletteVariant(variantSelect.value);
-    storage.set(STORAGE_KEYS.PALETTE_VARIANT, theme.variant);
-    applyTheme();
-  });
-
-  contrastControl?.addEventListener('change', event => {
-    const index = Number(event.detail?.selectedIndex ?? contrastControl.getAttribute('selected-index'));
-    theme.contrast = CONTRAST_LEVELS[index] ?? 'standard';
-    storage.set(STORAGE_KEYS.CONTRAST, theme.contrast);
-    applyTheme();
-  });
-
-  document.getElementById('reset-color-btn')?.addEventListener('click', () => {
-    theme.variant = 'tonal-spot';
-    theme.contrast = 'standard';
-    storage.set(STORAGE_KEYS.PALETTE_VARIANT, theme.variant);
-    storage.set(STORAGE_KEYS.CONTRAST, theme.contrast);
-    setSeedHex(SEED_PRESETS[0].hex);
-  });
+  function wireColorLab(root) {
+    const find = id => root.querySelector('#' + id);
+    if (!find('hue-slider') || lab.hueSlider) return;
+    Object.assign(lab, {
+      hueSlider: find('hue-slider'), chromaSlider: find('chroma-slider'), toneSlider: find('tone-slider'),
+      hueValue: find('hue-val-display'), chromaValue: find('chroma-val-display'), toneValue: find('tone-val-display'),
+      hexInput: find('hex-code-input'), variantSelect: find('palette-variant-select'), contrastControl: find('contrast-segmented'),
+    });
+    populateSeedChips(find('preset-swatches'));
+    for (const [slider, key] of [[lab.hueSlider, 'hue'], [lab.chromaSlider, 'chroma'], [lab.toneSlider, 'tone']]) {
+      slider?.addEventListener('input', event => {
+        theme.hct = { ...theme.hct, [key]: typeof event.detail?.value === 'number' ? event.detail.value : Number(slider.value) };
+        scheduleColor(slider);
+      });
+      slider?.addEventListener('change', () => applyColor(slider));
+    }
+    lab.hexInput?.addEventListener('input', () => {
+      let value = String(lab.hexInput.value || '').trim();
+      if (!value.startsWith('#')) value = `#${value}`;
+      if (/^#[0-9a-f]{6}$/i.test(value)) setSeedHex(value);
+    });
+    lab.variantSelect?.addEventListener('change', () => {
+      theme.variant = resolvePaletteVariant(lab.variantSelect.value);
+      storage.set(STORAGE_KEYS.PALETTE_VARIANT, theme.variant);
+      applyTheme();
+    });
+    lab.contrastControl?.addEventListener('change', event => {
+      const index = Number(event.detail?.selectedIndex ?? lab.contrastControl.getAttribute('selected-index'));
+      theme.contrast = CONTRAST_LEVELS[index] ?? 'standard';
+      storage.set(STORAGE_KEYS.CONTRAST, theme.contrast);
+      applyTheme();
+    });
+    find('reset-color-btn')?.addEventListener('click', () => {
+      theme.variant = 'tonal-spot';
+      theme.contrast = 'standard';
+      storage.set(STORAGE_KEYS.PALETTE_VARIANT, theme.variant);
+      storage.set(STORAGE_KEYS.CONTRAST, theme.contrast);
+      setSeedHex(SEED_PRESETS[0].hex);
+    });
+    syncColorControls();
+  }
 
   applyTheme();
 
@@ -424,7 +616,7 @@ export function initShowcase() {
   const initialHash = LEGACY_ANCHORS[location.hash.slice(1)] ?? location.hash.slice(1);
   activeTab = PRIMARY_TABS.includes(initialHash) ? initialHash
     : initialHash && document.getElementById(initialHash)?.closest('#tab-view-get-started') ? 'get-started'
-    : initialHash && document.getElementById(initialHash) ? 'components' : 'home';
+    : initialHash && findTarget(initialHash) ? 'components' : 'home';
   switchTab(activeTab, { scroll: false, hash: false });
   if (initialHash && !PRIMARY_TABS.includes(initialHash)) {
     requestAnimationFrame(() => routeTo(initialHash, false));
@@ -453,6 +645,7 @@ export function initShowcase() {
       if (heroProgressValue) heroProgressValue.textContent = `${Math.round(value * 100)}%`;
     };
     const advance = () => {
+      if (document.hidden || activeTab !== 'home') { setTimeout(advance, 1000); return; }
       const target = steps[step].target;
       from = position; start = performance.now();
       if (reducedMotion.matches || target === 0) {
@@ -481,50 +674,189 @@ export function initShowcase() {
   }
 
   // =========================================================================
-  // 7. Component examples
+  // 7. Component examples (wired as each card is mounted)
   // =========================================================================
-  const openers = [['open-dialog-btn', 'sample-dialog'], ['open-bottom-sheet-btn', 'sample-bottom-sheet'],
-    ['open-side-sheet-btn', 'sample-side-sheet'], ['open-date-picker-btn', 'sample-date-picker'],
-    ['open-time-picker-btn', 'sample-time-picker']];
-  for (const [buttonId, targetId] of openers) {
-    const button = document.getElementById(buttonId), target = document.getElementById(targetId);
-    if (button && target) button.addEventListener('click', () => target.show());
-  }
-
-  document.querySelectorAll('[data-toggle-rail]').forEach(button => {
-    button.addEventListener('click', () => {
-      const demoRail = document.getElementById(button.dataset.toggleRail);
-      if (!demoRail) return;
-      demoRail.expanded = !demoRail.expanded;
-      button.textContent = demoRail.expanded ? 'Collapse rail' : 'Expand rail';
-    });
-  });
-
-  document.querySelectorAll('[data-open-drawer], [data-close-drawer]').forEach(button => {
-    button.addEventListener('click', () => {
-      const demoDrawer = document.getElementById(button.dataset.openDrawer || button.dataset.closeDrawer);
-      if (!demoDrawer) return;
-      if (button.hasAttribute('data-open-drawer')) demoDrawer.show();
-      else demoDrawer.close();
-    });
-  });
-
-  const snackbarExamples = [...document.querySelectorAll('#snackbars md-snackbar')];
-  const positionSnackbarExamples = () => snackbarExamples.concat(appSnackbar ? [appSnackbar] : []).forEach(positionSnackbar);
+  const snackbarExamples = () => [...document.querySelectorAll('#snackbars md-snackbar')];
+  const positionSnackbarExamples = () => snackbarExamples().concat(appSnackbar ? [appSnackbar] : []).forEach(positionSnackbar);
   const snackbarLayout = new ResizeObserver(positionSnackbarExamples);
   snackbarLayout.observe(mainEl);
   snackbarLayout.observe(bottomNav);
   new MutationObserver(positionSnackbarExamples).observe(root, { attributes: true, attributeFilter: ['dir'] });
-  positionSnackbarExamples();
-  document.querySelectorAll('[data-snackbar-target]').forEach(button => {
-    const snackbar = document.getElementById(button.dataset.snackbarTarget);
-    if (snackbar) button.addEventListener('click', () => {
-      document.querySelectorAll('#snackbars md-snackbar[open]').forEach(other => { if (other !== snackbar) other.close(); });
-      if (appSnackbar?.open) appSnackbar.close();
-      positionSnackbar(snackbar);
-      snackbar.show();
+  // The observer's first notification positions them after layout.
+  const wiredDemoNodes = new WeakSet();
+  const claim = node => !wiredDemoNodes.has(node) && !!wiredDemoNodes.add(node);
+  const within = (scope, selector) => [...(scope.matches?.(selector) ? [scope] : []), ...scope.querySelectorAll(selector)];
+  function wireDemos(scope) {
+    const openers = [['open-dialog-btn', 'sample-dialog'], ['open-bottom-sheet-btn', 'sample-bottom-sheet'],
+      ['open-side-sheet-btn', 'sample-side-sheet'], ['open-date-picker-btn', 'sample-date-picker'],
+      ['open-time-picker-btn', 'sample-time-picker']];
+    for (const [buttonId, targetId] of openers) {
+      const button = within(scope, '#' + buttonId)[0], target = document.getElementById(targetId);
+      if (button && target && claim(button)) button.addEventListener('click', () => target.show());
+    }
+
+    within(scope, '[data-toggle-rail]').forEach(button => {
+      if (!claim(button)) return;
+      button.addEventListener('click', () => {
+        const demoRail = document.getElementById(button.dataset.toggleRail);
+        if (!demoRail) return;
+        demoRail.expanded = !demoRail.expanded;
+        button.textContent = demoRail.expanded ? 'Collapse rail' : 'Expand rail';
+      });
     });
-  });
+
+    within(scope, '[data-open-drawer], [data-close-drawer]').forEach(button => {
+      if (!claim(button)) return;
+      button.addEventListener('click', () => {
+        const demoDrawer = document.getElementById(button.dataset.openDrawer || button.dataset.closeDrawer);
+        if (!demoDrawer) return;
+        if (button.hasAttribute('data-open-drawer')) demoDrawer.show();
+        else demoDrawer.close();
+      });
+    });
+
+    within(scope, '[data-snackbar-target]').forEach(button => {
+      if (!claim(button)) return;
+      const snackbar = document.getElementById(button.dataset.snackbarTarget);
+      if (snackbar) button.addEventListener('click', () => {
+        document.querySelectorAll('#snackbars md-snackbar[open]').forEach(other => { if (other !== snackbar) other.close(); });
+        if (appSnackbar?.open) appSnackbar.close();
+        positionSnackbar(snackbar);
+        snackbar.show();
+      });
+    });
+
+
+
+    // Floating toolbar state belongs to its caller, as in the Compose samples.
+    within(scope, '[data-toolbar-shape]').forEach(control => {
+      if (!claim(control)) return;
+      const toolbar = document.getElementById(control.dataset.toolbarShape);
+      if (!toolbar) return;
+      const shapes = [null, {type: 'rounded', corners: 16}, {type: 'cut', corners: 16}];
+      control.addEventListener('change', event => {
+        toolbar.shape = shapes[event.detail.selectedIndex] ?? null;
+      });
+    });
+    within(scope, '[data-fab-toggle]').forEach(control => {
+      if (!claim(control)) return;
+      const examples = document.getElementById(control.dataset.fabToggle);
+      if (!examples) return;
+      const fabs = [...examples.querySelectorAll('md-fab')];
+      const update = () => {
+        const expanded = fabs.some(fab => fab.expanded);
+        control.label = expanded ? 'Collapse labels' : 'Expand labels';
+        control.setAttribute('aria-controls', examples.id);
+        control.setAttribute('aria-expanded', String(expanded));
+      };
+      control.addEventListener('click', () => {
+        const expanded = fabs.some(fab => fab.expanded);
+        for (const fab of fabs) fab.expanded = !expanded;
+        update();
+      });
+      examples.addEventListener('expanded-change', update);
+      update();
+    });
+    within(scope, '[data-toolbar-toggle]').forEach(control => {
+      if (!claim(control)) return;
+      const toolbar = document.getElementById(control.dataset.toolbarToggle);
+      if (!toolbar) return;
+      const noun = toolbar.id === 'drawing-toolbar' ? 'tools' : 'actions';
+      const update = () => {
+        control.setAttribute('label', `${toolbar.expanded ? 'Collapse' : 'Expand'} ${noun}`);
+        control.setAttribute('aria-controls', toolbar.id);
+        control.setAttribute('aria-expanded', String(toolbar.expanded));
+      };
+      control.addEventListener('click', () => toolbar.toggle());
+      toolbar.addEventListener('expanded-change', update);
+      update();
+    });
+    within(scope, '[data-toolbar-scroll]').forEach(toolbar => {
+      if (!claim(toolbar)) return;
+      toolbar.scrollTarget=document.getElementById(toolbar.dataset.toolbarScroll);
+      if(toolbar.dataset.toolbarScrollMode==='expand'){
+        toolbar.scrollExpansion=new ToolbarScrollExpansion({expanded:toolbar.expanded,onExpand:()=>toolbar.expand(),onCollapse:()=>toolbar.collapse()});
+      }else toolbar.scrollBehavior=new FloatingToolbarScrollBehavior({exitDirection:'bottom'});
+    });
+    within(scope, '[data-toolbar-fab-toggle]').forEach(fab => {
+      if (!claim(fab)) return;
+      const toolbar=document.getElementById(fab.dataset.toolbarFabToggle);if(!toolbar)return;
+      // AndroidX HorizontalFloatingToolbarWithFabSample owns this callback.
+      const update=()=>{
+        const expanded=String(toolbar.expanded);
+        fab.setAttribute('aria-label',toolbar.expanded?'Collapse actions':'Expand actions');
+        fab.setAttribute('aria-controls',toolbar.id);fab.setAttribute('aria-expanded',expanded);
+      };
+      fab.addEventListener('click',()=>toolbar.toggle());toolbar.addEventListener('expanded-change',update);update();
+    });
+    within(scope, '[data-top-app-bar-scroll]').forEach(bar => {
+      if (!claim(bar)) return;
+      const content=document.getElementById(bar.dataset.topAppBarScroll);
+      if(!content)return;
+      bar.scrollBehavior=TopAppBarScrollBehavior.enterAlways({isScrollingContentAtStart:()=>content.scrollTop===0});
+      bar.scrollTarget=content;
+    });
+    within(scope, '[data-bottom-app-bar-scroll]').forEach(bar => {
+      if (!claim(bar)) return;
+      const content=document.getElementById(bar.dataset.bottomAppBarScroll);if(!content)return;
+      bar.scrollBehavior=BottomAppBarScrollBehavior.exitAlways({element:bar});bar.scrollTarget=content;
+    });
+
+    const paginator = within(scope, '#demo-paginator')[0];
+    const pagePreview = document.querySelector('#paginator-content-preview .md-title-medium');
+    if (paginator && pagePreview && claim(paginator)) {
+      const updatePage = () => {
+        const start = paginator.length ? paginator.pageIndex * paginator.pageSize + 1 : 0;
+        const end = Math.min((paginator.pageIndex + 1) * paginator.pageSize, paginator.length);
+        pagePreview.textContent = `Active Page Records ${start}–${end} (Page ${paginator.pageIndex + 1})`;
+      };
+      paginator.addEventListener('page', updatePage);
+      updatePage();
+    }
+
+    // Stepper Interactive Wizard Wiring
+    const stepper = within(scope, '#demo-stepper')[0];
+    const prevBtn = document.getElementById('stepper-prev-btn');
+    const nextBtn = document.getElementById('stepper-next-btn');
+    const resetBtn = document.getElementById('stepper-reset-btn');
+
+    if (stepper && claim(stepper)) {
+      const syncStepperActions = () => {
+        const steps = stepper.getSteps();
+        if (prevBtn) prevBtn.disabled = !steps.slice(0, stepper.activeStep).some(step => !step.disabled);
+        if (nextBtn) nextBtn.disabled = !steps.slice(stepper.activeStep + 1).some(step => !step.disabled);
+      };
+      stepper.addEventListener('step-change', syncStepperActions);
+      stepper.addEventListener('reset', syncStepperActions);
+      syncStepperActions();
+      nextBtn?.addEventListener('click', () => {
+        stepper.next();
+      });
+      prevBtn?.addEventListener('click', () => {
+        stepper.prev();
+      });
+      resetBtn?.addEventListener('click', () => {
+        stepper.reset();
+      });
+    }
+
+    // Shapes Interactive Morph Wiring
+    const morphShape = document.getElementById('interactive-morph-shape');
+    const shapeButtons = within(scope, '.shape-btn');
+    shapeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const shapeName = btn.dataset.shape || btn.getAttribute('data-shape');
+        if (morphShape && shapeName) {
+          morphShape.setAttribute('name', shapeName);
+          shapeButtons.forEach(b => b.removeAttribute('selected'));
+          btn.setAttribute('selected', '');
+        }
+      });
+    });
+  }
+  mountHooks.push(card => { wireDemos(card); wireColorLab(card); highlightAllCodeBlocks(card); });
+  wireDemos(document);
+  wireColorLab(document);
 
   // =========================================================================
   // 8. Code highlighting (color roles only)
@@ -542,8 +874,8 @@ export function initShowcase() {
     '(?<func>\\b(?:applyDynamicTheme|useEffect|defineConfig|createElement|addEventListener|setAttribute|startsWith)\\b)'
   ].join('|'), 'g');
 
-  function highlightAllCodeBlocks() {
-    document.querySelectorAll('.code-block-wrapper pre code, .comp-code-box code').forEach(el => {
+  function highlightAllCodeBlocks(scope = document) {
+    scope.querySelectorAll('.code-block-wrapper pre code, .comp-code-box code').forEach(el => {
       if (el.dataset.highlighted) return;
       const escaped = el.textContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       el.innerHTML = escaped.replace(SYNTAX, (match, ...args) => {
@@ -719,13 +1051,33 @@ export function initShowcase() {
 
     let startTime = performance.now();
     let ambientPaused = false;
+    // The loop only runs while the homepage is visible; it resumes when it is shown again.
+    let running = false;
+    let pausedAt = null;
+    // Nothing is drawn while the waves are scrolled out of view.
+    let onScreen = true;
+    const shouldRun = () => onScreen && !ambientMotionPreference.matches && !document.hidden &&
+      (document.body.getAttribute('data-active-tab') || 'home') === 'home' && window.innerWidth > 839;
+    const resume = () => {
+      if (running || !shouldRun()) return;
+      if (pausedAt !== null) { startTime += performance.now() - pausedAt; pausedAt = null; }
+      running = true;
+      requestAnimationFrame(draw);
+    };
     ambientMotionPreference.addEventListener('change', () => {
       if (ambientPaused && !ambientMotionPreference.matches) {
         ambientPaused = false;
         startTime = performance.now();
-        requestAnimationFrame(draw);
       }
+      resume();
     });
+    document.addEventListener('visibilitychange', resume);
+    window.addEventListener('resize', resume, { passive: true });
+    new MutationObserver(resume).observe(document.body, { attributes: true, attributeFilter: ['data-active-tab'] });
+    new IntersectionObserver(entries => {
+      onScreen = entries.at(-1).isIntersecting;
+      resume();
+    }).observe(canvas);
 
     function draw(now) {
       const activeTab = document.body.getAttribute('data-active-tab') || 'home';
@@ -733,10 +1085,12 @@ export function initShowcase() {
       if (ambientMotionPreference.matches) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ambientPaused = true;
+        running = false;
         return;
       }
-      if (document.hidden || activeTab !== 'home' || isMobile) {
-        requestAnimationFrame(draw);
+      if (!onScreen || document.hidden || activeTab !== 'home' || isMobile) {
+        running = false;
+        pausedAt = now;
         return;
       }
 
@@ -777,7 +1131,8 @@ export function initShowcase() {
         }
 
         // Position & Rotate
-        anchor.style.transform = `translateX(-50%) translate(${step.posX}vw, ${step.posY}vh) rotate(${step.angle}deg)`;
+        const transform = `translateX(-50%) translate(${step.posX}vw, ${step.posY}vh) rotate(${step.angle}deg)`;
+        if (anchor.style.transform !== transform) anchor.style.transform = transform;
 
         const count = step.lineCount || 1;
         const totalSpan = (count - 1) * m.lineGap;
@@ -901,137 +1256,17 @@ export function initShowcase() {
       }
 
       ctx.restore();
-      requestAnimationFrame(draw);
+      if (currentItem && isWaitingGap) {
+        // Between passes the canvas stays clear: sleep until the next pass starts.
+        setTimeout(() => requestAnimationFrame(draw), (currentItem.nextStart - cycleTime) * 1000);
+      } else {
+        requestAnimationFrame(draw);
+      }
     }
 
-    requestAnimationFrame(draw);
+    resume();
   }
 
   initAmbientSequentialWave();
 
-
-  // Floating toolbar state belongs to its caller, as in the Compose samples.
-  document.querySelectorAll('[data-toolbar-shape]').forEach(control => {
-    const toolbar = document.getElementById(control.dataset.toolbarShape);
-    if (!toolbar) return;
-    const shapes = [null, {type: 'rounded', corners: 16}, {type: 'cut', corners: 16}];
-    control.addEventListener('change', event => {
-      toolbar.shape = shapes[event.detail.selectedIndex] ?? null;
-    });
-  });
-  document.querySelectorAll('[data-fab-toggle]').forEach(control => {
-    const examples = document.getElementById(control.dataset.fabToggle);
-    if (!examples) return;
-    const fabs = [...examples.querySelectorAll('md-fab')];
-    const update = () => {
-      const expanded = fabs.some(fab => fab.expanded);
-      control.label = expanded ? 'Collapse labels' : 'Expand labels';
-      control.setAttribute('aria-expanded', String(expanded));
-      const button = control.shadowRoot?.querySelector('button');
-      button?.setAttribute('aria-controls', examples.id);
-      button?.setAttribute('aria-expanded', String(expanded));
-    };
-    control.addEventListener('click', () => {
-      const expanded = fabs.some(fab => fab.expanded);
-      for (const fab of fabs) fab.expanded = !expanded;
-      update();
-    });
-    examples.addEventListener('expanded-change', update);
-    update();
-  });
-  document.querySelectorAll('[data-toolbar-toggle]').forEach(control => {
-    const toolbar = document.getElementById(control.dataset.toolbarToggle);
-    if (!toolbar) return;
-    const noun = toolbar.id === 'drawing-toolbar' ? 'tools' : 'actions';
-    const update = () => {
-      control.setAttribute('label', `${toolbar.expanded ? 'Collapse' : 'Expand'} ${noun}`);
-      control.setAttribute('aria-expanded', String(toolbar.expanded));
-      const button = control.shadowRoot?.querySelector('button');
-      button?.setAttribute('aria-controls', toolbar.id);
-      button?.setAttribute('aria-expanded', String(toolbar.expanded));
-    };
-    control.addEventListener('click', () => toolbar.toggle());
-    toolbar.addEventListener('expanded-change', update);
-    update();
-  });
-  document.querySelectorAll('[data-toolbar-scroll]').forEach(toolbar => {
-    toolbar.scrollTarget=document.getElementById(toolbar.dataset.toolbarScroll);
-    if(toolbar.dataset.toolbarScrollMode==='expand'){
-      toolbar.scrollExpansion=new ToolbarScrollExpansion({expanded:toolbar.expanded,onExpand:()=>toolbar.expand(),onCollapse:()=>toolbar.collapse()});
-    }else toolbar.scrollBehavior=new FloatingToolbarScrollBehavior({exitDirection:'bottom'});
-  });
-  document.querySelectorAll('[data-toolbar-fab-toggle]').forEach(fab=>{
-    const toolbar=document.getElementById(fab.dataset.toolbarFabToggle);if(!toolbar)return;
-    // AndroidX HorizontalFloatingToolbarWithFabSample owns this callback.
-    const update=()=>{
-      const expanded=String(toolbar.expanded);
-      fab.setAttribute('aria-label',toolbar.expanded?'Collapse actions':'Expand actions');
-      for(const node of [fab,fab.shadowRoot?.querySelector('button')].filter(Boolean)){
-        node.setAttribute('aria-controls',toolbar.id);node.setAttribute('aria-expanded',expanded);
-      }
-    };
-    fab.addEventListener('click',()=>toolbar.toggle());toolbar.addEventListener('expanded-change',update);update();
-  });
-  document.querySelectorAll('[data-top-app-bar-scroll]').forEach(bar=>{
-    const content=document.getElementById(bar.dataset.topAppBarScroll);
-    if(!content)return;
-    bar.scrollBehavior=TopAppBarScrollBehavior.enterAlways({isScrollingContentAtStart:()=>content.scrollTop===0});
-    bar.scrollTarget=content;
-  });
-  document.querySelectorAll('[data-bottom-app-bar-scroll]').forEach(bar=>{
-    const content=document.getElementById(bar.dataset.bottomAppBarScroll);if(!content)return;
-    bar.scrollBehavior=BottomAppBarScrollBehavior.exitAlways({element:bar});bar.scrollTarget=content;
-  });
-
-  const paginator = document.getElementById('demo-paginator');
-  const pagePreview = document.querySelector('#paginator-content-preview .md-title-medium');
-  if (paginator && pagePreview) {
-    const updatePage = () => {
-      const start = paginator.length ? paginator.pageIndex * paginator.pageSize + 1 : 0;
-      const end = Math.min((paginator.pageIndex + 1) * paginator.pageSize, paginator.length);
-      pagePreview.textContent = `Active Page Records ${start}–${end} (Page ${paginator.pageIndex + 1})`;
-    };
-    paginator.addEventListener('page', updatePage);
-    updatePage();
-  }
-
-  // Stepper Interactive Wizard Wiring
-  const stepper = document.getElementById('demo-stepper');
-  const prevBtn = document.getElementById('stepper-prev-btn');
-  const nextBtn = document.getElementById('stepper-next-btn');
-  const resetBtn = document.getElementById('stepper-reset-btn');
-
-  if (stepper) {
-    const syncStepperActions = () => {
-      const steps = stepper.getSteps();
-      if (prevBtn) prevBtn.disabled = !steps.slice(0, stepper.activeStep).some(step => !step.disabled);
-      if (nextBtn) nextBtn.disabled = !steps.slice(stepper.activeStep + 1).some(step => !step.disabled);
-    };
-    stepper.addEventListener('step-change', syncStepperActions);
-    stepper.addEventListener('reset', syncStepperActions);
-    syncStepperActions();
-    nextBtn?.addEventListener('click', () => {
-      stepper.next();
-    });
-    prevBtn?.addEventListener('click', () => {
-      stepper.prev();
-    });
-    resetBtn?.addEventListener('click', () => {
-      stepper.reset();
-    });
-  }
-
-  // Shapes Interactive Morph Wiring
-  const morphShape = document.getElementById('interactive-morph-shape');
-  const shapeButtons = document.querySelectorAll('.shape-btn');
-  shapeButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const shapeName = btn.dataset.shape || btn.getAttribute('data-shape');
-      if (morphShape && shapeName) {
-        morphShape.setAttribute('name', shapeName);
-        shapeButtons.forEach(b => b.removeAttribute('selected'));
-        btn.setAttribute('selected', '');
-      }
-    });
-  });
 }

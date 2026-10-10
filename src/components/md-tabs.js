@@ -3,6 +3,7 @@
  * Source revision: a095da93f8e98dea8748ceed79ea8427aade245f.
  * Layout policies are ported in tab-layout.js; native fonts and input remain web adapters.
  */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
@@ -244,7 +245,7 @@ export class MdTabs extends HTMLElement {
  }
  _releasePanel(panel){const state=this._panels.get(panel);if(!state)return;for(const [name,value] of Object.entries(state.before)){if(panel.getAttribute(name)!==state.owned[name])continue;if(value==null)panel.removeAttribute(name);else panel.setAttribute(name,value);}state.label.remove();this._panels.delete(panel);}
 }
-if(!customElements.get('md-tabs'))customElements.define('md-tabs',MdTabs);
+if(!customElements.get('md-tabs'))customElements.define('md-tabs',delegateHostAria(MdTabs));
 
 /** Declarative Tab data consumed by its parent MdTabs; the native button lives in MdTabs. */
 export class MdTab extends HTMLElement {

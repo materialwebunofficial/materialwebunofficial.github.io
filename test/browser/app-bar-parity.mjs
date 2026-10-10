@@ -162,6 +162,16 @@ export async function testAppBarParity(browser,base){
  }finally{await page.close();}
 }
 
+// A card's code sample is the live bar's markup. Component hosts keep ARIA as
+// the inner control's state (src/utils/host-aria.js), so ARIA written in the
+// sample is compared with what each live host reports for it.
+const snippetMatches=n=>{
+ const t=document.createElement('template');t.innerHTML=n.closest('.comp-card').querySelector('code').textContent;
+ const copy=t.content.firstElementChild,copies=[copy,...copy.querySelectorAll('*')],live=[n,...n.querySelectorAll('*')],aria=[];
+ for(const el of copies)for(const name of el.getAttributeNames())if(/^aria-/.test(name)&&name!=='aria-hidden'){aria.push([copies.indexOf(el),name,el.getAttribute(name)]);el.removeAttribute(name);}
+ if(copy.outerHTML!==n.outerHTML.replace(/\s+(?=<|$)/g,'').replace(/>\s+</g,'><'))return false;
+ return aria.every(([i,name,value])=>live[i].getAttribute(name)===value);
+};
 export async function testAppBarShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
@@ -173,11 +183,11 @@ export async function testAppBarShowcase(browser,base){
    assert.deepEqual(await top.evaluateAll(nodes=>nodes.map(n=>[n.variant,n.getBoundingClientRect().height,n.querySelectorAll('md-icon-button').length])),[['small',64,3],['medium-flexible',136,2],['center-aligned',64,2],['medium',112,2],['large',152,2],['large-flexible',152,2]]);
    for(const n of await top.all()){
     assert.equal(await n.evaluate(n=>getComputedStyle(n._bar).boxShadow),'none');
-    assert.equal(await n.evaluate(n=>{const t=document.createElement('template');t.innerHTML=n.closest('.comp-card').querySelector('code').textContent;const copy=t.content.firstElementChild;return copy.outerHTML===n.outerHTML.replace(/\s+(?=<|$)/g,'').replace(/>\s+</g,'><');}),true,'top app-bar snippet matches supplied controls');
+    assert.equal(await n.evaluate(snippetMatches),true,'top app-bar snippet matches supplied controls');
    }
    for(const n of await bars.all()){
     assert.equal(await n.evaluate(n=>getComputedStyle(n.shadowRoot.querySelector('.bar')).boxShadow),'none');
-    assert.equal(await n.evaluate(n=>{const template=document.createElement('template');template.innerHTML=n.closest('.comp-card').querySelector('code').textContent;return template.content.firstElementChild.outerHTML===n.outerHTML.replace(/\s+(?=<|$)/g,'').replace(/>\s+</g,'><');}),true,'bottom app-bar snippet matches actual controls');
+    assert.equal(await n.evaluate(snippetMatches),true,'bottom app-bar snippet matches actual controls');
    }
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'responsive app-bar showcase has no document overflow');
    assert.equal(await page.locator('#ambientWaveCanvas').count(),1,'homepage wave canvas retained');

@@ -69,11 +69,13 @@ export class ButtonElevationMotion {
 
 /** Resolve the source scalar through live web shadow tokens. */
 export function buttonElevationShadow(value, shadows) {
-  if (!(value > 0)) return shadows[0];
+  // Levels are read on demand: at rest a button only needs its own level.
+  const at = typeof shadows === 'function' ? shadows : level => shadows[level];
+  if (!(value > 0)) return at(0);
   let high=dp.findIndex(level=>level>=value);
   if (high<0) high=dp.length-1;
-  if (value===dp[high] || value>=dp.at(-1)) return shadows[high];
-  return interpolateShadow(shadows[high-1],shadows[high],(value-dp[high-1])/(dp[high]-dp[high-1]));
+  if (value===dp[high] || value>=dp.at(-1)) return at(high);
+  return interpolateShadow(at(high-1),at(high),(value-dp[high-1])/(dp[high]-dp[high-1]));
 }
 
 export function bindButtonElevation(button, {configuration, disabled, hitTest = () => true, MotionClass=ButtonElevationMotion, interactionSource=()=>true, compositionKey=()=>undefined, signal}) {
@@ -84,12 +86,14 @@ export function bindButtonElevation(button, {configuration, disabled, hitTest = 
     button.append(probe);return probe;
   });
   let values=configuration(),interactive=interactionSource(),key=compositionKey(),motion=values?new MotionClass(values,!disabled(),interactive):null,raf=null,disposed=false;
-  const originalShadow=button.style.boxShadow;let writtenShadow;
+  const originalShadow=button.style.boxShadow;let writtenShadow,paintedShadow;
+  const shadowAt=level=>getComputedStyle(probes[level]).boxShadow;
   function paint(time) {
     const elevation=motion?.sample(time)??0;
-    writtenShadow=buttonElevationShadow(elevation,probes.map(probe=>getComputedStyle(probe).boxShadow));
-    button.style.boxShadow=writtenShadow;writtenShadow=button.style.boxShadow;
-    button.dataset.elevation=String(elevation);
+    const shadow=buttonElevationShadow(elevation,shadowAt);
+    // Unchanged frames write nothing, so resting buttons do not invalidate style.
+    if(shadow!==paintedShadow||button.style.boxShadow!==writtenShadow){button.style.boxShadow=shadow;paintedShadow=shadow;writtenShadow=button.style.boxShadow;}
+    const level=String(elevation);if(button.dataset.elevation!==level)button.dataset.elevation=level;
   }
   function tick(time=performance.now()) {
     if(disposed)return;

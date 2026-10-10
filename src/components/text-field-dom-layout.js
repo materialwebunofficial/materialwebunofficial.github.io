@@ -11,7 +11,9 @@ export function layoutTextField(field){
  const hasLeading=!!field.icon,hasTrailing=!!field.trailingIcon||!!clear&&!clear.hidden,affixVisible=frame.affix>0,prefix=affixVisible?field.prefixText:'',suffix=affixVisible?field.suffixText:'';
  const start=hasLeading?4:16,end=hasTrailing?4:16,wrappers={};
  const helper=field.shadowRoot.querySelector('.helper-row');
- const key=JSON.stringify([width,g,frame.affix>0,frame.placeholder>0,field.value,field.placeholder,field.label,position,rtl,singleLine,field.minLines,field.maxLines,hasLeading,hasTrailing,prefix,suffix,field.minimizedLabelAlignment,field.expandedLabelAlignment,helper.hidden,field.maxlength,helper.textContent]);
+ // A single-line editor fills the field on one fixed-height line, so its
+ // measurement depends on whether it is empty, not on the text itself.
+ const key=JSON.stringify([width,g,frame.affix>0,frame.placeholder>0,singleLine?!!field.value:field.value,field.placeholder,field.label,position,rtl,singleLine,field.minLines,field.maxLines,hasLeading,hasTrailing,prefix,suffix,field.minimizedLabelAlignment,field.expandedLabelAlignment,helper.hidden,field.maxlength,helper.textContent]);
  if(field._fieldLayoutKey===key){
   for(const id of['prefix','suffix','placeholder']){const place=field._fieldLayout?.placements[id];if(place)place.alpha=Math.fround(id==='placeholder'?frame.placeholder:frame.affix);}
   return;

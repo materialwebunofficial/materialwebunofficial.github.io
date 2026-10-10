@@ -3,6 +3,7 @@
  * Source defaults/Surface/Row: test/fixtures/androidx/app-bars/AppBar.kt.
  * Actions and optional FAB are caller content, as in the public composables.
  */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { observeThemeContext } from '../theme/theme-context.js';
 import { resolveSurfaceColors } from '../theme/surface-color.js';
@@ -91,8 +92,8 @@ export class MdBottomAppBar extends HTMLElement {
   get heightOffset(){return this.scrollState?.heightOffset??0;}set heightOffset(value){if(this.scrollState)this.scrollState.heightOffset=value??0;}
   get heightOffsetLimit(){return this.scrollState?.heightOffsetLimit??0;}
   get collapsedFraction(){return this.scrollState?.collapsedFraction??0;}
-  preScroll(available={x:0,y:0}){this._cancelScrollSettle();const c=this._activeScrollBehavior?.nestedScrollConnection,result=c?.onPreScroll?.(available)||{x:0,y:0};this._sync();return result;}
-  postScroll(consumed={x:0,y:0},available={x:0,y:0}){this._cancelScrollSettle();const result=this._activeScrollBehavior?.nestedScrollConnection.onPostScroll(consumed,available)||{x:0,y:0};this._sync();return result;}
+  preScroll(available={x:0,y:0}){this._cancelScrollSettle();const c=this._activeScrollBehavior?.nestedScrollConnection,result=c?.onPreScroll?.(available)||{x:0,y:0};this._syncScroll();return result;}
+  postScroll(consumed={x:0,y:0},available={x:0,y:0}){this._cancelScrollSettle();const result=this._activeScrollBehavior?.nestedScrollConnection.onPostScroll(consumed,available)||{x:0,y:0};this._syncScroll();return result;}
   postFling(consumed={x:0,y:0},available={x:0,y:0}){return this._runScrollSettle(available.y??0,true,consumed);}
   _set(name, value) { if (value == null) this.removeAttribute(name); else this.setAttribute(name, String(value)); }
   connectedCallback() {
@@ -113,19 +114,26 @@ export class MdBottomAppBar extends HTMLElement {
     this._sizes=document.createElement('style');this._sizes.textContent=':host{}';this.shadowRoot.append(this._sizes);
     this._rendered = true;
   }
-  _queue(){if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{if(!this._queued)return;this._queued=false;if(this.isConnected)this._sync();});}
-  _sync() {
+  // Content, size, theme and attribute changes measure the bar again; scroll
+  // state changes only lay the measured content out at the new offset.
+  _queue(measure=true){if(measure)this._stale=true;if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{if(!this._queued)return;this._queued=false;if(this.isConnected)this._sync(false);});}
+  /** A scroll offset change: the measured content is laid out at the new offset. */
+  _syncScroll(){this._sync(false);}
+  _sync(measure=true) {
+    if(measure)this._stale=true;
     // A synchronous pre/post-scroll render already consumes queued state work.
     this._queued=false;
     const position=this._scrollPosition,before=position?.captureLayout();
+    const full=this._stale||!this._layoutInput;this._stale=false;
     try{
+    if(!full){this._layout(false);return;}
     const bar = this.shadowRoot.querySelector('.bar'), row = this.shadowRoot.querySelector('.content');
     const flexible = this.variant === 'flexible', rtl = getComputedStyle(this).direction === 'rtl';
     const padding = resolveToolbarPadding(this.contentPadding, rtl);
     row.classList.toggle('flexible', flexible);
     for (const edge of ['left', 'top', 'right', 'bottom']) row.style['padding' + edge[0].toUpperCase() + edge.slice(1)] = `${padding[edge]}px`;
     this.shadowRoot.querySelector('.fab').hidden = this.shadowRoot.querySelector('slot[name="fab"]').assignedElements().length === 0;
-    this._layout();
+    this._layout(true);
     const valid = (value, fallback) => value && CSS.supports('color', value) ? value : fallback;
     const colors = resolveSurfaceColors(this, this.shadowRoot.querySelector('.color-probe'), {
       container: valid(this.containerColor, 'var(--md-sys-color-surface-container)'),
@@ -147,15 +155,32 @@ export class MdBottomAppBar extends HTMLElement {
     const minimum=parseFloat(getComputedStyle(probe).width),weight=Number(node.getAttribute('data-app-bar-weight')),line=Number(node.getAttribute('data-app-bar-alignment-line'));
     return{id,width:Math.round(r.width),height:Math.round(r.height),weight:weight>0?Math.fround(Math.min(weight,3.4028234663852886e38)):0,fill:node.getAttribute('data-app-bar-fill')!=='false',align:node.getAttribute('data-app-bar-align')||'center',line:node.hasAttribute('data-app-bar-alignment-line')&&Number.isFinite(line)?Math.round(line):null,ink:b?{width:Math.round(parseFloat(b.width)||0),height:Math.round(parseFloat(b.height)||0),minimum:Number.isFinite(minimum)?minimum:48}:null};
   }
-  _layout(){
-    while(this._sizes.sheet.cssRules.length>1)this._sizes.sheet.deleteRule(1);
-    const sizing=this._sizes.sheet.cssRules[0].style;
+  /** Measures the constraints and content the layout is computed from. */
+  _measureInput(sizing){
     const dimension=()=>{const css=getComputedStyle(this);return Math.max(0,Math.round((parseFloat(css.height)||0)-(css.boxSizing==='border-box'?(parseFloat(css.paddingTop)||0)+(parseFloat(css.paddingBottom)||0)+(parseFloat(css.borderTopWidth)||0)+(parseFloat(css.borderBottomWidth)||0):0)));};
     sizing.setProperty('--_bottom-app-bar-height','0px');const minHeight=dimension();sizing.setProperty('--_bottom-app-bar-height','1000000px');const cap=dimension(),maxHeight=cap>=1000000?INF:Math.max(minHeight,cap);sizing.removeProperty('--_bottom-app-bar-height');
-    const bar=this.shadowRoot.querySelector('.bar'),content=this.shadowRoot.querySelector('.content'),actions=this.shadowRoot.querySelector('.actions'),fab=this.shadowRoot.querySelector('.fab'),rtl=getComputedStyle(this).direction==='rtl',width=Math.max(0,Math.round(bar.getBoundingClientRect().width));
+    // Leaves are measured free of the previous layout's placement rules.
+    this._setRules([]);
+    const bar=this.shadowRoot.querySelector('.bar'),rtl=getComputedStyle(this).direction==='rtl',width=Math.max(0,Math.round(bar.getBoundingClientRect().width));
     const css=getComputedStyle(this.shadowRoot.querySelector('.inset-probe')),insets=Object.fromEntries(['left','top','right','bottom'].map(edge=>[edge,parseFloat(css['padding'+edge[0].toUpperCase()+edge.slice(1)])||0]));
     const entries=[],collect=(name,prefix)=>this.shadowRoot.querySelector(name).assignedElements().filter(n=>getComputedStyle(n).display!=='none').map((n,i)=>{const input=this._leaf(n,prefix+i);entries.push({n,input});return input;});
-    const input={minWidth:width,maxWidth:width,minHeight,maxHeight,rtl,variant:this.variant,height:this.expandedHeight,contentPadding:this.contentPadding,arrangement:this.horizontalArrangement,insets,actions:collect('slot:not([name])','action'),fabs:collect('slot[name="fab"]','fab')};
+    this._layoutInput={minWidth:width,maxWidth:width,minHeight,maxHeight,rtl,variant:this.variant,height:this.expandedHeight,contentPadding:this.contentPadding,arrangement:this.horizontalArrangement,insets,actions:collect('slot:not([name])','action'),fabs:collect('slot[name="fab"]','fab')};
+    this._layoutEntries=entries;
+    const observed=new Set(entries.flatMap(({n})=>[n,n.shadowRoot?.querySelector('button')].filter(Boolean)));
+    for(const n of this._observedChildren||[])if(!observed.has(n))this._resize?.unobserve(n);
+    for(const n of observed)if(!this._observedChildren?.has(n))this._resize?.observe(n);this._observedChildren=observed;
+  }
+  _setRules(rules){
+    // Rewriting identical rules would restyle every placed control each frame.
+    const text=rules.join('');if(text===this._rulesText)return;this._rulesText=text;
+    while(this._sizes.sheet.cssRules.length>1)this._sizes.sheet.deleteRule(1);
+    for(const rule of rules)this._sizes.sheet.insertRule(rule,this._sizes.sheet.cssRules.length);
+  }
+  _layout(measure=true){
+    const sizing=this._sizes.sheet.cssRules[0].style;
+    if(measure||!this._layoutInput)this._measureInput(sizing);
+    const input=this._layoutInput,entries=this._layoutEntries,rules=[];
+    const bar=this.shadowRoot.querySelector('.bar'),content=this.shadowRoot.querySelector('.content'),actions=this.shadowRoot.querySelector('.actions'),fab=this.shadowRoot.querySelector('.fab');
     const state=this._activeScrollBehavior?.state,layout=state?bottomAppBarScrollLayout(input,state):bottomAppBarLayout(input);
     const positions=layout.placements,origin=positions['content-height'],surface=positions.bar;rect(content,{...origin,x:origin.x-surface.x,y:origin.y-surface.y});write(bar,'height',surface.height+'px');write(bar,'top',surface.y+'px');write(bar,'left',surface.x+'px');
     const flexible=this.variant==='flexible';if(!flexible){const p=positions['actions-row'];rect(actions,{x:p.x-origin.x,y:p.y-origin.y,width:p.width,height:p.height});const q=positions['fab-fill'];if(q)rect(fab,{x:q.x-origin.x,y:q.y-origin.y,width:q.width,height:q.height});}
@@ -163,14 +188,12 @@ export class MdBottomAppBar extends HTMLElement {
       const body=input.ink?minimumInteractiveLayout({...input.ink,...leaf.constraints}).body:null;
       const native=body?`--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;`:'';
       const index=[...this.children].indexOf(n)+1;
-      this._sizes.sheet.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-parent.x-leaf.offset.x}px!important;top:${p.y-parent.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`,this._sizes.sheet.cssRules.length);
+      rules.push(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-parent.x-leaf.offset.x}px!important;top:${p.y-parent.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`);
     }
-    const observed=new Set(entries.flatMap(({n})=>[n,n.shadowRoot?.querySelector('button')].filter(Boolean)));
-    for(const n of this._observedChildren||[])if(!observed.has(n))this._resize?.unobserve(n);
-    for(const n of observed)if(!this._observedChildren?.has(n))this._resize?.observe(n);this._observedChildren=observed;
+    this._setRules(rules);
     this._layoutResult=layout;sizing.setProperty('--_bottom-app-bar-height',layout.size.height+'px');
   }
-  _bindScrollState(){this._stopState?.();this._stopState=this.isConnected&&this._scrollBehavior?this._scrollBehavior.state.subscribe(()=>this._queue()):null;}
+  _bindScrollState(){this._stopState?.();this._stopState=this.isConnected&&this._scrollBehavior?this._scrollBehavior.state.subscribe(()=>this._queue(false)):null;}
   _configureScroll(){
     this._scrollAbort?.abort();if(!this.isConnected||!this._rendered)return;this._scrollAbort=new AbortController();const{signal}=this._scrollAbort,target=this._scrollTarget;
     const position=this._scrollPosition=new ScrollPosition(target);
@@ -195,7 +218,7 @@ export class MdBottomAppBar extends HTMLElement {
     if(motion.done)this._scrollTick(performance.now());else this._scrollRaf=requestAnimationFrame(time=>this._scrollTick(time));return promise;
   }
   _scrollTick(now){
-    this._scrollRaf=0;const motion=this._scrollSettle;if(!motion)return;motion.sampleFrame(now,()=>this._sync());this._sync();
+    this._scrollRaf=0;const motion=this._scrollSettle;if(!motion)return;motion.sampleFrame(now,()=>this._syncScroll());this._syncScroll();
     if(motion.done){this._scrollSettle=null;this._scrollResolve?.({x:0,y:motion.returnedVelocity});this._scrollResolve=null;}else this._scrollRaf=requestAnimationFrame(time=>this._scrollTick(time));
   }
   _barDragStart(event){
@@ -207,7 +230,7 @@ export class MdBottomAppBar extends HTMLElement {
     const delta=event.clientY-drag.last;drag.last=event.clientY;
     for(const sample of event.getCoalescedEvents?.()||[]){if(sample.timeStamp===event.timeStamp&&sample.clientY===event.clientY)continue;drag.tracker.move(sample.timeStamp,sample.clientY);}drag.tracker.move(event.timeStamp,event.clientY);
     let amount=delta;if(!drag.active){amount=drag.slop.add(delta);if(amount===null)return;drag.active=true;try{this.setPointerCapture(event.pointerId);}catch{}}
-    event.preventDefault();this.scrollState.heightOffset=Math.fround(this.heightOffset-amount);this._suppressDragClick=true;this._sync();
+    event.preventDefault();this.scrollState.heightOffset=Math.fround(this.heightOffset-amount);this._suppressDragClick=true;this._syncScroll();
   }
   _barDragStop(event){
     if(event.type==='lostpointercapture'&&event.target!==this)return;const drag=this._drag;if(!drag||drag.id!==event.pointerId)return;this._drag=null;
@@ -217,7 +240,14 @@ export class MdBottomAppBar extends HTMLElement {
     this._abortController?.abort();this._resize?.disconnect();this._mutation?.disconnect();this._abortController = new AbortController();
     const {signal} = this._abortController;
     for (const slot of this.shadowRoot.querySelectorAll('slot')) slot.addEventListener('slotchange', () => this._queue(), {signal});
-    this._observedChildren=new Set();this._resize=new ResizeObserver(()=>this._queue());this._resize.observe(this);
+    this._observedChildren=new Set();
+    // The bar's own height while it scrolls away and back is drawn from the
+    // measured content; only other size changes are measured again.
+    this._resize=new ResizeObserver(entries=>{
+      const drawn=entries.every(entry=>{if(entry.target!==this)return false;const width=entry.contentRect.width,previous=this._observedWidth;this._observedWidth=width;
+        return previous!==undefined&&Math.abs(width-previous)<.5&&this._layoutResult&&Math.abs(entry.contentRect.height-this._layoutResult.size.height)<.5;});
+      if(!drawn)this._queue();
+    });this._resize.observe(this);
     this._mutation=new MutationObserver(()=>this._queue());this._mutation.observe(this,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['slot','size','variant','style','class','disabled','hidden','label','icon','data-app-bar-weight','data-app-bar-fill','data-app-bar-align','data-app-bar-alignment-line']});
     document.fonts?.addEventListener('loadingdone',()=>this._queue(),{signal});document.fonts?.ready.then(()=>{if(!signal.aborted)this._queue();});
     this.shadowRoot.querySelector('.bar').addEventListener('click', event => {
@@ -235,4 +265,4 @@ export class MdBottomAppBar extends HTMLElement {
     signal.addEventListener('abort', stopTheme, {once: true});
   }
 }
-if (!customElements.get('md-bottom-app-bar')) customElements.define('md-bottom-app-bar', MdBottomAppBar);
+if (!customElements.get('md-bottom-app-bar')) customElements.define('md-bottom-app-bar', delegateHostAria(MdBottomAppBar));

@@ -187,11 +187,27 @@
    Regenerate: python tools/androidx-typography/generate.py */
 @font-face {
   font-family: 'Roboto';
-  src: url('./fonts/roboto-variable.woff2') format('woff2');
+  src: url('./fonts/roboto-latin.woff2') format('woff2');
   font-style: normal;
   font-weight: 100 900;
-  font-stretch: 75% 100%;
   font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/roboto-latin-ext.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0100-0130, U+0132-0151, U+0154-02BA, U+02BD-02C5, U+02C7-02D9, U+02DB, U+02DD-0303, U+0305-0307, U+0309-0328, U+032A-036F, U+1D00-1EFF, U+2070-20AB, U+20AD-2121, U+2123-2190, U+2192, U+2194-2211, U+2213-2214, U+2216-2BFF, U+2C60-2C7F, U+A720-A7FF, U+FB00-FB06;
+}
+@font-face {
+  font-family: 'Roboto';
+  src: url('./fonts/roboto-greek-cyrillic.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0370-052F, U+1C80-1C8F, U+1F00-1FFF, U+2DE0-2DFF, U+A640-A69F;
 }
 :root {
   --md-sys-typescale-font-family: 'Roboto', sans-serif;
@@ -839,9 +855,78 @@
 }
 
 
+/* --- src/tokens/upgrade.css --- */
+/* Until a component's definition has loaded, it reserves the box it will have
+   once upgraded (its container or 48dp minimum interactive size), so the page
+   does not shift when the components script runs. Content-sized widths stay
+   automatic. These rules stop matching as soon as the element is defined, and have no
+   specificity, so any page or author style for the element still applies. */
+:where(md-button:not(:defined)) { display: inline-flex; vertical-align: middle; min-height: 48px; }
+:where(md-button[size="m"]:not(:defined)) { min-height: 56px; }
+:where(md-button[size="l"]:not(:defined)) { min-height: 96px; }
+:where(md-button[size="xl"]:not(:defined)) { min-height: 136px; }
+/* A labelled button lays its label out (invisibly) with its size's padding and
+   type role, and a leading icon adds the icon and its gap, so it reserves the
+   width it will have. */
+:where(md-button[label]:not(:defined)) {
+  box-sizing: border-box; align-items: center; white-space: nowrap; color: transparent;
+  padding-inline: 16px; font: var(--md-sys-typescale-label-large); letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+:where(md-button[label]:not(:defined))::before { content: attr(label); }
+:where(md-button[label][icon]:not(:defined)) { padding-inline-start: 44px; }
+:where(md-button[size="xs"][label]:not(:defined)) { padding-inline: 12px; }
+:where(md-button[size="xs"][label][icon]:not(:defined)) { padding-inline-start: 36px; }
+:where(md-button[size="m"][label]:not(:defined)) { padding-inline: 24px; font: var(--md-sys-typescale-title-medium); letter-spacing: var(--md-sys-typescale-title-medium-tracking); }
+:where(md-button[size="m"][label][icon]:not(:defined)) { padding-inline-start: 56px; }
+:where(md-button[size="l"][label]:not(:defined)) { padding-inline: 48px; font: var(--md-sys-typescale-headline-small); letter-spacing: var(--md-sys-typescale-headline-small-tracking); }
+:where(md-button[size="l"][label][icon]:not(:defined)) { padding-inline-start: 92px; }
+:where(md-button[size="xl"][label]:not(:defined)) { padding-inline: 64px; font: var(--md-sys-typescale-headline-large); letter-spacing: var(--md-sys-typescale-headline-large-tracking); }
+:where(md-button[size="xl"][label][icon]:not(:defined)) { padding-inline-start: 120px; }
+
+:where(md-top-app-bar:not(:defined)) { display: block; min-height: 64px; }
+:where(md-top-app-bar[variant="medium"]:not(:defined)),
+:where(md-top-app-bar[variant="medium-flexible"]:not(:defined)) { min-height: 112px; }
+:where(md-top-app-bar[variant="medium-flexible"][subtitle]:not(:defined)) { min-height: 136px; }
+:where(md-top-app-bar[variant="large"]:not(:defined)),
+:where(md-top-app-bar[variant="large-flexible"]:not(:defined)) { min-height: 152px; }
+
+:where(md-icon-button:not(:defined)) { display: inline-flex; vertical-align: middle; min-width: 48px; min-height: 48px; }
+:where(md-icon-button[size="m"]:not(:defined)) { min-width: 56px; min-height: 56px; }
+:where(md-icon-button[size="l"]:not(:defined)) { min-width: 96px; min-height: 96px; }
+:where(md-icon-button[size="xl"]:not(:defined)) { min-width: 136px; min-height: 136px; }
+
+:where(md-fab:not(:defined)) { display: inline-block; min-width: 56px; min-height: 56px; }
+:where(md-fab[size="small"]:not(:defined)) { min-width: 48px; min-height: 48px; }
+:where(md-fab[size="medium"]:not(:defined)) { min-width: 80px; min-height: 80px; }
+:where(md-fab[size="large"]:not(:defined)) { min-width: 96px; min-height: 96px; }
+
+:where(md-chip:not(:defined)) { display: inline-flex; vertical-align: middle; min-height: 48px; }
+:where(md-switch:not(:defined)) { display: inline-block; width: 52px; height: 48px; }
+:where(md-checkbox:not(:defined)),
+:where(md-radio-button:not(:defined)) { display: inline-block; width: 48px; height: 48px; }
+:where(md-segmented-button:not(:defined)) { display: inline-flex; min-height: 40px; }
+:where(md-split-button:not(:defined)) { display: inline-block; min-height: 56px; }
+:where(md-split-button[size="xs"]:not(:defined)),
+:where(md-split-button[size="s"]:not(:defined)) { min-height: 48px; }
+:where(md-split-button[size="l"]:not(:defined)) { min-height: 96px; }
+:where(md-split-button[size="xl"]:not(:defined)) { min-height: 136px; }
+
+:where(md-slider:not(:defined)) { display: block; min-height: 48px; }
+:where(md-progress-indicator:not(:defined)) { display: block; min-height: 4px; }
+:where(md-progress-indicator[variant="wavy"]:not(:defined)) { min-height: 10px; }
+:where(md-progress-indicator[type="circular"]:not(:defined)) { display: inline-block; vertical-align: middle; width: 40px; height: 40px; }
+:where(md-progress-indicator[type="circular"][variant="wavy"]:not(:defined)) { width: 48px; height: 48px; }
+:where(md-loading-indicator:not(:defined)) { display: inline-block; vertical-align: middle; width: 48px; height: 48px; }
+
+:where(md-text-field:not(:defined)) { display: inline-block; min-height: 56px; }
+:where(md-divider:not(:defined)) { display: block; height: 1px; }
+
+
 /* --- src/icons/material-symbols.css --- */
 :root {
-  /* Icon font used by every component. Material 3 Expressive uses rounded symbols. */
+  /* Icon font used by every component. Material 3 Expressive uses rounded symbols.
+     Ligature names are shown as text until the font arrives, so icon faces block
+     briefly instead of swapping. The font is a subset (tools/material-symbols). */
   --md-icon-font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
 }
 
@@ -849,7 +934,7 @@
   font-family: "Material Symbols Outlined";
   font-style: normal;
   font-weight: 100 700;
-  font-display: swap;
+  font-display: block;
   src: url("./fonts/material-symbols-rounded.woff2") format("woff2");
 }
 
@@ -875,7 +960,7 @@
   font-family: "Material Symbols Rounded";
   font-style: normal;
   font-weight: 100 700;
-  font-display: swap;
+  font-display: block;
   src: url("./fonts/material-symbols-rounded.woff2") format("woff2");
 }
 
@@ -901,7 +986,7 @@
   font-family: "Material Symbols Sharp";
   font-style: normal;
   font-weight: 100 700;
-  font-display: swap;
+  font-display: block;
   src: url("./fonts/material-symbols-rounded.woff2") format("woff2");
 }
 

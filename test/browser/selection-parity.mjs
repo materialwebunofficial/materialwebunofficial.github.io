@@ -5,7 +5,7 @@ export async function testSelectionParity(page) {
     const host=document.createElement('div');host.id='selection-parity';
     host.style.cssText='position:fixed;inset:0;z-index:99999;background:var(--md-sys-color-surface);display:flex;align-items:start';
     host.innerHTML=`<form id="selection-a"><md-checkbox id="check" name="check" checked indeterminate></md-checkbox>
-      <md-switch id="switch" name="switch" checked></md-switch>
+      <md-switch id="parity-switch" name="switch" checked></md-switch>
       <md-radio-button id="radio-a" name="group" value="a" checked></md-radio-button>
       <md-radio-button id="radio-disabled" name="group" value="disabled" disabled></md-radio-button>
       <md-radio-button id="radio-b" name="group" value="b"></md-radio-button>
@@ -25,7 +25,7 @@ export async function testSelectionParity(page) {
     assert.equal(await check.getAttribute('aria-checked'),'true');
     await check.press('Space');
     assert.equal(await check.getAttribute('aria-checked'),'false');
-    await page.locator('#switch .switch-root').press('Space');
+    await page.locator('#parity-switch .switch-root').press('Space');
     await radio.press('ArrowDown');
     assert.equal(await page.locator('#radio-b').evaluate(el=>el.checked),true);
     assert.equal(await page.locator('#other-form').evaluate(el=>el.checked),true,'groups must respect form ownership');
@@ -35,7 +35,7 @@ export async function testSelectionParity(page) {
     assert.deepEqual(await page.locator('#selection-a').evaluate(form=>[...new FormData(form)]),[['group','b']]);
     await page.locator('#selection-a').evaluate(form=>form.reset());
     assert.equal(await check.getAttribute('aria-checked'),'mixed');
-    assert.equal(await page.locator('#switch').evaluate(el=>el.checked),true);
+    assert.equal(await page.locator('#parity-switch').evaluate(el=>el.checked),true);
     assert.equal(await page.locator('#radio-a').evaluate(el=>el.checked),true);
     assert.equal(await page.locator('#radio-b').evaluate(el=>el.checked),false);
     const data=await page.evaluate(() => {
@@ -47,7 +47,7 @@ export async function testSelectionParity(page) {
       let changes=0,inputs=0;
       check.addEventListener('change',()=>changes++);check.addEventListener('input',()=>inputs++);
       check.click();
-      const sw=document.getElementById('switch');sw.icon='close';
+      const sw=document.getElementById('parity-switch');sw.icon='close';
       const iconNode=sw.shadowRoot.querySelector('.icon');sw.icon='check';
       const stableIcon=iconNode===sw.shadowRoot.querySelector('.icon')&&iconNode.textContent==='check';
       const checked=check.checked;
@@ -58,21 +58,21 @@ export async function testSelectionParity(page) {
     assert.deepEqual(data,{restored:true,changes:1,inputs:1,checked:true,stableIcon:true,opacity:'1'});
     await page.locator('#radio-b').evaluate(el=>{el.checked=true;});
     assert.equal(await page.locator('#radio-a').evaluate(el=>el.checked),false,'programmatic group exclusivity');
-    await page.locator('#switch').evaluate(el=>{el.setAttribute('dir','rtl');el.checked=false;});
+    await page.locator('#parity-switch').evaluate(el=>{el.setAttribute('dir','rtl');el.checked=false;});
     await page.waitForTimeout(700);
-    const before=await page.locator('#switch .handle').boundingBox();
-    await page.locator('#switch').evaluate(el=>{el.checked=true;});
+    const before=await page.locator('#parity-switch .handle').boundingBox();
+    await page.locator('#parity-switch').evaluate(el=>{el.checked=true;});
     await page.waitForTimeout(700);
-    const after=await page.locator('#switch .handle').boundingBox();
+    const after=await page.locator('#parity-switch .handle').boundingBox();
     assert.ok(after.x<before.x,'RTL switch must move to inline end');
-    await page.locator('#switch .switch-root').press('Enter');
-    assert.equal(await page.locator('#switch').evaluate(el=>el.checked),false,'inherited ClickableNode Enter key-up toggles the switch');
-    await page.locator('#switch').evaluate(sw=>{sw.checked=true;sw.disabled=true;});
+    await page.locator('#parity-switch .switch-root').press('Enter');
+    assert.equal(await page.locator('#parity-switch').evaluate(el=>el.checked),false,'inherited ClickableNode Enter key-up toggles the switch');
+    await page.locator('#parity-switch').evaluate(sw=>{sw.checked=true;sw.disabled=true;});
     await page.waitForTimeout(700);
     const disabledColors = await page.evaluate(async() => {
       const {resolveColorAlpha}=await import('/src/theme/color-alpha.js');
       const {resolveSurfaceColor}=await import('/src/theme/surface-color.js');
-      const sw=document.getElementById('switch');
+      const sw=document.getElementById('parity-switch');
       const checkbox=document.getElementById('check');
       const probe=document.createElement('span');sw.parentElement.append(probe);
       const resolve = value => resolveSurfaceColor(probe,value).key;

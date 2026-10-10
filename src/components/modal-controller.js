@@ -1,4 +1,4 @@
-import {setThemeLayer,removeThemeLayer} from '../theme/theme-context.js';
+import { lockPageScroll, unlockPageScroll } from '../utils/scroll-lock.js';
 
 // Android Dialog delegates window animation to the host theme. The web default
 // uses MDC Material3.Dialog's unchanged m3_motion_fade_enter/exit resources:
@@ -67,12 +67,12 @@ export class ModalController {
       this.scrimFrom=reopening&&scrim?getComputedStyle(scrim).opacity:'0';
       const from=current?{opacity:current.opacity,transform:current.transform}:{opacity:'0',transform:'scale(0.8)'};
       this._cancel();this.target=true;this.closing=false;this.window.inert=false;
-      setThemeLayer(document.body,this,{styles:{overflow:'hidden'},attributes:{}});
+      lockPageScroll(this);
       if(!this.window.open)this.window.showModal();
       this._animate(true,from);return;
     }
     if(!this.window.open){const active=this.target||this.closing;this._cancel();this.target=false;this.closing=false;
-      this.window.inert=false;removeThemeLayer(document.body,this);if(active)this.onClosed();return;}
+      this.window.inert=false;unlockPageScroll(this);if(active)this.onClosed();return;}
     if(this.closing){this.target=false;return;}
     const current=this.surface?getComputedStyle(this.surface):null;
     const scrim=this.window.querySelector('.modal-scrim');
@@ -89,7 +89,7 @@ export class ModalController {
     const parsed=raw?parseFloat(raw)*(raw.endsWith('ms')?1:1000):enter?400:150;
     const duration=matchMedia('(prefers-reduced-motion: reduce)').matches?0:Number.isFinite(parsed)&&parsed>=0?parsed:enter?400:150;
     const easing=style.getPropertyValue(enter?'--md-dialog-enter-easing':'--md-dialog-exit-easing').trim()||(enter?'cubic-bezier(0.1, 0.7, 0.1, 1)':'cubic-bezier(0.3, 0, 0.8, 0.2)');
-    const complete=()=>{if(generation!==this.generation)return;this._cancel();if(!enter){this.closing=false;this.window.inert=false;this.window.close();removeThemeLayer(document.body,this);this.onClosed();}};
+    const complete=()=>{if(generation!==this.generation)return;this._cancel();if(!enter){this.closing=false;this.window.inert=false;this.window.close();unlockPageScroll(this);this.onClosed();}};
     if(!duration||!this.surface){complete();return;}
     const to=enter?{opacity:'1',transform:'none'}:{opacity:'0',transform:from.transform};
     const job=this.surface.animate([from,to],{duration,easing,fill:'both'});this.jobs.push(job);
@@ -101,6 +101,6 @@ export class ModalController {
   detach(){
     this._cancel();this.abort?.abort();this.abort=null;this.target=false;this.closing=false;
     if(this.window?.open){this.window.inert=false;this.window.close();}
-    removeThemeLayer(document.body,this);this.window=null;this.surface=null;
+    unlockPageScroll(this);this.window=null;this.surface=null;
   }
 }

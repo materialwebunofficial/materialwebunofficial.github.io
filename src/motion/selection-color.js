@@ -21,14 +21,17 @@ export function bindSelectionColors(element,channels,{disabled=()=>false,role=()
   function refresh(){
     if(disposed||!element.isConnected)return;
     const nowDisabled=disabled(),enabledChanged=nowDisabled!==previousDisabled;
-    for(const record of records){
+    // Every target color is read before any channel paints, so a refresh
+    // restyles once rather than once per channel.
+    const colors=records.map(record=>{
       const descriptor=record.disabledColor?.(nowDisabled);
-      let color;
-      if(descriptor)color=resolveColorAlpha(record.probe,descriptor);
-      else{
-        record.probe.style.color=`var(${record.token})`;
-        color=getComputedStyle(record.probe).color;
-      }
+      if(descriptor)return resolveColorAlpha(record.probe,descriptor);
+      const value=`var(${record.token})`;
+      if(record.probe.style.color!==value)record.probe.style.color=value;
+      return getComputedStyle(record.probe).color;
+    });
+    records.forEach((record,index)=>{
+      const color=colors[index];
       const draw=value=>{
         record.color=value;record.node.style.setProperty(record.property,value);
         record.written=record.node.style.getPropertyValue(record.property);onPaint();
@@ -46,7 +49,7 @@ export function bindSelectionColors(element,channels,{disabled=()=>false,role=()
         // animation even when a custom role resolves to the same target color.
         if(snap)record.motion.finish();
       }
-    }
+    });
     previousDisabled=nowDisabled;onPaint();
   }
   const stopTheme=observeThemeContext(element,refresh);

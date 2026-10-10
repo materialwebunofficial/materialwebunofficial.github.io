@@ -135,3 +135,10 @@ non-unit native density, native text clipping and Surface shadow/clip raster rem
 separate work. `button-layout.js` and `toggle-button-dom-layout.js` contain the
 production measurement and DOM adapters; the Kotlin/Python files produce the
 independent references rather than application code.
+
+Browser scope of the border oracle: width channels, pixel-ceiled strokes,
+durations and retention are compared exactly. The color channel of this oracle
+is the host model above; the component applies color through the packed,
+frame-based Animatable (checked by `test/browser/packed-color-consumers.mjs`),
+so `toggle-border.mjs` checks that the paint equals that owner's packed value
+and that resting colors equal the oracle's target.

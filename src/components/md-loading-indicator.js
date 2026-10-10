@@ -18,6 +18,7 @@
  * graphics-shapes Morph implementation, not frame-sampled contours.
  */
 
+import { delegateHostAria } from '../utils/host-aria.js';
 import { observeThemeContext } from '../theme/theme-context.js';
 import { observeElementVisibility } from '../utils/visibility.js';
 import { LOADING_MORPHS } from '../tokens/loading-morphs.js';
@@ -34,12 +35,13 @@ const defaultStyle = `
     outline: none;
   }
 
+  /* A 48dp box: a block-level root, so no line box adds descender space below it. */
   .loading-root {
     position: relative;
     width: 48px;
     height: 48px;
     box-sizing: border-box;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--md-sys-shape-corner-full, 9999px);
@@ -68,7 +70,7 @@ const QUARTER_ROTATION = 90;          // 90° per step
 
 export class MdLoadingIndicator extends HTMLElement {
   static get observedAttributes() {
-    return ['variant', 'size', 'progress', 'indeterminate', 'color', 'container-color', 'track-color', 'stroke-cap', 'gap-size', 'stroke-width'];
+    return ['variant', 'size', 'progress', 'indeterminate', 'color', 'container-color', 'track-color', 'stroke-cap', 'gap-size', 'stroke-width', 'aria-label'];
   }
 
   constructor() {
@@ -129,7 +131,7 @@ export class MdLoadingIndicator extends HTMLElement {
     if (name === 'color' || name === 'variant') {
       this._colorDirty = true;
     }
-    if (name === 'progress' || name === 'indeterminate') {
+    if (name === 'progress' || name === 'indeterminate' || name === 'aria-label') {
       this._syncProgress();
     }
     this._updateDimensions();
@@ -364,6 +366,8 @@ export class MdLoadingIndicator extends HTMLElement {
   _syncProgress() {
     const root = this.shadowRoot.querySelector('.loading-root');
     if (!root) return;
+    // The progress bar's name: the author's label, or a generic one.
+    root.setAttribute('aria-label', this.getAttribute('aria-label') || 'Loading indicator');
     if (this.indeterminate) {
       root.setAttribute('aria-busy', 'true');
       root.removeAttribute('aria-valuenow');
@@ -392,5 +396,5 @@ export class MdLoadingIndicator extends HTMLElement {
 }
 
 if (!customElements.get('md-loading-indicator')) {
-  customElements.define('md-loading-indicator', MdLoadingIndicator);
+  customElements.define('md-loading-indicator', delegateHostAria(MdLoadingIndicator));
 }

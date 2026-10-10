@@ -122,7 +122,6 @@ const defaultStyle = `
     letter-spacing: var(--md-sys-typescale-label-small-emphasized-tracking, 0.5px);
     text-transform: uppercase;
     background: rgba(255,255,255,0.25);
-    backdrop-filter: blur(8px);
     padding: 4px 8px;
     border-radius: 9999px;
     margin-bottom: 6px;

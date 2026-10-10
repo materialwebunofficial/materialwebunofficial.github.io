@@ -1,3 +1,4 @@
+import { delegateHostAria } from '../utils/host-aria.js';
 import {observeThemeContext} from '../theme/theme-context.js';
 import {tweenFraction} from '../motion/native-easing.js';
 import {AnimationClock} from '../motion/animation-clock.js';
@@ -43,7 +44,8 @@ export class MdProgressIndicator extends HTMLElement {
       if(visible)this._startAnimation();else this._stopAnimation();
     });
     if(typeof ResizeObserver!=='undefined'){
-      this._resizeObserver=new ResizeObserver(()=>this._startAnimation());this._resizeObserver.observe(this);
+      // The observed size is retained, so value changes never force a layout read.
+      this._resizeObserver=new ResizeObserver(entries=>{const box=entries.at(-1)?.contentRect;if(box&&box.width>0)this._observedWidth=Math.round(box.width);this._startAnimation();});this._resizeObserver.observe(this);
     }
     this._syncDimensions();this._startAnimation();
   }
@@ -59,7 +61,7 @@ export class MdProgressIndicator extends HTMLElement {
     if(this._mode!==mode)this._resetMotion();
     this._syncWaveParameters();
     if(this.type==='circular'&&this.indeterminate)this._waveMotion?.setAmplitude(this.amplitude??1);
-    if(name==='color'||name==='track-color'||name==='type'||name==='variant'||name==='indeterminate'||name==='value'||name==='progress'||name==='dir')this._colorDirty=true;
+    if(name==='color'||name==='track-color'||name==='type'||name==='variant'||name==='indeterminate'||name==='dir')this._colorDirty=true;
     this._syncDimensions();this._startAnimation();
   }
   _optional(name,value){if(value==null)this.removeAttribute(name);else this.setAttribute(name,String(value));}
@@ -101,6 +103,7 @@ export class MdProgressIndicator extends HTMLElement {
   get _waveOffset(){return this._waveMotion?.value??0;}
   _getWidth(){
     if(this.type==='circular')return this.variant==='wavy'?48:40;
+    if(this._observedWidth>0)return this._cachedWidth=this._observedWidth;
     const width=this.clientWidth;if(width>0)this._cachedWidth=width;return this._cachedWidth;
   }
   _syncDimensions(){
@@ -239,4 +242,4 @@ export class MdProgressIndicator extends HTMLElement {
     this._syncDimensions();
   }
 }
-if(!customElements.get('md-progress-indicator'))customElements.define('md-progress-indicator',MdProgressIndicator);
+if(!customElements.get('md-progress-indicator'))customElements.define('md-progress-indicator',delegateHostAria(MdProgressIndicator));

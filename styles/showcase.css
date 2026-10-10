@@ -17,7 +17,6 @@
 }
 
 html {
-  scroll-behavior: smooth;
   scroll-padding-top: 24px;
   -webkit-text-size-adjust: 100%;
 }
@@ -45,7 +44,7 @@ code {
 :focus-visible { outline: 3px solid var(--md-sys-color-secondary); outline-offset: 2px; }
 
 .mat-sym {
-  font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+  font-family: var(--md-icon-font-family);
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -96,6 +95,10 @@ code {
   padding-block: 16px 24px;
 }
 
+/* Until the drawer is defined, its slotted header would sit in the page row and
+   push the content aside for the first frames. */
+.sub-nav-drawer:not(:defined) { display: none; }
+
 .sub-nav-drawer[data-variant="dismissible"],
 .sub-nav-drawer[data-variant="standard"] {
   position: sticky;
@@ -141,6 +144,11 @@ code {
 }
 
 .tab-view.active { display: block; }
+/* Before the script runs, the view the address opens is the one shown. */
+html[data-start-tab="get-started"] body:not([data-routed]) #tab-view-home,
+html[data-start-tab="components"] body:not([data-routed]) #tab-view-home { display: none; }
+html[data-start-tab="get-started"] body:not([data-routed]) #tab-view-get-started,
+html[data-start-tab="components"] body:not([data-routed]) #tab-view-components { display: block; }
 
 /* Compact: top app bar + navigation bar. */
 @media (max-width: 599px) {
@@ -166,6 +174,19 @@ code {
 
 @media (min-width: 1600px) {
   .tab-view { padding-top: 40px; }
+}
+
+/* A catalog address keeps the docked drawer's place until the showcase has
+   routed and docked it, so the content does not move when it docks. */
+@media (min-width: 1200px) {
+  html[data-start-tab="components"] body:not([data-routed]) .sub-nav-drawer {
+    display: block;
+    flex: none;
+    width: 360px;
+    margin-inline-start: var(--app-rail-width);
+    visibility: hidden;
+  }
+  html[data-start-tab="components"] body:not([data-routed]) .sub-nav-drawer ~ .main { margin-inline-start: 0; }
 }
 
 /* ==========================================================================
@@ -218,7 +239,8 @@ code {
   min-width: 0;
   overflow-x: auto;
   white-space: nowrap;
-  font: 400 13px/20px var(--app-mono);
+  /* Code uses Body Medium metrics in a monospace face. */
+  font: var(--md-sys-typescale-body-medium-weight) var(--md-sys-typescale-body-medium-size)/var(--md-sys-typescale-body-medium-line-height) var(--app-mono);
   scrollbar-width: none;
 }
 
@@ -244,7 +266,8 @@ code {
 }
 
 .code-block-wrapper pre code {
-  font: 400 13px/20px var(--app-mono);
+  /* Code uses Body Medium metrics in a monospace face. */
+  font: var(--md-sys-typescale-body-medium-weight) var(--md-sys-typescale-body-medium-size)/var(--md-sys-typescale-body-medium-line-height) var(--app-mono);
   white-space: pre;
 }
 
@@ -719,6 +742,8 @@ code {
 }
 
 .section-note .mat-sym { flex: none; font-size: 20px; color: var(--md-sys-color-tertiary); }
+/* Avatar content an input chip shows in its 24dp avatar slot. */
+.chip-avatar { display: grid; place-items: center; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); font-size: 18px; }
 
 .cards-grid {
   display: grid;
@@ -759,6 +784,20 @@ code {
 
 .comp-preview > * { max-width: 100%; }
 
+/* Fields that open a menu keep room below them for it. */
+.comp-preview-dropdown { min-height: 220px; align-items: flex-start; overflow: visible; }
+
+/* FAB menus sit at the bottom end, like on a screen, and open upward inside the card:
+   three 56dp items 4dp apart, 8dp above the 56dp FAB. */
+.fab-menu-demo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 24px;
+  width: 100%;
+  min-height: 248px;
+}
+
 .comp-preview-stack {
   flex-direction: column;
   flex-wrap: nowrap;
@@ -788,6 +827,19 @@ code {
 }
 
 .comp-card > .comp-code-box { margin-top: auto; }
+
+/* Extended FAB examples sit in fixed-width cells, start-aligned, so collapsing
+   and expanding their labels changes only their own width (the icon stays put)
+   and never the number of rows the card needs. */
+.extended-fab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 192px);
+  justify-content: center;
+  justify-items: start;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
 
 /* Overlays opened from an example stay above neighbouring frames. */
 .comp-card:has(md-menu[open]),
@@ -1012,6 +1064,12 @@ code {
   overflow-wrap: anywhere;
 }
 
+/* Outline roles are for boundaries, not text backgrounds: they are shown as
+   the boundary of a surface, with the label in On surface. */
+.role-swatch-outline {
+  background-color: var(--md-sys-color-surface);
+  border: 4px solid var(--role);
+}
 .theme-lab-roles > .role-row:first-child > .role-swatch:first-child { border-start-start-radius: var(--md-sys-shape-corner-large); }
 .theme-lab-roles > .role-row:first-child > .role-swatch:last-child { border-start-end-radius: var(--md-sys-shape-corner-large); }
 .theme-lab-roles > .role-row:last-child > .role-swatch:first-child { border-end-start-radius: var(--md-sys-shape-corner-large); }
@@ -1101,9 +1159,6 @@ body:not([data-active-tab="home"]) .ambient-stage-wrapper { display: none; }
   contain: strict;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-}
 
 /* Card examples */
 .demo-card { width: 100%; max-width: 320px; }
@@ -1119,3 +1174,16 @@ body:not([data-active-tab="home"]) .ambient-stage-wrapper { display: none; }
   color: var(--md-sys-color-on-surface-variant);
 }
 .divider-demo { max-width: 360px; }
+
+/* Deferred example grids reserve their approximate height until mounted. The
+   catalog keeps the view still itself as cards are created above it, so the
+   browser's own scroll anchoring would adjust twice. */
+#tab-view-components { overflow-anchor: none; }
+/* Cards outside the viewport are not laid out or painted until they come near
+   it, so a width change (the docked drawer) or showing the catalog only lays out
+   what is on screen. The search card's suggestions extend past the card. */
+#tab-view-components .comp-card:not(:has(md-search-bar)) { content-visibility: auto; contain-intrinsic-size: auto 480px; }
+.cards-grid[data-deferred] { min-height: var(--deferred-one, 520px); }
+@media (min-width: 1200px) {
+  .cards-grid[data-deferred] { min-height: var(--deferred-two, 520px); }
+}

@@ -103,13 +103,13 @@ export async function testFabShowcase(browser, base) {
       await page.evaluate(mode => customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode:mode}), mode);
       await examples.locator('md-fab').evaluateAll(fabs => fabs.forEach(fab => fab.expanded = true));
       await page.waitForTimeout(800);
-      assert.equal(await control.getAttribute('aria-expanded'), 'true');
+      assert.equal(await control.locator('button').getAttribute('aria-expanded'), 'true');
       await control.click(); await page.waitForTimeout(800);
       assert.deepEqual(await examples.locator('md-fab button').evaluateAll(buttons => buttons.map(button => [button.getBoundingClientRect().width,button.getBoundingClientRect().height])), [[56,56],[56,56],[80,80],[96,96]]);
-      assert.equal(await control.getAttribute('aria-expanded'), 'false');
-      assert.equal(await control.locator('button').getAttribute('aria-controls'), 'extended-fab-examples');
+      assert.equal(await control.locator('button').getAttribute('aria-expanded'), 'false');
+      assert.equal(await control.locator('button').evaluate(b=>b.ariaControlsElements?.map(n=>n.id).join(' ')), 'extended-fab-examples');
       await control.press('Enter'); await page.waitForTimeout(800);
-      assert.equal(await control.getAttribute('aria-expanded'), 'true');
+      assert.equal(await control.locator('button').getAttribute('aria-expanded'), 'true');
       const geometry = await examples.locator('md-fab button').evaluateAll(buttons => buttons.map(button => [button.getBoundingClientRect().width,button.getBoundingClientRect().height,button.querySelector('.label-clip').hidden]));
       assert.ok(geometry.every(([w,h,hidden]) => w > h && !hidden));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no showcase document overflow');

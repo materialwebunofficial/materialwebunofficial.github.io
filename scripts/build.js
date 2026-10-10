@@ -32,6 +32,7 @@ const cssFiles = [
   'src/tokens/spacing.css',
   'src/tokens/elevation.css',
   'src/tokens/motion.css',
+  'src/tokens/upgrade.css',
   'src/icons/material-symbols.css'
 ];
 
@@ -67,6 +68,7 @@ await esbuild.build({
   bundle: true,
   format: 'esm',
   target: ['es2022'],
+  minify: true,
   sourcemap: true
 });
 const esmStats = fs.statSync(path.join(distDir, 'md3-expressive.esm.js'));

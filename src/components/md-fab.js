@@ -14,6 +14,7 @@
  *   - XSS sanitization and AbortSignal memory safety.
  */
 
+import { delegateHostAria, forwardControlAria } from '../utils/host-aria.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { bindFabInteractions } from '../motion/fab-interactions.js';
 import {domPointerInput,domPointerHit,domPointerHoverHit,domPointerOutOfBounds} from '../motion/dom-pointer-geometry.js';
@@ -129,7 +130,7 @@ const EXT = {
 
 export class MdFab extends HTMLElement {
   static get observedAttributes() {
-    return ['variant', 'color', 'size', 'icon', 'label', 'disabled', 'container-color', 'content-color', 'expanded', 'lowered', 'elevation', 'aria-label'];
+    return ['variant', 'color', 'size', 'icon', 'label', 'disabled', 'container-color', 'content-color', 'expanded', 'lowered', 'elevation', 'aria-label', 'aria-expanded', 'aria-controls', 'aria-haspopup'];
   }
 
   constructor() {
@@ -257,6 +258,7 @@ export class MdFab extends HTMLElement {
     const label = fab.querySelector('.lbl'); label.textContent = this.label;
     const fabAriaLabel = this.getAttribute('aria-label') || this.label || this.icon || 'Floating action button';
     fab.setAttribute('aria-label', fabAriaLabel);
+    forwardControlAria(this, fab);
     fab.disabled = this.disabled;
     this._pressBinding?.refresh();
     this._syncColors();
@@ -285,7 +287,7 @@ export class MdFab extends HTMLElement {
     const iconWidth = this.icon ? Math.round(parseFloat(getComputedStyle(icon).width) || 0) : 0;
     const gap = iconWidth && this.label ? baseline ? 12 : d.h === 96 ? 16 : d.h === 80 ? 12 : 8 : 0;
     const labelWidth = textWidth + gap;
-    this._fabLayout = {d, baseline, animated, textWidth, labelWidth, iconWidth, content, clip, fab, gap};
+    this._fabLayout = {d, baseline, animated, textWidth, labelWidth, iconWidth, content, clip, fab, gap, direction: getComputedStyle(fab).direction};
     const key = animated ? baseline ? 'baseline' : 'sized' : 'static';
     if (this._expansionKind !== key || !this._expansion) {
       this._expansionKind = key;
@@ -299,7 +301,7 @@ export class MdFab extends HTMLElement {
     if (this._expansionFrame !== null) cancelAnimationFrame(this._expansionFrame);
     this._expansionFrame = null;
     if (!this._fabLayout || !this._expansion) return;
-    const {d, baseline, animated, labelWidth, iconWidth, content, clip, fab, gap} = this._fabLayout;
+    const {d, baseline, animated, labelWidth, iconWidth, content, clip, fab, gap, direction} = this._fabLayout;
     const state = this._expansion.sample(now);
     const extended = this.isExtended;
     const showLabel = extended && Boolean(this.label) && (!animated || state.composed);
@@ -307,7 +309,7 @@ export class MdFab extends HTMLElement {
     clip.style.opacity = String(animated ? state.alpha : 1);
     const labelContent = clip.querySelector('.label-content');
     labelContent.style.paddingInlineStart = `${gap}px`;
-    labelContent.style.direction = getComputedStyle(fab).direction;
+    labelContent.style.direction = direction;
     content.style.justifyContent = extended && this.icon ? 'flex-start' : 'center';
     let width = d.h, measuredWidth = width, start = 0, end = 0;
     if (extended) {
@@ -334,24 +336,31 @@ export class MdFab extends HTMLElement {
     content.style.width = `var(--md-toolbar-fab-size, ${measuredWidth}px)`;
     content.style.paddingInlineStart = `${start}px`;
     content.style.paddingInlineEnd = `${end}px`;
-    this._syncHitLayout();
+    // While expanding, an unconstrained body has exactly the width just drawn.
+    this._syncHitLayout(state.running && this._hitBase?.plain ? {width, height: this._hitBase.height} : null);
     if (animated && state.running && this.isConnected) this._expansionFrame = requestAnimationFrame(time => this._tickExpansion(time));
   }
 
-  _syncHitLayout() {
+  _syncHitLayout(drawn = null) {
     const fab = this.shadowRoot.querySelector('.fab');
     const layout = this.shadowRoot.querySelector('.touch-layout');
-    const probe = this.shadowRoot.querySelector('.minimum-probe');
-    const style = getComputedStyle(fab);
-    const minimum = Math.max(0, Math.round(parseFloat(getComputedStyle(probe).width) || 0));
-    const width = parseFloat(style.width) || 0, height = parseFloat(style.height) || 0;
-    // Sized toolbar and app-bar slots supply native incoming constraints.
-    // The minimum-interactive node still requests its minimum, but Compose's
-    // Placeable coercion offsets apply before placing the visible body.
-    const sized = Boolean(style.getPropertyValue('--md-toolbar-fab-size').trim());
-    const constraints = Object.fromEntries([['minWidth','min-width'],['maxWidth','max-width'],['minHeight','min-height'],['maxHeight','max-height']].flatMap(([key,variable])=>{
-      const value=parseFloat(style.getPropertyValue('--md-toolbar-control-'+variable));return Number.isFinite(value)?[[key,value]]:[];
-    }));
+    let minimum, width, height, sized, constraints;
+    if (drawn) ({minimum, sized, constraints} = this._hitBase, {width, height} = drawn);
+    else {
+      const probe = this.shadowRoot.querySelector('.minimum-probe');
+      const style = getComputedStyle(fab);
+      minimum = Math.max(0, Math.round(parseFloat(getComputedStyle(probe).width) || 0));
+      width = parseFloat(style.width) || 0; height = parseFloat(style.height) || 0;
+      // Sized toolbar and app-bar slots supply native incoming constraints.
+      // The minimum-interactive node still requests its minimum, but Compose's
+      // Placeable coercion offsets apply before placing the visible body.
+      sized = Boolean(style.getPropertyValue('--md-toolbar-fab-size').trim());
+      constraints = Object.fromEntries([['minWidth','min-width'],['maxWidth','max-width'],['minHeight','min-height'],['maxHeight','max-height']].flatMap(([key,variable])=>{
+        const value=parseFloat(style.getPropertyValue('--md-toolbar-control-'+variable));return Number.isFinite(value)?[[key,value]]:[];
+      }));
+      this._hitBase = {minimum, height, sized, constraints, plain: !sized && !Object.keys(constraints).length};
+    }
+    this._hitSize = {width, height};
     const touch = minimumInteractiveLayout({width,height,minimum,
       ...(sized ? {minWidth:width,maxWidth:width,minHeight:height,maxHeight:height} : {}),...constraints});
     layout.style.width = `var(--md-toolbar-control-layout-width, var(--md-toolbar-fab-size, ${touch.size.width}px))`;
@@ -419,7 +428,9 @@ export class MdFab extends HTMLElement {
     document.fonts.addEventListener('loadingdone', () => this._sync(), {signal});
     const resize = new ResizeObserver(() => { if (this.isConnected) this._sync(); });
     resize.observe(fab.querySelector('.lbl'));
-    const bodyResize = new ResizeObserver(() => { if (this.isConnected) this._syncHitLayout(); });
+    // The expansion places the hit area for each body size it draws.
+    const drawn = entry => entry.target === fab && this._hitSize && Math.abs((entry.borderBoxSize?.[0]?.inlineSize ?? NaN) - this._hitSize.width) < .5 && Math.abs((entry.borderBoxSize?.[0]?.blockSize ?? NaN) - this._hitSize.height) < .5;
+    const bodyResize = new ResizeObserver(entries => { if (this.isConnected && !entries.every(drawn)) this._syncHitLayout(); });
     bodyResize.observe(fab);
     bodyResize.observe(this.shadowRoot.querySelector('.minimum-probe'));
     signal.addEventListener('abort', () => {
@@ -451,5 +462,5 @@ export class MdFab extends HTMLElement {
 }
 
 if (!customElements.get('md-fab')) {
-  customElements.define('md-fab', MdFab);
+  customElements.define('md-fab', delegateHostAria(MdFab));
 }

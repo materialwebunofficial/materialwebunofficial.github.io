@@ -293,11 +293,14 @@ const defaultStyle = MODAL_STYLE+`
     flex-shrink: 0;
   }
 
+  /* The arm is a dial-sized square rotated about its center; clipping at the
+     round dial keeps its rotated box from widening the dialog (no scrollbar). */
   .clock-face {
     position: relative;
     width: 256px;
     height: 256px;
     border-radius: 9999px;
+    overflow: clip;
     background-color: var(--time-clock-dial-color);
     touch-action: none;
     cursor: pointer;
@@ -376,6 +379,7 @@ const defaultStyle = MODAL_STYLE+`
     color: var(--time-clock-dial-selected-content-color);
     pointer-events: none;
   }
+  .dial-number-selected::before { content: attr(data-text); }
 
   /* Footer Actions */
   .picker-footer {

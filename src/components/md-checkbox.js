@@ -12,6 +12,7 @@
  *   - Memory safety via AbortSignal.
  */
 
+import { delegateHostAria } from '../utils/host-aria.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -436,5 +437,5 @@ export class MdCheckbox extends HTMLElement {
 }
 
 if (!customElements.get('md-checkbox')) {
-  customElements.define('md-checkbox', MdCheckbox);
+  customElements.define('md-checkbox', delegateHostAria(MdCheckbox));
 }

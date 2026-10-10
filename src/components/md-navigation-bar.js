@@ -1,6 +1,7 @@
 /** Web adaptation of AndroidX ShortNavigationBar / ShortNavigationBarItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f.
  * Vertical/horizontal item tokens describe icon placement, not bar orientation. */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
@@ -296,4 +297,4 @@ export class MdNavigationBar extends HTMLElement {
     }
   }
 }
-if (!customElements.get('md-navigation-bar')) customElements.define('md-navigation-bar', MdNavigationBar);
+if (!customElements.get('md-navigation-bar')) customElements.define('md-navigation-bar', delegateHostAria(MdNavigationBar));

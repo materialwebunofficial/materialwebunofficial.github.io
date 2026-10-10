@@ -15,7 +15,7 @@ import {themeParent} from '../theme/theme-context.js';
 import {createComponentSheet,adoptSheet} from '../utils/styles.js';
 
 let stepId=0;
-const stepStyle=':host{display:block;width:100%;box-sizing:border-box}:host([hidden]){display:none!important}.step-content-root{width:100%;box-sizing:border-box}';
+const stepStyle=':host{display:block;width:100%;box-sizing:border-box}:host([hidden]){display:none!important}:host([hidden][data-stacked]){display:block!important;visibility:hidden}.step-content-root{width:100%;box-sizing:border-box}';
 const stepSheet=createComponentSheet(stepStyle);
 export class MdStep extends HTMLElement {
  static get observedAttributes(){return ['label','description','completed','active','disabled','error'];}
@@ -28,7 +28,10 @@ export class MdStep extends HTMLElement {
  get error(){return this.hasAttribute('error');}set error(value){this.toggleAttribute('error',!!value);}
  connectedCallback(){
   if(!this._body){this.shadowRoot.innerHTML=(this.shadowRoot.adoptedStyleSheets?.length?'':'<style>'+stepStyle+'</style>')+'<div class="step-content-root"><slot></slot></div>';this._body=this.shadowRoot.querySelector('.step-content-root');}
-  if(!this.id)this.id=this._stepId;this.setAttribute('role','region');this._sync();this.closest('md-stepper')?._scheduleSteps?.();
+  if(!this.id)this.id=this._stepId;this.setAttribute('role','region');this._sync();
+  // A stepper inserted together with its steps is upgraded before them. Join it
+  // now, so the step is slotted before its own content connects and measures.
+  const stepper=this.closest('md-stepper');if(stepper?._header&&stepper.isConnected)stepper._sync();else stepper?._scheduleSteps?.();
  }
  disconnectedCallback(){this._motion?.dispose();this._motion=null;}
  attributeChangedCallback(name,oldValue,newValue){
@@ -40,7 +43,7 @@ export class MdStep extends HTMLElement {
   this.hidden=!this.active;this.inert=!this.active;this.setAttribute('aria-hidden',String(!this.active));this.setAttribute('aria-label',this.label||'Step');
   const alpha=this.active?1:0;
   if(!this._motion)this._motion=new SelectionMotion(this,{alpha},values=>{if(this.isConnected)this._body.style.opacity=String(Math.max(0,Math.min(1,values.alpha)));});
-  else this._motion.set({alpha:{value:alpha,role:'expressiveEffectsFast',snap:!this.active||!!this._initializing}});
+  else this._motion.set({alpha:{value:alpha,role:'expressiveEffectFast',snap:!this.active||!!this._initializing}});
  }
 }
 if(!customElements.get('md-step'))customElements.define('md-step',MdStep);
@@ -80,7 +83,10 @@ const stepperStyle=`
  .step-header[data-state="error"] .step-label,.step-header[data-state="error"] .step-description{color:var(--md-sys-color-error,#B3261E)}
  .step-header:disabled .step-icon{background:color-mix(in srgb,var(--md-sys-color-on-surface,#1D1B20) 38%,transparent);color:var(--md-sys-color-surface,#FEF7FF)}
  .step-header:disabled .step-label,.step-header:disabled .step-description{color:color-mix(in srgb,var(--md-sys-color-on-surface,#1D1B20) 38%,transparent)}
- .panels-box{width:100%;min-width:0;padding-top:24px;box-sizing:border-box}
+ /* Horizontal steps share one cell, so the area keeps the tallest step's
+    height and what follows the stepper does not move between steps. */
+ .panels-box{display:grid;width:100%;min-width:0;padding-top:24px;box-sizing:border-box}
+ .panels-box ::slotted(*){grid-area:1/1;min-width:0}
  .md-ripple-effect{position:absolute;border-radius:50%;background:currentColor;opacity:0;animation:stepper-ripple 450ms linear;pointer-events:none}
  @keyframes stepper-ripple{from{transform:scale(0);opacity:.1}to{transform:scale(1);opacity:0}}
  /* Compact horizontal headers show the label of the current step only. */
@@ -153,6 +159,7 @@ export class MdStepper extends HTMLElement {
     // Each step is assigned to its own slot: below its header (vertical) or in the shared panel area.
     const name='step-'+index;record.slot.name=name;
     if(record.step.slot!==name)record.step.slot=name;
+    record.step.toggleAttribute('data-stacked',!vertical);
     const target=vertical?record.panel:this._panels;
     if(record.slot.parentElement!==target||target===this._panels&&this._panels.children[index]!==record.slot)target===this._panels?this._panels.insertBefore(record.slot,this._panels.children[index]||null):target.append(record.slot);
     this._bindRecord(record);

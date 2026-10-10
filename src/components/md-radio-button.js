@@ -12,6 +12,7 @@
  *   - Memory safety via AbortSignal.
  */
 
+import { delegateHostAria } from '../utils/host-aria.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -363,5 +364,5 @@ export class MdRadioButton extends HTMLElement {
 }
 
 if (!customElements.get('md-radio-button')) {
-  customElements.define('md-radio-button', MdRadioButton);
+  customElements.define('md-radio-button', delegateHostAria(MdRadioButton));
 }

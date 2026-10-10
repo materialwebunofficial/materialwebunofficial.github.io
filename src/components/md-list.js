@@ -1,5 +1,6 @@
 /** Web adaptation of AndroidX public Expressive ListItem/SegmentedListItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f. */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { safeJsonParse } from '../utils/security.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
@@ -178,6 +179,11 @@ export class MdListItem extends HTMLElement {
    this._item.tabIndex=interactive&&enabled?0:-1;this._item.setAttribute('aria-disabled',String(!enabled));
    this._item.setAttribute('role',this.selectionMode==='single'?'radio':this.selectionMode==='multiple'?'checkbox':interactive?this.href?'link':'button':'listitem');
    this._item.removeAttribute('aria-selected');
+   // In a plain list an interactive row is a button or link inside its list
+   // item: the host is the list item, the row its control.
+   const listed=this.selectionMode==='none'&&interactive&&this.closest('md-list')?._list?.getAttribute('role')==='list';
+   if(listed){if(this.getAttribute('role')!=='listitem')this.setAttribute('role','listitem');this._hostListItem=true;}
+   else if(this._hostListItem){this.removeAttribute('role');this._hostListItem=false;}
    if(this.selectionMode!=='none')this._item.setAttribute('aria-checked',String(this.selected));else this._item.removeAttribute('aria-checked');
    if(this.hasAttribute('aria-label'))this._item.setAttribute('aria-label',this.getAttribute('aria-label'));else this._item.removeAttribute('aria-label');
    if(!enabled){this._states.pressed=this._states.hovered=this._states.focused=false;this._item.classList.remove('pressed');}
@@ -269,5 +275,5 @@ for(const name of fields){
  const property=name.replace(/-([a-z])/g,(_,char)=>char.toUpperCase());
  Object.defineProperty(MdListItem.prototype,property,{get(){return this.getAttribute(name)||'';},set(value){this._optional(name,value);},configurable:true});
 }
-if(!customElements.get('md-list'))customElements.define('md-list',MdList);
-if(!customElements.get('md-list-item'))customElements.define('md-list-item',MdListItem);
+if(!customElements.get('md-list'))customElements.define('md-list',delegateHostAria(MdList));
+if(!customElements.get('md-list-item'))customElements.define('md-list-item',delegateHostAria(MdListItem));

@@ -1,6 +1,7 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import zlib from 'zlib';
 
 const PORT = 3000;
 const ROOT = process.cwd();
@@ -38,11 +39,17 @@ const server = http.createServer((req, res) => {
 
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    // Text is compressed as a static host would serve it, so local audits
+    // (Lighthouse transfer sizes and load timing) match a deployment.
+    const accepts = String(req.headers['accept-encoding'] || '');
+    const text = /^(text\/|application\/(javascript|json)|image\/svg)/.test(contentType);
+    const encoding = text ? (/\bbr\b/.test(accepts) ? 'br' : /\bgzip\b/.test(accepts) ? 'gzip' : null) : null;
 
     res.writeHead(200, {
       'Content-Type': contentType,
       'Cache-Control': 'no-cache',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
+      ...(encoding ? { 'Content-Encoding': encoding, Vary: 'Accept-Encoding' } : {})
     });
 
     const stream = fs.createReadStream(filePath);
@@ -52,7 +59,9 @@ const server = http.createServer((req, res) => {
       }
       res.end();
     });
-    stream.pipe(res);
+    if (encoding === 'br') stream.pipe(zlib.createBrotliCompress({ params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 5 } })).pipe(res);
+    else if (encoding === 'gzip') stream.pipe(zlib.createGzip()).pipe(res);
+    else stream.pipe(res);
   });
 });
 

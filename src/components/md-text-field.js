@@ -271,7 +271,10 @@ export class MdTextField extends HTMLElement {
     if (input && input.value !== this._visualFieldValue()) input.value = this._visualFieldValue();
     this._internals?.setFormValue(this._value);
     const counter=this.shadowRoot.querySelector('.counter');if(counter&&this.maxlength!==null)counter.textContent=`${this._value.length}/${this.maxlength}`;
-    this._syncFloating();
+    // Only emptying or filling the field changes its label, placeholder and
+    // colors; any other value change only lays the text out again.
+    if(input&&this._fieldPhase!==undefined&&textFieldPhase(this._isFieldFocused(),!input.value)===this._fieldPhase)this._layoutField();
+    else this._syncFloating();
     this._syncValidity();
   }
 

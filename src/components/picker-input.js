@@ -18,6 +18,8 @@ const minuteValid=value=>Number.isInteger(value)&&value>=0&&value<60;
 // DOM beforeinput/input, focus and lifecycle bind the native policy. Screen
 // reader/service detection is unavailable on the web and is an explicit host
 // setting, rather than an inference from reduced motion or keyboard usage.
+const focusElsewhere=host=>{const active=host.ownerDocument.activeElement;return!!active&&active!==host.ownerDocument.body&&active!==host&&!host.contains(active);};
+
 export class PickerTimeInput{
  constructor(host,signal){
   this.host=host;this.time=pickerTimeForHost(host);this.disposed=false;this.focusTicket=0;
@@ -101,7 +103,12 @@ export class PickerTimeInput{
    support.textContent=valid?field.unit:field.unit==='Minute'?'Minute must be 0–59':this.time.is24hour?'Hour must be 0–23':'Hour must be 1–12';
    support.classList.toggle('error',!valid);if(valid)support.removeAttribute('aria-live');else support.setAttribute('aria-live','polite');
   }
-  if(this.lastSelection!==this.time.selection){this.lastSelection=this.time.selection;this.focusSelection();}
+  // TimeInputTextField requests focus for the selected field, initially too.
+  // A picker embedded in a page (inline) is part of a document rather than a
+  // window of its own: like any embedded control, it takes the first focus
+  // only when the author marks it autofocus, and never from another part of
+  // the page.
+  if(this.lastSelection!==this.time.selection){const initial=this.lastSelection===undefined;this.lastSelection=this.time.selection;if(!initial||!this.host.inline||this.host.hasAttribute('autofocus')&&!focusElsewhere(this.host))this.focusSelection();}
  }
  focusSelection(){
   const ticket=++this.focusTicket;queueMicrotask(()=>{if(this.disposed||ticket!==this.focusTicket||!this.host.isConnected||!this.host.inline&&!this.host.open)return;const element=this.fields.find(field=>field.unit===this.time.selection)?.element;if(this.host.shadowRoot.activeElement!==element)element?.focus({preventScroll:true});});

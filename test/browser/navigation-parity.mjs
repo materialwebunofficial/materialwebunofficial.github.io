@@ -83,10 +83,14 @@ export async function testNavigationParity(browser, base) {
       g=await geometry();
       g.items.forEach((item,i)=>assert.deepEqual(item.button,{x:padding+i*width,y:0,width,height:64},`centered ${count}`));
     }
+    // A size change alone is laid out from the bar's resize observation, in
+    // the next rendered frame before paint (as Compose measures in the next
+    // frame). The page clock is paused, so this waits for real frames.
+    const nextFrame=()=>page.waitForTimeout(50);
     await nav.evaluate(el => {el.items=Array.from({length:3},()=>({icon:'home',label:'A'}));el.style.width='603px';});
-    g=await geometry();g.items.forEach((item,i)=>assert.equal(item.button.x,121+i*120));
+    await nextFrame();g=await geometry();g.items.forEach((item,i)=>assert.equal(item.button.x,121+i*120));
     await nav.evaluate(el=>el.style.width='300px');
-    g=await geometry();
+    await nextFrame();g=await geometry();
     const grown=60+g.items[0].label.width, padding=60-3*Math.floor((grown-60)/2);
     g.items.forEach((item,i)=>assert.deepEqual(item.button,{x:padding+i*grown,y:0,width:grown,height:64},'centered intrinsic growth'));
     await nav.evaluate(el=>{el.dir='rtl';});
@@ -288,12 +292,15 @@ export async function testNavigationShowcase(page, base) {
 
 export async function testCatalogueDrawer(page, base) {
   await page.setViewportSize({width:390,height:844});
+  // A fresh document: the same URL with only a fragment would not reload it.
+  await page.goto('about:blank');
   await page.goto(base+'/#components',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>customElements.get('md-navigation-drawer')&&document.getElementById('components-sub-nav')._records?.length>0);
   const drawer=page.locator('#components-sub-nav');
   const mobileOpener=page.locator('#mobile-drawer-toggle');
   const railOpener=page.locator('#rail-drawer-toggle');
-  const closed=()=>page.waitForFunction(()=>!document.getElementById('components-sub-nav').open);
+  // Closed once the exit motion has finished and the modal layer has returned focus.
+  const closed=()=>page.waitForFunction(()=>{const d=document.getElementById('components-sub-nav');return !d.open&&!d._layer?.open;});
   const bounds=()=>drawer.locator('.drawer').evaluate(el=>{
     const r=el.getBoundingClientRect(),s=getComputedStyle(el);
     return {x:Math.round(r.x),y:r.y,width:r.width,height:r.height,border:s.borderWidth,shadow:s.boxShadow};
@@ -309,14 +316,14 @@ export async function testCatalogueDrawer(page, base) {
   assert.equal(await drawer.evaluate(el=>el.variant),'modal');
   assert.equal(await drawer.evaluate(el=>el.selected),await indexOf('overview'));
   assert.deepEqual(await bounds(),{x:0,y:0,width:360,height:844,border:'0px',shadow:'none'});
-  assert.equal(await mobileOpener.getAttribute('aria-expanded'),'true');
+  assert.equal(await mobileOpener.locator('button').getAttribute('aria-expanded'),'true');
   const row=drawer.getByRole('tab',{name:'Buttons',exact:true});
   assert.deepEqual(await row.evaluate(el=>{const s=getComputedStyle(el);return {
     height:el.getBoundingClientRect().height,size:s.fontSize,weight:s.fontWeight,line:s.lineHeight,tracking:s.letterSpacing};
   }),{height:56,size:'16px',weight:'400',line:'24px',tracking:'0.5px'});
   await page.screenshot({path:'research/catalogue-drawer-modal-390.png'});
   await page.keyboard.press('Escape');await closed();
-  assert.equal(await mobileOpener.getAttribute('aria-expanded'),'false');
+  assert.equal(await mobileOpener.locator('button').getAttribute('aria-expanded'),'false');
   assert.equal(await mobileOpener.evaluate(el=>document.activeElement===el),true);
   await mobileOpener.click();await page.waitForTimeout(800);
   await page.mouse.click(378,400);await closed();
@@ -329,7 +336,7 @@ export async function testCatalogueDrawer(page, base) {
   await railOpener.click();await page.waitForTimeout(800);
   assert.deepEqual(await bounds(),{x:0,y:0,width:360,height:1000,border:'0px',shadow:'none'});
   assert.equal(await railOpener.locator('.btn').getAttribute('aria-expanded'),'true');
-  assert.equal(await railOpener.locator('.btn').getAttribute('aria-controls'),'components-sub-nav');
+  assert.equal(await railOpener.locator('.btn').evaluate(b=>b.ariaControlsElements?.map(n=>n.id).join(' ')),'components-sub-nav');
   await page.screenshot({path:'research/catalogue-drawer-modal-840.png'});
   await drawer.getByRole('tab',{name:'Chips',exact:true}).click();await closed();
   assert.equal(new URL(page.url()).hash,'#chips');

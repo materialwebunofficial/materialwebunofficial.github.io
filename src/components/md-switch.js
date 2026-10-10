@@ -13,6 +13,7 @@
  *   - Memory safety via AbortSignal.
  */
 
+import { delegateHostAria } from '../utils/host-aria.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { bindStateLayer } from '../motion/state-layer.js';
 import { escapeHtml } from '../utils/security.js';
@@ -400,5 +401,5 @@ export class MdSwitch extends HTMLElement {
 }
 
 if (!customElements.get('md-switch')) {
-  customElements.define('md-switch', MdSwitch);
+  customElements.define('md-switch', delegateHostAria(MdSwitch));
 }

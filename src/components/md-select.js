@@ -62,8 +62,10 @@ export class MdSelect extends MdTextField {
   const style=document.createElement('style');style.textContent='.select-menu{display:block;width:0;height:0}.field-box,input{cursor:pointer}input{caret-color:transparent}slot.options-data{display:none}';this.shadowRoot.append(style);
   const slot=document.createElement('slot');slot.className='options-data';slot.hidden=true;this.shadowRoot.append(slot);
   const box=this.shadowRoot.querySelector('.field-box');box.setAttribute('part','box');
+  // Options use the MD3E vertical menu: a 16dp group, items inset 4dp, the
+  // selected option in a 12dp tertiary container (DropdownMenuGroup/Item).
   this._selectMenu=document.createElement('md-menu');this._selectMenu.className='select-menu';this._selectMenu.id=this._selectId+'-listbox';
-  this._selectMenu.variant='dropdown';this._selectMenu.popupRole='listbox';this._selectMenu.focusMode='anchor';this._selectMenu.matchAnchorWidth=true;this._selectMenu.anchorElement=box;this.shadowRoot.append(this._selectMenu);
+  this._selectMenu.variant='standard';this._selectMenu.popupRole='listbox';this._selectMenu.focusMode='anchor';this._selectMenu.matchAnchorWidth=true;this._selectMenu.anchorElement=box;this.shadowRoot.append(this._selectMenu);
   const input=this.shadowRoot.querySelector('input');input.setAttribute('role','combobox');input.setAttribute('aria-haspopup','listbox');input.setAttribute('aria-controls',this._selectMenu.id);input.setAttribute('autocomplete','off');
  }
  _showExpandedLabel(){return this.floatLabel!=='always'&&super._showExpandedLabel();}

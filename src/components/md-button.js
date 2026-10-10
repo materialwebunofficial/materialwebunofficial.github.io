@@ -11,6 +11,7 @@
  *   - Form association (attachInternals), toggle mode, single-click guarantee
  */
 
+import { delegateHostAria, forwardControlAria } from '../utils/host-aria.js';
 import { followHref } from '../utils/navigation.js';
 import { bindPress, createRipple, nestedInteractiveEvent } from '../motion/interactions.js';
 import { sanitizeAttribute } from '../utils/security.js';
@@ -63,7 +64,9 @@ const defaultStyle = `
     font-family: var(--md-sys-typescale-font-family, 'Roboto', system-ui, sans-serif);
     letter-spacing: 0.1px;
     overflow: visible;
-    will-change: transform, border-radius;
+    /* Own stacking context for the surface layers, without a compositor layer
+       per button: the button's box is never transformed. */
+    isolation: isolate;
     /* ButtonColors resolves enabled/theme roles directly; elevation is separate. */
     transition: none;
   }
@@ -342,7 +345,7 @@ export class MdButton extends HTMLElement {
   static formAssociated = true;
 
   static get observedAttributes() {
-    return ['variant', 'size', 'shape', 'connected', 'disabled', 'toggle', 'selected', 'icon', 'trailing-icon', 'label', 'type', 'href', 'target', 'aria-label'];
+    return ['variant', 'size', 'shape', 'connected', 'disabled', 'toggle', 'selected', 'icon', 'trailing-icon', 'label', 'type', 'href', 'target', 'aria-label', 'aria-expanded', 'aria-controls', 'aria-haspopup'];
   }
 
   constructor() {
@@ -362,9 +365,14 @@ export class MdButton extends HTMLElement {
     }
     this._bindEvents();
     this._surface ||= new ButtonSurface(this, this.shadowRoot.querySelector('.btn'));
-    this._sync();
+    // A button that has never been laid out creates its shape and border
+    // owners without painting what needs layout: its first resize observation
+    // (after layout, before paint) does, so a group of new buttons does not
+    // force a layout per button. A reconnected button repaints immediately.
+    this._connecting = !this._laidOut;
+    try { this._sync(); } finally { this._connecting = false; }
     this._resize?.disconnect();
-    this._resize = new ResizeObserver(() => { this._updateShape(); this._updateBorder(); });
+    this._resize = new ResizeObserver(() => { this._laidOut = true; this._updateShape(); this._updateBorder(); });
     this._resize.observe(this.shadowRoot.querySelector('.btn'));
     this._stopThemeObservation?.();
     this._stopThemeObservation = observeThemeContext(this, () => {
@@ -513,6 +521,7 @@ export class MdButton extends HTMLElement {
       this._shapeMotion?.dispose();
       this._shapeState = state;
       this._shapeMotion = new SelectionMotion(this, {progress: state.progress.sample(now).position}, values => {
+        if (this._connecting) return;
         const shape = state.getMorphedShape(null, values.progress);
         this._applyRadius(btn, Math.max(0, buttonCornerRadius(shape, btn.offsetWidth, btn.offsetHeight)));
         this._surface?.clip();
@@ -597,7 +606,11 @@ export class MdButton extends HTMLElement {
       this._borderWidthMotion = new SelectionMotion(this, {width}, values => {
         // Native animateBorderStrokeAsState omits a non-positive width;
         // preserve the unclipped channel/velocity for the next retarget.
-        const stroke = buttonBorderStroke(values.width, btn.offsetWidth, btn.offsetHeight, window.devicePixelRatio);
+        // The size only caps the stroke at half the button; while connecting
+        // nothing is measured, and the first resize observation repaints.
+        const stroke = this._connecting
+          ? buttonBorderStroke(values.width, Infinity, Infinity, window.devicePixelRatio)
+          : buttonBorderStroke(values.width, btn.offsetWidth, btn.offsetHeight, window.devicePixelRatio);
         btn.style.setProperty('--_button-outline-width', `${stroke}px`);
       });
       this._borderColorMotion = new ColorMotion(this, this._borderProbe, color,
@@ -690,6 +703,8 @@ export class MdButton extends HTMLElement {
     btn.setAttribute('role', this.toggle ? 'checkbox' : this.href ? 'link' : 'button');
     if (this.hasAttribute('aria-label')) btn.setAttribute('aria-label', this.getAttribute('aria-label'));
     else btn.removeAttribute('aria-label');
+    // Popup/expansion state an author or md-menu gives the button lives on the native control.
+    forwardControlAria(this, btn);
     btn.removeAttribute('aria-pressed');
     if (this.toggle) btn.setAttribute('aria-checked', this.selected ? 'true' : 'false');
     else btn.removeAttribute('aria-checked');
@@ -734,6 +749,8 @@ export class MdButton extends HTMLElement {
       btn.style.gap = '0px';
       btn.style.minHeight = '0px';
       this._toggleDOM ||= new ToggleButtonDOMLayout(this);
+      // The toggle's size comes from this layout, so it is measured at once:
+      // the button must have its real bounds for the first pointer input.
       this._toggleDOM.measure();
     }
     this._updateShape();
@@ -746,5 +763,5 @@ export class MdButton extends HTMLElement {
 }
 
 if (!customElements.get('md-button')) {
-  customElements.define('md-button', MdButton);
+  customElements.define('md-button', delegateHostAria(MdButton));
 }

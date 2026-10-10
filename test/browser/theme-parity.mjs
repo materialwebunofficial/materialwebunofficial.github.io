@@ -27,7 +27,7 @@ export async function testThemeParity(page) {
       const normal = getComputedStyle(local).getPropertyValue('--md-sys-color-primary');
       local.setAttribute('contrast','high');
       const high = getComputedStyle(local).getPropertyValue('--md-sys-color-primary').trim();
-      output.contrast = high !== normal.trim() && high === generateM3Scheme('#0000ff',false,'expressive',1)['--md-sys-color-primary'];
+      output.contrast = high !== normal.trim() && high === generateM3Scheme('#0000ff',false,undefined,1)['--md-sys-color-primary']; // default palette variant (tonal spot)
       local.customPalette = { primary: '#123456' };
       output.override = getComputedStyle(local).getPropertyValue('--md-sys-color-primary').trim() === '#123456';
       local.customPalette = null;

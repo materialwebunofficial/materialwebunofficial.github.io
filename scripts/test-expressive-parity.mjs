@@ -300,17 +300,26 @@ try {
     results.push([getComputedStyle(element).opacity,'1']);
     results.push([getComputedStyle(element).color,resolve('color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent)')]);
     results.push([getComputedStyle(element).backgroundColor,resolve('color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent)')]);
-    results.push([getComputedStyle(chip.shadowRoot.querySelector('.ico')).color,getComputedStyle(element).color]);
+    results.push([getComputedStyle(chip.shadowRoot.querySelector('.trailing-ico')).color,getComputedStyle(element).color]);
     for(const variant of ['filled','elevated','outlined']){
-      const card=document.createElement('md-card');card.setAttribute('variant',variant);card.disabled=true;document.body.append(card);
+      // Only a clickable Card has an enabled state (Card(onClick, enabled)); its
+      // disabled content is contentColorFor(container).copy(DisabledAlpha).
+      const card=document.createElement('md-card');card.setAttribute('variant',variant);card.setAttribute('interactive','');document.body.append(card);
       const root=card.shadowRoot.querySelector('.card');root.style.transition='none';
-      results.push([getComputedStyle(root).opacity,'1'],[getComputedStyle(root).color,resolve('color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent)')]);
+      const enabledContent=getComputedStyle(root).color;card.disabled=true;
+      results.push([getComputedStyle(root).opacity,'1'],[getComputedStyle(root).color,resolve(`color-mix(in srgb, ${enabledContent} 38%, transparent)`)]);
       const background=variant==='filled'?'color-mix(in srgb, var(--md-sys-color-surface-variant) 38%, var(--md-sys-color-surface-container-highest))':'var(--md-sys-color-surface)';
       results.push([getComputedStyle(root).backgroundColor,resolve(background)]);card.remove();
     }
-    probe.remove();return results;
+    // Compare colors in one serialization (legacy rgba() keeps two alpha digits).
+    const same=value=>/^(rgba?|color|oklab|lab|hsla?)\(/.test(value)?resolve(`color-mix(in srgb, ${value} 100%, transparent)`):value;
+    const normalized=results.map(([actual,expected])=>[same(actual),same(expected)]);
+    probe.remove();return normalized;
   });
-  for(const [actual,expected] of contentStates)assert.equal(actual,expected);
+  // Disabled roles are Compose Colors (onSurface.copy(alpha)), packed with an
+  // 8-bit alpha in sRGB; the CSS color-mix reference is compared at that precision.
+  const packedAlpha=value=>value.replace(/\/ ([\d.]+)\)$/,(match,alpha)=>`/ ${Number((Math.round(Number(alpha)*255)/255).toFixed(6))})`);
+  for(const [index,[actual,expected]] of contentStates.entries())assert.equal(packedAlpha(actual),packedAlpha(expected),`disabled content state ${index}`);
   // Retargeting must preserve both position and velocity, and unrelated properties.
   const continuity = await page.evaluate(async () => {
     const { SpringPhysics: P } = await import('/src/motion/spring-physics.js');

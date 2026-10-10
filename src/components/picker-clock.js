@@ -95,7 +95,10 @@ export class PickerClock{
    for(let i=0;i<12;i++){
     const value=unit==='Minute'?i*5:inner?i+12:is24?i:i===0?12:i;
     const label=document.createElement('div');label.className='dial-number';label._ring={inner,index:i};label.dataset.val=value;label.style.left=layout[i].x+'px';label.style.top=layout[i].y+'px';label.tabIndex=-1;label.setAttribute('role','option');label.setAttribute('aria-label',value+(unit==='Hour'?' hours':' minutes'));
-    const text=document.createElement('span');text.textContent=String(value);const selected=text.cloneNode(true);selected.className='dial-number-selected';selected.setAttribute('aria-hidden','true');label.append(text,selected);element.append(label);layer.labels.push(label);
+    const text=document.createElement('span');text.textContent=String(value);
+    // The selector-colored copy is drawn inside the selector only; it is a
+    // painted duplicate, not text of its own.
+    const selected=document.createElement('span');selected.className='dial-number-selected';selected.dataset.text=String(value);selected.setAttribute('aria-hidden','true');label.append(text,selected);element.append(label);layer.labels.push(label);
     label.addEventListener('keydown',event=>{
      if(['ArrowRight','ArrowDown','ArrowLeft','ArrowUp'].includes(event.key)){event.preventDefault();const index=layer.labels.indexOf(label),step=['ArrowLeft','ArrowUp'].includes(event.key)?-1:1;layer.labels[(index+step+layer.labels.length)%layer.labels.length].focus();}
      if(event.key==='Tab'){event.preventDefault();const target=event.shiftKey?(unit==='Hour'?'#hour-card':'#min-card'):unit==='Hour'?'#min-card':is24?'#mode-toggle-btn':this.time.isPm?'#pm-btn':'#am-btn';this.host.shadowRoot.querySelector(target)?.focus();}

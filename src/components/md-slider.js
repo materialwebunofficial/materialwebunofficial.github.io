@@ -1,4 +1,5 @@
 /** Material 3 slider. Source geometry: Slider.kt / SliderTokens.kt, see NOTICE. */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { observeThemeContext } from '../theme/theme-context.js';
 import { pointerSlop } from '../motion/touch-slop.js';
@@ -117,7 +118,9 @@ export class MdSlider extends HTMLElement {
     this._setup(); this._sync();
     this._resizeObserver = new ResizeObserver(() => this._sync()); this._resizeObserver.observe(this._root);
     this._unobserveTheme = observeThemeContext(this, () => this._sync());
-    this._nameObserver = new MutationObserver(() => this._syncAccessibleName());
+    // The accessible name comes from elements in the host's tree; only changes
+    // to those elements (or to ids and label associations) can alter it.
+    this._nameObserver = new MutationObserver(records => { if (records.some(record => this._affectsName(record))) this._syncAccessibleName(); });
     this._nameObserver.observe(this.getRootNode(), {subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['id','for']});
   }
   disconnectedCallback() {
@@ -150,10 +153,21 @@ export class MdSlider extends HTMLElement {
   _emit(type) {
     this.dispatchEvent(new CustomEvent(type, { detail:{ value:this.range ? [this.rangeStart,this.rangeEnd] : this.value }, bubbles:true, composed:true }));
   }
+  _affectsName(record) {
+    if (record.type === 'attributes') return true;
+    const sources = this._nameSources || [];
+    if (sources.some(source => source.contains(record.target))) return true;
+    if (record.type !== 'childList') return false;
+    const ids = (this.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
+    const names = node => node.nodeType === 1 && (node.localName === 'label' || node.querySelector?.('label')
+      || ids.some(id => node.id === id || node.querySelector?.(`[id="${CSS.escape(id)}"]`)) || node.contains(this));
+    return [...record.addedNodes, ...record.removedNodes].some(names);
+  }
   _syncAccessibleName() {
     if (!this._rendered) return;
     const references = (this.getAttribute('aria-labelledby') || '').split(/\s+/).map(id => this.getRootNode().getElementById?.(id)).filter(Boolean);
     const labels = references.length ? references : [...(this.labels || [])];
+    this._nameSources = labels;
     const text = labels.map(n => n.textContent.replace(/\s+/g,' ').trim()).filter(Boolean).join(' ');
     const explicit = this.getAttribute('aria-label') || this.getAttribute('label');
     const label = references.length ? text || explicit || 'Slider' : explicit || text || 'Slider';
@@ -330,4 +344,4 @@ export class MdSlider extends HTMLElement {
     this._thumb = this.shadowRoot.querySelector('.thumb:not(.range-start-thumb)'); this._startThumb = this.shadowRoot.querySelector('.range-start-thumb');
   }
 }
-if (!customElements.get('md-slider')) customElements.define('md-slider',MdSlider);
+if (!customElements.get('md-slider')) customElements.define('md-slider',delegateHostAria(MdSlider));

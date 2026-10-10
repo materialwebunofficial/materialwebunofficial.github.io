@@ -1,0 +1,64 @@
+/* Until a component's definition has loaded, it reserves the box it will have
+   once upgraded (its container or 48dp minimum interactive size), so the page
+   does not shift when the components script runs. Content-sized widths stay
+   automatic. These rules stop matching as soon as the element is defined, and have no
+   specificity, so any page or author style for the element still applies. */
+:where(md-button:not(:defined)) { display: inline-flex; vertical-align: middle; min-height: 48px; }
+:where(md-button[size="m"]:not(:defined)) { min-height: 56px; }
+:where(md-button[size="l"]:not(:defined)) { min-height: 96px; }
+:where(md-button[size="xl"]:not(:defined)) { min-height: 136px; }
+/* A labelled button lays its label out (invisibly) with its size's padding and
+   type role, and a leading icon adds the icon and its gap, so it reserves the
+   width it will have. */
+:where(md-button[label]:not(:defined)) {
+  box-sizing: border-box; align-items: center; white-space: nowrap; color: transparent;
+  padding-inline: 16px; font: var(--md-sys-typescale-label-large); letter-spacing: var(--md-sys-typescale-label-large-tracking);
+}
+:where(md-button[label]:not(:defined))::before { content: attr(label); }
+:where(md-button[label][icon]:not(:defined)) { padding-inline-start: 44px; }
+:where(md-button[size="xs"][label]:not(:defined)) { padding-inline: 12px; }
+:where(md-button[size="xs"][label][icon]:not(:defined)) { padding-inline-start: 36px; }
+:where(md-button[size="m"][label]:not(:defined)) { padding-inline: 24px; font: var(--md-sys-typescale-title-medium); letter-spacing: var(--md-sys-typescale-title-medium-tracking); }
+:where(md-button[size="m"][label][icon]:not(:defined)) { padding-inline-start: 56px; }
+:where(md-button[size="l"][label]:not(:defined)) { padding-inline: 48px; font: var(--md-sys-typescale-headline-small); letter-spacing: var(--md-sys-typescale-headline-small-tracking); }
+:where(md-button[size="l"][label][icon]:not(:defined)) { padding-inline-start: 92px; }
+:where(md-button[size="xl"][label]:not(:defined)) { padding-inline: 64px; font: var(--md-sys-typescale-headline-large); letter-spacing: var(--md-sys-typescale-headline-large-tracking); }
+:where(md-button[size="xl"][label][icon]:not(:defined)) { padding-inline-start: 120px; }
+
+:where(md-top-app-bar:not(:defined)) { display: block; min-height: 64px; }
+:where(md-top-app-bar[variant="medium"]:not(:defined)),
+:where(md-top-app-bar[variant="medium-flexible"]:not(:defined)) { min-height: 112px; }
+:where(md-top-app-bar[variant="medium-flexible"][subtitle]:not(:defined)) { min-height: 136px; }
+:where(md-top-app-bar[variant="large"]:not(:defined)),
+:where(md-top-app-bar[variant="large-flexible"]:not(:defined)) { min-height: 152px; }
+
+:where(md-icon-button:not(:defined)) { display: inline-flex; vertical-align: middle; min-width: 48px; min-height: 48px; }
+:where(md-icon-button[size="m"]:not(:defined)) { min-width: 56px; min-height: 56px; }
+:where(md-icon-button[size="l"]:not(:defined)) { min-width: 96px; min-height: 96px; }
+:where(md-icon-button[size="xl"]:not(:defined)) { min-width: 136px; min-height: 136px; }
+
+:where(md-fab:not(:defined)) { display: inline-block; min-width: 56px; min-height: 56px; }
+:where(md-fab[size="small"]:not(:defined)) { min-width: 48px; min-height: 48px; }
+:where(md-fab[size="medium"]:not(:defined)) { min-width: 80px; min-height: 80px; }
+:where(md-fab[size="large"]:not(:defined)) { min-width: 96px; min-height: 96px; }
+
+:where(md-chip:not(:defined)) { display: inline-flex; vertical-align: middle; min-height: 48px; }
+:where(md-switch:not(:defined)) { display: inline-block; width: 52px; height: 48px; }
+:where(md-checkbox:not(:defined)),
+:where(md-radio-button:not(:defined)) { display: inline-block; width: 48px; height: 48px; }
+:where(md-segmented-button:not(:defined)) { display: inline-flex; min-height: 40px; }
+:where(md-split-button:not(:defined)) { display: inline-block; min-height: 56px; }
+:where(md-split-button[size="xs"]:not(:defined)),
+:where(md-split-button[size="s"]:not(:defined)) { min-height: 48px; }
+:where(md-split-button[size="l"]:not(:defined)) { min-height: 96px; }
+:where(md-split-button[size="xl"]:not(:defined)) { min-height: 136px; }
+
+:where(md-slider:not(:defined)) { display: block; min-height: 48px; }
+:where(md-progress-indicator:not(:defined)) { display: block; min-height: 4px; }
+:where(md-progress-indicator[variant="wavy"]:not(:defined)) { min-height: 10px; }
+:where(md-progress-indicator[type="circular"]:not(:defined)) { display: inline-block; vertical-align: middle; width: 40px; height: 40px; }
+:where(md-progress-indicator[type="circular"][variant="wavy"]:not(:defined)) { width: 48px; height: 48px; }
+:where(md-loading-indicator:not(:defined)) { display: inline-block; vertical-align: middle; width: 48px; height: 48px; }
+
+:where(md-text-field:not(:defined)) { display: inline-block; min-height: 56px; }
+:where(md-divider:not(:defined)) { display: block; height: 1px; }

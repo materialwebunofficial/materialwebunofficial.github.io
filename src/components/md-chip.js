@@ -2,6 +2,7 @@
  * Expressive selectable shapes. DOM leaves, events, automatic check/removal,
  * font measurement and CSS drawing are the web adapters. */
 import {bindPress, createRipple, nestedInteractiveEvent} from '../motion/interactions.js';
+import {observeThemeContext} from '../theme/theme-context.js';
 import {bindButtonElevation} from '../motion/button-elevation.js';
 import {ChipElevationMotion} from '../motion/chip-elevation.js';
 import {bindStateLayer} from '../motion/state-layer.js';
@@ -54,10 +55,12 @@ const defaultStyle = `
   [hidden] { display:none !important; }
   slot { display:contents; }
   ::slotted([slot=avatar]) { width:24px; height:24px; border-radius:50%; object-fit:cover; }
+  /* The 18dp trailing icon keeps its layout size; its target extends 3px on
+     each side to the 24px minimum without moving anything. */
   .remove-btn { position:relative; display:inline-flex; align-items:center; justify-content:center;
-    width:18px; height:18px; padding:0; margin:0; border:0; border-radius:50%;
+    width:24px; height:24px; padding:0; margin:-3px; border:0; border-radius:50%;
     background:transparent; color:inherit; cursor:pointer; outline:none; }
-  .remove-btn::before { content:''; position:absolute; inset:0; border-radius:inherit;
+  .remove-btn::before { content:''; position:absolute; inset:3px; border-radius:inherit;
     background:currentColor; opacity:var(--md-chip-remove-alpha,0); pointer-events:none; }
   /* Keyboard outline is the library's declared web accessibility adapter. */
   .chip:focus-visible,.remove-btn:focus-visible { outline:3px solid var(--md-sys-color-secondary); outline-offset:2px; }
@@ -78,12 +81,16 @@ export class MdChip extends HTMLElement {
   }
   connectedCallback() {
     if(!this._rendered){this.render();this._rendered=true;}
-    this._setup(); this._sync();
+    // Connecting creates the content and shape owners without reading layout;
+    // the first resize observation measures and paints them before the chip is
+    // shown, so a row of chips does not force a layout per chip.
+    this._connecting=true;this._laidOut=false;
+    try{this._setup();this._sync();}finally{this._connecting=false;}
   }
   disconnectedCallback() {
     this._abortController?.abort();this._abortController=null;
     this._contentMotion?.dispose();this._shapeMotion?.dispose();
-    this._resize?.disconnect();this._themeObserver?.disconnect();this._pressed=false;
+    this._resize?.disconnect();this._stopTheme?.();this._stopTheme=null;this._pressed=false;
     this._shapeComposition=null;this._shapeState=null;
     this._retainedContent?.forEach(owner=>owner.forget());
   }
@@ -183,11 +190,14 @@ export class MdChip extends HTMLElement {
   _measureContent() {
     if(!this.isConnected||!this._presence)return;
     const present=[this._presence.avatar||this._presence.leading,this._presence.trailing];
-    const leaves=[this._leadingContent,this._trailingContent];
+    const leaves=[this._leadingContent,this._trailingContent],measuring=!this._connecting;
     const dimensions=leaves.map((node,index)=>{
-      return present[index]?[node.offsetWidth,node.offsetHeight]:this._leafSizes?.[index]??[0,0];
+      return present[index]&&measuring?[node.offsetWidth,node.offsetHeight]:this._leafSizes?.[index]??[0,0];
     });
     this._leafSizes=dimensions;
+    // The first real measurement settles at the measured sizes, as creating the
+    // owner with them would; later ones animate.
+    const settle=measuring&&!this._laidOut;if(measuring)this._laidOut=true;
     if(!this._contentMotion||this._contentMotion.disposed){
       this._contentMotion=new SelectionMotion(this,{leadWidth:present[0]?dimensions[0][0]:0,leadHeight:present[0]?dimensions[0][1]:0,
         trailWidth:present[1]?dimensions[1][0]:0,trailHeight:present[1]?dimensions[1][1]:0,leadAlpha:Number(present[0]),trailAlpha:Number(present[1])},values=>this._drawContent(values));
@@ -195,7 +205,7 @@ export class MdChip extends HTMLElement {
       const now=performance.now(),channels=this._contentMotion.channels;
       for(let index=0;index<2;index++){
         const prefix=index?'trail':'lead',alpha=prefix+'Alpha',size=[channels[prefix+'Width'],channels[prefix+'Height']];
-        if(this._presence.family!=='filter'&&this._presence.family!=='input'){
+        if(settle||(this._presence.family!=='filter'&&this._presence.family!=='input')){
           size.forEach((channel,axis)=>{channel.target=present[index]?dimensions[index][axis]:0;channel.finish();});
           channels[alpha].target=Number(present[index]);channels[alpha].finish();
         } else {
@@ -209,7 +219,7 @@ export class MdChip extends HTMLElement {
   }
 
   _drawContent(values) {
-    if(!this.isConnected||!this._presence)return;
+    if(!this.isConnected||!this._presence||this._connecting)return;
     this._applyContentLeaves(values);
     // The browser owns font/slot metrics. Native policy owns allocation, modifier
     // order and placement; do not subtract icon widths from the label by hand.
@@ -274,7 +284,7 @@ export class MdChip extends HTMLElement {
     if(this._shapeMotion.media?.matches)this._shapeMotion.finish();else this._shapeMotion.tick(now);
   }
   _paintShape(progress) {
-    if(!this._shapeState||!this.isConnected)return;
+    if(!this._shapeState||!this.isConnected||this._connecting)return;
     const shape=this._shapeState.getMorphedShape(performance.now(),progress);
     const radius=buttonCornerRadius(shape,this._chip.offsetWidth,this._chip.offsetHeight);
     put(this._chip,'border-radius',Math.max(0,radius)+'px');
@@ -294,11 +304,8 @@ export class MdChip extends HTMLElement {
     this._resize?.disconnect();this._resize=new ResizeObserver(refresh);
     for(const node of [this._chip,this._labelContent,this._leadingContent,this._trailingContent])this._resize.observe(node);
     document.fonts?.addEventListener('loadingdone',refresh,{signal});
-    this._themeObserver?.disconnect();this._themeObserver=new MutationObserver(records=>{
-      if(records.some(record=>record.target===this||record.target.contains(this)))this._sync();
-    });
-    this._themeObserver.observe(document.documentElement,{subtree:true,attributes:true,
-      attributeFilter:['style','class','dir','data-motion-scheme','data-theme-scheme']});
+    // Theme, direction and motion-scheme changes of this chip or its ancestors.
+    this._stopTheme?.();this._stopTheme=observeThemeContext(this,()=>this._sync());
     this._elevationMotion=bindButtonElevation(this._chip,{configuration:()=>{
       const native=chipElevation({family:chipFamily(this.variant),elevated:this.elevated});
       return [native[0],native[1],native[2],native[3],native[5],native[4]];

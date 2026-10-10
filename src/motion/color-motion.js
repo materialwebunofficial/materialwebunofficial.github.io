@@ -54,7 +54,16 @@ export class ColorSpringVector {
 // Keep conversion in the browser's color implementation instead of interpreting
 // CSS color syntax with an incomplete rgb/hex parser. The hidden probe is owned
 // by the record and removed with it, and doesn't affect layout or accessibility.
+const sharedVectors=new Map(),contextFree=/^(?:#[0-9a-f]{3,8}|(?:rgba?|hsla?)\([^()]*\)|transparent)$/i;
 export function colorVector(probe,color) {
+  // Plain colors convert identically for every element; share their vectors.
+  const shareable=typeof color==='string'&&contextFree.test(color);
+  if(shareable&&sharedVectors.has(color))return[...sharedVectors.get(color)];
+  const vector=probeColorVector(probe,color);
+  if(shareable){if(sharedVectors.size>=256)sharedVectors.clear();sharedVectors.set(color,vector);}
+  return[...vector];
+}
+function probeColorVector(probe,color) {
   probe.style.color=`oklab(from ${color} l a b / alpha)`;
   const resolved=getComputedStyle(probe).color;
   const match=/^oklab\(\s*([\d.e+-]+)%?\s+([\d.e+-]+)\s+([\d.e+-]+)(?:\s*\/\s*([\d.e+-]+)%?)?\s*\)$/.exec(resolved);

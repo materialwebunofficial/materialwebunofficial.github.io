@@ -33,6 +33,7 @@ const defaultStyle = MODAL_STYLE+`
   }
   :host([inline]) {
     display: inline-block;
+    max-width: 100%;
   }
 
   .scrim {
@@ -47,11 +48,12 @@ const defaultStyle = MODAL_STYLE+`
   }
 
   /* 1. DOCKED STYLES */
+  /* Docked picker: a 360dp menu below its field. */
   .docked-container {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 328px;
+    width: 360px;
     max-width: 100%;
     box-sizing: border-box;
   }
@@ -123,8 +125,10 @@ const defaultStyle = MODAL_STYLE+`
   .nav-cluster {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 0;
   }
+  /* Month and year menus keep their label on one line between the arrows. */
+  .nav-cluster md-button { flex: none; white-space: nowrap; }
 
   .dropdown-pill-btn {
     border: none;
@@ -163,9 +167,11 @@ const defaultStyle = MODAL_STYLE+`
     margin: auto;
   }
 
+  /* DatePickerDialog is 360dp wide whatever the headline or selection; an
+     inline picker keeps that width instead of shrinking to its content. */
   :host([inline]) .picker-dialog {
-    width: 100%;
-    max-width: 360px;
+    width: 360px;
+    max-width: 100%;
     box-shadow: none;
     margin: 0 auto;
   }
@@ -259,6 +265,25 @@ const defaultStyle = MODAL_STYLE+`
     letter-spacing: var(--md-sys-typescale-headline-large-tracking, 0px);
     color: var(--date-headline-content-color);
   }
+  /* DateRangePicker header: RangeSelectionHeaderContainerHeight less the 60dp
+     of the full-screen dialog's own bar, title and headline inset 64dp/12dp,
+     the headline in Title Large with the mode toggle 12dp from the end and
+     bottom. The headline stays on one line, so the header keeps its height
+     whatever is selected. */
+  .picker-dialog.range .picker-header { min-height: 68px; padding: 0; }
+  .picker-dialog.range .header-title { padding: 0 12px 0 64px; }
+  .picker-dialog.range .header-row { padding-inline-start: 64px; align-items: center; }
+  .picker-dialog.range .formatted-date {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 12px 12px 0;
+    font: var(--md-sys-typescale-title-large-weight) var(--md-sys-typescale-title-large-size)/var(--md-sys-typescale-title-large-line-height) var(--md-sys-typescale-title-large-font);
+    letter-spacing: var(--md-sys-typescale-title-large-tracking);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .picker-dialog.range .header-row > :last-child:not(.formatted-date) { margin: 0 12px 12px 0; }
 
   .icon-toggle-btn {
     border: none;
@@ -441,6 +466,23 @@ const defaultStyle = MODAL_STYLE+`
     display: none;
   }
 
+  /* DateRangePicker: weekdays over a vertically scrolling list of months. */
+  .range-body { padding: 0 12px; }
+  .months-list {
+    position: relative;
+    height: 336px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .month-subhead {
+    padding: 20px 0 8px 24px;
+    color: var(--md-sys-color-on-surface-variant, #49454F);
+    font: var(--md-sys-typescale-title-small, 500 14px/20px Roboto, sans-serif);
+    letter-spacing: var(--md-sys-typescale-title-small-tracking, 0.1px);
+  }
+  .months-edge { height: 1px; }
+
   .range-input-pane, .modal-input-pane {
     display: flex;
     gap: 12px;
@@ -478,17 +520,9 @@ const defaultStyle = MODAL_STYLE+`
   }
 
   @media (max-width: 600px) {
-    .picker-dialog {
-      width: 360px !important;
-      max-width: calc(100vw - 32px) !important;
-      padding: 24px !important;
-      border-radius: var(--md-sys-shape-corner-extra-large, 28px) !important;
-      box-sizing: border-box !important;
-      margin: auto !important;
-    }
     .docked-container {
       width: 100% !important;
-      max-width: 328px !important;
+      max-width: 360px !important;
       margin: 0 auto !important;
     }
     .docked-calendar {
@@ -569,6 +603,10 @@ export class MdDatePicker extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this._monthEdges?.disconnect();
+    this._monthPlacement?.disconnect();
+    this._monthEdges = this._monthPlacement = null;
+    this._monthWindow = null;
     this._abortController?.abort();
     this._abortController = null;
     this._modal.detach();
@@ -828,12 +866,21 @@ export class MdDatePicker extends HTMLElement {
       yearMenu?.setAttribute('label', `${MONTH_NAMES[this.state.viewMonth]} ${this.state.viewYear}`);
     }
 
+    const monthsList = this.shadowRoot.querySelector('.months-list');
+    if (monthsList) { this._renderMonthList(monthsList); return; }
     const daysGrid = this.shadowRoot.querySelector('.days-grid');
     if (!daysGrid) return;
+    daysGrid.innerHTML = this._monthCells(this.state.viewYear, this.state.viewMonth);
+    for (const cell of daysGrid.querySelectorAll('.day-cell:not(.empty)')) {
+      cell.addEventListener('click', () => this._pickDate(new Date(this.state.viewYear, this.state.viewMonth, Number(cell.dataset.day))));
+    }
+  }
 
+  /** One month's 6 x 7 day grid (Month: six 48dp weeks, empty leading and trailing cells). */
+  _monthCells(viewYear, viewMonth) {
     const isRange = this.range;
-    const firstDayIndex = new Date(this.state.viewYear, this.state.viewMonth, 1).getDay();
-    const daysInMonth = new Date(this.state.viewYear, this.state.viewMonth + 1, 0).getDate();
+    const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     const today = new Date();
 
     const startTime = this.state.startDate ? new Date(this.state.startDate.getFullYear(), this.state.startDate.getMonth(), this.state.startDate.getDate()).getTime() : null;
@@ -844,12 +891,12 @@ export class MdDatePicker extends HTMLElement {
       gridHtml += `<div class="day-cell empty"></div>`;
     }
     for (let day = 1; day <= daysInMonth; day++) {
-      const currentCellDate = new Date(this.state.viewYear, this.state.viewMonth, day);
+      const currentCellDate = new Date(viewYear, viewMonth, day);
       const currentTime = currentCellDate.getTime();
 
       const isToday =
-        today.getFullYear() === this.state.viewYear &&
-        today.getMonth() === this.state.viewMonth &&
+        today.getFullYear() === viewYear &&
+        today.getMonth() === viewMonth &&
         today.getDate() === day;
 
       let cellClasses = 'day-cell';
@@ -867,8 +914,8 @@ export class MdDatePicker extends HTMLElement {
         } else if (inRange) cellClasses += ' in-range';
       } else {
         const isSelected =
-          this.state.selectedDate.getFullYear() === this.state.viewYear &&
-          this.state.selectedDate.getMonth() === this.state.viewMonth &&
+          this.state.selectedDate.getFullYear() === viewYear &&
+          this.state.selectedDate.getMonth() === viewMonth &&
           this.state.selectedDate.getDate() === day;
         if (isSelected) cellClasses += ' selected';
       }
@@ -876,58 +923,114 @@ export class MdDatePicker extends HTMLElement {
       const selected=cellClasses.includes(' selected'),inRange=!!(isRange&&startTime!==null&&endTime!==null&&currentTime>=startTime&&currentTime<=endTime);
       const colors=datePickerDayColors({isToday,selected,inRange});
       gridHtml += `
-        <button class="${cellClasses}" data-day="${day}" tabindex="0" type="button" aria-pressed="${selected}" style="--date-day-content:${pickerCssColor(colors.content)};--date-day-container:${pickerCssColor(colors.container)}" aria-label="${day} ${MONTH_NAMES[this.state.viewMonth]} ${this.state.viewYear}">
+        <button class="${cellClasses}" data-day="${day}" tabindex="0" type="button" aria-pressed="${selected}" style="--date-day-content:${pickerCssColor(colors.content)};--date-day-container:${pickerCssColor(colors.container)}" aria-label="${day} ${MONTH_NAMES[viewMonth]} ${viewYear}">
           <span class="day-text">${day}</span>
         </button>
       `;
     }
     for(let i=firstDayIndex+daysInMonth;i<42;i++)gridHtml+='<div class="day-cell empty"></div>';
-    daysGrid.innerHTML = gridHtml;
+    return gridHtml;
+  }
 
-    const dayCells = daysGrid.querySelectorAll('.day-cell:not(.empty)');
-    dayCells.forEach((cell) => {
-      cell.addEventListener('click', () => {
-        const dayNum = parseInt(cell.getAttribute('data-day'), 10);
-        const pickedDate = new Date(this.state.viewYear, this.state.viewMonth, dayNum);
-
-        if (isRange) {
-          if (!this.state.startDate || (this.state.startDate && this.state.endDate)) {
-            this.state.startDate = pickedDate;
-            this.state.endDate = null;
-            this.startDate = formatDateMMDDYYYY(pickedDate);
-            this.endDate = '';
-          } else {
-            if (pickedDate < this.state.startDate) {
-              this.state.endDate = this.state.startDate;
-              this.state.startDate = pickedDate;
-            } else {
-              this.state.endDate = pickedDate;
-            }
-            this.startDate = formatDateMMDDYYYY(this.state.startDate);
-            this.endDate = formatDateMMDDYYYY(this.state.endDate);
-          }
+  /** Selects a date (or extends the range) and reports the change. */
+  _pickDate(pickedDate) {
+    if (this.range) {
+      if (!this.state.startDate || (this.state.startDate && this.state.endDate)) {
+        this.state.startDate = pickedDate;
+        this.state.endDate = null;
+        this.startDate = formatDateMMDDYYYY(pickedDate);
+        this.endDate = '';
+      } else {
+        if (pickedDate < this.state.startDate) {
+          this.state.endDate = this.state.startDate;
+          this.state.startDate = pickedDate;
         } else {
-          this.state.selectedDate = pickedDate;
-          this.value = formatDateMMDDYYYY(pickedDate);
-
-          // Update docked textfield if present
-          const dockedInput = this.shadowRoot.querySelector('#docked-text-input');
-          if (dockedInput) dockedInput.value = this.value;
+          this.state.endDate = pickedDate;
         }
+        this.startDate = formatDateMMDDYYYY(this.state.startDate);
+        this.endDate = formatDateMMDDYYYY(this.state.endDate);
+      }
+    } else {
+      this.state.selectedDate = pickedDate;
+      this.value = formatDateMMDDYYYY(pickedDate);
+      const dockedInput = this.shadowRoot.querySelector('#docked-text-input');
+      if (dockedInput) dockedInput.value = this.value;
+    }
+    this._updateUI();
+    this.dispatchEvent(new CustomEvent('change', {
+      detail: { date: this.state.selectedDate, startDate: this.state.startDate, endDate: this.state.endDate, value: this.value },
+      bubbles: true,
+      composed: true
+    }));
+  }
 
-        this._updateUI();
-        this.dispatchEvent(new CustomEvent('change', {
-          detail: {
-            date: this.state.selectedDate,
-            startDate: this.state.startDate,
-            endDate: this.state.endDate,
-            value: this.value
-          },
-          bubbles: true,
-          composed: true
-        }));
+  /*
+   * DateRangePicker VerticalMonthsList: weekdays stay above a vertically
+   * scrolling list of months, each a Title Small subhead (24dp start, 20dp top,
+   * 8dp bottom) over its grid. The list starts at the displayed month; months
+   * are added in blocks as either end comes near (a lazy list over 1900-2100).
+   */
+  _renderMonthList(list) {
+    const FIRST = 1900 * 12, LAST = 2100 * 12 + 11, BLOCK = 12;
+    const block = index => {
+      const year = Math.floor(index / 12), month = index % 12;
+      return `<section class="month-block" data-month="${index}" aria-label="${MONTH_NAMES[month]} ${year}">
+        <div class="month-subhead">${MONTH_NAMES[month]} ${year}</div>
+        <div class="days-grid range-grid">${this._monthCells(year, month)}</div>
+      </section>`;
+    };
+    if (!this._monthWindow || this._monthWindow.list !== list) {
+      const anchor = this.state.startDate ?? new Date(this.state.viewYear, this.state.viewMonth, 1);
+      const first = Math.min(LAST, Math.max(FIRST, anchor.getFullYear() * 12 + anchor.getMonth()));
+      this._monthWindow = { list, from: Math.max(FIRST, first - BLOCK), to: Math.min(LAST, first + BLOCK) };
+      let html = '';
+      for (let index = this._monthWindow.from; index <= this._monthWindow.to; index++) html += block(index);
+      list.innerHTML = `<div class="months-edge" data-edge="start"></div>${html}<div class="months-edge" data-edge="end"></div>`;
+      // The displayed month starts at the top of the list, once the list has a size.
+      const shown = list.querySelector(`[data-month="${first}"]`);
+      this._monthPlacement?.disconnect();
+      this._monthPlacement = new ResizeObserver(() => {
+        if (!list.clientHeight || !shown) return;
+        list.scrollTop = shown.offsetTop;
+        this._monthPlacement.disconnect();
       });
-    });
+      this._monthPlacement.observe(list);
+      list.addEventListener('click', event => {
+        const cell = event.target.closest?.('.day-cell:not(.empty)');
+        const index = Number(cell?.closest('.month-block')?.dataset.month);
+        if (!cell || !Number.isFinite(index)) return;
+        this._pickDate(new Date(Math.floor(index / 12), index % 12, Number(cell.dataset.day)));
+      }, { signal: this._abortController?.signal });
+      this._monthEdges?.disconnect();
+      this._monthEdges = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const range = this._monthWindow;
+          if (entry.target.dataset.edge === 'end' && range.to < LAST) {
+            const to = Math.min(LAST, range.to + BLOCK);
+            let more = '';
+            for (let index = range.to + 1; index <= to; index++) more += block(index);
+            entry.target.insertAdjacentHTML('beforebegin', more);
+            range.to = to;
+          } else if (entry.target.dataset.edge === 'start' && range.from > FIRST) {
+            const from = Math.max(FIRST, range.from - BLOCK), before = list.scrollHeight;
+            let more = '';
+            for (let index = from; index < range.from; index++) more += block(index);
+            entry.target.insertAdjacentHTML('afterend', more);
+            // Months already on screen keep their position.
+            list.scrollTop += list.scrollHeight - before;
+            range.from = from;
+          }
+        }
+      }, { root: list, rootMargin: '600px 0px' });
+      for (const edge of list.querySelectorAll('.months-edge')) this._monthEdges.observe(edge);
+      return;
+    }
+    // Selection changed: repaint the rendered months in place.
+    for (const section of list.querySelectorAll('.month-block')) {
+      const index = Number(section.dataset.month);
+      section.querySelector('.days-grid').innerHTML = this._monthCells(Math.floor(index / 12), index % 12);
+    }
   }
 
   render() {
@@ -968,7 +1071,7 @@ export class MdDatePicker extends HTMLElement {
       // Docked: an outlined field, with month and year menus above the calendar.
       cardContentHtml = `
         <div class="docked-container">
-          <md-text-field class="docked-field" id="docked-text-input" variant="outlined" label="Date"
+          <md-text-field class="docked-field" id="docked-text-input" variant="outlined" single-line label="Date"
             value="${currentFormattedValue}" placeholder="MM/DD/YYYY" supporting-text="MM/DD/YYYY"></md-text-field>
           <div class="docked-calendar" style="${pickerPaletteStyle(datePickerColors(),'date')}">
             <div class="docked-nav-row">
@@ -1004,11 +1107,11 @@ export class MdDatePicker extends HTMLElement {
           <div class="divider"></div>
           ${isInputMode ? `
             <div class="range-input-pane">
-              <md-text-field id="range-start-input" variant="outlined" label="Start date" value="${startFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
-              <md-text-field id="range-end-input" variant="outlined" label="End date" value="${endFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
+              <md-text-field id="range-start-input" variant="outlined" single-line label="Start date" value="${startFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
+              <md-text-field id="range-end-input" variant="outlined" single-line label="End date" value="${endFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
             </div>
           ` : `
-            <div class="calendar-body">${monthHeader}<div class="calendar-views">${dayView}${yearGrid}</div></div>
+            <div class="calendar-body range-body">${weekdays}<div class="months-list" role="group" aria-label="Calendar"></div></div>
           `}
           ${actions('Save')}
         </div>
@@ -1023,7 +1126,7 @@ export class MdDatePicker extends HTMLElement {
           <div class="divider"></div>
           ${isInputMode ? `
             <div class="modal-input-pane">
-              <md-text-field id="docked-text-input" variant="outlined" label="Date" value="${currentFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
+              <md-text-field id="docked-text-input" variant="outlined" single-line label="Date" value="${currentFormattedValue}" placeholder="mm/dd/yyyy"></md-text-field>
             </div>
           ` : `
             <div class="calendar-body">${monthHeader}<div class="calendar-views">${dayView}${yearGrid}</div></div>

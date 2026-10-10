@@ -1,4 +1,5 @@
 /** Compose FloatingToolbar and MDC DockedToolbar browser adapter. */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
 import { retargetIntSize, toolbarGroupComposed } from '../motion/size-motion.js';
@@ -144,7 +145,10 @@ export class MdToolbar extends HTMLElement {
   this._abortController?.abort();this._abortController=new AbortController();const{signal}=this._abortController;
   this.shadowRoot.addEventListener('slotchange',()=>this._queueLayout(),{signal});
   this.addEventListener('keydown',event=>this._key(event),{signal});
-  this._resize=new ResizeObserver(()=>this._queueLayout());this._resize.observe(this);for(const group of Object.values(this._groups))this._resize.observe(group);
+  // A size the toolbar drew itself (its frame while expanding or collapsing,
+  // the groups it placed) brings nothing new to measure; any other size
+  // change, or one after a measurement made while not rendered, does.
+  this._resize=new ResizeObserver(entries=>{if(!this._measuredRendered||!entries.every(entry=>this._drewSize(entry)))this._queueLayout();});this._resize.observe(this);for(const group of Object.values(this._groups))this._resize.observe(group);
   this._children=new MutationObserver(()=>this._queueLayout());this._children.observe(this,{subtree:true,childList:true,attributes:true,attributeFilter:['slot','hidden','disabled','size','width','style','variant','label','icon','data-toolbar-weight','data-toolbar-fill','data-toolbar-align','data-toolbar-alignment-line']});
   this._theme=observeThemeContext(this,()=>{this._colors();this._queueLayout();});
   document.fonts?.addEventListener('loadingdone',()=>this._queueLayout(),{signal});
@@ -186,7 +190,12 @@ export class MdToolbar extends HTMLElement {
  }
  _present(name){return this._slots[name].assignedNodes().some(n=>n.nodeType===1||n.textContent?.trim());}
  _queueLayout(){if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{this._queued=false;if(this.isConnected){this._measure();this._sync(false);}});}
+ _drewSize(entry){
+  const node=entry.target===this?this._frame:entry.target,width=parseFloat(node.style.width),height=parseFloat(node.style.height);
+  return Number.isFinite(width)&&Number.isFinite(height)&&Math.abs(entry.contentRect.width-width)<.5&&Math.abs(entry.contentRect.height-height)<.5;
+ }
  _measure(){
+  this._rowProbe=null;this._measuredRendered=!this.checkVisibility||this.checkVisibility({contentVisibilityAuto:true});
   this._frame.dataset.variant=this.variant;this._frame.dataset.orientation=this.orientation;
   this._hasFab=this.variant==='floating'&&this._present('fab');this._frame.dataset.fab=String(this._hasFab);this._fab.hidden=!this._hasFab;
   const hadRow=this._hasRow;
@@ -246,7 +255,7 @@ export class MdToolbar extends HTMLElement {
   const spec=SpringPhysics.getPreset('expressiveSpatialFast',this);
   const to=(key,value,chosen=spec,threshold=chosen.visibilityThreshold??.01,roundInitial=false)=>this._motion.channels[key].to(value,{...chosen,visibilityThreshold:threshold},{now,roundInitial});
   to('progress',expanded?1:0,this._hasFab&&this._animationSpec?this._animationSpec:spec);
-  to('padding',expanded&&(this._present('leading')||this._present('trailing'))?0:1,SpringPhysics.getPreset('expressiveEffectsMedium',this));
+  to('padding',expanded&&(this._present('leading')||this._present('trailing'))?0:1,SpringPhysics.getPreset('expressiveEffectMedium',this));
   to('elevation',expanded?this.expandedShadowElevation:this.collapsedShadowElevation,spec);
   for(const name of ['leading','trailing']){
    const channel=this._motion.channels[name],crossChannel=this._motion.channels[name+'Cross'],fullSize=this._hasRow?(this._rowFullSizes?.[name]??this._metrics[name]):this._metrics[name],full=fullSize[axis],fullCross=fullSize[this.orientation==='vertical'?'width':'height'],target=expanded?full:0;
@@ -350,14 +359,14 @@ export class MdToolbar extends HTMLElement {
   // An empty cross dimension must still retain the source main-axis scroll extent.
   const extent=layout.scroll.content,viewport=layout.placements.viewport;
   rect(this._scrollExtent,{x:!vertical&&rtl&&viewport.width!==0?viewport.width-extent:0,y:0,width:vertical?1:extent,height:vertical?extent:1});
-  this._clearRowRules();
+  const rules=[];
   for(let i=0;i<this._rowChildren.main.length;i++){
    const element=this._rowChildren.main[i],leaf=node.children[i].node,p=layout.placements['content-'+i],index=[...this.children].indexOf(element)+1;
    const ink=this._rowInputs.main[i].ink,body=ink?minimumInteractiveLayout({...ink,...leaf.constraints}).body:null;
    const native=body?`--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;`:'';
-   const rule=`:host([data-toolbar-content]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-row.x-leaf.offset.x}px!important;top:${p.y-row.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`;
-   this._sizeStyle.sheet.insertRule(rule,this._sizeStyle.sheet.cssRules.length);
+   rules.push(`:host([data-toolbar-content]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-row.x-leaf.offset.x}px!important;top:${p.y-row.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`);
   }
+  this._setRowRules(rules);
  }
  _rowOptions(values,vertical,rtl){
   const animating=name=>!!this._motion&&(!!this._motion.channels[name].animation||!!this._motion.channels[name+'Cross'].animation||!!this._motion.channels[name+'Offset'].animation);
@@ -365,17 +374,32 @@ export class MdToolbar extends HTMLElement {
   return{vertical,rtl,...this._rowInputs,...this._rowLines,contentPadding:this.contentPadding,padding:values.padding,hasVisibleLeading:this.effectiveExpanded&&this._present('leading'),hasVisibleTrailing:this.effectiveExpanded&&this._present('trailing'),leadingSample:values.leading,trailingSample:values.trailing,
    leadingCurrent:this._alignment?.leading??'none',trailingCurrent:this._alignment?.trailing??'none',leadingDelta:values.leadingOffset,trailingDelta:values.trailingOffset,leadingSettled:settled('leading'),trailingSettled:settled('trailing'),leadingCross:values.leadingCross??this._metrics.leading[vertical?'width':'height'],trailingCross:values.trailingCross??this._metrics.trailing[vertical?'width':'height'],leadingComposed:toolbarGroupComposed(this.effectiveExpanded,this._visibilityState?.leading,animating('leading')),trailingComposed:toolbarGroupComposed(this.effectiveExpanded,this._visibilityState?.trailing,animating('trailing'))};
  }
- _clearRowRules(){const sheet=this._sizeStyle.sheet;while(sheet.cssRules.length>1)sheet.deleteRule(1);}
+ _clearRowRules(){const sheet=this._sizeStyle.sheet;while(sheet.cssRules.length>1)sheet.deleteRule(1);this._rowRules=null;}
+ _setRowRules(rules){
+  // Rewriting identical rules would restyle every placed control each frame.
+  const text=rules.join('');if(text===this._rowRules)return;
+  this._clearRowRules();for(const rule of rules)this._sizeStyle.sheet.insertRule(rule,this._sizeStyle.sheet.cssRules.length);this._rowRules=text;
+ }
  _drawRow(values,vertical,rtl){
   const options=this._rowOptions(values,vertical,rtl),preferred=toolbarRowLayout(options),sizing=this._sizeStyle.sheet.cssRules[0].style;
   const weighted=Object.values(this._rowInputs).some(group=>group.some(child=>child.weight>0));
   for(const key of ['width','height']){const property='--_toolbar-'+key,text=weighted&&key===(vertical?'height':'width')?'100%':preferred.size[key]+'px';if(sizing.getPropertyValue(property)!==text)sizing.setProperty(property,text);}
   const dimension=key=>{const css=getComputedStyle(this);let value=parseFloat(css[key])||0;if(css.boxSizing==='border-box')value-=key==='width'?(parseFloat(css.paddingLeft)||0)+(parseFloat(css.paddingRight)||0)+(parseFloat(css.borderLeftWidth)||0)+(parseFloat(css.borderRightWidth)||0):(parseFloat(css.paddingTop)||0)+(parseFloat(css.paddingBottom)||0)+(parseFloat(css.borderTopWidth)||0)+(parseFloat(css.borderBottomWidth)||0);return Math.max(0,Math.round(value));};
-  const base={width:dimension('width'),height:dimension('height')},saved={width:this._frame.style.width,height:this._frame.style.height};
-  const set=(key,value)=>{sizing.setProperty('--_toolbar-'+key,value+'px');write(this._frame,key,value+'px');};
-  set('width',0);set('height',0);const minima={width:dimension('width'),height:dimension('height')},maxima={};
-  for(const key of ['width','height']){set(key,1000000);const value=dimension(key);maxima[key]=value>=1000000?2147483647:Math.max(minima[key],value);set(key,0);}
-  for(const key of ['width','height']){sizing.setProperty('--_toolbar-'+key,weighted&&key===(vertical?'height':'width')?'100%':preferred.size[key]+'px');write(this._frame,key,saved[key]);}
+  const base={width:dimension('width'),height:dimension('height')};
+  // The incoming minimum/maximum constraints are resolved by the browser from
+  // zero and unbounded probes. They depend on the parent and authored CSS, not
+  // on the expansion, so they are probed again only when those change.
+  const own=getComputedStyle(this),parent=this.parentElement;
+  const signature=['minWidth','maxWidth','minHeight','maxHeight','boxSizing','paddingLeft','paddingRight','paddingTop','paddingBottom','borderLeftWidth','borderRightWidth','borderTopWidth','borderBottomWidth'].map(key=>own[key]).concat(parent?[parent.clientWidth,parent.clientHeight,getComputedStyle(parent).display]:[]).join('|');
+  if(this._rowProbe?.signature!==signature){
+   const saved={width:this._frame.style.width,height:this._frame.style.height};
+   const set=(key,value)=>{sizing.setProperty('--_toolbar-'+key,value+'px');write(this._frame,key,value+'px');};
+   set('width',0);set('height',0);const minima={width:dimension('width'),height:dimension('height')},maxima={};
+   for(const key of ['width','height']){set(key,1000000);const value=dimension(key);maxima[key]=value>=1000000?2147483647:Math.max(minima[key],value);set(key,0);}
+   for(const key of ['width','height']){sizing.setProperty('--_toolbar-'+key,weighted&&key===(vertical?'height':'width')?'100%':preferred.size[key]+'px');write(this._frame,key,saved[key]);}
+   this._rowProbe={minima,maxima,signature};
+  }
+  const minima=this._rowProbe.minima,maxima={...this._rowProbe.maxima};
   const axis=vertical?'height':'width',crossAxis=vertical?'width':'height';
   const parentDisplay=this.parentElement?getComputedStyle(this.parentElement).display:'';
   if(/flex|grid/.test(parentDisplay)&&!weighted&&base[axis]<preferred.size[axis])maxima[axis]=Math.min(maxima[axis],base[axis]);
@@ -383,7 +407,7 @@ export class MdToolbar extends HTMLElement {
   const previous=this._rowFullSizes;this._rowFullTargets=layout.fullTargets;this._rowFullSizes=layout.fullSizes;
   if(previous&&['leading','trailing'].some(name=>previous[name]?.width!==layout.fullSizes[name]?.width||previous[name]?.height!==layout.fullSizes[name]?.height))this._queueLayout();
   write(this._frame,'width',layout.size.width+'px');write(this._frame,'height',layout.size.height+'px');rect(this._surface,{x:0,y:0,...layout.size});
-  this._clearRowRules();
+  const rules=[];
   const findNode=(node,id)=>node.id===id?node:node.children.map(p=>findNode(p.node,id)).find(Boolean);
   for(const name of ['leading','main','trailing']){
    const container=name==='main'?this._main:this._clips[name],box=layout.placements[name==='main'?'balanced':name],rowBox=layout.placements[name+'-row'],group=this._groups[name];
@@ -398,10 +422,10 @@ export class MdToolbar extends HTMLElement {
     const index=[...this.children].indexOf(element)+1;
     const ink=this._rowInputs[name][i].ink,body=ink?minimumInteractiveLayout({...ink,...leaf.constraints}).body:null;
     const native=body?`--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;`:'';
-    const rule=`:host([data-toolbar-row]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-rowBox.x-leaf.offset.x}px!important;top:${p.y-rowBox.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`;
-    this._sizeStyle.sheet.insertRule(rule,this._sizeStyle.sheet.cssRules.length);
+    rules.push(`:host([data-toolbar-row]:not([data-toolbar-measuring])) ::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-rowBox.x-leaf.offset.x}px!important;top:${p.y-rowBox.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`);
    }
   }
+  this._setRowRules(rules);
   write(this._viewport,'width','');write(this._viewport,'height','');write(this._viewport,'left','');write(this._viewport,'top','');this._main.inert=false;
  }
  _configureScroll(){
@@ -510,4 +534,4 @@ export class MdToolbar extends HTMLElement {
   event.preventDefault();(controls[target]?.shadowRoot?.querySelector('button')||controls[target])?.focus();
  }
 }
-if(!customElements.get('md-toolbar'))customElements.define('md-toolbar',MdToolbar);
+if(!customElements.get('md-toolbar'))customElements.define('md-toolbar',delegateHostAria(MdToolbar));

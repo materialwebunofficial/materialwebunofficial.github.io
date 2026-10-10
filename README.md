@@ -166,7 +166,12 @@ fixed accent roles, surface tint, shadow and scrim. Use corresponding on-color
 roles for text and icons. See [source and regeneration notes](tools/material-color-utilities/README.md).
 
 The CSS package includes a local variable Roboto font and its OFL license in
-`dist/fonts`. Keep that folder beside the distribution CSS. All 30 typography
+`dist/fonts`, split into Latin and Greek/Cyrillic files that browsers load only
+for the scripts a page uses. It also includes the Material Symbols Rounded
+subset the components use (variable `FILL` and `wght`; add symbols with
+`tools/material-symbols`, or load the full Material Symbols Rounded stylesheet
+from Google Fonts after the tokens CSS). Keep that folder beside the
+distribution CSS. All 30 typography
 roles come from the pinned AndroidX source; `font-family` on a theme updates
 those roles, including their shorthand tokens.
 

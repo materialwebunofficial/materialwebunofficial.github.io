@@ -7,7 +7,7 @@ export async function testPickerInputContainer(browser,base){
   try{
    await page.goto(base+'/test/browser/fixtures/toolbars.html');await page.evaluate(()=>document.fonts.ready);
    for(const error of [false,true])for(const focused of [false,true]){
-    await page.evaluate(({vibrant,dark})=>{document.documentElement.dataset.theme=dark?'dark':'light';document.querySelector('#fixture').innerHTML='<button id="outside">Outside</button><md-time-picker id="input-container" mode="input" inline is-24-hour accessibility-services-enabled value="07:17" '+(vibrant?'rich-colors':'')+'></md-time-picker>';},{vibrant,dark});
+    await page.evaluate(({vibrant,dark})=>{document.documentElement.dataset.theme=dark?'dark':'light';document.querySelector('#fixture').innerHTML='<button id="outside">Outside</button><md-time-picker autofocus id="input-container" mode="input" inline is-24-hour accessibility-services-enabled value="07:17" '+(vibrant?'rich-colors':'')+'></md-time-picker>';},{vibrant,dark});
     const input=page.locator('#input-container #hour-input');if(error){await input.focus();await input.selectText();await page.keyboard.insertText('99');}if(focused)await input.focus();else await page.locator('#outside').focus();
     const expected=rows.find(row=>row.kind==='field'&&row.vibrant===vibrant&&row.enabled&&row.error===error&&row.focused===focused);
     const actual=await page.locator('#input-container').evaluate((host,expected)=>{

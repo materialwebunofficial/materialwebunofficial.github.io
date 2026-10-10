@@ -14,6 +14,7 @@
  * - DockedEnterTransition: fade + expand, 600ms after 100ms, emphasized decelerate.
  *   DockedExitTransition: fade + shrink, 350ms after 100ms, CubicBezier(0, 1, 0, 1).
  */
+import { delegateHostAria } from '../utils/host-aria.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
@@ -417,5 +418,5 @@ export class MdSearchBar extends HTMLElement {
 }
 
 if (!customElements.get('md-search-bar')) {
-  customElements.define('md-search-bar', MdSearchBar);
+  customElements.define('md-search-bar', delegateHostAria(MdSearchBar));
 }

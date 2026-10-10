@@ -35,7 +35,8 @@ export class MdAutocomplete extends MdTextField {
   const box=this.shadowRoot.querySelector('.field-box');box.append(this._clearButton);
   this._autocompleteMenu=document.createElement('md-menu');
   this._autocompleteMenu.className='autocomplete-menu';this._autocompleteMenu.id=this._autocompleteId+'-listbox';
-  this._autocompleteMenu.variant='dropdown';this._autocompleteMenu.popupRole='listbox';
+  // MD3E vertical menu (DropdownMenuPopup/Group/Item) for the suggestions.
+  this._autocompleteMenu.variant='standard';this._autocompleteMenu.popupRole='listbox';
   this._autocompleteMenu.focusMode='anchor';this._autocompleteMenu.matchAnchorWidth=true;
   this._autocompleteMenu.anchorElement=box;
   this.shadowRoot.append(this._autocompleteMenu);

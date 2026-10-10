@@ -469,6 +469,8 @@ export class MdNavigationDrawer extends HTMLElement {
   variant: 'standard' | 'modal' | 'dismissible';
   modal: boolean;
   open: boolean;
+  /** DrawerState.snapTo: open or close at once, without the sheet motion. */
+  snapTo(value: 'open' | 'closed' | boolean): void;
   headline: string;
   /** Web extension: public NavigationDrawerItem does not expose enabled. */
   disabled: boolean;
@@ -832,7 +834,26 @@ export class MdToolbar extends HTMLElement {
 }
 
 export class MdFabMenu extends HTMLElement {
+  /** Menu items, shown above the FAB from the bottom up. */
+  items: Array<{ label: string; icon?: string }>;
   open: boolean;
+  /** Alias of open. */
+  expanded: boolean;
+  /** Toggle FAB icon while closed; the open FAB shows "close". */
+  icon: string;
+  label: string;
+  color: 'primary' | 'secondary' | 'tertiary';
+  /** Closed FAB size: 56dp (baseline), 80dp (medium) or 96dp (large); open it is 56dp round. */
+  size: 'baseline' | 'medium' | 'large';
+  fixed: boolean;
+  fabPosition: 'end' | 'start';
+  containerColor: string;
+  contentColor: string;
+  /** Motion role for the toggle FAB, FastSpatial by default. */
+  animationSpec: string;
+  show(): void;
+  close(): void;
+  toggle(): void;
 }
 
 export class MdExpressiveTheme extends HTMLElement {

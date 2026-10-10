@@ -27,7 +27,9 @@ export class ButtonSurface {
     this.probe.hidden = true;
     this.probe.setAttribute('aria-hidden', 'true');
     host.shadowRoot.append(this.probe);
-    this.resize = new ResizeObserver(() => this.clip());
+    // The first observation measures the surface; until then nothing is laid out to clip.
+    this.measured = false;
+    this.resize = new ResizeObserver(() => { this.measured = true; this.clip(); });
     for (const node of [button, ...this.children]) this.resize.observe(node);
     this.onFonts = () => this.clip();
     document.fonts?.addEventListener('loadingdone', this.onFonts);
@@ -83,7 +85,7 @@ export class ButtonSurface {
       this.background.applied = this.button.style.getPropertyValue('background-color');
       this.background.appliedPriority = this.button.style.getPropertyPriority('background-color');
     } finally { if (!this.disposed) this.observe(); }
-    this.clip();
+    if (this.measured) this.clip();
   }
 
   clip() {

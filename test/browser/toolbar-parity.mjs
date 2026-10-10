@@ -83,17 +83,17 @@ export async function testToolbarShowcase(browser,base){
    await page.setViewportSize({width,height:1100});await page.evaluate(mode=>{customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode:mode});},mode);await page.waitForTimeout(500);assert.equal(await page.locator('html').getAttribute('data-theme'),mode);
    for(const id of ['editing-toolbar','create-toolbar','drawing-toolbar']){
     const control=page.locator(`[data-toolbar-toggle="${id}"]`);await page.locator('#'+id).evaluate(n=>n.expand());await page.waitForTimeout(500);await control.click();await page.waitForTimeout(500);
-    assert.equal(await page.locator('#'+id).evaluate(n=>n.expanded),false);assert.equal(await control.getAttribute('aria-expanded'),'false');
+    assert.equal(await page.locator('#'+id).evaluate(n=>n.expanded),false);assert.equal(await control.locator('button').getAttribute('aria-expanded'),'false');
     if(id!=='editing-toolbar')assert.equal(await page.locator('#'+id+' md-fab button').evaluate(n=>n.getBoundingClientRect().width),80);
-    await control.press('Enter');await page.waitForTimeout(500);assert.equal(await page.locator('#'+id).evaluate(n=>n.expanded),true);assert.equal(await control.getAttribute('aria-expanded'),'true');
+    await control.press('Enter');await page.waitForTimeout(500);assert.equal(await page.locator('#'+id).evaluate(n=>n.expanded),true);assert.equal(await control.locator('button').getAttribute('aria-expanded'),'true');
     if(id!=='editing-toolbar')assert.equal(await page.locator('#'+id+' md-fab button').evaluate(n=>n.getBoundingClientRect().width),56);
       if(id==='create-toolbar'){
        const fab=page.locator('#create-toolbar [data-toolbar-fab-toggle]');
        await fab.locator('button').click();await page.waitForTimeout(500);
        assert.equal(await page.locator('#create-toolbar').evaluate(n=>n.expanded),false);
-       assert.equal(await fab.getAttribute('aria-expanded'),'false');assert.equal(await fab.locator('button').getAttribute('aria-controls'),'create-toolbar');
+       assert.equal(await fab.locator('button').getAttribute('aria-expanded'),'false');assert.equal(await fab.locator('button').evaluate(b=>b.ariaControlsElements?.map(n=>n.id).join(' ')),'create-toolbar');
        await fab.locator('button').press('Enter');await page.waitForTimeout(500);
-       assert.equal(await page.locator('#create-toolbar').evaluate(n=>n.expanded),true);assert.equal(await fab.getAttribute('aria-expanded'),'true');
+       assert.equal(await page.locator('#create-toolbar').evaluate(n=>n.expanded),true);assert.equal(await fab.locator('button').getAttribute('aria-expanded'),'true');
       }
    }
    const italic=page.locator('#formatting-toolbar md-icon-button').nth(1);await italic.click();assert.equal(await italic.evaluate(n=>n.selected),true);await italic.press('Space');assert.equal(await italic.evaluate(n=>n.selected),false);

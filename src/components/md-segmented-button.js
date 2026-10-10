@@ -13,6 +13,7 @@
  *   - Inner content scaling to prevent container clipping/gaps on press
  */
 
+import { delegateHostAria, labelledByText } from '../utils/host-aria.js';
 import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -78,7 +79,7 @@ const defaultStyle = `
     gap: 8px;
     height: 100%;
     pointer-events: none;
-    will-change: transform;
+    isolation: isolate;
   }
 
   .segment::after {
@@ -134,7 +135,7 @@ const segmentedButtonSheet = createComponentSheet(defaultStyle);
 
 export class MdSegmentedButton extends HTMLElement {
   static get observedAttributes() {
-    return ['selected-index', 'selected-indices', 'items', 'multi-select', 'disabled', 'checked', 'selected', 'space'];
+    return ['selected-index', 'selected-indices', 'items', 'multi-select', 'disabled', 'checked', 'selected', 'space', 'aria-label', 'aria-labelledby'];
   }
 
   constructor() {
@@ -161,8 +162,17 @@ export class MdSegmentedButton extends HTMLElement {
     this._abortController = null;
   }
 
+  /** The radio group / group name: an author label, or the text an aria-labelledby names. */
+  _syncGroupLabel() {
+    const group = this.shadowRoot.querySelector('.container');
+    if (!group) return;
+    const label = this.getAttribute('aria-label') || labelledByText(this, this.getAttribute('aria-labelledby'));
+    if (label) group.setAttribute('aria-label', label); else group.removeAttribute('aria-label');
+  }
+
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
+    if (name === 'aria-label' || name === 'aria-labelledby') { this._syncGroupLabel(); return; }
     if (name === 'items' || name === 'space') {
       this.render();
       this._setup();
@@ -301,6 +311,7 @@ export class MdSegmentedButton extends HTMLElement {
   }
 
   _setup() {
+    this._syncGroupLabel();
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
@@ -375,5 +386,5 @@ export class MdSegmentedButton extends HTMLElement {
 }
 
 if (!customElements.get('md-segmented-button')) {
-  customElements.define('md-segmented-button', MdSegmentedButton);
+  customElements.define('md-segmented-button', delegateHostAria(MdSegmentedButton));
 }

@@ -77,7 +77,7 @@ export class MdPaginator extends HTMLElement{
    '<md-divider part="divider"></md-divider>'+
    '<nav class="paginator-root" aria-label="Pagination" part="container">'+
     '<div class="page-size-box"><span class="page-size-label">Items per page:</span>'+
-     '<md-menu id="page-size-menu" variant="dropdown" selection-mode="single" label="Items per page">'+
+     '<md-menu id="page-size-menu" variant="standard" selection-mode="single" label="Items per page">'+
       '<md-button id="page-size-toggle" slot="trigger" variant="outlined" size="s" trailing-icon="arrow_drop_down" aria-label="Items per page"></md-button>'+
      '</md-menu></div>'+
     '<div class="range-label" id="range-label" aria-live="polite"></div>'+

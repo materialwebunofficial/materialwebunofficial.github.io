@@ -43,7 +43,7 @@ const defaultStyle = `
       background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
       border-radius var(--md-sys-motion-effect-medium-duration, 250ms) var(--md-sys-motion-effect-medium-easing, ease),
       box-shadow var(--md-sys-motion-duration-medium1, 300ms) var(--md-sys-motion-easing-expressive-spatial, ease);
-    will-change: transform, border-radius;
+    isolation: isolate;
   }
   .btn-left:focus, .btn-right:focus { outline: none; }
   .btn-left:focus-visible, .btn-right:focus-visible {

@@ -3,6 +3,11 @@
 // before composition; a continuous CSS color-mix gives different results.
 const f=Math.fround;
 const schemeCache=new WeakMap();
+// Token values are plain colors, so their resolution does not depend on the
+// element. Sharing it avoids a style recalculation per role for every surface.
+const sharedSchemes=new Map(),sharedColors=new Map(),SHARED_LIMIT=256;
+const contextFree=/^(?:#[0-9a-f]{3,8}|(?:rgba?|hsla?)\([^()]*\)|transparent)$/i;
+const remember=(map,key,value)=>{if(map.size>=SHARED_LIMIT)map.clear();map.set(key,value);return value;};
 export const CONTENT_COLOR_ROLES=Object.freeze([
  ['primary','on-primary'],['secondary','on-secondary'],['tertiary','on-tertiary'],
  ['background','on-background'],['error','on-error'],
@@ -46,13 +51,16 @@ export function srgbCss(color) {
 // theme role by clipping them through Canvas; their native wide-gamut tonal
 // packing is outside this sRGB adapter.
 export function resolveSurfaceColor(probe,color) {
+ const shared=contextFree.test(color)?sharedColors.get(color):undefined;
+ if(shared)return shared;
  probe.style.color='';probe.style.color=color;
  const css=getComputedStyle(probe).color;
  const rgb=/^rgba?\(([^)]+)\)$/.exec(css),srgb=/^color\(srgb\s+([^)]+)\)$/.exec(css);
  let packed;
  if(rgb){const channels=rgb[1].split(/[,\s/]+/).filter(Boolean).map(Number);packed=packSrgb([...channels.slice(0,3).map(v=>v/255),channels[3]??1]);}
  else if(srgb){const channels=srgb[1].split(/[\s/]+/).filter(Boolean).map(Number);packed=packSrgb(channels);}
- return{css,key:packed??css,packed};
+ const result={css,key:packed??css,packed};
+ return contextFree.test(color)?remember(sharedColors,color,result):result;
 }
 export function resolveSurfaceColors(host,probe,{container,content,elevation=0}) {
  const style=getComputedStyle(host),resolved=new Map();
@@ -62,11 +70,17 @@ export function resolveSurfaceColors(host,probe,{container,content,elevation=0})
  const signature=JSON.stringify([style.color,values]);
  let cached=schemeCache.get(host);
  if(cached?.signature!==signature){
-  const scheme={};
-  for(let i=0;i<roles.length;i++){
-   if(values[i])scheme[roles[i]]=resolve(values[i]).key;
+  cached=sharedSchemes.get(signature);
+  if(!cached){
+   const scheme={};
+   for(let i=0;i<roles.length;i++){
+    if(values[i])scheme[roles[i]]=resolve(values[i]).key;
+   }
+   cached={signature,scheme};
+   // Schemes containing context-dependent values stay per surface.
+   if(values.every(value=>!value||contextFree.test(value)))remember(sharedSchemes,signature,cached);
   }
-  cached={signature,scheme};schemeCache.set(host,cached);
+  schemeCache.set(host,cached);
  }
  const scheme=cached.scheme;
  const background=resolve(container);

@@ -9,6 +9,7 @@
  *   - Toggle mode (toggle, selected, checked), icon / selected-icon switching
  */
 
+import { delegateHostAria, forwardControlAria } from '../utils/host-aria.js';
 import { followHref } from '../utils/navigation.js';
 import { createRipple, bindPress, morphShape } from '../motion/interactions.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
@@ -230,7 +231,7 @@ const SIZES = {
 
 export class MdIconButton extends HTMLElement {
   static get observedAttributes() {
-    return ['variant', 'size', 'width', 'shape', 'toggle', 'selected', 'checked', 'disabled', 'icon', 'selected-icon', 'href', 'target', 'aria-label', 'aria-controls', 'aria-expanded'];
+    return ['variant', 'size', 'width', 'shape', 'toggle', 'selected', 'checked', 'disabled', 'icon', 'selected-icon', 'href', 'target', 'aria-label', 'aria-controls', 'aria-expanded', 'aria-haspopup'];
   }
 
   constructor() {
@@ -356,10 +357,7 @@ export class MdIconButton extends HTMLElement {
     btn.setAttribute('tabindex', this.disabled ? '-1' : '0');
     btn.setAttribute('role', this.href && !this.toggle ? 'link' : 'button');
     btn.setAttribute('aria-label', sanitizeAttribute(this.getAttribute('aria-label') || this.icon || 'icon button'));
-    for (const name of ['aria-controls', 'aria-expanded']) {
-      if (this.hasAttribute(name)) btn.setAttribute(name, this.getAttribute(name));
-      else btn.removeAttribute(name);
-    }
+    forwardControlAria(this, btn);
     if (this.toggle) btn.setAttribute('aria-pressed', this.selected ? 'true' : 'false');
     else btn.removeAttribute('aria-pressed');
 
@@ -386,5 +384,5 @@ export class MdIconButton extends HTMLElement {
 }
 
 if (!customElements.get('md-icon-button')) {
-  customElements.define('md-icon-button', MdIconButton);
+  customElements.define('md-icon-button', delegateHostAria(MdIconButton));
 }

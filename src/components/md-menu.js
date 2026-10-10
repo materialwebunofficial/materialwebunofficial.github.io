@@ -94,8 +94,10 @@ export class MdMenu extends HTMLElement {
  connectedCallback(){
   if(!this._menu)this.render();this.setupInteractions();this._sync();
   this._observer=new MutationObserver(()=>this._sync());this._observer.observe(this,{childList:true,subtree:true});
+  // A closed menu's groups and items are not drawn; a theme change reaches
+  // them when the menu opens.
+  this._themeObserver=observeThemeContext(this,()=>{if(this._visible)this._sync();else this._themeStale=true;});
   this._resizeObserver=new ResizeObserver(()=>{if(this._visible)this._position();});this._resizeObserver.observe(this._menu);this._resizeObserver.observe(this._trigger);if(this._externalAnchor)this._resizeObserver.observe(this._externalAnchor);
-  this._themeObserver=observeThemeContext(this,()=>this._sync());
  }
  disconnectedCallback(){
   this._abortController?.abort();this._popupAbort?.abort();this._observer?.disconnect();this._resizeObserver?.disconnect();this._themeObserver?.();this._themeObserver=null;
@@ -153,7 +155,7 @@ export class MdMenu extends HTMLElement {
   });
  }
  _beginOpen(){
-  if(!this._visible){this._returnFocus=activeElement(this.ownerDocument);this._visible=true;this._menu.hidden=false;this._menu.showPopover?.();}
+  if(!this._visible){this._returnFocus=activeElement(this.ownerDocument);this._visible=true;this._menu.hidden=false;this._menu.showPopover?.();if(this._themeStale){this._themeStale=false;this._sync();}}
   openMenus.add(this);this._makeMotion();this._position();this._listenPopup();
   this._motion.set({scale:{value:1,role:'expressiveSpatialFast'},alpha:{value:1,role:'expressiveEffectFast'}});
   if(this.focusMode!=='anchor'&&this._focusOnOpen!==false)queueMicrotask(()=>{if(this.open)this._focusFirst();});this._focusOnOpen=undefined;

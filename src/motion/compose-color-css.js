@@ -6,7 +6,17 @@ const number=(value,scale=1)=>value.endsWith('%')?parseFloat(value)*scale/100:pa
 // The browser resolves variables, named colors, hex, HSL, color-mix and relative
 // syntax. Its canonical components then enter the original Color encoding and
 // native space converter, preserving the input space wherever Compose has it.
+// Plain hex/rgb/hsl values resolve the same everywhere; they are shared so a
+// theme role is resolved once instead of once per component.
+const sharedColors=new Map(),contextFree=/^(?:#[0-9a-f]{3,8}|(?:rgba?|hsla?)\([^()]*\)|transparent)$/i;
 export function resolveComposeColor(probe,color){
+ const shareable=typeof color==='string'&&contextFree.test(color);
+ if(shareable&&sharedColors.has(color))return sharedColors.get(color);
+ const result=resolveComposeColorWithProbe(probe,color);
+ if(shareable){if(sharedColors.size>=256)sharedColors.clear();sharedColors.set(color,result);}
+ return result;
+}
+function resolveComposeColorWithProbe(probe,color){
  probe.style.color=color;let resolved=getComputedStyle(probe).color;
  const parse=value=>{
   const match=/^([a-z][a-z0-9-]*)\((.*)\)$/.exec(value);if(!match)return null;
