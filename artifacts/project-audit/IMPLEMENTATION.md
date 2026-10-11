@@ -108,3 +108,5 @@ entegrasyonlarını birlikte çalıştırır. Tam parity paketi ayrıca çalış
 11 Ekim 2026 tarihli görsel/etkileşim geri bildirimleri ve Brave Shields
 düzeltmeleri ayrıca [UI-FOLLOWUP.md](UI-FOLLOWUP.md) dosyasında kayıtlıdır.
 Yeni üç motorlu UI regresyon paketi de `verify` zincirine eklenmiştir.
+
+Home/Components Lighthouse değerlendirmesi ve sonraki performans çalışması ayrıca [LIGHTHOUSE-FOLLOWUP.md](LIGHTHOUSE-FOLLOWUP.md) dosyasına kaydedildi.

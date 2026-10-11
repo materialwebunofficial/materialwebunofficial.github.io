@@ -74,3 +74,5 @@ Son çalıştırmaların kayıtları `ui-followup/` altındadır.
 Kaynak karşılaştırmalarında ham Float yay/renk değerlerinin sıkı sayısal toleransları korunur. Çizilen dönüştürülmüş DOM dikdörtgenlerinde üç motorun yuvarlama farkları için 1/60 CSS px tolerans kullanılır. Menü örneğinde içsel boyut her karede sabit kalmalı; sayfa/ankraj hareket ettiğinde popup'ın onu takip etmesi beklenir. Önceki popup'ın odak iadesi için kapanışın gerçekten tamamlanması beklenir. Rail sürükleme testi, Firefox'un ekran dışındaki negatif pointer koordinatlarını sınırlamasından etkilenmemesi için aynı sürükleme mesafesini ekran içinde tamamlar.
 
 Bu çalışmada paket yayımlanmadı ve deploy yapılmadı. Fiziksel Android ekranıyla piksel karşılaştırması, gerçek Safari veya ekran okuyucuyla yeni bir sertifikasyon yapılmadı.
+
+Sonraki Home/Components Lighthouse incelemesi, ölçülen performans değişiklikleri ve kalan uyarılar [LIGHTHOUSE-FOLLOWUP.md](LIGHTHOUSE-FOLLOWUP.md) dosyasındadır.
