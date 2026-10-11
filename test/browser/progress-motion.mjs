@@ -112,7 +112,7 @@ export async function testProgressShowcase(browser,base){
  for(const width of [1440,390])for(const mode of ['light','dark']){
   const page=await browser.newPage({viewport:{width,height:900},colorScheme:mode}),errors=[];page.on('pageerror',error=>errors.push(error.message));
   try{
-   await page.goto(base+'/#progress');await page.waitForFunction(()=>customElements.get('md-progress-indicator')&&customElements.get('md-expressive-theme')&&document.fonts.status==='loaded',null,{timeout:10000});
+   await page.goto(base+'/#progress').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.waitForFunction(()=>customElements.get('md-progress-indicator')&&customElements.get('md-expressive-theme')&&document.fonts.status==='loaded',null,{timeout:10000});
    await page.evaluate(colorMode=>customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode}),mode);
    assert.equal(await page.locator('html').getAttribute('data-theme'),mode,'actual showcase theme selected');
    const heading=page.locator('.comp-name').getByText('Circular',{exact:true});await heading.scrollIntoViewIfNeeded();

@@ -84,7 +84,7 @@ export async function testMenuParity(browser,base){
   for(const rtl of [false,true])for(const position of ['below','above','start','end','left','right']){
    await el('standard').evaluate((n,{rtl,position})=>{n.dir=rtl?'rtl':'ltr';n.anchorPosition=position;n.offsetX=7.5;n.offsetY=-4.5;n.show();n._position();},{rtl,position});await run(512);
    const actual=await el('standard').evaluate(n=>({input:n._positionInput,placement:n._placement,left:parseFloat(n._menu.style.left),top:parseFloat(n._menu.style.top),origin:n._menu.style.transformOrigin})),expected=calculateMenuPosition(actual.input);
-   assert.deepEqual(actual.placement,expected);assert.equal(actual.left,expected.x);assert.equal(actual.top,expected.y);actual.origin.split(' ').map(parseFloat).forEach((v,i)=>near(v,Object.values(expected.origin)[i]*100,'CSS pivot',.0001));await close('standard');
+   assert.deepEqual(actual.placement,expected);assert.equal(actual.left,expected.x);assert.equal(actual.top,expected.y);const axes=actual.origin.split(' ').map(parseFloat);axes.slice(0,2).forEach((v,i)=>near(v,Object.values(expected.origin)[i]*100,'CSS pivot',.0001));if(axes.length===3)assert.equal(axes[2],0,'2D popup has no Z pivot');await close('standard');
   }
   await el('standard').evaluate(n=>{n.dir='ltr';n.offsetX=0;n.offsetY=0;n.anchorPosition='below';});
   await open('standard');await el('standard').evaluate(n=>n.dir='rtl');await run(32);assert.equal(await el('standard').evaluate(n=>n._positionInput.rtl),true);assert.equal((await geometry('one')).trailing.x,12);await el('standard').evaluate(n=>n.dir='ltr');await run(32);
@@ -114,7 +114,7 @@ export async function testMenuParity(browser,base){
 async function testMenuShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.goto(base+'/#menus',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{await document.fonts.ready;return true;});
+  await page.goto(base+'/#menus',{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(async()=>{await document.fonts.ready;return true;});
   assert.equal(await page.locator('#menus .comp-card').count(),3);assert.equal(await page.locator('#demo-menu-2').evaluate(n=>n.variant),'vibrant');
   await page.locator('#demo-menu-1 md-button button').press('Enter');await page.waitForTimeout(450);assert.equal(await page.locator('#demo-menu-1').evaluate(n=>n.open),true);
   await page.locator('#demo-menu-1 md-menu-item').first().locator('.item').press('Enter');await page.waitForTimeout(450);assert.equal(await page.locator('#demo-menu-1').evaluate(n=>n.open),false);
@@ -125,9 +125,17 @@ async function testMenuShowcase(browser,base){
    // behind assertions made only after the spring has settled.
    for(const id of ['demo-menu-1','demo-menu-2']){
     const popup=page.locator('#'+id);await popup.scrollIntoViewIfNeeded();
-    const frames=await popup.evaluate(async n=>{n.show({focus:false});const out=[];for(let i=0;i<18;i++){await new Promise(requestAnimationFrame);out.push([n._menu.offsetWidth,n._menu.offsetHeight,n._menu.style.left,n._menu.style.top,n._menu.style.transformOrigin]);}return out;});
-    for(const frame of frames.slice(1))assert.deepEqual(frame,frames[0],'stable popup layout during opening '+width+'/'+mode+'/'+id);
-    await popup.evaluate(n=>n.close());await page.waitForTimeout(450);
+    const frames=await popup.evaluate(async n=>{n.show({focus:false});const out=[];for(let i=0;i<18;i++){await new Promise(requestAnimationFrame);const r=n._anchor().getBoundingClientRect();out.push({layout:[n._menu.offsetWidth,n._menu.offsetHeight,n._menu.style.left,n._menu.style.top,n._menu.style.transformOrigin],anchor:[r.left,r.top,r.right,r.bottom].map(Math.round)});}return out;});
+    for(const frame of frames.slice(1)){
+     assert.deepEqual(frame.layout.slice(0,2),frames[0].layout.slice(0,2),'stable intrinsic popup size during opening '+width+'/'+mode+'/'+id);
+     // Deferred layout and focus restoration can move the page. The popup
+     // follows its anchor; a stationary anchor must retain its placement.
+     if(frame.anchor.every((v,i)=>v===frames[0].anchor[i]))assert.deepEqual(frame.layout,frames[0].layout,'stable placement for a stationary anchor '+width+'/'+mode+'/'+id);
+    }
+    await popup.evaluate(n=>n.close());
+    // Focus restoration happens when the spatial spring finishes. Starting
+    // the next popup sooner can scroll its anchor midway through this sample.
+    await page.waitForFunction(id=>!document.getElementById(id)._visible,id);
    }
    const menu=page.locator('#demo-menu-grouped'),trigger=menu.locator('md-button button');await trigger.click();await page.waitForTimeout(450);assert.equal(await menu.evaluate(n=>n.open),true);assert.equal(await trigger.getAttribute('aria-expanded'),'true');
    const sort=menu.locator('md-menu-group').first().locator('md-menu-item');await sort.nth(1).locator('.item').press('Enter');await page.waitForTimeout(450);assert.deepEqual(await sort.evaluateAll(nodes=>nodes.map(n=>n.selected)),[false,true,false]);assert.equal(await menu.evaluate(n=>n.open),false);

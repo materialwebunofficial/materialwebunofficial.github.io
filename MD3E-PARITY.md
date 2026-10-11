@@ -4,6 +4,296 @@ Status: in progress. Passing tests below verify the listed scope; they do not es
 
 Reference: [AndroidX revision a095da93](https://github.com/androidx/androidx/tree/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3). Motion token fixtures retain their Apache license in `test/fixtures/androidx`. Local research copies live in ignored `research/official-2026-09`.
 
+## Source ports, 2026-10-11
+
+Search follows the Expressive SearchBar.kt API at a095da93 (SearchBar,
+ExpandedDockedSearchBar, ExpandedDockedSearchBarWithGap,
+ExpandedFullScreenSearchBar, SearchBarState). The bar previously used the
+deprecated DockedSearchBar transitions (600ms/350ms tweens). Expansion is now a
+SearchBarState spring: SlowSpatial to expand and DefaultSpatial to collapse
+(rememberSearchBarState), DefaultSpatial and FastSpatial with 100ms content
+fades for the with-gap layout (rememberSearchBarWithGapState). The docked
+surface (CornerExtraLarge) is limited to lerp(56dp, 2/3 of the window,
+progress) and is at least 240dp; its results scroll inside that limit. The
+with-gap dropdown is limited to half the window, slides in from half its
+height above once progress passes 0.1, and its scrim follows progress. The new
+full-screen attribute ports FullScreenSearchBarLayout: a dialog surface grows
+from the bar's bounds to the window with a 28dp x (1 - progress) corner radius,
+the field widens around a moving centre, 8dp padding appears above and below
+it, the results fade in with progress and the leading icon becomes a back
+button, as in the samples. AppBarWithSearch, the contained variants and
+predictive back are not ported yet. The showcase adds a full-screen card. Test:
+test/browser/search-bar-parity.mjs (23 checks).
+
+Navigation rail: ModalWideNavigationRail is ported from AndroidX a095da93
+WideNavigationRail.kt, WideNavigationRailState.kt, NavigationRailExpandedTokens,
+ScrimTokens and foundation AnchoredDraggable (computeTarget, the 125dp/s
+minimum fling velocity, half-distance positional threshold, snap without
+decay). `modal` keeps the collapsed rail in the layout; expanding animates
+positionProgress on DefaultEffects, and while it is above 0 the rail's
+content sits in a modal dialog at the window's start edge: SurfaceContainer
+with CornerLarge corners, at most 360dp, expanding from progress 0.3 with
+FastSpatial widths, over a Scrim (Scrim color at 32%, alpha on DefaultEffects).
+`hide-on-collapse` leaves nothing in the layout; the expanded rail slides in
+from its width on DefaultSpatial and can be dragged closed. Escape and
+collapse() collapse the state; a scrim tap slides a hide-on-collapse rail out
+first, as animateToDismiss does. The header moves with the content instead of
+being drawn twice, and predictive back has no web equivalent. The showcase
+adds a modal rail card. Test: test/browser/navigation-rail-modal.mjs (22
+checks).
+
+Split button is ported from AndroidX a095da93 SplitButton.kt,
+SplitButtonXSmall-XLargeTokens, HorizontalCenterOptically.kt, AnimatedShape.kt
+and SplitButtonSamples.kt. Each size now takes its own leading and trailing
+padding, trailing icon size, inner and pressed corners, and ButtonDefaults'
+icon size, icon spacing (4dp at XS, which was 8) and type role; the default
+size is Small, as in SplitButtonDefaults. Corner changes (pressed, and the
+trailing button's CircleShape while checked) animate per corner on MotionScheme
+DefaultEffects through the shared AnimatedShapeState port; they were 250ms CSS
+transitions. The outer CornerFull corners are written in pixels: the old
+9999px corners made CSS scale every radius on the button down, so the inner
+corners (4dp, 12dp pressed) were drawn almost square. The trailing content is
+moved by horizontalCenterOptically (for example 2px toward the start at rest
+in the Small size, 0 when checked) and mirrored in RTL. A checked trailing
+button draws its shape in the content color at 0.1 over everything, the arrow
+(Icons.Filled.KeyboardArrowDown) turns on animateFloatAsState's default spring,
+and colors and elevation use the ported ButtonDefaults values with the shared
+state layer and ripple. The menu is the DropdownMenu port (md-menu
+variant="dropdown") anchored to the split button, as in
+SplitButtonWithDropdownMenuSample; the hand-written popup with its invented
+spring keyframes is gone. A tap on the leading button dismisses an open menu.
+The showcase adds the four styles. Test:
+test/browser/split-button-lifecycle.mjs (128 checks, replacing the checks of
+the old popup's internals).
+
+test/browser/selection-motion.mjs waited a fixed 16ms after switching to
+reduced motion, but MediaQueryList change events arrive with a rendering
+update, so the check failed about one run in four. It now waits for the change
+event first.
+
+Segmented button is ported from AndroidX a095da93 SegmentedButton.kt and
+OutlinedSegmentedButtonTokens (it was written from research notes; Expressive
+did not change it and points new designs to connected button groups). The row
+gives every item the widest item's width (IntrinsicSize.Min with weight(1f))
+and overlaps neighbours by the 1dp border (spacedBy(-space)); each item has its
+own Outline border over the ripple, CornerFull start/end corners on the first
+and last items, a 58dp minimum width and 12dp/8dp padding. Without an icon the
+label sits 13dp left so it stays centred, and slides right on the Int
+FastSpatial spring when the check appears; the check scales in from its
+bottom-left corner (FastSpatial) and fades in (DefaultEffects), and leaves at
+once (ExitTransition.None). Item icons crossfade with the check. Colors switch
+without animation; a disabled item uses OnSurface 38% content and an Outline 12%
+border and keeps SecondaryContainer when selected; checked items sit above
+their neighbours (interactionZIndex). The old version's press scale (not in the
+source), single shared outline, whole-control 38% opacity and color transitions
+are gone; change now fires only when the selection changes, and comma-separated
+items work as the showcase snippets wrote them. Arrow keys follow the radio
+group convention. Test: test/browser/segmented-button-parity.mjs (76 checks).
+
+Icon button (checked against AndroidX a095da93 IconButton.kt,
+IconButtonDefaults and the XSmall–XLarge, Filled, FilledTonal and Outlined
+token files): sizes, icon sizes, narrow/default/wide spaces, corner roles,
+outline widths and color roles already matched. The shape did not: it morphed
+with expressiveSpatialFast (a bouncing spring) through CSS keyframes, always
+starting a selection change from the pressed radius. It now follows
+shapeForInteraction: pressed, else checked, else the shape, animated with
+rememberAnimatedShape semantics (the shared ButtonShapeComposition) on
+MotionScheme defaultEffects, which the source picks "to prevent any bounce in
+this component". Hover and focus use the shared state-layer port instead of CSS
+:hover/:focus-visible opacity transitions. The outlined border keeps the spec
+color (OutlineVariant, the source's Vibrant border); the source's default
+border uses LocalContentColor instead.
+
+Badge and divider are ported from AndroidX a095da93 Badge.kt/BadgeTokens and
+Divider.kt/DividerTokens (they were written from research notes). md-badge
+wrapping an anchor acts as BadgedBox: a dot 6dp in from the anchor's end edge
+overlapping 6dp, a badge with content 12dp in overlapping 14dp, mirrored in
+RTL; content uses Label Small with the icon's variation axes reset. The
+showcase badges sit on the icons (IconButton { BadgedBox { Icon } }) instead of
+hand-placed pixel offsets. Dividers follow DividerTokens; inset (16dp start)
+and inset="middle" (16dp both ends) follow the M3 divider specs, and the
+invented vertical minimum height and vertical insets are gone.
+
+Side sheet: official sources were checked for an Expressive version
+(m3.material.io side sheet specs; MDC Android master side sheet styles) and
+none exists, so motion stays the MDC port. The M3 spec anatomy was added: an
+optional back icon button (16dp start padding), bottom actions (16dp above,
+24dp below, start aligned) and an optional divider (above the actions, or on a
+standard sheet's inner edge); the width can grow to the spec's 400dp maximum.
+See MD3E-INVENTORY.md for every component's source and open gaps.
+
+Date range picker: DateRangePicker's header leaves room for an X and Save row
+the app draws (HeaderHeightOffset; DateRangePickerSample puts a row with a
+close icon button and a Save text button, 12dp start and end padding, above the
+picker). The component now draws that row; the Cancel/Save row under the months
+is gone, and the title no longer sits against the top edge.
+
+Buttons and chips painted no corner radius until their first resize
+observation (they avoid forcing a layout while connecting). Where rendering is
+paused (a hidden pane or tab) or delayed, a button stayed square until an
+interaction repainted it. Before their first layout they now paint a radius
+that needs no measurement: a full corner as a pill (CSS scales the radius to
+half the size) and a fixed corner at its length; the first observation
+repaints with the measured size. Carousel examples have twelve items so they
+scroll on wide windows.
+
+Carousel (src/components/md-carousel.js, src/components/carousel-keylines.js)
+is ported from AndroidX a095da93 compose/material3/carousel (Arrangement,
+Keylines, KeylineList, Strategy, KeylineSnapPosition, Carousel's
+Modifier.carouselItem and CarouselDefaults) and the foundation pager it
+scrolls with (PagerDefaults.flingBehavior, PagerSnapDistance,
+PagerSnapLayoutInfoProvider, SnapFlingBehavior, PagerMeasure's current page).
+The previous carousel was a CSS approximation (scroll snapping, width
+transitions, a hover zoom, gradients, tags and built-in demo images); none of
+that remains. Child elements are the items, as the content lambda is; the items
+attribute still creates image items. Items are laid out end to end at the
+strategy's large size and item spacing, masked around their centers to the
+interpolated keyline size with the Extra Large shape, and translated so masked
+items meet; z order falls off from the current item. Layouts: multi-browse
+(default), uncontained and centered hero, with CarouselDefaults (0dp spacing,
+40/56dp small items, 10dp anchors, 0.85 medium threshold) and start/end content
+padding. Release: multi-browse and hero use singleAdvanceFlingBehavior
+(atMost(1), so no approach animation; the pager's snapping bounds, 400dp/s fling
+threshold, 0.5 positional threshold and 56dp minimum drag; a StiffnessMediumLow
+critically damped spring from the release velocity, never past its target);
+uncontained uses noSnapFlingBehavior (Android spline decay). animateScrollToItem
+uses the default spring and pre-jumps targets three or more items away. Web
+bindings: a horizontal wheel or trackpad scrolls directly and settles like a
+release without velocity; arrow keys, Home and End on the focused carousel
+animate between items; focus moving into an item brings it to rest; items off
+screen are hidden from focus and assistive technology. A touch drag no longer
+ends at the implicit pointer capture handoff. Not ported: the vertical
+carousels, CarouselParallaxScrollEffect and Android's stretch overscroll.
+test/unit/carousel-keylines.test.mjs checks arrangement fill, size order,
+alignment, content padding, rest size at snap positions and hero centering
+(320 invariants); Kotlin oracles are not generated.
+
+## Sheets, catalog navigation, color lab, load order and accessibility, 2026-10-10 (second round)
+
+Modal bottom sheet (src/components/md-bottom-sheet.js) is ported from AndroidX
+a095da93 ModalBottomSheet, BottomSheet, SheetState, BottomSheetDefaults, Scrim,
+ScrimTokens, SheetBottomTokens and foundation AnchoredDraggable (downloaded
+from the pinned revision). The scrim and sheet live in a modal `<dialog>` in
+the top layer (ModalBottomSheetDialog is its own window), so no ancestor can
+contain them: the catalog cards' content-visibility containment had trapped
+the old fixed-position sheets inside their card. Scrim role at 32% with a
+defaultEffects alpha; SurfaceContainerLow, CornerExtraLargeTop, no tonal or
+shadow elevation, 640dp maximum width; 32x4dp OnSurfaceVariant drag handle
+with 22dp vertical padding. Anchors: Hidden at the window height, Expanded at
+window height minus sheet height, and PartiallyExpanded at window height minus
+min(half the window, sheet height), present by default
+(isBottomSheetPartiallyExpandedDeterministicEnabled is true at this revision).
+show/expand use defaultSpatial, hide/partialExpand fastEffects; a drag
+settles with defaultSpatial from its release velocity using the 56dp
+positional and 125dp/s velocity thresholds, with downward velocity damped
+within 125dp of Hidden; an overshoot above Expanded scales the surface and
+counter-scales its content (verticalScaleUp/Down). Escape is the back action.
+Spring durations come from the SpringEstimation port. Scrollable content
+scrolls natively instead of through nested scrolling.
+
+Modal side sheet (src/components/md-side-sheet.js): Compose has none; ported
+from Material Components for Android (SideSheetBehavior, SideSheetDialog,
+SheetDialog, Right/LeftSheetDelegate, md.comp.sheet.side tokens) with
+ViewDragHelper settling: a top-layer `<dialog>`, 256dp, SurfaceContainerLow,
+Level 1, CornerLarge on the inner edge (detached: all corners and a 16dp
+margin), window enter/exit by its full width over 275ms on the emphasized path
+(sampled from the path itself, src/motion/path-easing.js), scrim at 32%. A
+release with outward velocity stays expanded; an inward horizontal swipe over
+500px/s or a release past halfway hides; settling uses ViewDragHelper's
+256/600ms duration and quintic interpolator. The standard side sheet
+(variant="standard", Widget.Material3.SideSheet with SideSheetBehavior) is in
+the page: Surface, Level 0, no corners (detached: CornerLarge, 16dp margin). It
+occupies the part of its parent it covers, as the behavior sets a coplanar
+sibling's adjacent margin, so content beside it narrows as it slides. Showing
+and hiding settle like smoothSlideViewTo (512ms over the whole range, quintic);
+a hidden sheet is invisible and unfocusable; Escape inside it hides it. A drag
+on either sheet no longer selects the text under it.
+
+Range date picker header (DateRangePicker): RangeSelectionHeaderContainerHeight
+less the 60dp full-screen bar offset (68dp minimum), title and headline inset
+64dp/12dp, headline in Title Large. The headline keeps one line, so selecting
+dates no longer changes the picker's height. Months outside the list's
+viewport are not drawn (the source list is lazy).
+
+Stepper (web extension): horizontal steps share one grid cell with inactive
+steps hidden but still sized, so the area keeps the tallest step's height and
+controls after the stepper do not move between steps. Its content fade used a
+mistyped motion role that fell back to defaultSpatial; it now uses fastEffects.
+The floating toolbar's balanced padding had the same mistake and now uses the
+source's defaultEffectsSpec.
+
+Accessibility. aria-controls written on a component host reaches its native
+control by element reflection (an ID reference cannot cross into the shadow
+root). Interactive rows of a plain list are buttons inside a listitem host.
+The clock dial's selector-colored copy of a number is drawn with generated
+content (it is a painted duplicate, not text). A chip's 18dp remove icon has a
+24px target without changing its layout. Inline time inputs take the initial
+focus only when marked autofocus.
+
+Keyboard and input modality. A date picker's days are one tab stop (the last
+focused day, else the selected date, else today) instead of one stop per day;
+the arrow keys move a day or a week across month boundaries, as directional
+focus search moves between Compose's day cells, and Home/End, Page Up/Down
+(with Shift, a year) follow the web date grid convention. A focused day draws
+the focus state layer and the 3dp secondary focus ring. The year grid and the
+docked month and year lists are one tab stop each, with arrow keys. The time
+picker's hour and minute selectors (TimeSelector, a clickable Surface) gained
+their ripple and hover/focus/press state layer. A Tab walk of the whole
+catalog at 1280px and 390px reaches 494/495 stops, none hidden or off screen;
+every stop changes pixels when focused except text inputs, whose indicator is
+the caret (and, for text fields, the active indicator outside the editor).
+
+Bottom sheet anchors use the deterministic PartiallyExpanded rule above; a
+short sheet shown on converged anchors is promoted to Expanded when its
+content grows. A horizontal stepper on a narrow screen keeps one line per
+label (ellipsized) and switches to its compact layout when a label would be
+cut. Showcase chip rows wrap on phones. Deferred example grids reserve the
+height their cards take before they are drawn (480px plus padding per row,
+not 520px), and a card created above the viewport is scrolled for in the same
+task: an open menu used to jump 24px for a frame each time the idle catalog
+fill created a card above it. The showcase marks
+`data-showcase-ready` on the root element once the bundle has loaded and the
+catalog is initialised; the browser suites wait for it.
+
+Performance. Theme updates run in one batch: every component's visibility is
+read before any callback writes, a component already waiting to be drawn keeps
+waiting, and a closed menu applies a theme change when it opens. Selection
+colors read all channels before painting; a single-line text field's layout no
+longer depends on its text. Bottom app bar scroll frames lay measured content
+out again instead of measuring it, and its own scroll-driven size changes do
+not trigger a measurement. Roboto is split into latin, latin-ext and
+greek-cyrillic subsets with the width axis pinned (Material roles vary weight
+only): the latin file is 52KB instead of 133KB. The showcase loads the
+component bundle after the first contentful paint, reserves the size of
+labelled buttons, top app bars and navigation bars before they are defined,
+applies the visitor's theme before any component is defined (components are
+created with their final color roles, so no theme update runs through all of
+them at start), registers the bundle's definitions one per task (defining a
+component upgrades all of its elements at once; one task for the whole bundle
+blocked input for 0.6s on a 4x slower CPU), creates Home's seed chips when
+Home is first shown, and creates the rest of the catalog ahead of time only
+after five seconds without input. applyDynamicTheme no longer writes roles
+that already have their value, reuses the last scheme for the same inputs, and
+does not announce a theme that changed nothing. A button at an elevation level
+writes that level's token instead of reading resolved shadows (it forced a
+style recalculation per button as it connected); shadows are resolved only
+between two levels. Lighthouse 12.8 (local, compressed, other applications
+running): mobile (simulated slow 4G, 4x CPU) performance 100 on home and
+99-100 on components (TBT 20-50ms, CLS 0.01); desktop 100; accessibility,
+best practices and SEO 100.
+
+Showcase. Catalog navigation follows the target section's live position while
+cards between it and the reader are laid out (it used to land on the wrong
+section). The color lab re-themes the page on every frame of a slider drag.
+Extended FAB examples sit in fixed cells, so collapsing them does not resize
+the card. The dev server compresses text responses; `serve.json` disables
+caching for `npx serve`.
+
+Modal navigation drawer: a tap while the drawer is still moving catches it
+(anchoredDraggable startDragImmediately while an animation runs) and the scrim
+dismisses only once the drawer has settled open (DrawerState.isOpen), as in
+the source; this is why a tap right after opening does not close it.
+
 ## Animation frame cost and page-wide per-frame work, 2026-10-10
 
 Measured in Chromium at 4x CPU throttling (a mid-range laptop), per animation
@@ -59,8 +349,8 @@ picker now takes that first focus only when the author marks it `autofocus`
 the page; later selection changes request focus as before. The parity tests
 that follow the source's initial request use `autofocus`.
 
-Showcase. The color lab moves its slider thumb and HCT values on every pointer
-move and re-themes the page when the thumb rests or is released. The inline
+Showcase. The color lab re-themes the page once per frame while a slider is
+dragged (see the second round below for what made that affordable). The inline
 date range picker keeps its 360dp width whatever the selection; the clock dial
 clips its rotated hand, so dragging no longer adds horizontal overflow.
 

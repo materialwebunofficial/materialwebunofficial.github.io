@@ -80,20 +80,27 @@ export function buttonElevationShadow(value, shadows) {
 
 export function bindButtonElevation(button, {configuration, disabled, hitTest = () => true, MotionClass=ButtonElevationMotion, interactionSource=()=>true, compositionKey=()=>undefined, signal}) {
   const order=new InteractionOrder(),media=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
-  const probes=dp.map((_,level)=>{
-    const probe=document.createElement('span');probe.hidden=true;probe.setAttribute('aria-hidden','true');
-    probe.style.boxShadow=`var(--md-sys-elevation-level${level}, var(--md-sys-elevation-level-${level}, none))`;
-    button.append(probe);return probe;
-  });
+  const token=level=>`var(--md-sys-elevation-level${level}, var(--md-sys-elevation-level-${level}, none))`;
+  // Resolved level shadows are needed only between two levels; their probes
+  // inherit the button's own theme and are created the first time.
+  let probes=null;
   let values=configuration(),interactive=interactionSource(),key=compositionKey(),motion=values?new MotionClass(values,!disabled(),interactive):null,raf=null,disposed=false;
   const originalShadow=button.style.boxShadow;let writtenShadow,paintedShadow;
-  const shadowAt=level=>getComputedStyle(probes[level]).boxShadow;
+  const shadowAt=level=>{
+    probes??=dp.map((_,index)=>{
+      const probe=document.createElement('span');probe.hidden=true;probe.setAttribute('aria-hidden','true');
+      probe.style.boxShadow=token(index);button.append(probe);return probe;
+    });
+    return getComputedStyle(probes[level]).boxShadow;
+  };
   function paint(time) {
     const elevation=motion?.sample(time)??0;
-    const shadow=buttonElevationShadow(elevation,shadowAt);
+    // A level itself is written as its token, which paints without reading style.
+    const level=!(elevation>0)?0:elevation>=dp.at(-1)?dp.length-1:dp.indexOf(elevation);
+    const shadow=level>=0?token(level):buttonElevationShadow(elevation,shadowAt);
     // Unchanged frames write nothing, so resting buttons do not invalidate style.
     if(shadow!==paintedShadow||button.style.boxShadow!==writtenShadow){button.style.boxShadow=shadow;paintedShadow=shadow;writtenShadow=button.style.boxShadow;}
-    const level=String(elevation);if(button.dataset.elevation!==level)button.dataset.elevation=level;
+    const value=String(elevation);if(button.dataset.elevation!==value)button.dataset.elevation=value;
   }
   function tick(time=performance.now()) {
     if(disposed)return;
@@ -127,7 +134,7 @@ export function bindButtonElevation(button, {configuration, disabled, hitTest = 
     hoverBinding.dispose();
     if(disposed)return;disposed=true;
     if(raf!==null)cancelAnimationFrame(raf);raf=null;
-    media?.removeEventListener('change',preference);probes.forEach(probe=>probe.remove());
+    media?.removeEventListener('change',preference);probes?.forEach(probe=>probe.remove());
     if(button.style.boxShadow===writtenShadow)button.style.boxShadow=originalShadow;
     delete button.dataset.elevation;order.clear();
   }

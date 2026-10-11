@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** AndroidX Chip.kt a095da93: default factories, three-child content row and
  * Expressive selectable shapes. DOM leaves, events, automatic check/removal,
  * font measurement and CSS drawing are the web adapters. */
@@ -284,9 +285,12 @@ export class MdChip extends HTMLElement {
     if(this._shapeMotion.media?.matches)this._shapeMotion.finish();else this._shapeMotion.tick(now);
   }
   _paintShape(progress) {
-    if(!this._shapeState||!this.isConnected||this._connecting)return;
+    if(!this._shapeState||!this.isConnected)return;
     const shape=this._shapeState.getMorphedShape(performance.now(),progress);
-    const radius=buttonCornerRadius(shape,this._chip.offsetWidth,this._chip.offsetHeight);
+    // Not laid out yet: a full corner is a pill at any size and a fixed corner
+    // keeps its length, so the chip is painted without measuring it.
+    const radius=this._connecting?Math.min(buttonCornerRadius(shape,Infinity,Infinity),9999):buttonCornerRadius(shape,this._chip.offsetWidth,this._chip.offsetHeight);
+    if(Number.isNaN(radius))return;
     put(this._chip,'border-radius',Math.max(0,radius)+'px');
   }
   _pointerInput(event) {
@@ -301,7 +305,7 @@ export class MdChip extends HTMLElement {
     this._abortController?.abort();this._abortController=new AbortController();const {signal}=this._abortController;
     for(const slot of this.shadowRoot.querySelectorAll('slot'))slot.addEventListener('slotchange',()=>this._sync(),{signal});
     const refresh=()=>{this._measureContent();this._updateShape();};
-    this._resize?.disconnect();this._resize=new ResizeObserver(refresh);
+    this._resize?.disconnect();this._resize=new FrameResizeObserver(refresh);
     for(const node of [this._chip,this._labelContent,this._leadingContent,this._trailingContent])this._resize.observe(node);
     document.fonts?.addEventListener('loadingdone',refresh,{signal});
     // Theme, direction and motion-scheme changes of this chip or its ancestors.
@@ -311,7 +315,7 @@ export class MdChip extends HTMLElement {
       return [native[0],native[1],native[2],native[3],native[5],native[4]];
     },MotionClass:ChipElevationMotion,disabled:()=>this.disabled,hitTest:event=>this._hitTest(event),signal});
     this._stateLayer=bindStateLayer(this._chip,{disabled:()=>this.disabled,hitTest:event=>this._hitTest(event),property:'--md-chip-state-alpha',signal});
-    this._pressBinding=bindPress(this._chip,{disabled:()=>this.disabled,keyboardActivation:true,
+    this._pressBinding=bindPress(this._chip,{disabled:()=>this.disabled,keyboardActivation:true,hostActivation:true,
       ignoreEvent:event=>nestedInteractiveEvent(event,this._chip),
       pointerPolicy:{input:event=>this._pointerInput(event),hitTest:event=>this._hitTest(event),outOfBounds:event=>{
         const input=this._pointerInput(event);return input!==null&&capturedPointerOutOfBounds(input);
@@ -326,7 +330,8 @@ export class MdChip extends HTMLElement {
     bindPress(this._removeButton,{disabled:()=>this.disabled||!this.removable,onPress:event=>createRipple(event,this._removeButton),onActivate:()=>{
       if(this.dispatchEvent(new CustomEvent('remove',{detail:{label:this.label},bubbles:true,composed:true,cancelable:true})))this.remove();
     },signal});
-    this._removeButton.addEventListener('click',event=>event.stopPropagation(),{signal});
+    // The main binding ignores nested controls. Keep this click observable and
+    // cancelable by host consumers, without selecting the chip as well.
   }
   render() {
     const adopted=this.shadowRoot.adoptedStyleSheets?.length;

@@ -1,0 +1,24 @@
+{
+  "items": 30,
+  "measurementsPerSample": 10,
+  "records": [
+    {
+      "LayoutCount": 20,
+      "RecalcStyleCount": 21,
+      "LayoutDuration": 0.007543,
+      "ScriptDuration": 0
+    },
+    {
+      "LayoutCount": 20,
+      "RecalcStyleCount": 21,
+      "LayoutDuration": 0.005442,
+      "ScriptDuration": 0
+    },
+    {
+      "LayoutCount": 20,
+      "RecalcStyleCount": 21,
+      "LayoutDuration": 0.007980000000000001,
+      "ScriptDuration": 0
+    }
+  ]
+}

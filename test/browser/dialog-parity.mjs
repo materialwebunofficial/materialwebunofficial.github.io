@@ -122,10 +122,12 @@ export async function testDialogLifecycle(browser,base){
 }
 export async function testDialogShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:900,height:760}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
- try{await page.goto(base+'/#dialogs');await page.evaluate(()=>customElements.whenDefined('md-dialog'));
+ try{await page.goto(base+'/#dialogs').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(()=>customElements.whenDefined('md-dialog'));
   for(const width of[1440,390])for(const colorMode of['light','dark']){
    await page.setViewportSize({width,height:760});await page.evaluate(colorMode=>customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode}),colorMode);
-   for(const[trigger,id]of[['open-dialog-btn','sample-dialog'],['open-date-picker-btn','sample-date-picker'],['open-time-picker-btn','sample-time-picker']]){
+   for(const[trigger,id,section]of[['open-dialog-btn','sample-dialog','dialogs'],['open-date-picker-btn','sample-date-picker','date-pickers'],['open-time-picker-btn','sample-time-picker','time-pickers']]){
+    // Examples are created as the reader reaches them: go to the trigger's section as the catalog does.
+    if(!await page.locator('#'+trigger).count())await page.evaluate(section=>{location.hash='#'+section;},section);
     await page.locator('#'+trigger).click();await page.waitForFunction(id=>document.querySelector('#'+id).shadowRoot.querySelector('.modal-window').matches(':modal'),id);
     await page.waitForFunction(id=>document.querySelector('#'+id)._modal.jobs.length===0,id);
     const bounds=await page.locator('#'+id+' '+(id==='sample-dialog'?'.dialog':'.picker-dialog')).boundingBox();

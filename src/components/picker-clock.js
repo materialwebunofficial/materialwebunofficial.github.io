@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 import {pickerTimeForHost,PickerAnalogState,PICKER_CLOCK,pickerAtan,pickerCircularLayout,pickerPostSlop} from './picker-clock-state.js';
 import {SelectionMotion} from '../motion/selection-motion.js';
 import {PickerClockAnimation} from './picker-clock-animation.js';
@@ -18,7 +19,7 @@ export class PickerClock{
   this.analog=new PickerAnalogState(this.time,this.animation,(millis,job)=>this.animation.delay(millis,job));this.analog.currentDiameter=face.clientWidth;
   this.bind();this.sync();
   // The dial is laid out again whenever its measured diameter changes.
-  this.laidOutWidth=face.clientWidth;this.resize=new ResizeObserver(()=>this.relayout());this.resize.observe(face);
+  this.laidOutWidth=face.clientWidth;this.resize=new FrameResizeObserver(()=>this.relayout());this.resize.observe(face);
  }
  relayout(){
   if(this.disposed)return;const width=this.face.clientWidth;if(width===this.laidOutWidth)return;this.laidOutWidth=width;

@@ -8,12 +8,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
+import { buildShowcaseAssets } from './build-showcase-assets.mjs';
 import './generate-motion-tokens.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
+const sourcemap = process.env.MD3E_SOURCEMAPS === '1';
 
 console.log('🚀 Starting MD3 Expressive NPM Build Pipeline...\n');
 
@@ -40,7 +42,7 @@ let concatenatedCss = '/* Material Design 3 Expressive (M3 Expressive) Bundled T
 for (const file of cssFiles) {
   const filePath = path.join(rootDir, file);
   if (fs.existsSync(filePath)) {
-    const css = fs.readFileSync(filePath, 'utf8').replaceAll("url('../fonts/", "url('./fonts/");
+    const css = fs.readFileSync(filePath, 'utf8').replaceAll('\r\n', '\n').replaceAll("url('../fonts/", "url('./fonts/");
     concatenatedCss += `/* --- ${file} --- */\n` + css + '\n\n';
   } else {
     console.warn(`⚠️ Warning: CSS file not found: ${file}`);
@@ -69,7 +71,7 @@ await esbuild.build({
   format: 'esm',
   target: ['es2022'],
   minify: true,
-  sourcemap: true
+  sourcemap
 });
 const esmStats = fs.statSync(path.join(distDir, 'md3-expressive.esm.js'));
 console.log(`  ✅ md3-expressive.esm.js (${(esmStats.size / 1024).toFixed(1)} KB)`);
@@ -84,7 +86,7 @@ await esbuild.build({
   globalName: 'MD3Expressive',
   minify: true,
   target: ['es2022'],
-  sourcemap: true
+  sourcemap
 });
 const minStats = fs.statSync(path.join(distDir, 'md3-expressive.min.js'));
 console.log(`  ✅ md3-expressive.min.js (${(minStats.size / 1024).toFixed(1)} KB)`);
@@ -94,7 +96,7 @@ const fontsSrcDir = path.join(rootDir, 'src/icons/fonts');
 const fontsDistDir = path.join(distDir, 'fonts');
 if (fs.existsSync(fontsSrcDir)) {
   fs.mkdirSync(fontsDistDir, { recursive: true });
-  const fontFiles = fs.readdirSync(fontsSrcDir);
+  const fontFiles = ['material-symbols-rounded.woff2'];
   for (const font of fontFiles) {
     fs.copyFileSync(path.join(fontsSrcDir, font), path.join(fontsDistDir, font));
   }
@@ -113,10 +115,21 @@ console.log('\n📦 4/4 Packaging TypeScript Definitions (dist/index.d.ts)...');
 const typesSrc = path.join(rootDir, 'types/index.d.ts');
 const typesDist = path.join(distDir, 'index.d.ts');
 if (fs.existsSync(typesSrc)) {
-  fs.copyFileSync(typesSrc, typesDist);
+  fs.writeFileSync(typesDist, fs.readFileSync(typesSrc, 'utf8').replaceAll('\r\n', '\n'));
   const typesStats = fs.statSync(typesDist);
   console.log(`  ✅ index.d.ts (${(typesStats.size / 1024).toFixed(1)} KB)`);
 }
+// Per-component declarations re-export the canonical public API, never duplicate it.
+const componentTypesDir=path.join(distDir,'components');fs.mkdirSync(componentTypesDir,{recursive:true});
+const entry=fs.readFileSync(path.join(rootDir,'src/index.js'),'utf8').replaceAll('\r\n','\n');
+for(const match of entry.matchAll(/export\s*\{([^}]+)\}\s*from\s*'([^']+)'/g)){
+  const [,names,module]=match;
+  if(module.startsWith('./components/'))fs.writeFileSync(path.join(componentTypesDir,path.basename(module,'.js')+'.d.ts'),`export { ${names.trim()} } from '../index.js';\n`);
+  if(module==='./theme/hct-color-engine.js')fs.writeFileSync(path.join(distDir,'theme.d.ts'),`export { ${names.trim()} } from './index.js';\nexport type { HCT, RGB, PaletteVariant, DynamicSchemeTokens } from './index.js';\n`);
+}
+
+await buildShowcaseAssets();
+console.log('  ✅ Minified showcase assets (outside the npm package)');
 
 console.log('\n================================================================');
 console.log('🎉 BUILD SUCCESSFUL! All NPM distribution artifacts created in dist/');

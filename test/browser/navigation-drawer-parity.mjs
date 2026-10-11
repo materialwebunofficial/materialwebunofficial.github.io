@@ -12,7 +12,7 @@ const near=(actual,expected,label,tolerance=2e-5)=>assert.ok(Math.abs(actual-exp
 export async function testNavigationDrawerParity(browser,base){
  const page=await browser.newPage({viewport:{width:900,height:700}}),errors=[];page.on('pageerror',error=>errors.push(error.stack));
  try{
-  await page.goto(base,{waitUntil:'domcontentloaded'});await page.evaluate(()=>document.fonts.ready);
+  await page.goto(base,{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(()=>document.fonts.ready);
   await page.waitForFunction(()=>customElements.get('md-navigation-drawer'));
   await page.clock.install({time:new Date('2026-10-02T10:00:00Z')});await page.clock.pauseAt(new Date('2026-10-02T10:00:01.008Z'));
   await page.evaluate(()=>{
@@ -58,9 +58,11 @@ export async function testNavigationDrawerParity(browser,base){
    near(g.offset,expected,`opening offset ${time}ms`);
    const scale=expected>0?Math.fround(1+Math.fround(expected/360)):1;
    near(parseFloat(g.scale),scale,`surface stretch ${time}ms`,5e-6);near(parseFloat(g.contentScale),Math.fround(1/scale),`counter stretch ${time}ms`,5e-6);
-   near(g.x,Math.round(expected)-(scale-1)*360,`surface start ${time}ms`,.0002);
+   // Drawn rectangles allow one layout unit (1/60 CSS px). Raw Float spring,
+   // scale and alpha assertions retain their tighter numeric tolerances.
+   near(g.x,Math.round(expected)-(scale-1)*360,`surface start ${time}ms`,1/60);
    near(+g.opacity,Math.max(0,Math.min(1,Math.fround(Math.fround(expected+360)/360))),`scrim ${time}ms`,1e-6);
-   near(g.items[0].icon.width,24,`icon isn't stretched ${time}ms`,.0002);
+   near(g.items[0].icon.width,24,`icon isn't stretched ${time}ms`,1/60);
   }
   await page.clock.runFor(640);g=await bounds();assert.equal(g.width,360);assert.equal(g.radius,'0px 16px 16px 0px');assert.equal(g.shadow,'none');assert.equal(g.border,'0px');assert.equal(g.opacity,'1');
   const modalColor=await drawer.evaluate(el=>{const probe=document.createElement('span');el._content.append(probe);probe.style.color='var(--md-sys-color-surface-container-low)';const color=getComputedStyle(probe).color;probe.remove();return color;});assert.equal(g.color,modalColor);
@@ -187,6 +189,10 @@ export async function testNavigationDrawerParity(browser,base){
   const nativeBefore=await drawer.evaluate(el=>({offset:el._offset,selected:el.selected,changes:el._changes.length}));
   await page.mouse.move(400,400);await page.mouse.down();
   assert.ok(await drawer.evaluate(el=>el._drag?.started&&!el._motion.channels.offset.animation),'real pointer catches modal opening');
+  // ResizeObserver's initial or height-only notification can arrive after the
+  // pointer catches the spring; it must not restore the open attribute's target.
+  await drawer.evaluate(el=>{el._drawer.style.height='99%';});
+  await page.waitForTimeout(50);
   await page.clock.runFor(64);near((await bounds()).offset,nativeBefore.offset,'real pointer stops opening while held');
   await page.mouse.up();await page.clock.runFor(256);
   assert.deepEqual(await drawer.evaluate(el=>({open:el.open,layer:el._layer.open,selected:el.selected,changes:el._changes.length})),

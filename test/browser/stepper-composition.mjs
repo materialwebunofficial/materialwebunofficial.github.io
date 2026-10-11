@@ -67,7 +67,7 @@ export async function testStepperComposition(browser,base){
 }
 export async function testStepperShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
- try{await page.goto(base+'/#stepper');await page.waitForFunction(()=>customElements.get('md-stepper'),null,{timeout:10000});
+ try{await page.goto(base+'/#stepper').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.waitForFunction(()=>customElements.get('md-stepper'),null,{timeout:10000});
   for(const width of[1440,390])for(const colorMode of['light','dark']){
    await page.setViewportSize({width,height:900});await page.evaluate(colorMode=>customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode}),colorMode);
    await page.locator('#stepper-reset-btn').click();assert.ok(await page.locator('#stepper-prev-btn').evaluate(node=>node.disabled));

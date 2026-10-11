@@ -59,7 +59,7 @@ export async function testIndicatorVisibility(browser,base){
    checks+=8;
    // The actual hash shows a previously hidden category. Native observers can
    // deliver hidden + visible entries together during the showcase bootstrap.
-   await page.goto(base+'/#progress-indicators');
+   await page.goto(base+'/#progress-indicators').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
    await page.waitForFunction(()=>customElements.get('md-progress-indicator')&&customElements.get('md-expressive-theme')&&document.fonts.status==='loaded',null,{timeout:10000});
    await page.evaluate(mode=>customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode:mode}),mode);
    for(const title of ['Circular','Default and contained']){

@@ -1,0 +1,926 @@
+{
+  "engine": "chromium",
+  "engines": {
+    "chromium": {
+      "path": "C:\\Users\\sagla\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe",
+      "installed": true
+    },
+    "firefox": {
+      "path": "C:\\Users\\sagla\\AppData\\Local\\ms-playwright\\firefox-1538\\firefox\\firefox.exe",
+      "installed": true
+    },
+    "webkit": {
+      "path": "C:\\Users\\sagla\\AppData\\Local\\ms-playwright\\webkit-2336\\Playwright.exe",
+      "installed": true
+    }
+  },
+  "results": [
+    {
+      "mode": "src",
+      "name": "form-values-reset-fieldset",
+      "actual": {
+        "initial": [
+          [
+            "text",
+            "initial"
+          ],
+          [
+            "check",
+            "yes"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "changed": [
+          [
+            "text",
+            "changed"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "reset": [
+          [
+            "text",
+            "initial"
+          ],
+          [
+            "check",
+            "yes"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "disabled": [],
+        "controlDisabled": [
+          [
+            "md-text-field",
+            true
+          ],
+          [
+            "md-checkbox",
+            true
+          ],
+          [
+            "md-switch",
+            true
+          ],
+          [
+            "md-slider",
+            true
+          ],
+          [
+            "md-select",
+            true
+          ]
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "text-external-label-and-constraints",
+      "actual": {
+        "nativeLabelCount": 1,
+        "inputLabel": "Account number",
+        "inputLabelledBy": "",
+        "inputReflectedLabelledBy": [
+          "Account number"
+        ],
+        "labelClickFocused": true,
+        "valid": false,
+        "pattern": "[0-9]+",
+        "minLength": 3
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "text-number-range-and-invalid-sanitization",
+      "actual": {
+        "range": {
+          "value": "3",
+          "visualValue": "3",
+          "valid": false,
+          "min": "10",
+          "max": "20",
+          "step": "2"
+        },
+        "invalid": {
+          "value": "",
+          "visualValue": "",
+          "form": [
+            [
+              "n",
+              ""
+            ]
+          ],
+          "valid": false
+        }
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "autocomplete-custom-validity",
+      "actual": {
+        "before": false,
+        "after": false,
+        "message": "Server rejected this",
+        "custom": "Server rejected this",
+        "innerValid": false,
+        "formValid": false
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "select-options-selected-and-unknown",
+      "actual": {
+        "initial": {
+          "value": "a",
+          "selected": [
+            true,
+            false
+          ],
+          "valid": true
+        },
+        "programmatic": {
+          "value": "b",
+          "selected": [
+            false,
+            true
+          ]
+        },
+        "unknown": {
+          "value": "",
+          "selected": [
+            false,
+            false
+          ],
+          "valid": false,
+          "form": [
+            [
+              "s",
+              ""
+            ]
+          ]
+        }
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "radio-required-without-name",
+      "actual": {
+        "customValid": true,
+        "nativeValid": true,
+        "customMissing": false,
+        "nativeMissing": false
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "button-default-prevention-and-submitter",
+      "actual": {
+        "preventedSubmissions": 0,
+        "submits": [
+          {
+            "submitter": null,
+            "form": []
+          }
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "button-aria-remove-and-labelledby",
+      "actual": {
+        "before": {
+          "label": "External button label",
+          "labelledBy": "",
+          "reflected": [
+            "External button label"
+          ],
+          "expanded": "true"
+        },
+        "afterExpanded": null,
+        "hostExpanded": null,
+        "attributeIsNative": "label"
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "date-value-clear-and-form",
+      "actual": {
+        "initial": "10/11/2026",
+        "afterClear": "",
+        "form": []
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "date-invalid-rollover",
+      "error": "page.evaluate: TypeError: Cannot read properties of null (reading 'getFullYear')\n    at eval (eval at evaluate (:311:30), <anonymous>:4:59)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "aria-clone-and-live-label",
+      "actual": {
+        "originalLabel": "Delete account",
+        "clonedLabel": "Delete account",
+        "hostSerializedLabel": true,
+        "checkboxLabelBefore": "Original consent",
+        "checkboxLabelAfter": "Original consent"
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "optional-number-and-multiple-select-form",
+      "actual": {
+        "formValid": true,
+        "numberVisual": "",
+        "form": [
+          [
+            "n",
+            ""
+          ],
+          [
+            "s",
+            "a,b"
+          ]
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "malformed-json-records",
+      "actual": {
+        "mounted": 6
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "html-payload-escaping",
+      "actual": {
+        "executions": 0,
+        "injectedImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "src",
+      "name": "reconnect-single-change",
+      "actual": {
+        "events": 1,
+        "checked": true
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "form-values-reset-fieldset",
+      "actual": {
+        "initial": [
+          [
+            "text",
+            "initial"
+          ],
+          [
+            "check",
+            "yes"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "changed": [
+          [
+            "text",
+            "changed"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "reset": [
+          [
+            "text",
+            "initial"
+          ],
+          [
+            "check",
+            "yes"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "disabled": [],
+        "controlDisabled": [
+          [
+            "md-text-field",
+            true
+          ],
+          [
+            "md-checkbox",
+            true
+          ],
+          [
+            "md-switch",
+            true
+          ],
+          [
+            "md-slider",
+            true
+          ],
+          [
+            "md-select",
+            true
+          ]
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "text-external-label-and-constraints",
+      "actual": {
+        "nativeLabelCount": 1,
+        "inputLabel": "Text field",
+        "inputLabelledBy": null,
+        "labelClickFocused": false,
+        "valid": true,
+        "pattern": "",
+        "minLength": -1
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "text-number-range-and-invalid-sanitization",
+      "actual": {
+        "range": {
+          "value": "3",
+          "visualValue": "3",
+          "valid": true,
+          "min": "",
+          "max": "",
+          "step": ""
+        },
+        "invalid": {
+          "value": "invalid-number",
+          "visualValue": "",
+          "form": [
+            [
+              "n",
+              "invalid-number"
+            ]
+          ],
+          "valid": false
+        }
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "autocomplete-custom-validity",
+      "actual": {
+        "before": false,
+        "after": true,
+        "message": "",
+        "custom": "Server rejected this",
+        "innerValid": false,
+        "formValid": true
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "select-options-selected-and-unknown",
+      "actual": {
+        "initial": {
+          "value": "",
+          "selected": [
+            false,
+            false
+          ],
+          "valid": false
+        },
+        "programmatic": {
+          "value": "",
+          "selected": [
+            false,
+            true
+          ]
+        },
+        "unknown": {
+          "value": "missing",
+          "selected": [
+            false,
+            false
+          ],
+          "valid": true,
+          "form": [
+            [
+              "s",
+              "missing"
+            ]
+          ]
+        }
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "radio-required-without-name",
+      "actual": {
+        "customValid": true,
+        "nativeValid": true,
+        "customMissing": false,
+        "nativeMissing": false
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "button-default-prevention-and-submitter",
+      "actual": {
+        "preventedSubmissions": 1,
+        "submits": [
+          {
+            "submitter": null,
+            "form": []
+          },
+          {
+            "submitter": null,
+            "form": []
+          }
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "button-aria-remove-and-labelledby",
+      "actual": {
+        "before": {
+          "label": null,
+          "labelledBy": null,
+          "expanded": "true"
+        },
+        "afterExpanded": "true",
+        "hostExpanded": null,
+        "attributeIsNative": null
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "date-value-clear-and-form",
+      "actual": {
+        "initial": "10/11/2026",
+        "afterClear": "10/11/2026",
+        "selectedDate": "2026-10-10T21:00:00.000Z",
+        "form": []
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "date-invalid-rollover",
+      "actual": {
+        "value": "02/31/2026",
+        "state": [
+          2026,
+          3,
+          3
+        ],
+        "headline": "Tue, Mar 3"
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "aria-clone-and-live-label",
+      "actual": {
+        "originalLabel": "Delete account",
+        "clonedLabel": "delete",
+        "hostSerializedLabel": false,
+        "checkboxLabelBefore": "Original consent",
+        "checkboxLabelAfter": "Original consent"
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "optional-number-and-multiple-select-form",
+      "actual": {
+        "formValid": true,
+        "numberVisual": "",
+        "form": [
+          [
+            "n",
+            "invalid-number"
+          ],
+          [
+            "s",
+            "a,b"
+          ]
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "malformed-json-records",
+      "actual": {
+        "mounted": 6
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "html-payload-escaping",
+      "actual": {
+        "executions": 0,
+        "injectedImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "dist",
+      "name": "reconnect-single-change",
+      "actual": {
+        "events": 1,
+        "checked": true
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "form-values-reset-fieldset",
+      "actual": {
+        "initial": [
+          [
+            "text",
+            "initial"
+          ],
+          [
+            "check",
+            "yes"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "changed": [
+          [
+            "text",
+            "changed"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "reset": [
+          [
+            "text",
+            "initial"
+          ],
+          [
+            "check",
+            "yes"
+          ],
+          [
+            "switch",
+            "on"
+          ],
+          [
+            "slider",
+            "25"
+          ],
+          [
+            "select",
+            "a"
+          ]
+        ],
+        "disabled": [],
+        "controlDisabled": [
+          [
+            "md-text-field",
+            true
+          ],
+          [
+            "md-checkbox",
+            true
+          ],
+          [
+            "md-switch",
+            true
+          ],
+          [
+            "md-slider",
+            true
+          ],
+          [
+            "md-select",
+            true
+          ]
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "text-external-label-and-constraints",
+      "actual": {
+        "nativeLabelCount": 1,
+        "inputLabel": "Account number",
+        "inputLabelledBy": "",
+        "inputReflectedLabelledBy": [
+          "Account number"
+        ],
+        "labelClickFocused": true,
+        "valid": false,
+        "pattern": "[0-9]+",
+        "minLength": 3
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "text-number-range-and-invalid-sanitization",
+      "actual": {
+        "range": {
+          "value": "3",
+          "visualValue": "3",
+          "valid": false,
+          "min": "10",
+          "max": "20",
+          "step": "2"
+        },
+        "invalid": {
+          "value": "",
+          "visualValue": "",
+          "form": [
+            [
+              "n",
+              ""
+            ]
+          ],
+          "valid": false
+        }
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "autocomplete-custom-validity",
+      "actual": {
+        "before": false,
+        "after": false,
+        "message": "Server rejected this",
+        "custom": "Server rejected this",
+        "innerValid": false,
+        "formValid": false
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "select-options-selected-and-unknown",
+      "actual": {
+        "initial": {
+          "value": "a",
+          "selected": [
+            true,
+            false
+          ],
+          "valid": true
+        },
+        "programmatic": {
+          "value": "b",
+          "selected": [
+            false,
+            true
+          ]
+        },
+        "unknown": {
+          "value": "",
+          "selected": [
+            false,
+            false
+          ],
+          "valid": false,
+          "form": [
+            [
+              "s",
+              ""
+            ]
+          ]
+        }
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "radio-required-without-name",
+      "actual": {
+        "customValid": true,
+        "nativeValid": true,
+        "customMissing": false,
+        "nativeMissing": false
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "button-default-prevention-and-submitter",
+      "actual": {
+        "preventedSubmissions": 0,
+        "submits": [
+          {
+            "submitter": null,
+            "form": []
+          }
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "button-aria-remove-and-labelledby",
+      "actual": {
+        "before": {
+          "label": "External button label",
+          "labelledBy": "",
+          "reflected": [
+            "External button label"
+          ],
+          "expanded": "true"
+        },
+        "afterExpanded": null,
+        "hostExpanded": null,
+        "attributeIsNative": "label"
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "date-value-clear-and-form",
+      "actual": {
+        "initial": "10/11/2026",
+        "afterClear": "",
+        "form": []
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "date-invalid-rollover",
+      "error": "page.evaluate: TypeError: Cannot read properties of null (reading 'getFullYear')\n    at eval (eval at evaluate (:311:30), <anonymous>:4:59)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "aria-clone-and-live-label",
+      "actual": {
+        "originalLabel": "Delete account",
+        "clonedLabel": "Delete account",
+        "hostSerializedLabel": true,
+        "checkboxLabelBefore": "Original consent",
+        "checkboxLabelAfter": "Original consent"
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "optional-number-and-multiple-select-form",
+      "actual": {
+        "formValid": true,
+        "numberVisual": "",
+        "form": [
+          [
+            "n",
+            ""
+          ],
+          [
+            "s",
+            "a,b"
+          ]
+        ]
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "malformed-json-records",
+      "actual": {
+        "mounted": 6
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "html-payload-escaping",
+      "actual": {
+        "executions": 0,
+        "injectedImages": 0
+      },
+      "pageErrors": []
+    },
+    {
+      "mode": "fresh",
+      "name": "reconnect-single-change",
+      "actual": {
+        "events": 1,
+        "checked": true
+      },
+      "pageErrors": []
+    }
+  ]
+}

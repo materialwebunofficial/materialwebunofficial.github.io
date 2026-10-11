@@ -43,11 +43,6 @@ export class SpringPhysics {
 // ---------------------------------------------------------------------------
 // Base Web Component
 // ---------------------------------------------------------------------------
-export class MdBaseComponent extends HTMLElement {
-  connectedCallback(): void;
-  disconnectedCallback(): void;
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
-}
 
 // ---------------------------------------------------------------------------
 // Components
@@ -86,14 +81,28 @@ export class MdButton extends HTMLElement {
   formDisabledCallback(disabled: boolean): void;
 }
 
-export class MdSplitButton extends MdBaseComponent {
-  variant: 'filled' | 'elevated' | 'tonal' | 'outlined';
+export class MdSplitButton extends HTMLElement {
+  /** filled (default), tonal, elevated or outlined: ButtonDefaults colors and elevation. */
+  variant: 'filled' | 'tonal' | 'elevated' | 'outlined';
+  /** SplitButton sizes (ContainerHeight 32/40/56/96/136dp); default s. */
+  size: 'xs' | 's' | 'm' | 'l' | 'xl';
   label: string;
+  /** Leading icon (Material Symbols name); an empty attribute leaves it out. */
   icon: string;
+  /** Accessible name of the trailing button and its menu. */
+  menuLabel: string;
+  /** The trailing button's checked state: the menu is open. */
+  open: boolean;
+  /** Space between the buttons in px (BetweenSpace 2dp). */
+  spacing: number;
   disabled: boolean;
+  readonly menu: HTMLElement | null;
+  openMenu(): void;
+  close(): void;
+  toggle(): void;
 }
 
-export class MdIconButton extends MdBaseComponent {
+export class MdIconButton extends HTMLElement {
   variant: 'standard' | 'filled' | 'tonal' | 'outlined';
   readonly size: 'xs' | 's' | 'm' | 'l' | 'xl';
   icon: string;
@@ -114,7 +123,7 @@ export class MdButtonGroup extends HTMLElement {
   expandedRatio: number;
 }
 
-export class MdFab extends MdBaseComponent {
+export class MdFab extends HTMLElement {
   variant: 'surface' | 'primary' | 'secondary' | 'tertiary' | 'extended';
   color: 'primary' | 'secondary' | 'tertiary' | 'primary-container' | 'secondary-container' | 'tertiary-container' | 'surface';
   /** Ordinary default: baseline (56px). Extended small also remains 56px when collapsed. */
@@ -145,7 +154,7 @@ export interface CardColors {
   disabledContainerColor: string;
   disabledContentColor: string;
 }
-export class MdCard extends MdBaseComponent {
+export class MdCard extends HTMLElement {
   variant: 'elevated' | 'filled' | 'outlined';
   interactive: boolean;
   /** Applies to the clickable overload; static Cards use enabled colors. */
@@ -156,7 +165,7 @@ export class MdCard extends MdBaseComponent {
   colors: Readonly<CardColors> | undefined;
 }
 
-export class MdChip extends MdBaseComponent {
+export class MdChip extends HTMLElement {
   /** action is a compatibility alias for assist. */
   variant: 'assist' | 'filter' | 'input' | 'suggestion' | 'action';
   elevated: boolean;
@@ -177,7 +186,7 @@ export class MdChip extends MdBaseComponent {
   removable: boolean;
 }
 
-export class MdSlider extends MdBaseComponent {
+export class MdSlider extends HTMLElement {
   value: number;
   min: number;
   max: number;
@@ -203,7 +212,7 @@ export class MdSlider extends MdBaseComponent {
   readonly type: 'range';
 }
 
-export class MdSwitch extends MdBaseComponent {
+export class MdSwitch extends HTMLElement {
   checked: boolean;
   disabled: boolean;
   icon: string;
@@ -221,7 +230,7 @@ export class MdSwitch extends MdBaseComponent {
   readonly type: 'checkbox';
 }
 
-export class MdTextField extends MdBaseComponent {
+export class MdTextField extends HTMLElement {
   floatLabel: 'auto' | 'always';
   variant: 'filled' | 'outlined';
   type: string;
@@ -240,6 +249,11 @@ export class MdTextField extends MdBaseComponent {
   readOnly: boolean;
   maxLength: number | null;
   maxlength: number | null;
+  pattern: string;
+  minLength: number;
+  min: string;
+  max: string;
+  step: string;
   labelPosition: string;
   singleLine: boolean;
   minLines: number;
@@ -260,7 +274,7 @@ export class MdTextField extends MdBaseComponent {
 
 export interface AutocompleteOption { label?: string; value?: string; disabled?: boolean; }
 export class MdOption extends HTMLElement {
-  value: string; selected: boolean; disabled: boolean;
+  value: string; selected: boolean; defaultSelected: boolean; disabled: boolean;
   readonly displayText: string;
 }
 export class MdSelect extends MdTextField {
@@ -294,7 +308,7 @@ export class MdStepper extends HTMLElement {
   next(): void; prev(): void; previous(): void; goTo(index: number): void; reset(): void;
 }
 
-export class MdCheckbox extends MdBaseComponent {
+export class MdCheckbox extends HTMLElement {
   checked: boolean;
   indeterminate: boolean;
   disabled: boolean;
@@ -315,7 +329,7 @@ export class MdCheckbox extends MdBaseComponent {
   readonly type: 'checkbox';
 }
 
-export class MdRadioButton extends MdBaseComponent {
+export class MdRadioButton extends HTMLElement {
   checked: boolean;
   selected: boolean;
   disabled: boolean;
@@ -333,7 +347,7 @@ export class MdRadioButton extends MdBaseComponent {
   readonly type: 'radio';
 }
 
-export class MdProgressIndicator extends MdBaseComponent {
+export class MdProgressIndicator extends HTMLElement {
   type: 'linear' | 'circular';
   variant: 'standard' | 'wavy';
   value: number | null;
@@ -353,7 +367,7 @@ export class MdProgressIndicator extends MdBaseComponent {
   trackColor: string;
 }
 
-export class MdLoadingIndicator extends MdBaseComponent {
+export class MdLoadingIndicator extends HTMLElement {
   variant: 'standalone' | 'contained';
   size: string | number;
   progress: number | null;
@@ -362,12 +376,26 @@ export class MdLoadingIndicator extends MdBaseComponent {
   containerColor: string;
 }
 
-export class MdBottomSheet extends MdBaseComponent {
+export class MdBottomSheet extends HTMLElement {
   open: boolean;
   modal: boolean;
-  showDragHandle: boolean;
+  /** SheetState value the sheet last settled at. */
+  readonly currentValue: 'hidden' | 'partial' | 'expanded';
+  /** Value a running animation or drag is heading to. */
+  readonly targetValue: 'hidden' | 'partial' | 'expanded';
+  headline: string;
+  sheetMaxWidth: string;
+  sheetGesturesEnabled: boolean;
+  containerColor: string;
+  contentColor: string;
+  scrimColor: string;
   show(): void;
+  expand(): void;
+  partialExpand(): void;
+  /** Hides the sheet, then dismisses it. */
   close(): void;
+  hide(): void;
+  toggle(): void;
 }
 
 export type SnackbarDuration = 'short' | 'long' | 'indefinite';
@@ -479,15 +507,16 @@ export class TooltipState {
   onDispose(): void;
 }
 
-export class MdBadge extends MdBaseComponent {
-  value: string;
+export class MdBadge extends HTMLElement {
+  /** Badge content; empty draws the 6dp dot. */
+  label: string;
+  /** Larger numeric labels show as "max+" (default 99). */
   max: number;
-  dot: boolean;
-  size: 'small' | 'large';
-  color: 'error' | 'primary' | 'secondary' | 'tertiary';
+  containerColor: string;
+  contentColor: string;
 }
 
-export class MdTopAppBar extends MdBaseComponent {
+export class MdTopAppBar extends HTMLElement {
   scrollBehavior: TopAppBarScrollBehavior | null;
   scrollTarget: HTMLElement | Window | null;
   readonly scrollState: TopAppBarState | null;
@@ -532,7 +561,7 @@ export class MdTopAppBar extends MdBaseComponent {
   set subtitleContentColor(value: string | null | undefined);
 }
 
-export class MdBottomAppBar extends MdBaseComponent {
+export class MdBottomAppBar extends HTMLElement {
   scrollBehavior: BottomAppBarScrollBehavior | null;
   scrollTarget: HTMLElement | Window | null;
   readonly scrollState: BottomAppBarState | null;
@@ -623,6 +652,15 @@ export class MdNavigationRail extends HTMLElement {
   items: NavigationBarItem[];
   selected: number;
   expanded: boolean;
+  /** ModalWideNavigationRail: expanding opens the rail in a modal dialog over a scrim. */
+  modal: boolean;
+  /** With modal: no rail in the layout while collapsed; the expanded rail slides in. */
+  hideOnCollapse: boolean;
+  /** Drag gestures on a hide-on-collapse rail (default true). */
+  gesturesEnabled: boolean;
+  expand(): void;
+  collapse(): void;
+  toggle(): void;
   /** Compatibility width override; public WideNavigationRail defaults to96px. */
   narrow: boolean;
   /** Explicit legacy icon placement; omit to follow expanded. */
@@ -637,12 +675,20 @@ export class MdNavigationRail extends HTMLElement {
   alwaysShowLabel: boolean;
 }
 
-export class MdSegmentedButton extends MdBaseComponent {
-  value: string;
+export class MdSegmentedButton extends HTMLElement {
+  /** Items: JSON array of labels or {label, icon, disabled} objects, or comma-separated labels. */
+  items: string;
+  /** SingleChoiceSegmentedButtonRow selection (default 0). */
+  selectedIndex: number;
+  /** MultiChoiceSegmentedButtonRow selection. */
+  selectedIndices: number[];
   multiSelect: boolean;
+  disabled: boolean;
+  /** Overlap between neighbouring items in px (spacedBy(-space)); default BorderWidth, 1. */
+  space: number;
 }
 
-export class MdDialog extends MdBaseComponent {
+export class MdDialog extends HTMLElement {
   open: boolean;
   headline: string;
   supportingText: string;
@@ -659,7 +705,7 @@ export class MdDialog extends MdBaseComponent {
 }
 
 /** Web pagination composed from shared Material buttons and dropdown menu. */
-export class MdPaginator extends MdBaseComponent {
+export class MdPaginator extends HTMLElement {
   length: number;
   pageIndex: number;
   pageSize: number;
@@ -680,19 +726,36 @@ export interface PaginatorPageDetail {
   length: number;
 }
 
-export class MdDivider extends MdBaseComponent {
+export class MdDivider extends HTMLElement {
+  /** true or "start": 16dp start inset; "middle": 16dp at both ends (M3 divider specs). */
   inset: boolean;
-  insetStart: boolean;
-  insetEnd: boolean;
   vertical: boolean;
+  /** Thickness in dp (DividerDefaults.Thickness 1dp). */
+  thickness: number;
+  color: string;
 }
 
-export class MdCarousel extends MdBaseComponent {
-  variant: 'multi-browse' | 'uncontained';
-  scrollDistance: number;
+export class MdCarousel extends HTMLElement {
+  /** HorizontalMultiBrowseCarousel (default), HorizontalUncontainedCarousel or HorizontalCenteredHeroCarousel. Child elements are the items. */
+  layout: 'multi-browse' | 'uncontained' | 'hero';
+  /** Large item size for multi-browse and hero, in dp. */
+  preferredItemWidth: number;
+  /** Item size for uncontained, in dp. */
+  itemWidth: number;
+  itemSpacing: number;
+  minSmallItemWidth: number;
+  maxSmallItemWidth: number;
+  /** Start and end content padding, in dp. */
+  contentPadding: number;
+  userScrollEnabled: boolean;
+  /** The item closest to its resting position (CarouselState.currentItem). */
+  readonly currentItem: number;
+  activeIndex: number;
+  scrollToItem(index: number): void;
+  animateScrollToItem(index: number): void;
 }
 
-export class MdDatePicker extends MdBaseComponent {
+export class MdDatePicker extends HTMLElement {
   value: string;
   open: boolean;
   inline: boolean;
@@ -706,7 +769,7 @@ export class MdDatePicker extends MdBaseComponent {
   close(): void;
 }
 
-export class MdTimePicker extends MdBaseComponent {
+export class MdTimePicker extends HTMLElement {
   value: string;
   open: boolean;
   inline: boolean;
@@ -762,11 +825,11 @@ export interface ListItemShapesOptions {
   hoveredShape?: ListItemCornerSize;
   draggedShape?: ListItemCornerSize;
 }
-export class MdList extends MdBaseComponent {
+export class MdList extends HTMLElement {
   variant: 'standard' | 'segmented';
   selectionMode: 'none' | 'single' | 'multiple';
 }
-export class MdListItem extends MdBaseComponent {
+export class MdListItem extends HTMLElement {
   variant: 'standard' | 'segmented';
   selectionMode: 'none' | 'single' | 'multiple';
 
@@ -835,7 +898,7 @@ export class MdMenuItem extends HTMLElement {
 
 export interface SearchSuggestion { label: string; icon?: string; supportingText?: string; }
 /** AndroidX DockedSearchBar with SearchBarDefaults.InputField. */
-export class MdSearchBar extends MdBaseComponent {
+export class MdSearchBar extends HTMLElement {
   placeholder: string;
   value: string;
   query: string;
@@ -846,14 +909,27 @@ export class MdSearchBar extends MdBaseComponent {
   /** Presence selects ExpandedDockedSearchBarWithGap; 2dp by default. */
   dropdownGapSize: number;
   dropdownScrimColor: string;
+  /** ExpandedFullScreenSearchBar instead of the docked layouts. */
+  fullScreen: boolean;
+  /** SearchBarState.progress (0 collapsed, 1 expanded). */
+  readonly progress: number;
 }
 
-export class MdSideSheet extends MdBaseComponent {
-  variant: 'standard' | 'modal' | 'copilot';
+export class MdSideSheet extends HTMLElement {
   open: boolean;
+  /** 'modal' (default): a window with a scrim. 'standard': in the page, coplanar with the content beside it. */
+  variant: 'modal' | 'standard';
+  /** True unless variant is 'standard'. */
+  readonly modal: boolean;
   headline: string;
+  position: 'left' | 'right';
+  gesturesEnabled: boolean;
+  scrimColor: string;
+  drawerContainerColor: string;
+  drawerContentColor: string;
   show(): void;
   close(): void;
+  toggle(): void;
 }
 
 export interface TabItemData {
@@ -861,7 +937,7 @@ export interface TabItemData {
   disabled?: boolean; enabled?: boolean; iconPosition?: 'top' | 'start';
   selectedContentColor?: string; unselectedContentColor?: string;
 }
-export class MdTabs extends MdBaseComponent {
+export class MdTabs extends HTMLElement {
   tabs: TabItemData[];
   selected: number; selectedIndex: number; selectedTabIndex: number; activeTab: number;
   variant: 'primary' | 'secondary'; iconPosition: 'top' | 'start';
@@ -1006,7 +1082,7 @@ export type ToolbarShape = {readonly type: 'rectangle'} | {
   readonly corners?: number | ToolbarCornerSize | readonly [number | ToolbarCornerSize, number | ToolbarCornerSize, number | ToolbarCornerSize, number | ToolbarCornerSize];
 };
 
-export class MdToolbar extends MdBaseComponent {
+export class MdToolbar extends HTMLElement {
   variant: 'docked' | 'floating';
   orientation: 'horizontal' | 'vertical';
   color: 'vibrant' | 'standard';
@@ -1035,7 +1111,7 @@ export class MdToolbar extends MdBaseComponent {
   postFling(available?: ToolbarScrollDelta): Promise<ToolbarScrollDelta>;
 }
 
-export class MdFabMenu extends MdBaseComponent {
+export class MdFabMenu extends HTMLElement {
   /** Menu items, shown above the FAB from the bottom up. */
   items: Array<{ label: string; icon?: string }>;
   open: boolean;
@@ -1059,7 +1135,7 @@ export class MdFabMenu extends MdBaseComponent {
 }
 
 export type PaletteVariant = 'tonal-spot' | 'neutral' | 'vibrant' | 'expressive' | 'fidelity' | 'content' | 'monochrome' | 'rainbow' | 'fruit-salad';
-export class MdExpressiveTheme extends MdBaseComponent {
+export class MdExpressiveTheme extends HTMLElement {
   scheme: 'expressive' | 'standard';
   /** Dynamic color variant; tonal spot by default, independent from scheme. */
   paletteVariant: PaletteVariant;
@@ -1136,6 +1212,14 @@ export const MD3_PRESETS: Array<{ id: string; name: string; hex: string; hue: nu
 export function escapeHtml(str: any): string;
 export function sanitizeAttribute(val: any): string;
 export function safeJsonParse(val: any, fallback?: any): any;
+export function createComponentSheet(cssText: string): CSSStyleSheet | null;
+export function adoptSheet(shadowRoot: ShadowRoot, sheet: CSSStyleSheet | null): void;
+export class MdShape extends HTMLElement {
+  name: string;
+  size: string;
+  color: string;
+  mask: boolean;
+}
 
 // ---------------------------------------------------------------------------
 // Custom Elements Global Registry
@@ -1164,6 +1248,7 @@ declare global {
     'md-radio-button': MdRadioButton;
     'md-progress-indicator': MdProgressIndicator;
     'md-loading-indicator': MdLoadingIndicator;
+    'md-shape': MdShape;
     'md-bottom-sheet': MdBottomSheet;
     'md-snackbar': MdSnackbar;
     'md-tooltip': MdTooltip;
@@ -1183,7 +1268,7 @@ declare global {
     'md-list': MdList;
     'md-list-item': MdListItem;
     'md-menu': MdMenu;
-  'md-menu-group': MdMenuGroup;
+    'md-menu-group': MdMenuGroup;
     'md-menu-item': MdMenuItem;
     'md-search-bar': MdSearchBar;
     'md-side-sheet': MdSideSheet;

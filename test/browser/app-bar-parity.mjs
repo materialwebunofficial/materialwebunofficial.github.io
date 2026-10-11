@@ -162,20 +162,17 @@ export async function testAppBarParity(browser,base){
  }finally{await page.close();}
 }
 
-// A card's code sample is the live bar's markup. Component hosts keep ARIA as
-// the inner control's state (src/utils/host-aria.js), so ARIA written in the
-// sample is compared with what each live host reports for it.
+// A card's code sample is the live bar's markup, including real host ARIA
+// attributes. Normalize only formatting whitespace on both DOM serializations.
 const snippetMatches=n=>{
  const t=document.createElement('template');t.innerHTML=n.closest('.comp-card').querySelector('code').textContent;
- const copy=t.content.firstElementChild,copies=[copy,...copy.querySelectorAll('*')],live=[n,...n.querySelectorAll('*')],aria=[];
- for(const el of copies)for(const name of el.getAttributeNames())if(/^aria-/.test(name)&&name!=='aria-hidden'){aria.push([copies.indexOf(el),name,el.getAttribute(name)]);el.removeAttribute(name);}
- if(copy.outerHTML!==n.outerHTML.replace(/\s+(?=<|$)/g,'').replace(/>\s+</g,'><'))return false;
- return aria.every(([i,name,value])=>live[i].getAttribute(name)===value);
+ const normalize=value=>value.replace(/\s+(?=<|$)/g,'').replace(/>\s+</g,'><');
+ return normalize(t.content.firstElementChild.outerHTML)===normalize(n.outerHTML);
 };
 export async function testAppBarShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.emulateMedia({reducedMotion:'reduce'});await page.goto(base+'/#app-bars');await page.waitForFunction(()=>customElements.get('md-bottom-app-bar'));await page.evaluate(()=>document.fonts.ready);
+  await page.emulateMedia({reducedMotion:'reduce'});await page.goto(base+'/#app-bars').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.waitForFunction(()=>customElements.get('md-bottom-app-bar'));await page.evaluate(()=>document.fonts.ready);
   for(const width of [1440,390])for(const mode of ['light','dark']){
    await page.setViewportSize({width,height:1100});await page.evaluate(mode=>{const T=customElements.get('md-expressive-theme');T.applyGlobal({colorMode:mode});},mode);await page.waitForTimeout(60);
    const bars=page.locator('#app-bars md-bottom-app-bar');assert.equal(await bars.count(),2);assert.equal(await bars.nth(0).locator('md-fab').count(),1);assert.equal(await bars.nth(1).locator('md-icon-button').count(),4);

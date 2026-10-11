@@ -53,7 +53,7 @@ export async function testPaginatorComposition(browser,base){
 export async function testPaginatorShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:760}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
  try{
-  await page.goto(base+'/#paginator');await page.evaluate(()=>customElements.whenDefined('md-paginator'));
+  await page.goto(base+'/#paginator').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(()=>customElements.whenDefined('md-paginator'));
   for(const width of[1440,390])for(const colorMode of['light','dark']){
    await page.setViewportSize({width,height:760});
    await page.evaluate(colorMode=>{customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode});const h=document.querySelector('#demo-paginator');h.pageSize=10;h.pageIndex=0;},colorMode);

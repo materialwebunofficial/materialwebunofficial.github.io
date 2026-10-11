@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * Material Design 3 Expressive (MD3E) Web Component: <md-bottom-sheet>
  *
@@ -15,9 +16,12 @@
  * - Surface. SurfaceContainerLow, CornerExtraLargeTop, no tonal or shadow
  *   elevation, at most 640dp wide, centered at the top of the window and moved
  *   by its anchored offset.
- * - Anchors. Hidden at the window height; PartiallyExpanded at half the window
- *   when the sheet is taller than half the window; Expanded at the window
- *   height minus the sheet height.
+ * - Anchors. Hidden at the window height; Expanded at the window height minus
+ *   the sheet height; PartiallyExpanded, unless skipped, at the window height
+ *   minus the smaller of half the window and the sheet height
+ *   (isBottomSheetPartiallyExpandedDeterministicEnabled, the default here), so
+ *   a short sheet's two open anchors converge. A sheet that settled on
+ *   converged anchors is promoted to Expanded when its anchors change.
  * - Motion. show/expand: defaultSpatial; hide/partialExpand: fastEffects. A
  *   drag settles with defaultSpatial from the release velocity, choosing its
  *   anchor with the 56dp positional and 125dp/s velocity thresholds; downward
@@ -62,7 +66,8 @@ const defaultStyle = `
     margin: 0;
     padding: 0;
     border: 0;
-    overflow: hidden;
+    /* Focusing a translated child must not scroll the full-screen window. */
+    overflow: clip;
     background: transparent;
     color: inherit;
     outline: none;
@@ -359,7 +364,7 @@ export class MdBottomSheet extends HTMLElement {
     this._sheet.addEventListener('pointerup', event => this._pointerUp(event), { signal });
     this._sheet.addEventListener('pointercancel', event => this._pointerUp(event, true), { signal });
     this._resize?.disconnect();
-    this._resize = new ResizeObserver(() => { if (this._window.open) this._measure(); });
+    this._resize = new FrameResizeObserver(() => { if (this._window.open) this._measure(); });
     this._resize.observe(this._window);
     this._resize.observe(this._sheet);
   }
@@ -384,6 +389,7 @@ export class MdBottomSheet extends HTMLElement {
     this._scrimMotion?.cancel();
     this._scrimMotion = null;
     this._scrimAlpha = 0;
+    this._scrimVelocity = 0;
     this._drag = null;
     if (this._window.open) this._window.close();
     unlockPageScroll(this);
@@ -413,15 +419,17 @@ export class MdBottomSheet extends HTMLElement {
     const full = this._window.clientHeight, sheet = this._sheet.offsetHeight;
     this._content.classList.toggle('scrolls', this._content.scrollHeight > this._content.clientHeight + 1);
     const anchors = new Map([['hidden', full]]);
-    // Legacy (non-deterministic) PartiallyExpanded: only for a sheet taller than half the window.
-    if (!this._skipPartial && sheet > full / 2) anchors.set('partial', full / 2);
+    // isPartiallyExpandedAnchorAvailable and calculatePartiallyExpandedOffset.
+    if (!this._skipPartial) anchors.set('partial', full - Math.min(full / 2, sheet));
     if (sheet !== 0) anchors.set('expanded', Math.max(0, full - sheet));
     this._sheetHeight = sheet;
-    const changed = [...anchors].some(([key, value]) => this._anchors.get(key) !== value) || anchors.size !== this._anchors.size;
+    const previous = this._anchors;
+    const changed = [...anchors].some(([key, value]) => previous.get(key) !== value) || anchors.size !== previous.size;
     this._anchors = anchors;
-    // draggableAnchors' new target for the previous one.
+    // draggableAnchors' new target for the previous one (shouldPromoteToExpanded).
+    const wasConverged = previous.has('partial') && previous.has('expanded') && previous.get('partial') === previous.get('expanded');
     let target = this._target;
-    if (target === 'partial' && !anchors.has('partial')) target = anchors.has('expanded') ? 'expanded' : 'hidden';
+    if (target === 'partial') target = wasConverged && anchors.has('expanded') ? 'expanded' : anchors.has('partial') ? 'partial' : anchors.has('expanded') ? 'expanded' : 'hidden';
     if (target === 'expanded' && !anchors.has('expanded')) target = 'hidden';
     if (Number.isNaN(this._offset)) {
       this._offset = anchors.get(this._settled) ?? full;
@@ -481,7 +489,7 @@ export class MdBottomSheet extends HTMLElement {
     const motion = { preset, frame: 0, start: performance.now() };
     const step = now => {
       if (this._motion !== motion) return;
-      const elapsed = now - motion.start;
+      const elapsed = Math.max(0, now - motion.start);
       if (elapsed >= duration) {
         this._offset = to; this._velocity = 0; this._motion = null;
         this._draw();
@@ -517,7 +525,7 @@ export class MdBottomSheet extends HTMLElement {
     let frame = 0;
     const motion = { to, cancel: () => cancelAnimationFrame(frame) };
     const step = now => {
-      const elapsed = now - start;
+      const elapsed = Math.max(0, now - start);
       if (elapsed >= duration) { this._scrimAlpha = to; this._scrimVelocity = 0; this._drawScrim(); if (this._scrimMotion === motion) this._scrimMotion = null; return; }
       const state = SpringPhysics.solve({ from, to, velocity, dampingRatio: spec.dampingRatio, stiffness: spec.stiffness, time: elapsed / 1000 });
       this._scrimAlpha = state.position; this._scrimVelocity = state.velocity;

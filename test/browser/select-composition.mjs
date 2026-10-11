@@ -25,14 +25,14 @@ export async function testSelectComposition(browser,base){
    await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
    check(await page.evaluate(()=>document.querySelector('#select').value==='c'&&window.selectInput.value==='Gamma'&&!document.querySelector('#select').open&&window.selectEvents.join(',')==='c'&&window.selectInputs.join(',')==='c'),'keyboard commits one input/change with value and label separated');
    await page.locator('#select input').click();await page.locator('#select md-menu-item').last().locator('button').click();
-   check(await page.evaluate(()=>document.querySelector('#select').value==='c'&&window.selectInput.value==='Gamma alternative'&&window.selectEvents.length===2&&document.querySelector('#select').querySelectorAll('md-option[selected]').length===1),'duplicate values preserve the chosen option identity');
+   check(await page.evaluate(()=>document.querySelector('#select').value==='c'&&window.selectInput.value==='Gamma alternative'&&window.selectEvents.length===2&&[...document.querySelector('#select').querySelectorAll('md-option')].filter(option=>option.selected).length===1),'duplicate values preserve the chosen option identity');
    await page.evaluate(()=>document.querySelector('#select').value='c');
    check(await page.evaluate(()=>window.selectInput.value==='Gamma'&&document.querySelector('#select').getAttribute('value')==='b'),'programmatic value resolves the first match and preserves reset default');
    await page.locator('#select input').click();await page.keyboard.press('Home');await page.keyboard.press('Tab');
    await page.waitForFunction(()=>!window.selectMenu._visible);
    check(await page.evaluate(()=>document.querySelector('#select').value==='a'&&document.activeElement.id==='after'),'Tab accepts the active single choice and exit does not steal next focus');
    await page.locator('#multi input').click();await page.keyboard.press('End');await page.keyboard.press('Space');
-   check(await page.evaluate(()=>{const h=document.querySelector('#multi');return h.open&&h.value==='a,b,c'&&h._selectMenu.getAttribute('aria-multiselectable')==='true'&&h.querySelectorAll('md-option[selected]').length===3;}),'multiple keyboard toggle retains popup and preserves CSV form API');
+   check(await page.evaluate(()=>{const h=document.querySelector('#multi');return h.open&&h.value==='a,b,c'&&h._selectMenu.getAttribute('aria-multiselectable')==='true'&&[...h.querySelectorAll('md-option')].filter(option=>option.selected).length===3;}),'multiple keyboard toggle retains popup and preserves CSV form API');
    await page.keyboard.press('Space');check(await page.evaluate(()=>document.querySelector('#multi').value==='a,b'&&document.querySelector('#multi').open),'multiple second toggle removes only that option');
    await page.keyboard.press('Escape');await page.evaluate(()=>document.querySelector('#form').reset());
    check(await page.evaluate(()=>document.querySelector('#select').value==='b'&&window.selectInput.value==='Beta'&&document.querySelector('#multi').value==='a,b'),'form reset restores authored defaults and display labels');
@@ -80,7 +80,7 @@ export async function testSelectComposition(browser,base){
 }
 export async function testSelectShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:800}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
- try{await page.goto(base+'/#select');await page.waitForFunction(()=>customElements.get('md-select'),null,{timeout:10000});
+ try{await page.goto(base+'/#select').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.waitForFunction(()=>customElements.get('md-select'),null,{timeout:10000});
   for(const width of[1440,390])for(const colorMode of['light','dark']){
    await page.setViewportSize({width,height:800});await page.evaluate(colorMode=>customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode}),colorMode);
    for(const select of await page.locator('#select md-select').all()){

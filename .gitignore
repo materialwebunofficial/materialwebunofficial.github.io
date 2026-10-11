@@ -18,6 +18,7 @@ coverage/
 test-results/
 playwright-report/
 blob-report/
+artifacts/showcase-site/
 
 # OS & Editor
 .DS_Store
@@ -48,3 +49,22 @@ Thumbs.db
 !scripts/test-text-fields.mjs
 !scripts/test-selection.mjs
 !scripts/browser-test-server.mjs
+
+!scripts/audit-showcase-tokens.mjs
+!scripts/test-all-components.js
+!scripts/test-audit-security-fixes.js
+!scripts/test-fabs.mjs
+!scripts/test-chips.mjs
+!scripts/test-web-platform.mjs
+!scripts/test-package-contract.mjs
+!scripts/check-dist.mjs
+!scripts/test-clean-checkout.mjs
+!scripts/test-browser-smoke.mjs
+
+!scripts/test-package-install.mjs
+!scripts/prepare-showcase.mjs
+
+!scripts/test-catalog.mjs
+!scripts/test-frameworks.mjs
+!scripts/test-ui-followup.mjs
+!scripts/build-showcase-assets.mjs

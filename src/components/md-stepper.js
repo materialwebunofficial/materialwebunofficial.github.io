@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * Stepper: a web extension; Material 3 has no native stepper composable.
  * Step headers follow the Material web stepper anatomy (a 24dp step icon,
@@ -54,11 +55,13 @@ const stepperStyle=`
  :host{display:block;width:100%;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
  .stepper-root{display:flex;flex-direction:column;width:100%}
  .header-bar{display:flex;align-items:center;margin:0;padding:0;list-style:none}
- .step-item{display:flex;align-items:center;flex:none;min-width:0}
- .step-item:not(:last-child){flex:1 1 auto}
+ /* A step keeps at least its icon (and a short connector); its text shortens first. */
+ .step-item{display:flex;align-items:center;flex:none;min-width:56px}
+ .step-item:not(:last-child){flex:1 1 auto;min-width:72px}
  .connector{flex:1 1 24px;min-width:16px;height:1px;margin-inline:8px;background:var(--md-sys-color-outline-variant,#CAC4D0)}
  .step-item:last-child .connector{display:none}
- .step-header{position:relative;display:flex;align-items:center;gap:12px;box-sizing:border-box;min-height:72px;max-width:100%;
+ .stepper-root.compact .connector{min-width:8px;margin-inline:4px}
+ .step-header{position:relative;display:flex;align-items:center;gap:12px;box-sizing:border-box;min-height:72px;min-width:56px;max-width:100%;
    padding:12px 16px;margin:0;border:0;border-radius:var(--md-sys-shape-corner-full,9999px);background:transparent;
    color:var(--md-sys-color-on-surface-variant,#49454F);text-align:start;font:inherit;cursor:pointer;outline:none;overflow:hidden}
  .step-header::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--md-sys-color-on-surface,#1D1B20);opacity:0;pointer-events:none}
@@ -89,6 +92,9 @@ const stepperStyle=`
  .panels-box ::slotted(*){grid-area:1/1;min-width:0}
  .md-ripple-effect{position:absolute;border-radius:50%;background:currentColor;opacity:0;animation:stepper-ripple 450ms linear;pointer-events:none}
  @keyframes stepper-ripple{from{transform:scale(0);opacity:.1}to{transform:scale(1);opacity:0}}
+ /* Horizontal step text stays on one line; when a label is cut short the
+    headers turn compact and show the label of the current step only. */
+ :host(:not([orientation="vertical"])) .step-label,:host(:not([orientation="vertical"])) .step-description{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  /* Compact horizontal headers show the label of the current step only. */
  :host(:not([orientation="vertical"])) .stepper-root.compact .step-header:not([data-state="current"]) .step-text{display:none}
  /* Vertical: each step's content follows its header, beside a 1dp connector. */
@@ -115,7 +121,7 @@ export class MdStepper extends HTMLElement {
   if(!this._header)this._render();this._abort?.abort();this._abort=new AbortController();const{signal}=this._abort;
   this._header.addEventListener('keydown',event=>this._key(event),{signal});
   this._observer?.disconnect();this._observer=new MutationObserver(()=>this._scheduleSteps());this._observer.observe(this,{childList:true});
-  this._resize?.disconnect();this._resize=new ResizeObserver(()=>this._syncCompact());this._resize.observe(this);
+  this._resize?.disconnect();this._resize=new FrameResizeObserver(()=>this._syncCompact());this._resize.observe(this);
   for(const record of this._records)this._bindRecord(record);
   this._sync();
  }
@@ -189,7 +195,8 @@ export class MdStepper extends HTMLElement {
  _syncCompact(){
   if(!this._root||this.orientation==='vertical'){this._root?.classList.remove('compact');return;}
   this._root.classList.remove('compact');
-  if(this._header.scrollWidth>this._header.clientWidth+1)this._root.classList.add('compact');
+  const cut=[...this._header.querySelectorAll('.step-label,.step-description')].some(node=>node.getClientRects().length&&node.scrollWidth>node.clientWidth+1);
+  if(cut||this._header.scrollWidth>this._header.clientWidth+1)this._root.classList.add('compact');
  }
  goTo(index){
   if(this.disabled||!Number.isInteger(index)||index<0||index>=this.getSteps().length||this.getSteps()[index].disabled||index===this.activeStep)return;

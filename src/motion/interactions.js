@@ -56,6 +56,7 @@ export function morphShape(el, from, to, preset = 'expressiveSpatialMedium') {
  * @param {Object} [opts.pointerPolicy] Surface hit eligibility and captured-pointer bounds.
  * @param {() => boolean} [opts.pointerNode] Whether the clickable modifier exists, independent of its enabled state.
  * @param {boolean} [opts.keyboardActivation] Native per-key press ownership and key-up activation.
+ * @param {boolean} [opts.hostActivation] This binding owns direct host/label activation.
  * @param {AbortSignal}   [opts.signal]   Optional abort signal for event cleanup.
  * @returns {{refresh: () => void}|undefined} Synchronously apply a component's enabled-state update.
  */
@@ -69,6 +70,7 @@ export function bindPress(el, {
   pointerPolicy,
   pointerNode=()=>true,
   keyboardActivation = false,
+  hostActivation = false,
   signal
 } = {}) {
   if (!el) return;
@@ -149,6 +151,14 @@ export function bindPress(el, {
   };
 
   const listenerOptions = signal ? { signal } : {};
+  const host=el.getRootNode().host;
+  // FACE label activation and HTMLElement.click() target the host directly.
+  // Handle that original event; forwarding another click bypasses its cancellation.
+  if(onActivate&&host&&hostActivation)host.addEventListener('click',event=>{
+    if(event.composedPath()[0]!==host)return;
+    if(disabled()){event.preventDefault();return;}
+    afterClickDispatch(event,()=>{if(!disposed&&!disabled())onActivate(event);});
+  },listenerOptions);
 
   function pointerMove(e) {
     if (!pointerPolicy || !isPressed || pointerId === null || e.pointerId !== pointerId) return;
@@ -203,7 +213,7 @@ export function bindPress(el, {
       canceledClick = false;
       return;
     }
-    onActivate?.(e);
+    if (onActivate) afterClickDispatch(e, () => { if (!disposed && !disabled()) onActivate(e); });
   }, { ...listenerOptions, capture: true });
   const clearRipples = () => { for (const ripple of [...allRipples]) ripple.dispose(); };
   function refreshDisabled() {
@@ -254,4 +264,21 @@ export function bindPress(el, {
     }
   }, listenerOptions);
   return {refresh:refreshDisabled};
+}
+
+/** Run default actions after host/ancestor cancellation. A final bubble listener
+ * keeps normal clicks synchronous. Stopped propagation uses a task fallback:
+ * microtasks can run between trusted event listeners. */
+export function afterClickDispatch(event, activate) {
+  const last = event.composedPath().at(-1);
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true; clearTimeout(timer);
+    last?.removeEventListener('click', end);
+    if (!event.defaultPrevented) activate();
+  };
+  const end = received => { if (received === event) finish(); };
+  const timer = setTimeout(finish, 0);
+  last?.addEventListener('click', end);
 }

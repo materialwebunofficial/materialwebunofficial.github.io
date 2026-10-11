@@ -53,3 +53,15 @@ export function measureIconOnlyRailItem({selectedProgress,maxWidth,minHeight}) {
     ripple:{x:div(width-56,2),y,width:Math.min(56,maxWidth),height:56},
     icon:{x:div(width-24,2),y:div(height-24,2),width:24,height:24},label:null};
 }
+
+// foundation AnchoredDraggable: AnchoredDraggableMinFlingVelocity (dp/s) and
+// AnchoredDraggableDefaults.PositionalThreshold (half the distance).
+const ANCHORED_MIN_FLING_VELOCITY = 125;
+/** AnchoredDraggable computeTarget for the modal rail's Collapsed (-width) and Expanded (0) anchors. */
+export function modalRailTarget(offset, velocity, width) {
+  // Not moving: the closest anchor; a tie keeps the first anchor, Collapsed.
+  if (velocity === 0) return Math.abs(offset) < Math.abs(offset + width) ? 0 : -width;
+  if (Math.abs(velocity) >= ANCHORED_MIN_FLING_VELOCITY) return velocity > 0 ? 0 : -width;
+  const threshold = width / 2;
+  return velocity > 0 ? (offset + width >= threshold ? 0 : -width) : (-offset >= threshold ? -width : 0);
+}

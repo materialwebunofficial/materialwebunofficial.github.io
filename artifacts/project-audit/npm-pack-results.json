@@ -1,0 +1,1026 @@
+[
+  {
+    "id": "@materialwebunofficial/md3e-web@1.0.8",
+    "name": "@materialwebunofficial/md3e-web",
+    "version": "1.0.8",
+    "size": 22618674,
+    "unpackedSize": 32240036,
+    "shasum": "1e5742c0656f8235d51d90b6ed540486405f71f3",
+    "integrity": "sha512-lnI5MqgAAYA5pv7uuhtPUD/LC00Id9SqXU2s55VCII0VwYGRN5A9f+gcEvBanE/k0hIw5lXVzxdD2/pW0+PkQw==",
+    "filename": "materialwebunofficial-md3e-web-1.0.8.tgz",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 10169,
+        "mode": 420
+      },
+      {
+        "path": "NOTICE",
+        "size": 47478,
+        "mode": 420
+      },
+      {
+        "path": "README.md",
+        "size": 63631,
+        "mode": 420
+      },
+      {
+        "path": "dist/fonts/material-symbols-outlined.woff2",
+        "size": 3964532,
+        "mode": 420
+      },
+      {
+        "path": "dist/fonts/material-symbols-rounded.full.woff2",
+        "size": 5349652,
+        "mode": 420
+      },
+      {
+        "path": "dist/fonts/material-symbols-rounded.woff2",
+        "size": 50908,
+        "mode": 420
+      },
+      {
+        "path": "dist/fonts/roboto-greek-cyrillic.woff2",
+        "size": 71364,
+        "mode": 420
+      },
+      {
+        "path": "dist/fonts/roboto-latin-ext.woff2",
+        "size": 48368,
+        "mode": 420
+      },
+      {
+        "path": "dist/fonts/roboto-latin.woff2",
+        "size": 52472,
+        "mode": 420
+      },
+      {
+        "path": "dist/fonts/Roboto-OFL.txt",
+        "size": 4394,
+        "mode": 420
+      },
+      {
+        "path": "dist/fonts/roboto-variable.woff2",
+        "size": 222128,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.d.ts",
+        "size": 52460,
+        "mode": 420
+      },
+      {
+        "path": "dist/md3-expressive.esm.js",
+        "size": 1475907,
+        "mode": 420
+      },
+      {
+        "path": "dist/md3-expressive.esm.js.map",
+        "size": 3538761,
+        "mode": 420
+      },
+      {
+        "path": "dist/md3-expressive.min.js",
+        "size": 1476474,
+        "mode": 420
+      },
+      {
+        "path": "dist/md3-expressive.min.js.map",
+        "size": 3545421,
+        "mode": 420
+      },
+      {
+        "path": "dist/tokens.css",
+        "size": 63549,
+        "mode": 420
+      },
+      {
+        "path": "dist/tokens.min.css",
+        "size": 54651,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 9305,
+        "mode": 420
+      },
+      {
+        "path": "src/components/bottom-app-bar-layout.js",
+        "size": 4558,
+        "mode": 420
+      },
+      {
+        "path": "src/components/bottom-app-bar-scroll.js",
+        "size": 3953,
+        "mode": 420
+      },
+      {
+        "path": "src/components/button-border.js",
+        "size": 1388,
+        "mode": 420
+      },
+      {
+        "path": "src/components/button-layout.js",
+        "size": 3442,
+        "mode": 420
+      },
+      {
+        "path": "src/components/button-shape.js",
+        "size": 3508,
+        "mode": 420
+      },
+      {
+        "path": "src/components/button-surface.js",
+        "size": 6820,
+        "mode": 420
+      },
+      {
+        "path": "src/components/carousel-keylines.js",
+        "size": 36348,
+        "mode": 420
+      },
+      {
+        "path": "src/components/chip-layout.js",
+        "size": 5633,
+        "mode": 420
+      },
+      {
+        "path": "src/components/chip-retained-content.js",
+        "size": 333,
+        "mode": 420
+      },
+      {
+        "path": "src/components/chip-state.js",
+        "size": 3533,
+        "mode": 420
+      },
+      {
+        "path": "src/components/list-item-layout.js",
+        "size": 2636,
+        "mode": 420
+      },
+      {
+        "path": "src/components/list-item-state.js",
+        "size": 2196,
+        "mode": 420
+      },
+      {
+        "path": "src/components/material-strings.js",
+        "size": 681,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-autocomplete.js",
+        "size": 8669,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-badge.js",
+        "size": 6371,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-bottom-app-bar.js",
+        "size": 24513,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-bottom-sheet.js",
+        "size": 26078,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-button-group.js",
+        "size": 10579,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-button.js",
+        "size": 35270,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-card.js",
+        "size": 9944,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-carousel.js",
+        "size": 31675,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-checkbox.js",
+        "size": 17082,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-chip.js",
+        "size": 26090,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-date-picker.js",
+        "size": 54975,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-dialog.js",
+        "size": 9717,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-divider.js",
+        "size": 3971,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-expansion-panel.js",
+        "size": 6048,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-fab-menu.js",
+        "size": 16709,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-fab.js",
+        "size": 24277,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-icon-button.js",
+        "size": 18372,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-list.js",
+        "size": 25131,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-loading-indicator.js",
+        "size": 14181,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-menu.js",
+        "size": 48703,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-navigation-bar.js",
+        "size": 17559,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-navigation-drawer.js",
+        "size": 24375,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-navigation-rail.js",
+        "size": 31678,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-paginator.js",
+        "size": 7979,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-progress-indicator.js",
+        "size": 18463,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-radio-button.js",
+        "size": 13997,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-search-bar.js",
+        "size": 31423,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-segmented-button.js",
+        "size": 19855,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-select.js",
+        "size": 15082,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-shape.js",
+        "size": 6021,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-side-sheet.js",
+        "size": 24453,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-slider.js",
+        "size": 25346,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-snackbar.js",
+        "size": 24413,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-split-button.js",
+        "size": 22347,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-stepper.js",
+        "size": 19196,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-switch.js",
+        "size": 16532,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-tabs.js",
+        "size": 23181,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-text-field.js",
+        "size": 28215,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-theme.js",
+        "size": 11592,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-time-picker.js",
+        "size": 30809,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-toolbar.js",
+        "size": 52836,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-tooltip.js",
+        "size": 27881,
+        "mode": 420
+      },
+      {
+        "path": "src/components/md-top-app-bar.js",
+        "size": 30646,
+        "mode": 420
+      },
+      {
+        "path": "src/components/menu-icons.js",
+        "size": 3566,
+        "mode": 420
+      },
+      {
+        "path": "src/components/menu-layout.js",
+        "size": 5904,
+        "mode": 420
+      },
+      {
+        "path": "src/components/modal-controller.js",
+        "size": 6679,
+        "mode": 420
+      },
+      {
+        "path": "src/components/navigation-rail-layout.js",
+        "size": 3970,
+        "mode": 420
+      },
+      {
+        "path": "src/components/picker-clock-animation.js",
+        "size": 3574,
+        "mode": 420
+      },
+      {
+        "path": "src/components/picker-clock-state.js",
+        "size": 8317,
+        "mode": 420
+      },
+      {
+        "path": "src/components/picker-clock.js",
+        "size": 11412,
+        "mode": 420
+      },
+      {
+        "path": "src/components/picker-colors.js",
+        "size": 4932,
+        "mode": 420
+      },
+      {
+        "path": "src/components/picker-input-state.js",
+        "size": 3740,
+        "mode": 420
+      },
+      {
+        "path": "src/components/picker-input.js",
+        "size": 10317,
+        "mode": 420
+      },
+      {
+        "path": "src/components/picker-period.js",
+        "size": 4660,
+        "mode": 420
+      },
+      {
+        "path": "src/components/progress-indicator-layout.js",
+        "size": 8422,
+        "mode": 420
+      },
+      {
+        "path": "src/components/progress-indicator-path.js",
+        "size": 3901,
+        "mode": 420
+      },
+      {
+        "path": "src/components/progress-wave-motion.js",
+        "size": 3255,
+        "mode": 420
+      },
+      {
+        "path": "src/components/row-column-layout.js",
+        "size": 10828,
+        "mode": 420
+      },
+      {
+        "path": "src/components/selection-dom-layout.js",
+        "size": 5993,
+        "mode": 420
+      },
+      {
+        "path": "src/components/slider-layout.js",
+        "size": 9135,
+        "mode": 420
+      },
+      {
+        "path": "src/components/snackbar-host-state.js",
+        "size": 2802,
+        "mode": 420
+      },
+      {
+        "path": "src/components/snackbar-layout.js",
+        "size": 8856,
+        "mode": 420
+      },
+      {
+        "path": "src/components/tab-layout.js",
+        "size": 4689,
+        "mode": 420
+      },
+      {
+        "path": "src/components/text-field-container.js",
+        "size": 2386,
+        "mode": 420
+      },
+      {
+        "path": "src/components/text-field-cutout.js",
+        "size": 856,
+        "mode": 420
+      },
+      {
+        "path": "src/components/text-field-dom-layout.js",
+        "size": 6715,
+        "mode": 420
+      },
+      {
+        "path": "src/components/text-field-layout.js",
+        "size": 9452,
+        "mode": 420
+      },
+      {
+        "path": "src/components/text-field-state.js",
+        "size": 2086,
+        "mode": 420
+      },
+      {
+        "path": "src/components/text-field-styles.js",
+        "size": 7314,
+        "mode": 420
+      },
+      {
+        "path": "src/components/toggle-button-dom-layout.js",
+        "size": 8892,
+        "mode": 420
+      },
+      {
+        "path": "src/components/toolbar-layout.js",
+        "size": 13283,
+        "mode": 420
+      },
+      {
+        "path": "src/components/toolbar-padding.js",
+        "size": 2135,
+        "mode": 420
+      },
+      {
+        "path": "src/components/toolbar-scroll.js",
+        "size": 7040,
+        "mode": 420
+      },
+      {
+        "path": "src/components/tooltip-dom-layout.js",
+        "size": 8719,
+        "mode": 420
+      },
+      {
+        "path": "src/components/tooltip-focus.js",
+        "size": 6234,
+        "mode": 420
+      },
+      {
+        "path": "src/components/tooltip-layout.js",
+        "size": 6599,
+        "mode": 420
+      },
+      {
+        "path": "src/components/tooltip-position.js",
+        "size": 2085,
+        "mode": 420
+      },
+      {
+        "path": "src/components/tooltip-shape.js",
+        "size": 932,
+        "mode": 420
+      },
+      {
+        "path": "src/components/tooltip-state.js",
+        "size": 3512,
+        "mode": 420
+      },
+      {
+        "path": "src/components/top-app-bar-layout.js",
+        "size": 5951,
+        "mode": 420
+      },
+      {
+        "path": "src/components/top-app-bar-scroll.js",
+        "size": 7659,
+        "mode": 420
+      },
+      {
+        "path": "src/fonts/roboto-greek-cyrillic.woff2",
+        "size": 71364,
+        "mode": 420
+      },
+      {
+        "path": "src/fonts/roboto-latin-ext.woff2",
+        "size": 48368,
+        "mode": 420
+      },
+      {
+        "path": "src/fonts/roboto-latin.woff2",
+        "size": 52472,
+        "mode": 420
+      },
+      {
+        "path": "src/fonts/Roboto-OFL.txt",
+        "size": 4394,
+        "mode": 420
+      },
+      {
+        "path": "src/fonts/roboto-variable.woff2",
+        "size": 222128,
+        "mode": 420
+      },
+      {
+        "path": "src/icons/fonts/material-symbols-outlined.woff2",
+        "size": 3964532,
+        "mode": 420
+      },
+      {
+        "path": "src/icons/fonts/material-symbols-rounded.full.woff2",
+        "size": 5349652,
+        "mode": 420
+      },
+      {
+        "path": "src/icons/fonts/material-symbols-rounded.woff2",
+        "size": 50908,
+        "mode": 420
+      },
+      {
+        "path": "src/icons/material-symbols.css",
+        "size": 2446,
+        "mode": 420
+      },
+      {
+        "path": "src/index.js",
+        "size": 3969,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/android-fling.js",
+        "size": 2886,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/animatable-color.js",
+        "size": 1980,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/animatable-float.js",
+        "size": 2985,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/animatable-packed-color.js",
+        "size": 1991,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/animate-as-state.js",
+        "size": 4930,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/animation-clock.js",
+        "size": 1676,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/broadcast-frame-clock.js",
+        "size": 2304,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/button-elevation.js",
+        "size": 8497,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/card-elevation.js",
+        "size": 1677,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/chip-elevation.js",
+        "size": 1590,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/clickable-keys.js",
+        "size": 1487,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/color-motion.js",
+        "size": 6003,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/color-spaces.generated.js",
+        "size": 144518,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/compose-color-css.js",
+        "size": 3338,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/compose-color.js",
+        "size": 8194,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/cubic-morph.js",
+        "size": 1073,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/dom-pointer-geometry.js",
+        "size": 1139,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/drawer-motion.js",
+        "size": 4942,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/easing.js",
+        "size": 451,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/fab-expansion.js",
+        "size": 2844,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/fab-interactions.js",
+        "size": 5957,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/focus-indication.js",
+        "size": 3456,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/frame-animation-writer.js",
+        "size": 4682,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/interaction-tween.js",
+        "size": 2893,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/interactions.js",
+        "size": 11951,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/motion-job.js",
+        "size": 608,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/native-easing.js",
+        "size": 3700,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/path-easing.js",
+        "size": 1058,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/pointer-geometry.js",
+        "size": 1965,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/pointer-routing.js",
+        "size": 19170,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/pointer-tree.js",
+        "size": 2892,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/ripple-state.js",
+        "size": 1665,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/ripple.js",
+        "size": 3715,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/scroll-position.js",
+        "size": 1267,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/selection-color.js",
+        "size": 3703,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/selection-layout.js",
+        "size": 3764,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/selection-motion.js",
+        "size": 5883,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/shadow-tween.js",
+        "size": 1776,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/size-motion.js",
+        "size": 1178,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/spring-duration.js",
+        "size": 3938,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/spring-physics.js",
+        "size": 9311,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/state-layer.js",
+        "size": 3700,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/top-app-bar-motion.js",
+        "size": 1852,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/touch-slop.js",
+        "size": 746,
+        "mode": 420
+      },
+      {
+        "path": "src/motion/velocity-tracker.js",
+        "size": 2691,
+        "mode": 420
+      },
+      {
+        "path": "src/shapes/corner-shape.js",
+        "size": 5444,
+        "mode": 420
+      },
+      {
+        "path": "src/shapes/outline-shadow.js",
+        "size": 3916,
+        "mode": 420
+      },
+      {
+        "path": "src/showcase.js",
+        "size": 60619,
+        "mode": 420
+      },
+      {
+        "path": "src/theme/card-color.js",
+        "size": 3723,
+        "mode": 420
+      },
+      {
+        "path": "src/theme/color-alpha.js",
+        "size": 1574,
+        "mode": 420
+      },
+      {
+        "path": "src/theme/hct-color-engine.js",
+        "size": 9711,
+        "mode": 420
+      },
+      {
+        "path": "src/theme/material-color-utilities.js",
+        "size": 203879,
+        "mode": 420
+      },
+      {
+        "path": "src/theme/surface-color.js",
+        "size": 5665,
+        "mode": 420
+      },
+      {
+        "path": "src/theme/theme-context.js",
+        "size": 11501,
+        "mode": 420
+      },
+      {
+        "path": "src/theme/typography.js",
+        "size": 768,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/bundle.css",
+        "size": 311,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/colors.css",
+        "size": 7066,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/elevation.css",
+        "size": 1400,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/loading-morphs.js",
+        "size": 57076,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/motion.css",
+        "size": 13116,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/progress-morphs.js",
+        "size": 210807,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/shape-extensions.js",
+        "size": 1044,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/shapes.css",
+        "size": 2771,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/shapes.js",
+        "size": 60317,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/spacing.css",
+        "size": 1077,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/typography.css",
+        "size": 30131,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/typography.js",
+        "size": 4376,
+        "mode": 420
+      },
+      {
+        "path": "src/tokens/upgrade.css",
+        "size": 5156,
+        "mode": 420
+      },
+      {
+        "path": "src/utils/host-aria.js",
+        "size": 9042,
+        "mode": 420
+      },
+      {
+        "path": "src/utils/navigation.js",
+        "size": 1269,
+        "mode": 420
+      },
+      {
+        "path": "src/utils/scroll-lock.js",
+        "size": 1224,
+        "mode": 420
+      },
+      {
+        "path": "src/utils/security.js",
+        "size": 1442,
+        "mode": 420
+      },
+      {
+        "path": "src/utils/selection-validity.js",
+        "size": 1044,
+        "mode": 420
+      },
+      {
+        "path": "src/utils/styles.js",
+        "size": 1547,
+        "mode": 420
+      },
+      {
+        "path": "src/utils/visibility.js",
+        "size": 945,
+        "mode": 420
+      },
+      {
+        "path": "types/components.d.ts",
+        "size": 41954,
+        "mode": 420
+      },
+      {
+        "path": "types/index.d.ts",
+        "size": 53028,
+        "mode": 420
+      },
+      {
+        "path": "types/motion.d.ts",
+        "size": 965,
+        "mode": 420
+      },
+      {
+        "path": "types/theme.d.ts",
+        "size": 2180,
+        "mode": 420
+      }
+    ],
+    "entryCount": 202,
+    "bundled": []
+  }
+]

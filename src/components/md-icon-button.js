@@ -1,17 +1,25 @@
 /**
- * Material Design 3 Expressive (MD3E) Web Component: <md-icon-button>
- *
- * Spec: MD3E-DESIGN-FOUNDATIONS-AND-COMPONENT-ANATOMY.md §7 & §12
- *   - 4 variants: standard, filled, tonal, outlined
- *   - 40x40dp container, 24x24dp icon optical size, 48x48dp touch target expansion
- *   - State layer: hover (0.08), focus (0.10), press (0.10)
- *   - Dynamic ripple effect
- *   - Toggle mode (toggle, selected, checked), icon / selected-icon switching
+ * <md-icon-button>: port of Compose Material3 IconButton.kt, IconButtonDefaults and
+ * the XSmall-XLarge, Filled, FilledTonal and Outlined icon button tokens at
+ * AndroidX a095da93 (the Expressive icon buttons).
+ *   - Variants standard, filled, tonal, outlined; sizes xs-xl with narrow,
+ *     default and wide widths, icon sizes and corner roles from the tokens.
+ *   - shapeForInteraction (pressed, else checked, else the shape) animated by
+ *     rememberAnimatedShape on MotionScheme defaultEffects.
+ *   - State layer and ripple from the shared CommonRippleNode ports.
+ *   - Toggle mode (toggle, selected, checked) with icon / selected-icon.
+ *   - The outlined border uses the spec color (OutlineVariant); the source's
+ *     default border uses LocalContentColor.
+ *   - Web adapter: the 48dp minimum touch target is a pseudo-element.
  */
 
 import { delegateHostAria, forwardControlAria } from '../utils/host-aria.js';
 import { followHref } from '../utils/navigation.js';
-import { createRipple, bindPress, morphShape } from '../motion/interactions.js';
+import { createRipple, bindPress } from '../motion/interactions.js';
+import { SpringPhysics } from '../motion/spring-physics.js';
+import { SelectionMotion } from '../motion/selection-motion.js';
+import { ButtonShapeComposition, buttonCornerRadius } from './button-shape.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 import { escapeHtml, sanitizeAttribute } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 
@@ -74,22 +82,15 @@ const defaultStyle = `
     pointer-events: auto;
   }
 
-  /* State Layer */
+  /* State layer: the shared CommonRippleNode opacity indication (hover and
+     focus tweens, recent interaction order), written to --md-button-state-alpha. */
   .state-layer {
     position: absolute;
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
     background-color: currentColor;
-    opacity: 0;
-    transition: opacity var(--md-sys-motion-duration-short-2, 100ms) ease;
-  }
-
-  .btn:hover:not([disabled]) .state-layer {
-    opacity: var(--md-sys-state-hover-opacity, 0.08);
-  }
-  .btn:focus-visible:not([disabled]) .state-layer {
-    opacity: var(--md-sys-state-focus-opacity, 0.10);
+    opacity: var(--md-button-state-alpha, 0);
   }
 
   /* Ripple */
@@ -254,6 +255,9 @@ export class MdIconButton extends HTMLElement {
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._shapeMotion?.dispose();
+    this._shapeMotion = null;
+    this._pressed = false;
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
@@ -266,7 +270,6 @@ export class MdIconButton extends HTMLElement {
       }
     }
     this._sync();
-    if (name === 'selected') morphShape(this.shadowRoot.querySelector('.btn'), SIZES[this.size].press, this._getBaseRadius(), 'expressiveSpatialFast');
   }
 
   get variant() { return sanitizeAttribute(this.getAttribute('variant') || 'standard'); }
@@ -299,9 +302,47 @@ export class MdIconButton extends HTMLElement {
   focus(options) { this.shadowRoot.querySelector('.btn')?.focus(options); }
   click() { this.shadowRoot.querySelector('.btn')?.click(); }
 
-  _getBaseRadius() {
+  /**
+   * IconButtonShapes / IconToggleButtonShapes from the size tokens: round
+   * (CornerFull) or square, the pressed corner, and the selected shape (a round
+   * button squares to its SelectedContainerShapeRound, a square one rounds).
+   */
+  _shapes() {
     const s = SIZES[this.size];
-    return (this.getAttribute('shape') === 'square') !== (this.toggle && this.selected) ? s.square : s.size / 2;
+    const full = {unit: 'percent', value: 50}, square = {unit: 'px', value: s.square};
+    const round = this.getAttribute('shape') !== 'square';
+    const shapes = {shape: round ? full : square, pressedShape: {unit: 'px', value: s.press}};
+    if (this.toggle) shapes.checkedShape = round ? square : full;
+    return shapes;
+  }
+
+  /**
+   * shapeForInteraction: pressed, else checked, else the shape, animated by
+   * rememberAnimatedShape with MotionScheme defaultEffects ("to prevent any
+   * bounce in this component"). Sizes are known, so no layout is read; a full
+   * corner at rest is written as a pill so a resized container stays round.
+   */
+  _updateShape() {
+    const btn = this.shadowRoot.querySelector('.btn');
+    if (!btn) return;
+    const s = SIZES[this.size];
+    const width = s.iconSize + 2 * (s[this.getAttribute('width')] ?? s.pad), height = s.size;
+    const now = performance.now();
+    const spec = SpringPhysics.getPreset('expressiveEffectMedium', this);
+    this._shapeComposition ||= new ButtonShapeComposition();
+    const state = this._shapeComposition.update(this._shapes(), !!this._pressed, spec, now, this.toggle && this.selected);
+    if (state !== this._shapeState || !this._shapeMotion || this._shapeMotion.disposed) {
+      this._shapeMotion?.dispose();
+      this._shapeState = state;
+      this._shapeMotion = new SelectionMotion(this, {progress: state.progress.sample(now).position}, values => {
+        const shape = state.getMorphedShape(null, values.progress);
+        const resting = shape.unit === 'percent' && shape.value >= 50;
+        btn.style.borderRadius = `${resting ? 9999 : Math.max(0, buttonCornerRadius(shape, width, height))}px`;
+      });
+      this._shapeMotion.channels.progress = state.progress;
+    }
+    if (this._shapeMotion.media?.matches) this._shapeMotion.finish();
+    else this._shapeMotion.tick(now);
   }
 
   _render() {
@@ -323,14 +364,18 @@ export class MdIconButton extends HTMLElement {
     const btn = this.shadowRoot.querySelector('.btn');
     if (!btn) return;
 
+    this._stateLayer = bindStateLayer(btn, { disabled: () => this.disabled, signal });
     bindPress(btn, {
+      hostActivation: true,
       disabled: () => this.disabled,
       onPress: (e) => {
-        morphShape(btn, this._getBaseRadius(), SIZES[this.size].press, 'expressiveSpatialFast');
+        this._pressed = true;
+        this._updateShape();
         createRipple(e, btn);
       },
       onRelease: () => {
-        morphShape(btn, SIZES[this.size].press, this._getBaseRadius(), 'expressiveSpatialFast');
+        this._pressed = false;
+        this._updateShape();
       },
       onActivate: (e) => {
         if (this.disabled) return;
@@ -353,6 +398,7 @@ export class MdIconButton extends HTMLElement {
 
     btn.className = `btn ${this.variant} ${this.size}${this.selected ? ' selected' : ''}${this.toggle ? ' togglable' : ''}`;
     btn.disabled = this.disabled;
+    this._stateLayer?.refresh?.();
     btn.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
     btn.setAttribute('tabindex', this.disabled ? '-1' : '0');
     btn.setAttribute('role', this.href && !this.toggle ? 'link' : 'button');
@@ -369,7 +415,7 @@ export class MdIconButton extends HTMLElement {
     const layout = this.shadowRoot.querySelector('.touch-layout');
     layout.style.setProperty('--_md-icon-button-width', btn.style.width);
     layout.style.setProperty('--_md-icon-button-height', btn.style.height);
-    btn.style.borderRadius = `${this._getBaseRadius()}px`;
+    this._updateShape();
     btn.style.borderWidth = this.variant === 'outlined' && !(this.toggle && this.selected) ? `${this.size === 'xl' ? 3 : this.size === 'l' ? 2 : 1}px` : '0';
 
     const iconSlot = this.shadowRoot.querySelector('.icon');

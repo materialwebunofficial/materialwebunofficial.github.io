@@ -4,7 +4,7 @@ export async function testChipShowcase(browser,base,snapshot='bundle'){
  for(const width of [1440,390])for(const mode of ['light','dark']){
   const page=await browser.newPage({viewport:{width,height:1000}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
   try{
-   await page.emulateMedia({reducedMotion:'reduce'});await page.goto(base+'/#chips');
+   await page.emulateMedia({reducedMotion:'reduce'});await page.goto(base+'/#chips').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
    await page.waitForFunction(()=>customElements.get('md-chip')&&document.querySelectorAll('#chips md-chip').length===12&&document.fonts.status==='loaded');
    await page.evaluate(mode=>customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode:mode}),mode);
    await page.locator('#chips').scrollIntoViewIfNeeded();

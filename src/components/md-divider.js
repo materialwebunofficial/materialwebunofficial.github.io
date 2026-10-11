@@ -1,10 +1,14 @@
 /**
- * Material Design 3 Expressive (M3 Expressive) Web Component: <md-divider>
+ * Material Design 3 Expressive (MD3E) Web Component: <md-divider>
  *
- * Spec: research/MD3E-content-selection-research.md §3 (Dividers)
- *   Standart M3, 1dp thickness, outline-variant color, horizontal / vertical / inset.
+ * Port of AndroidX a095da93 HorizontalDivider, VerticalDivider and
+ * DividerTokens (a Material 3 component Expressive left unchanged): a line of
+ * DividerDefaults.Thickness (1dp) in OutlineVariant, filling the width
+ * (horizontal) or the height (vertical, fillMaxHeight). Dividers carry no
+ * semantics.
  *
- * Contract: docs/AGENT-INTERACTION-CONTRACT.md
+ * Insets come from the M3 divider specs, where Compose applies them as
+ * padding: inset is 16dp at the start, inset="middle" 16dp at both ends.
  */
 
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -31,22 +35,18 @@ const defaultStyle = `
     box-sizing: border-box;
   }
 
+  /* Divider inset: 16dp start margin, 0dp end margin. */
   .line.inset {
     margin-inline-start: 16px;
-    margin-inline-end: 16px;
     width: auto;
   }
+  /* Divider middle inset: 16dp at both ends. */
+  .line.inset.middle { margin-inline-end: 16px; }
 
   .line.vertical {
     width: 1px;
     height: 100%;
-    min-height: 24px;
-  }
-  .line.vertical.inset {
-    margin-top: 8px;
-    margin-bottom: 8px;
-    margin-inline: 0;
-    height: calc(100% - 16px);
+    margin: 0;
   }
 `;
 
@@ -107,7 +107,8 @@ export class MdDivider extends HTMLElement {
   _sync() {
     const line = this.shadowRoot.querySelector('.line');
     if (!line) return;
-    line.className = `line${this.inset ? ' inset' : ''}${this.vertical ? ' vertical' : ''}`;
+    const inset = this.inset && !this.vertical;
+    line.className = `line${inset ? ' inset' : ''}${inset && this.getAttribute('inset') === 'middle' ? ' middle' : ''}${this.vertical ? ' vertical' : ''}`;
 
     if (!this.vertical) {
       line.style.height = `${this.thickness}px`;

@@ -95,7 +95,7 @@ export async function testFabShowcase(browser, base) {
   const page = await browser.newPage({viewport:{width:1440,height:1100}}), errors = [];
   page.on('pageerror', error => errors.push(error.message));
   try {
-    await page.goto(base + '/#extended-fabs', {waitUntil:'domcontentloaded'});
+    await page.goto(base + '/#extended-fabs', {waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
     await page.evaluate(async () => { await customElements.whenDefined('md-fab'); await document.fonts.ready; });
     const examples = page.locator('#extended-fab-examples'), control = page.locator('[data-fab-toggle="extended-fab-examples"]');
     for (const width of [1440,390]) for (const mode of ['light','dark']) {

@@ -1,11 +1,12 @@
 /**
  * Material Design 3 Expressive (MD3E) Web Component: <md-side-sheet>
  *
- * Modal side sheet. Jetpack Compose Material 3 has no side sheet; the source is
- * Material Components for Android (SideSheetBehavior, SideSheetDialog,
- * SheetDialog, RightSheetDelegate/LeftSheetDelegate and the md.comp.sheet.side
- * tokens), with androidx ViewDragHelper settling.
+ * Modal and standard side sheets. Jetpack Compose Material 3 has no side sheet;
+ * the source is Material Components for Android (SideSheetBehavior,
+ * SideSheetDialog, SheetDialog, RightSheetDelegate/LeftSheetDelegate and the
+ * md.comp.sheet.side tokens), with androidx ViewDragHelper settling.
  *
+ * variant="modal" (default):
  * - Window. SideSheetDialog is a window above the app with a dimmed
  *   background. On the web the scrim and the sheet live in a modal <dialog> in
  *   the top layer, so no ancestor can clip or contain them and the page behind
@@ -22,6 +23,21 @@
  *   otherwise it settles back. Settling uses ViewDragHelper's duration (256ms
  *   base, 600ms cap, from distance and velocity) and quintic interpolator.
  * - Header. Headline (Title Large) and a standard close icon button.
+ *
+ * variant="standard": Widget.Material3.SideSheet with SideSheetBehavior in the
+ * page, coplanar with the content beside it.
+ * - Surface. Surface container color, elevation Level 0, no corners (detached:
+ *   CornerLarge and a 16dp margin).
+ * - Coplanar sibling. The behavior sets the sibling's adjacent margin to the
+ *   part of the parent the sheet covers (parent width minus the sheet's left
+ *   edge for a right sheet). On the web the component occupies that width
+ *   itself, so content laid out beside it narrows as the sheet slides.
+ * - Motion. expand() and hide() (the open attribute) settle with
+ *   ViewDragHelper.smoothSlideViewTo: duration from the distance over the drag
+ *   range (512ms for the whole range) and the quintic interpolator. Drags
+ *   release as in the modal sheet. A hidden sheet is invisible
+ *   (View.INVISIBLE): it takes no space and cannot be focused.
+ * - Escape inside the sheet hides it, as the back action does.
  */
 
 import './md-icon-button.js';
@@ -66,7 +82,8 @@ const defaultStyle = `
     margin: 0;
     padding: 0;
     border: 0;
-    overflow: hidden;
+    /* Keep the scrim fixed when the browser focuses the entering sheet. */
+    overflow: clip;
     background: transparent;
     color: inherit;
     outline: none;
@@ -87,8 +104,8 @@ const defaultStyle = `
     bottom: 0;
     right: 0;
     box-sizing: border-box;
-    width: 256px;
-    max-width: 100%;
+    width: var(--md-side-sheet-width, 256px);
+    max-width: min(400px, 100%);
     display: flex;
     flex-direction: column;
     background-color: var(--_container-color, var(--md-sys-color-surface-container-low));
@@ -120,6 +137,24 @@ const defaultStyle = `
     padding: 12px 12px 12px 24px;
     box-sizing: border-box;
   }
+  /* Start padding with a back icon button: 16dp. */
+  :host([back-button]) .header { padding-inline-start: 16px; }
+  .back { flex: none; }
+  /* Bottom actions: 16dp above, 24dp below, aligned to the start. */
+  .actions {
+    display: none;
+    flex: none;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 16px 24px 24px;
+  }
+  .actions[data-filled] { display: flex; }
+  /* Optional divider: above the bottom actions, or on a standard sheet's inner edge. */
+  .divider { display: none; flex: none; height: 1px; background-color: var(--md-sys-color-outline-variant); }
+  :host([divider]) .divider[data-filled] { display: block; }
+  :host([variant="standard"][divider]) .frame .sheet { border-inline-start: 1px solid var(--md-sys-color-outline-variant); box-sizing: border-box; }
+  :host([variant="standard"][divider][position="left"]) .frame .sheet { border-inline-start: none; border-inline-end: 1px solid var(--md-sys-color-outline-variant); }
   .headline {
     flex: 1 1 auto;
     min-width: 0;
@@ -136,6 +171,39 @@ const defaultStyle = `
     overscroll-behavior: contain;
     padding: 0 24px 24px;
   }
+
+  /* Standard: in the page, as wide as the part of it the sheet covers. The
+     sheet keeps its width inside and the frame clips what is off its edge. */
+  :host([variant="standard"]) {
+    display: block;
+    flex: none;
+    align-self: stretch;
+    width: max-content;
+    max-width: 100%;
+    position: relative;
+  }
+  .frame {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+  }
+  :host([position="left"]) .frame { justify-content: flex-end; }
+  :host([variant="standard"]) .frame .sheet {
+    position: relative;
+    inset: auto;
+    flex: none;
+    width: var(--md-side-sheet-width, 256px);
+    max-width: 400px;
+    background-color: var(--_container-color, var(--md-sys-color-surface));
+    box-shadow: none;
+    border-radius: 0;
+  }
+  :host([variant="standard"][detached]) .frame .sheet {
+    margin: 16px 16px 16px 0;
+    border-radius: var(--md-sys-shape-corner-large);
+  }
+  :host([variant="standard"][detached][position="left"]) .frame .sheet { margin: 16px 0 16px 16px; }
+  .frame .sheet[data-hidden] { visibility: hidden; }
 `;
 
 const sideSheetSheet = createComponentSheet(defaultStyle);
@@ -143,7 +211,7 @@ const sideSheetSheet = createComponentSheet(defaultStyle);
 export class MdSideSheet extends HTMLElement {
   static get observedAttributes() {
     return [
-      'open', 'modal', 'headline', 'position', 'gestures-enabled', 'detached',
+      'open', 'variant', 'headline', 'position', 'gestures-enabled', 'detached', 'back-button',
       'scrim-color', 'drawer-container-color', 'drawer-content-color', 'selected'
     ];
   }
@@ -162,7 +230,14 @@ export class MdSideSheet extends HTMLElement {
 
   get open() { return this.hasAttribute('open'); }
   set open(v) { v ? this.setAttribute('open', '') : this.removeAttribute('open'); }
-  get modal() { return this.hasAttribute('modal'); }
+  /** 'modal' (the default) or 'standard'. */
+  get variant() { return this.getAttribute('variant') === 'standard' ? 'standard' : 'modal'; }
+  set variant(v) {
+    if (v === null || v === undefined) this.removeAttribute('variant');
+    else this.setAttribute('variant', v);
+  }
+  get modal() { return this.variant === 'modal'; }
+  get _standard() { return this.variant === 'standard'; }
   get selected() { return this.getAttribute('selected') || ''; }
   set selected(v) { this.setAttribute('selected', v); }
 
@@ -205,7 +280,8 @@ export class MdSideSheet extends HTMLElement {
       this._rendered = true;
     }
     this._bind();
-    if (this.open) this._present();
+    if (this._standard) this._layoutStandard();
+    else if (this.open) this._present();
   }
 
   disconnectedCallback() {
@@ -219,7 +295,22 @@ export class MdSideSheet extends HTMLElement {
 
   attributeChangedCallback(name, oldV, newV) {
     if (!this._rendered || oldV === newV) return;
+    if (name === 'variant' || name === 'back-button') {
+      this._stopMotion();
+      this._drag = null;
+      if (this._window?.open) this._window.close();
+      unlockPageScroll(this);
+      this.render();
+      this._bind();
+      if (this._standard) this._layoutStandard();
+      else if (this.open) this._present();
+      return;
+    }
     if (name === 'open') {
+      if (this._standard) {
+        if (!this._closing) this._settleStandard(this.open ? 0 : this._range(), 0);
+        return;
+      }
       if (this.open) this._present();
       else if (!this._closing) this._remove();
       return;
@@ -227,7 +318,11 @@ export class MdSideSheet extends HTMLElement {
     this._applyStyle();
     if (name === 'headline') {
       this._headline.textContent = this.headline;
-      this._window.setAttribute('aria-label', this.headline || 'Side Sheet');
+      this._surfaceRoot().setAttribute('aria-label', this.headline || 'Side Sheet');
+    }
+    if (this._standard) {
+      if (!this._motion && !this._drag) this._layoutStandard();
+      return;
     }
     if (this._window?.open && !this._motion) { this._offset = 0; this._draw(); }
   }
@@ -237,6 +332,7 @@ export class MdSideSheet extends HTMLElement {
   /** SheetDialog.cancel: the window's exit animation, then dismissal. */
   close() {
     if (!this.open || this._closing) return;
+    if (this._standard) { this._settleStandard(this._range(), 0, true); return; }
     this._closing = true;
     const from = this._offset, to = this._windowWidth();
     this._run(WINDOW_DURATION, emphasizedEasing, value => {
@@ -250,21 +346,27 @@ export class MdSideSheet extends HTMLElement {
 
   render() {
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-    const headline = this.headline;
-    this.shadowRoot.innerHTML = `
-      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <dialog class="window" part="window" aria-label="${escapeHtml(headline || 'Side Sheet')}">
-        <div class="scrim" part="scrim" aria-hidden="true"></div>
-        <aside class="sheet" part="sheet">
+    const headline = this.headline, label = escapeHtml(headline || 'Side Sheet');
+    const sheet = `
+        <aside class="sheet" part="sheet"${this._standard ? ` aria-label="${label}"` : ''}>
           <div class="header" part="header">
+            ${this.hasAttribute('back-button') ? '<md-icon-button class="back" icon="arrow_back" aria-label="Back" part="back-button"></md-icon-button>' : ''}
             <span class="headline" part="headline">${escapeHtml(headline)}</span>
             <md-icon-button class="close" icon="close" aria-label="Close" part="close-button"></md-icon-button>
           </div>
           <div class="content" part="content"><slot></slot></div>
-        </aside>
-      </dialog>
+          <div class="divider" part="divider"></div>
+          <div class="actions" part="actions"><slot name="actions"></slot></div>
+        </aside>`;
+    this.shadowRoot.innerHTML = `
+      ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
+      ${this._standard ? `<div class="frame" part="frame">${sheet}</div>` : `
+      <dialog class="window" part="window" aria-label="${label}">
+        <div class="scrim" part="scrim" aria-hidden="true"></div>${sheet}
+      </dialog>`}
     `;
     this._window = this.shadowRoot.querySelector('.window');
+    this._frame = this.shadowRoot.querySelector('.frame');
     this._scrim = this.shadowRoot.querySelector('.scrim');
     this._sheet = this.shadowRoot.querySelector('.sheet');
     this._headline = this.shadowRoot.querySelector('.headline');
@@ -272,8 +374,12 @@ export class MdSideSheet extends HTMLElement {
     this._applyStyle();
   }
 
+  /** The modal window, or the standard sheet in the page. */
+  _surfaceRoot() { return this._standard ? this._sheet : this._window; }
+
   _applyStyle() {
-    const set = (name, value) => value ? this._window.style.setProperty(name, sanitizeAttribute(value)) : this._window.style.removeProperty(name);
+    const root = this._window || this._frame;
+    const set = (name, value) => value ? root.style.setProperty(name, sanitizeAttribute(value)) : root.style.removeProperty(name);
     set('--_container-color', this.drawerContainerColor);
     set('--_content-color', this.drawerContentColor);
     set('--_scrim-color', this.scrimColor);
@@ -283,22 +389,66 @@ export class MdSideSheet extends HTMLElement {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
-    this._window.addEventListener('cancel', event => { event.preventDefault(); this.close(); }, { signal });
-    this._scrim.addEventListener('click', () => this.close(), { signal });
+    this._window?.addEventListener('cancel', event => { event.preventDefault(); this.close(); }, { signal });
+    this._scrim?.addEventListener('click', () => this.close(), { signal });
     this._close.addEventListener('click', () => this.close(), { signal });
+    // The back icon button reports the action; the page decides where back goes.
+    this.shadowRoot.querySelector('.back')?.addEventListener('click', () => {
+      this.dispatchEvent(new CustomEvent('back', { bubbles: true, composed: true }));
+    }, { signal });
+    const actions = this.shadowRoot.querySelector('slot[name="actions"]');
+    const syncActions = () => {
+      const filled = actions.assignedElements().length > 0;
+      this.shadowRoot.querySelector('.actions').toggleAttribute('data-filled', filled);
+      this.shadowRoot.querySelector('.divider').toggleAttribute('data-filled', filled);
+    };
+    actions.addEventListener('slotchange', syncActions, { signal });
+    syncActions();
+    // The standard sheet's back action: Escape while focus is in it.
+    if (this._standard) this._sheet.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !event.defaultPrevented && this.open) { event.preventDefault(); this.close(); }
+    }, { signal });
     this._sheet.addEventListener('pointerdown', event => this._pointerDown(event), { signal });
     this._sheet.addEventListener('pointermove', event => this._pointerMove(event), { signal });
     this._sheet.addEventListener('pointerup', event => this._pointerUp(event), { signal });
     this._sheet.addEventListener('pointercancel', event => this._pointerUp(event, true), { signal });
-    window.addEventListener('resize', () => { if (this._window.open && !this._motion && !this._drag) this._draw(); }, { signal });
+    window.addEventListener('resize', () => { if (this._window?.open && !this._motion && !this._drag) this._draw(); }, { signal });
   }
+
+  /* -------------------------------------------------------------- standard -- */
+
+  /** onLayoutChild: the sheet at its state's offset, without motion. */
+  _layoutStandard() {
+    this._stopMotion();
+    this._offset = this.open ? 0 : this._range();
+    this._draw();
+  }
+
+  /**
+   * startSettling: smoothSlideViewTo for expand and hide, settleCapturedViewAt
+   * for a released drag, with ViewDragHelper's duration and quintic interpolator.
+   */
+  _settleStandard(to, velocity, dismiss = false) {
+    const from = this._offset;
+    const finish = () => { if (to > 0 && (dismiss || this.open)) this._dismiss(); };
+    if (from === to) { this._stopMotion(); this._draw(); finish(); return; }
+    const duration = settleDuration(to - from, velocity, this._range(), this._parentWidth());
+    this._sheet.removeAttribute('data-hidden');
+    this._run(duration, quintic, value => {
+      this._offset = from + (to - from) * value;
+      this._draw();
+    }, finish);
+  }
+
+  _parentWidth() { return this.parentElement?.clientWidth || this._range(); }
 
   /* ---------------------------------------------------------------- window -- */
 
   _direction() { return this.position === 'left' ? -1 : 1; }
   _windowWidth() { return this._window.clientWidth || innerWidth; }
   /** Distance from the expanded to the hidden offset (sheet width plus inner margin). */
-  _range() { return this._sheet.offsetWidth + (this.hasAttribute('detached') ? 16 : 0); }
+  // 256dp (md.comp.sheet.side.docked.container.width) before the sheet is laid out.
+  _range() { return (this._sheet.offsetWidth || 256) + (this.hasAttribute('detached') ? 16 : 0); }
 
   _present() {
     this._closing = false;
@@ -327,7 +477,7 @@ export class MdSideSheet extends HTMLElement {
   _dismiss() {
     this._closing = true;
     this.open = false;
-    this._remove();
+    if (!this._standard) this._remove();
     this._closing = false;
     this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
   }
@@ -345,7 +495,7 @@ export class MdSideSheet extends HTMLElement {
     const motion = { frame: 0, start: performance.now() };
     const step = now => {
       if (this._motion !== motion) return;
-      const fraction = reduced || duration <= 0 ? 1 : Math.min(1, (now - motion.start) / duration);
+      const fraction = reduced || duration <= 0 ? 1 : Math.max(0, Math.min(1, (now - motion.start) / duration));
       apply(easing(fraction));
       if (fraction >= 1) { this._motion = null; done?.(); return; }
       motion.frame = requestAnimationFrame(step);
@@ -356,6 +506,13 @@ export class MdSideSheet extends HTMLElement {
   }
 
   _draw() {
+    if (this._standard) {
+      // The frame is the part of the parent the sheet covers; the sheet slides inside it.
+      const covered = Math.max(0, this._range() - this._offset);
+      this._frame.style.width = `${covered}px`;
+      this._sheet.toggleAttribute('data-hidden', covered === 0);
+      return;
+    }
     this._sheet.style.transform = `translateX(${this._direction() * this._offset}px)`;
     const opacity = Math.min(1, Math.max(0, this._scrimFraction ?? 1)) * (this.scrimColor ? 1 : 0.32);
     this._scrim.style.opacity = String(opacity);
@@ -387,6 +544,10 @@ export class MdSideSheet extends HTMLElement {
       drag.x = event.clientX;
       this._stopMotion();
       this._sheet.setPointerCapture?.(event.pointerId);
+      // A captured drag moves the sheet; it does not select the text under it.
+      this._sheet.style.userSelect = 'none';
+      const selection = this.ownerDocument.getSelection?.();
+      if (selection?.rangeCount && this.contains(selection.anchorNode)) selection.removeAllRanges();
       return;
     }
     event.preventDefault();
@@ -402,6 +563,7 @@ export class MdSideSheet extends HTMLElement {
     this._drag = null;
     if (!drag.moved) return;
     this._sheet.releasePointerCapture?.(event.pointerId);
+    this._sheet.style.userSelect = '';
     // Velocity toward the hidden (inner) edge is positive.
     const xVelocity = cancelled ? 0 : drag.tracker.up(event.timeStamp, MAX_FLING_VELOCITY) * this._direction();
     const yVelocity = cancelled ? 0 : drag.yTracker.up(event.timeStamp, MAX_FLING_VELOCITY);
@@ -412,6 +574,7 @@ export class MdSideSheet extends HTMLElement {
       const significant = Math.abs(xVelocity) > Math.abs(yVelocity) && Math.abs(xVelocity) > SIGNIFICANT_VELOCITY;
       hide = significant || this._offset > range / 2;
     }
+    if (this._standard) { this._settleStandard(hide ? range : 0, xVelocity, hide); return; }
     const from = this._offset, to = hide ? range : 0;
     const duration = settleDuration(to - from, xVelocity, range, this._windowWidth());
     this._run(duration, quintic, value => {

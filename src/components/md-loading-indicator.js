@@ -396,5 +396,5 @@ export class MdLoadingIndicator extends HTMLElement {
 }
 
 if (!customElements.get('md-loading-indicator')) {
-  customElements.define('md-loading-indicator', delegateHostAria(MdLoadingIndicator));
+  customElements.define('md-loading-indicator', delegateHostAria(MdLoadingIndicator, '.loading-root'));
 }

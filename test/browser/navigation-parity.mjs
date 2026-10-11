@@ -20,7 +20,7 @@ export async function testNavigationParity(browser, base) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   try {
-    await page.goto(base, { waitUntil:'domcontentloaded' });
+    await page.goto(base, { waitUntil:'domcontentloaded' }).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
     await page.evaluate(() => document.fonts.ready);
     await page.clock.install({ time:new Date('2026-10-02T10:00:00Z') });
     await page.clock.pauseAt(new Date('2026-10-02T10:00:01.008Z'));
@@ -85,8 +85,8 @@ export async function testNavigationParity(browser, base) {
     }
     // A size change alone is laid out from the bar's resize observation, in
     // the next rendered frame before paint (as Compose measures in the next
-    // frame). The page clock is paused, so this waits for real frames.
-    const nextFrame=()=>page.waitForTimeout(50);
+    // frame). Allow native resize delivery, then run the controlled RAF clock.
+    const nextFrame=async()=>{await page.waitForTimeout(50);await page.clock.runFor(32);};
     await nav.evaluate(el => {el.items=Array.from({length:3},()=>({icon:'home',label:'A'}));el.style.width='603px';});
     await nextFrame();g=await geometry();g.items.forEach((item,i)=>assert.equal(item.button.x,121+i*120));
     await nav.evaluate(el=>el.style.width='300px');
@@ -232,7 +232,7 @@ export async function testNavigationParity(browser, base) {
 
 export async function testNavigationShowcase(page, base) {
   await page.setViewportSize({width:390,height:844});
-  await page.goto(base,{waitUntil:'domcontentloaded'});
+  await page.goto(base,{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
   const navigation=page.locator('md-navigation-bar.mobile-bottom-nav');
   assert.equal(await navigation.evaluate(el=>el.getBoundingClientRect().height),64);
   assert.equal(await navigation.evaluate(el=>el.selected),0);
@@ -246,7 +246,7 @@ export async function testNavigationShowcase(page, base) {
   assert.equal(new URL(page.url()).hash,'#get-started');
   await page.evaluate(()=>document.querySelector('md-navigation-rail.app-nav-rail').shadowRoot.querySelector('[data-index="0"]').click());
   assert.equal(await navigation.evaluate(el=>el.selected),0,'desktop navigation also updates mobile selection');
-  await page.goto(base+'/#nav-bar',{waitUntil:'domcontentloaded'});
+  await page.goto(base+'/#nav-bar',{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
   assert.equal(await navigation.evaluate(el=>el.selected),2,'direct catalogue anchor selects Components');
   await page.setViewportSize({width:840,height:1000});
   assert.equal(await navigation.evaluate(el=>getComputedStyle(el).display),'none');
@@ -294,7 +294,7 @@ export async function testCatalogueDrawer(page, base) {
   await page.setViewportSize({width:390,height:844});
   // A fresh document: the same URL with only a fragment would not reload it.
   await page.goto('about:blank');
-  await page.goto(base+'/#components',{waitUntil:'domcontentloaded'});
+  await page.goto(base+'/#components',{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
   await page.waitForFunction(()=>customElements.get('md-navigation-drawer')&&document.getElementById('components-sub-nav')._records?.length>0);
   const drawer=page.locator('#components-sub-nav');
   const mobileOpener=page.locator('#mobile-drawer-toggle');

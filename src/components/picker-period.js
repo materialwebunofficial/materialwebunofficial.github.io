@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /* AndroidX TimePicker.kt: updated period measure policies and ToggleItem shapes.
  * DOM leaves and scheduling adapt the native shared ToggleButton owners.
  */
@@ -59,7 +60,7 @@ export class PickerPeriodGroup{
  constructor(host,group,{period,onActivate,signal}){
   this.host=host;this.group=group;this.disposed=false;
   this.buttons=[...group.querySelectorAll('.period-btn')].map(button=>new PickerPeriodButton(host,button,{checked:()=>period()===button.dataset.period,onActivate:()=>onActivate(button.dataset.period),signal}));
-  this.resize=new ResizeObserver(()=>this.refresh());this.resize.observe(group);
+  this.resize=new FrameResizeObserver(()=>this.refresh());this.resize.observe(group);
   signal?.addEventListener('abort',()=>this.dispose(),{once:true});this.refresh();
  }
  refresh(){

@@ -118,7 +118,7 @@ export async function testTabParity(browser,base){
 export async function testTabShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.goto(base+'/#tabs',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{await document.fonts.ready;return true;});await page.waitForTimeout(500);
+  await page.goto(base+'/#tabs',{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(async()=>{await document.fonts.ready;return true;});await page.waitForTimeout(500);
   assert.equal(await page.locator('#tabs .comp-card').count(),4);
   for(const width of [1440,390])for(const mode of ['light','dark']){
    await page.setViewportSize({width,height:1100});await page.evaluate(mode=>{customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode:mode});},mode);await page.waitForTimeout(600);assert.equal(await page.locator('html').getAttribute('data-theme'),mode);

@@ -6,7 +6,7 @@ export async function testSeedPresets(browser,base){
   const page=await browser.newPage({viewport:{width,height:900}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   try{
-   await page.goto(base+'/#theming');
+   await page.goto(base+'/#theming').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
    await page.waitForFunction(()=>document.querySelectorAll('#preset-swatches md-chip').length===6&&customElements.get('md-chip'),null,{timeout:10000});
    await page.evaluate(({mode,dir})=>{document.documentElement.dir=dir;customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode:mode});window.seedControls=[...document.querySelectorAll('#preset-swatches md-chip')].map(chip=>chip.shadowRoot.querySelector('.chip'));window.seedChanges=0;document.querySelector('#preset-swatches').addEventListener('change',()=>window.seedChanges++);},{mode,dir});
    check(await page.locator('#preset-swatches').getAttribute('aria-labelledby')==='preset-swatches-label','named seed choice group');

@@ -13,7 +13,7 @@ export async function testListParity(browser,base){
  const page=await browser.newPage({viewport:{width:900,height:1100}}),errors=[];
  page.on('pageerror',error=>errors.push(error.message));
  try{
-  await page.goto(base,{waitUntil:'domcontentloaded'});await page.evaluate(()=>document.fonts.ready);
+  await page.goto(base,{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(()=>document.fonts.ready);
   await page.clock.install({time:new Date('2026-10-02T10:00:00Z')});
   await page.clock.pauseAt(new Date('2026-10-02T10:00:01.008Z'));
   await page.evaluate(()=>{
@@ -163,7 +163,7 @@ export async function testListParity(browser,base){
   assert.deepEqual(errors,[]);console.log('List browser parity: geometry, color priorities, spring interruption, nested controls, dynamic slots, keyboard and lifecycle passed.');
   const showcase=await browser.newPage({viewport:{width:1440,height:1100}});
   try{
-   showcase.on('pageerror',error=>errors.push(error.message));await showcase.goto(base+'/#lists',{waitUntil:'domcontentloaded'});
+   showcase.on('pageerror',error=>errors.push(error.message));await showcase.goto(base+'/#lists',{waitUntil:'domcontentloaded'}).then(()=>showcase.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
    const rows=showcase.locator('#showcase-segmented-list md-list-item');assert.equal(await rows.count(),3);
    await rows.nth(1).locator('.item').click();assert.deepEqual(await rows.evaluateAll(nodes=>nodes.map(n=>n.selected)),[false,true,false]);
    const sw=showcase.locator('#lists md-switch');await sw.locator('.switch-root').press('Space');assert.equal(await sw.evaluate(n=>n.checked),false);

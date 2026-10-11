@@ -1,0 +1,15 @@
+{
+  "archiveBytes": 2357737,
+  "unpackedBytes": 6467913,
+  "fileCount": 247,
+  "imports": {
+    "root": {
+      "bytes": 1473289,
+      "gzipBytes": 402621
+    },
+    "button": {
+      "bytes": 250128,
+      "gzipBytes": 55214
+    }
+  }
+}

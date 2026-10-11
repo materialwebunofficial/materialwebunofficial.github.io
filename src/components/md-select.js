@@ -4,9 +4,15 @@ import './md-menu.js';
 
 // Declarative option data. The Select's MenuItems render each choice once.
 export class MdOption extends HTMLElement {
+ static get observedAttributes(){return ['selected'];}
  connectedCallback(){this.closest('md-select')?._scheduleOptions?.();}
  get value(){return this.getAttribute('value')||'';}set value(value){this.setAttribute('value',value??'');}
- get selected(){return this.hasAttribute('selected');}set selected(value){this.toggleAttribute('selected',!!value);}
+ get selected(){return this._selected??this.defaultSelected;}
+ set selected(value){this._selected=!!value;this._dirtySelected=true;this.closest('md-select')?._optionSelectionChanged(this);}
+ get defaultSelected(){return this.hasAttribute('selected');}set defaultSelected(value){this.toggleAttribute('selected',!!value);}
+ attributeChangedCallback(){if(!this._dirtySelected){this._selected=this.defaultSelected;this.closest('md-select')?._optionSelectionChanged(this);}}
+ _setSelected(value){this._selected=!!value;}
+ _resetSelected(){this._dirtySelected=false;this._selected=this.defaultSelected;}
  get disabled(){return this.hasAttribute('disabled');}set disabled(value){this.toggleAttribute('disabled',!!value);}
  get displayText(){return this.getAttribute('headline')||this.getAttribute('label')||this.textContent.trim()||this.value;}
 }
@@ -46,10 +52,15 @@ export class MdSelect extends MdTextField {
    }
    if(records.some(record=>record.target!==this||record.type==='childList'))this._scheduleOptions();
   });
-  this._optionsObserver.observe(this,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['value','headline','label','disabled','supporting-text','leading-icon','trailing-icon']});
+  this._optionsObserver.observe(this,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['value','selected','headline','label','disabled','supporting-text','leading-icon','trailing-icon']});
  }
  disconnectedCallback(){this._optionsObserver?.disconnect();this._optionsObserver=null;super.disconnectedCallback();this._selectMenu?.close({restoreFocus:false});this.open=false;}
- formResetCallback(){super.formResetCallback();this.open=false;}
+ formResetCallback(){
+  for(const {source}of this._optionRecords)source._resetSelected();
+  this._selectionInitialized=false;this._valueSet=false;this._selectionKey=null;
+  if(this.hasAttribute('value'))super.formResetCallback();else{this._value='';this._sync();}
+  this.open=false;
+ }
  formStateRestoreCallback(state){super.formStateRestoreCallback(state);}
  formDisabledCallback(disabled){this._formDisabled=disabled;this._sync();}
  _scheduleOptions(){
@@ -57,6 +68,14 @@ export class MdSelect extends MdTextField {
   queueMicrotask(()=>{this._optionsSyncQueued=false;if(this.isConnected&&!signal?.aborted)this._sync();});
  }
  _key(){return JSON.stringify([this.multiple,this.value]);}
+ _optionSelectionChanged(option){
+  if(!this._selectedSources||!this._rendered)return;
+  if(option.selected){if(!this.multiple)this._selectedSources.clear();this._selectedSources.add(option);}
+  else this._selectedSources.delete(option);
+  this._selectionInitialized=true;
+  this._value=[...this.querySelectorAll('md-option')].filter(source=>this._selectedSources.has(source)).map(source=>source.value).join(',');
+  this._selectionKey=this._key();this._sync();
+ }
  render(){
   super.render();
   const style=document.createElement('style');style.textContent='.select-menu{display:block;width:0;height:0}.field-box,input{cursor:pointer}input{caret-color:transparent}slot.options-data{display:none}';this.shadowRoot.append(style);
@@ -73,6 +92,14 @@ export class MdSelect extends MdTextField {
  _sync(){
   super._sync();if(!this.isConnected||!this._selectMenu)return;
   const options=[...this.querySelectorAll('md-option')].filter(option=>option instanceof MdOption&&option.closest('md-select')===this),previous=new Map(this._optionRecords.map(record=>[record.source,record]));
+  if(!this._selectionInitialized&&options.length){
+   this._selectionInitialized=true;
+   if(!this.hasAttribute('value')&&!this._valueSet){
+    const selected=options.filter(option=>option.selected);
+    this._selectedSources=new Set(this.multiple?selected:selected.slice(-1));
+    this._value=[...this._selectedSources].map(option=>option.value).join(',');this._selectionKey=this._key();
+   }
+  }
   this._optionRecords=options.map(source=>{
    let record=previous.get(source);
    if(!record){const item=document.createElement('md-menu-item');item.id=this._selectId+'-option-'+ ++selectId;record={source,item};}
@@ -94,7 +121,9 @@ export class MdSelect extends MdTextField {
    for(const value of values){const source=candidates.find(option=>option.value===value&&!this._selectedSources.has(option));if(source)this._selectedSources.add(source);}
    this._selectionKey=key;
   }
-  for(const record of this._optionRecords){record.source.selected=this._selectedSources.has(record.source);record.item.selected=record.source.selected;}
+  if(options.length||this._selectionInitialized){this._value=options.filter(option=>this._selectedSources.has(option)).map(option=>option.value).join(',');this._selectionKey=this._key();}
+  this._internals?.setFormValue(this._value);
+  for(const record of this._optionRecords){record.source._setSelected(this._selectedSources.has(record.source));record.item.selected=record.source.selected;}
   const input=this.shadowRoot.querySelector('input');input.value=this._optionRecords.filter(record=>record.source.selected).map(record=>record.source.displayText).join(', ')||this.value;
   input.readOnly=true;input.setAttribute('aria-required',String(this.required));
   const label=this.shadowRoot.querySelector('.label');label.textContent=this.label+(this.required&&!this.hideRequiredMarker?' *':'');

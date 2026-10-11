@@ -18,6 +18,8 @@ import {PickerClock} from './picker-clock.js';
 import {timePickerColors,timeInputColors,pickerPaletteStyle} from './picker-colors.js';
 import {PickerPeriodGroup} from './picker-period.js';
 import {PickerTimeInput} from './picker-input.js';
+import {createRipple} from '../motion/interactions.js';
+import {bindStateLayer} from '../motion/state-layer.js';
 
 const defaultStyle = MODAL_STYLE+`
   :host {
@@ -148,7 +150,13 @@ const defaultStyle = MODAL_STYLE+`
     justify-content: center;
     cursor: pointer;
     outline: none;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
   }
+  /* TimeSelector is a clickable Surface: ripple and the hover, focus and press state layer. */
+  .time-card .state-layer {position: absolute; inset: 0; background: currentColor; opacity: var(--md-button-state-alpha,0); pointer-events: none;}
+  .time-card .time-val {position: relative;}
   .time-card.active {
     background-color: var(--time-time-selector-selected-container-color);
     color: var(--time-time-selector-selected-content-color);
@@ -667,6 +675,10 @@ export class MdTimePicker extends HTMLElement {
         this._updateDisplay(true);
         if(event.detail===0)this._clock?.focusSelected();
       }, { signal });
+      for (const card of [hourCard, minCard]) {
+        bindStateLayer(card, { signal });
+        card.addEventListener('pointerdown', event => { if (event.button === 0) createRipple(event, card); }, { signal });
+      }
     }
 
     this._input=this.shadowRoot.querySelector('#hour-input')?new PickerTimeInput(this,signal):null;
@@ -790,11 +802,11 @@ export class MdTimePicker extends HTMLElement {
                 </div>
               ` : `
                 <button class="time-card active" id="hour-card" type="button" aria-label="Hour ${hh}">
-                  <span class="time-val" id="hour-val">${hh}</span>
+                  <span class="state-layer"></span><span class="time-val" id="hour-val">${hh}</span>
                 </button>
                 <div class="time-separator" aria-hidden="true"><span>:</span></div>
                 <button class="time-card" id="min-card" type="button" aria-label="Minute ${mm}">
-                  <span class="time-val" id="min-val">${mm}</span>
+                  <span class="state-layer"></span><span class="time-val" id="min-val">${mm}</span>
                 </button>
               `}
               </div>

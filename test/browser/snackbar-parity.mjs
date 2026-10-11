@@ -197,7 +197,7 @@ export async function testSnackbarShowcase(browser, base) {
   const page = await browser.newPage({viewport: {width: 1440, height: 1000}}), errors = [];
   page.on('pageerror', error => errors.push(error.message));
   try {
-    await page.emulateMedia({reducedMotion: 'reduce'}); await page.goto(base + '/#snackbars');
+    await page.emulateMedia({reducedMotion: 'reduce'}); await page.goto(base + '/#snackbars').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
     await page.evaluate(async () => { await customElements.whenDefined('md-snackbar'); await document.fonts.ready; });
     for (const width of [1440, 390]) for (const mode of ['light', 'dark']) {
       await page.setViewportSize({width, height: 1000});

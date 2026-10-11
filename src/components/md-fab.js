@@ -1,17 +1,15 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
- * Material Design 3 Expressive (M3 Expressive) Web Component: <md-fab>
- *
- * Spec: research/MD3E-actions-inputs-research.md §4 (FAB / Extended FAB)
- *   Sizes: small=40, baseline=56 (default), medium=80, large=96.
- *   Extended: small=56, baseline=56, medium=80, large=96.
- *   Color roles: primary / secondary / tertiary (and *-container variants).
- *   Elevation: rest L3, hover L4, focus/press L3.
- *
- * Contract: docs/AGENT-INTERACTION-CONTRACT.md & docs/SECURITY-AND-A11Y-SPEC.md
- *   - Hover elevation and content-color state layer; press ripple without whole-button scaling.
- *   - Single release via setPointerCapture (bindPress). NO pointerleave release.
- *   - Default focus opacity layer. Enter/numpad Enter/Space activate on key-up.
- *   - XSS sanitization and AbortSignal memory safety.
+ * <md-fab>: port of Compose Material3 FloatingActionButton.kt (FloatingActionButton,
+ * Small/Medium/Large FABs, ExtendedFloatingActionButton and its expansion,
+ * FloatingActionButtonDefaults elevation and colors) at AndroidX a095da93.
+ *   Sizes: small 40, baseline 56 (default), medium 80, large 96dp; extended
+ *   small/baseline 56, medium 80, large 96dp.
+ *   Color roles: surface, primary, secondary and tertiary (and their container roles).
+ *   Elevation: rest Level3, hover Level4, focus and press Level3.
+ *   State layer and press ripple from the shared ports; no whole-button scaling.
+ * Web adapters: pointer capture for a single release, Enter/numpad Enter/Space
+ * activation on key-up, AbortSignal cleanup.
  */
 
 import { delegateHostAria, forwardControlAria } from '../utils/host-aria.js';
@@ -254,8 +252,14 @@ export class MdFab extends HTMLElement {
     fab.style.backgroundColor = this.containerColor;
     fab.style.color = this.contentColor;
     const iconEl = fab.querySelector('.material-symbols-outlined');
-    if (iconEl) { iconEl.style.fontSize = `var(--md-toolbar-fab-icon-size, ${d.icon}px)`; iconEl.textContent = this.icon; iconEl.hidden = !this.icon; }
-    const label = fab.querySelector('.lbl'); label.textContent = this.label;
+    // Retain text nodes during size/theme updates, including cosmetic-filter scans.
+    if (iconEl) {
+      iconEl.style.fontSize = `var(--md-toolbar-fab-icon-size, ${d.icon}px)`;
+      if (iconEl.textContent !== this.icon) iconEl.textContent = this.icon;
+      iconEl.hidden = !this.icon;
+    }
+    const label = fab.querySelector('.lbl');
+    if (label.textContent !== this.label) label.textContent = this.label;
     const fabAriaLabel = this.getAttribute('aria-label') || this.label || this.icon || 'Floating action button';
     fab.setAttribute('aria-label', fabAriaLabel);
     forwardControlAria(this, fab);
@@ -426,11 +430,11 @@ export class MdFab extends HTMLElement {
     }, {signal});
     const stopTheme = observeThemeContext(this, () => this._sync());
     document.fonts.addEventListener('loadingdone', () => this._sync(), {signal});
-    const resize = new ResizeObserver(() => { if (this.isConnected) this._sync(); });
+    const resize = new FrameResizeObserver(() => { if (this.isConnected) this._sync(); });
     resize.observe(fab.querySelector('.lbl'));
     // The expansion places the hit area for each body size it draws.
     const drawn = entry => entry.target === fab && this._hitSize && Math.abs((entry.borderBoxSize?.[0]?.inlineSize ?? NaN) - this._hitSize.width) < .5 && Math.abs((entry.borderBoxSize?.[0]?.blockSize ?? NaN) - this._hitSize.height) < .5;
-    const bodyResize = new ResizeObserver(entries => { if (this.isConnected && !entries.every(drawn)) this._syncHitLayout(); });
+    const bodyResize = new FrameResizeObserver(entries => { if (this.isConnected && !entries.every(drawn)) this._syncHitLayout(); });
     bodyResize.observe(fab);
     bodyResize.observe(this.shadowRoot.querySelector('.minimum-probe'));
     signal.addEventListener('abort', () => {

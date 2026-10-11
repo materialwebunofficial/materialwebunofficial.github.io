@@ -267,10 +267,6 @@ export class MdRadioButton extends HTMLElement {
       disabledColor:disabled=>disabled?{color:'var(--md-sys-color-on-surface)',alpha:.38}:null
     }],{disabled:()=>this.disabled,signal});
 
-    this.addEventListener('click', event => {
-      if (event.composedPath()[0] === this && !this.disabled) root.click();
-    }, { signal });
-
     this._stateLayer=bindStateLayer(root,{disabled:()=>this.disabled,hitTest:event=>this._layout.hoverHitTest(event),property:'--md-selection-state-alpha',signal});
     const press = event => { root.classList.add('pressed'); createRipple(event, root.querySelector('.ripple'),{bounded:false,radius:20}); };
     const release = () => root.classList.remove('pressed');
@@ -300,6 +296,7 @@ export class MdRadioButton extends HTMLElement {
     }, { signal });
 
     this._pressBinding=bindPress(root, {
+      hostActivation: true,
       disabled: () => this.disabled,
       pointerPolicy:{input:event=>({...this._layout.pointerInput(event),clipping:false}),hitTest:event=>this._layout.hitTest(event),outOfBounds:event=>this._layout.outOfBounds(event)},
       keyboardActivation: true,

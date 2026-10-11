@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * Web disclosure composed from Material Card/ListItem and shared motion.
  * ExpansionPanel itself is a web extension, not a native MD3E composable.
@@ -30,7 +31,7 @@ export class MdExpansionPanel extends HTMLElement {
   if(!this._header)this._render();
   this._abort?.abort();this._abort=new AbortController();const{signal}=this._abort;
   this._header.addEventListener('action',event=>{if(event.target!==this._header)return;event.stopPropagation();this.toggle();},{signal});
-  this._resize?.disconnect();this._resize=new ResizeObserver(()=>this._syncMotion());this._resize.observe(this._body);
+  this._resize?.disconnect();this._resize=new FrameResizeObserver(()=>this._syncMotion());this._resize.observe(this._body);
   this._sync();
  }
  disconnectedCallback(){this._abort?.abort();this._abort=null;this._resize?.disconnect();this._resize=null;this._motion?.dispose();this._motion=null;}

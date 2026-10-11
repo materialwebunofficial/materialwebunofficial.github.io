@@ -1,0 +1,45 @@
+{
+  "imports": [
+    {
+      "entry": "import {MdButton} from '@materialwebunofficial/md3e-web'; console.log(MdButton)",
+      "bytes": 1462318,
+      "gzipBytes": 399438
+    },
+    {
+      "entry": "import {MdButton} from '@materialwebunofficial/md3e-web/components/md-button.js'; console.log(MdButton)",
+      "bytes": 247474,
+      "gzipBytes": 54410
+    }
+  ],
+  "buildComparison": [
+    {
+      "path": "C:\\Users\\sagla\\OneDrive\\Belgeler\\MD3E for web\\material-design-3-expressive-unofficial\\dist\\md3-expressive.esm.js.map",
+      "bytes": 3555006,
+      "matchesDist": false
+    },
+    {
+      "path": "C:\\Users\\sagla\\OneDrive\\Belgeler\\MD3E for web\\material-design-3-expressive-unofficial\\dist\\md3-expressive.esm.js",
+      "bytes": 1482347,
+      "matchesDist": false
+    }
+  ],
+  "api": {
+    "runtimeWithoutTypes": [
+      "MdShape",
+      "adoptSheet",
+      "createComponentSheet"
+    ],
+    "typesWithoutRuntime": [
+      "MdBaseComponent"
+    ],
+    "distTypesMatch": false
+  },
+  "ssr": {
+    "success": false,
+    "error": "ReferenceError: Element is not defined"
+  },
+  "main": {
+    "bytes": 1475907,
+    "gzipBytes": 403915
+  }
+}

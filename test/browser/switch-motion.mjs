@@ -10,7 +10,7 @@ export async function testSwitchMotion(browser, base) {
   const page=await browser.newPage();
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   try {
-    await page.goto(base,{waitUntil:'domcontentloaded'});
+    await page.goto(base,{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
     await page.clock.install({time:new Date('2026-10-02T10:00:00Z')});
     await page.clock.pauseAt(new Date('2026-10-02T10:00:01.008Z'));
     await page.evaluate(()=>{

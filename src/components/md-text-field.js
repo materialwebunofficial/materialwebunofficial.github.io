@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * Material Design 3 Expressive (M3 Expressive) Web Component: <md-text-field>
  *
@@ -23,6 +24,7 @@ import {SelectionMotion} from '../motion/selection-motion.js';
 import {TextFieldContainerMotion} from './text-field-container.js';
 import {bindSelectionColors} from '../motion/selection-color.js';
 import {observeThemeContext} from '../theme/theme-context.js';
+import {syncControlName, observeControlLabels} from '../utils/host-aria.js';
 
 const defaultStyle = textFieldStyles;
 
@@ -76,7 +78,8 @@ export class MdTextField extends HTMLElement {
       'label', 'value', 'placeholder', 'variant', 'type', 'disabled',
       'error', 'error-text', 'supporting-text', 'icon', 'leading-icon',
       'trailing-icon', 'prefix-text', 'suffix-text', 'currency', 'maxlength', 'name', 'required',
-      'single-line', 'min-lines', 'max-lines', 'read-only', 'readonly', 'is-error', 'label-position','float-label','expanded-label-alignment','minimized-label-alignment','aria-label','dir'
+      'single-line', 'min-lines', 'max-lines', 'read-only', 'readonly', 'is-error', 'label-position','float-label','expanded-label-alignment','minimized-label-alignment','aria-label','aria-labelledby','dir',
+      'pattern', 'minlength', 'min', 'max', 'step'
     ];
   }
 
@@ -99,9 +102,12 @@ export class MdTextField extends HTMLElement {
     }
     this._setup();
     this._sync();
+    this._stopLabels?.();
+    this._stopLabels=observeControlLabels(this,()=>syncControlName(this,this._fieldInput(),'Text field'));
   }
 
   disconnectedCallback() {
+    this._stopLabels?.();this._stopLabels=null;
     this._abortController?.abort();
     this._abortController = null;
     this._fieldMotion?.dispose();this._fieldMotion=null;
@@ -262,6 +268,11 @@ export class MdTextField extends HTMLElement {
   }
   set maxlength(value){this._optionalFieldAttribute('maxlength',value);}
   get maxLength(){return this.maxlength;}set maxLength(value){this.maxlength=value;}
+  get pattern(){return this.getAttribute('pattern')||'';}set pattern(value){this._optionalFieldAttribute('pattern',value);}
+  get minLength(){return this._fieldInput()?.minLength??-1;}set minLength(value){this._optionalFieldAttribute('minlength',value);}
+  get min(){return this.getAttribute('min')||'';}set min(value){this._optionalFieldAttribute('min',value);}
+  get max(){return this.getAttribute('max')||'';}set max(value){this._optionalFieldAttribute('max',value);}
+  get step(){return this.getAttribute('step')||'';}set step(value){this._optionalFieldAttribute('step',value);}
 
   get value() { return this._value; }
   set value(val) {
@@ -269,6 +280,7 @@ export class MdTextField extends HTMLElement {
     this._valueSet=true;
     const input = this._fieldInput();
     if (input && input.value !== this._visualFieldValue()) input.value = this._visualFieldValue();
+    this._sanitizeValue(input);
     this._internals?.setFormValue(this._value);
     const counter=this.shadowRoot.querySelector('.counter');if(counter&&this.maxlength!==null)counter.textContent=`${this._value.length}/${this.maxlength}`;
     // Only emptying or filling the field changes its label, placeholder and
@@ -294,6 +306,10 @@ export class MdTextField extends HTMLElement {
   _usesSingleLineEditor(){return this.singleLine||this.type!=='text';}
   _fieldInput(){return this.shadowRoot.querySelector(this._usesSingleLineEditor()?'.single-editor':'.multi-editor');}
   _visualFieldValue(){return this._usesSingleLineEditor()?this._value.replace(/\n/g,' '):this._value;}
+  _sanitizeValue(input){
+    // Compose's multiline presentation transform is separate from HTML type sanitization.
+    if(input?.tagName==='INPUT'&&!['text','search','tel','url','email','password'].includes(input.type))this._value=input.value;
+  }
   _syncEditor(){
     const active=this._fieldInput(),previous=this._activeEditor,focused=previous&&this.shadowRoot.activeElement===previous;
     this._switchingEditor=true;
@@ -395,9 +411,13 @@ export class MdTextField extends HTMLElement {
     if (this.maxlength !== null) input.maxLength = Math.max(0, this.maxlength);
     else input.removeAttribute('maxlength');
     if(input.tagName==='INPUT')input.type = this.type;
+    for(const name of ['pattern','minlength','min','max','step']){
+      const value=this.getAttribute(name);if(value===null)input.removeAttribute(name);else input.setAttribute(name,value);
+    }
     input.placeholder = this.placeholder;
-    input.setAttribute('aria-label', this.label || this.getAttribute('aria-label') || 'Text field');
+    syncControlName(this,input,'Text field');
     if (input.value !== this._visualFieldValue()) input.value = this._visualFieldValue();
+    this._sanitizeValue(input);
 
     if (labelEl) {
       labelEl.textContent = this.label;
@@ -453,6 +473,7 @@ export class MdTextField extends HTMLElement {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
+    this.addEventListener('click',event=>{if(event.composedPath()[0]===this&&!this.disabled&&!event.defaultPrevented)this.focus();},{signal});
 
     const input = this._fieldInput();
     const fieldBox = this.shadowRoot.querySelector('.field-box');
@@ -518,7 +539,7 @@ export class MdTextField extends HTMLElement {
       disabledColor:()=>{const descriptor=this._fieldColors[name];return descriptor.copied?{color:textFieldCssRole(descriptor.role),alpha:descriptor.alpha}:null;},
       snapAlways:name!=='label',
     })),{disabled:()=>this.disabled,role:()=> 'expressiveEffectFast',signal});
-    this._fieldObserver=new ResizeObserver(entries=>{
+    this._fieldObserver=new FrameResizeObserver(entries=>{
       if(signal.aborted)return;
       const previousWidth=this._fieldSize?.width;
       for(const entry of entries){const box=entry.borderBoxSize?.[0];const size={width:box?.inlineSize??entry.contentRect.width,height:box?.blockSize??entry.contentRect.height};

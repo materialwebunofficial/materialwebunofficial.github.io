@@ -920,6 +920,8 @@
 
 :where(md-text-field:not(:defined)) { display: inline-block; min-height: 56px; }
 :where(md-divider:not(:defined)) { display: block; height: 1px; }
+:where(md-navigation-bar:not(:defined)) { display: block; min-height: 64px; }
+:where(md-navigation-bar[tall]:not(:defined)) { min-height: 80px; }
 
 
 /* --- src/icons/material-symbols.css --- */

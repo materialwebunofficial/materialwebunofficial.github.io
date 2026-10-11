@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** Compose FloatingToolbar and MDC DockedToolbar browser adapter. */
 import { delegateHostAria } from '../utils/host-aria.js';
 import { SpringPhysics } from '../motion/spring-physics.js';
@@ -12,6 +13,7 @@ import { observeThemeContext } from '../theme/theme-context.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { circleCornerShape, rectangleCornerShape, normalizeCornerShape, cornerShapeOutline } from '../shapes/corner-shape.js';
 import { OutlineShadow } from '../shapes/outline-shadow.js';
+import { HostStyleSheet } from '../utils/host-style.js';
 
 const defaultStyle=`
  :host{display:inline-block;vertical-align:middle;outline:none;-webkit-tap-highlight-color:transparent}
@@ -148,7 +150,7 @@ export class MdToolbar extends HTMLElement {
   // A size the toolbar drew itself (its frame while expanding or collapsing,
   // the groups it placed) brings nothing new to measure; any other size
   // change, or one after a measurement made while not rendered, does.
-  this._resize=new ResizeObserver(entries=>{if(!this._measuredRendered||!entries.every(entry=>this._drewSize(entry)))this._queueLayout();});this._resize.observe(this);for(const group of Object.values(this._groups))this._resize.observe(group);
+  this._resize=new FrameResizeObserver(entries=>{if(!this._measuredRendered||!entries.every(entry=>this._drewSize(entry)))this._queueLayout();});this._resize.observe(this);for(const group of Object.values(this._groups))this._resize.observe(group);
   this._children=new MutationObserver(()=>this._queueLayout());this._children.observe(this,{subtree:true,childList:true,attributes:true,attributeFilter:['slot','hidden','disabled','size','width','style','variant','label','icon','data-toolbar-weight','data-toolbar-fill','data-toolbar-align','data-toolbar-alignment-line']});
   this._theme=observeThemeContext(this,()=>{this._colors();this._queueLayout();});
   document.fonts?.addEventListener('loadingdone',()=>this._queueLayout(),{signal});
@@ -167,7 +169,7 @@ export class MdToolbar extends HTMLElement {
   if(this._rendered)return;
   if(!this.shadowRoot.adoptedStyleSheets?.length){const style=document.createElement('style');style.textContent=defaultStyle;this.shadowRoot.append(style);}
   // CSSOM sizing keeps internal probes out of host/ancestor style observers.
-  this._sizeStyle=document.createElement('style');this._sizeStyle.textContent=':host{--_toolbar-width:auto;--_toolbar-height:auto}';this.shadowRoot.append(this._sizeStyle);
+  this._sizeStyle=new HostStyleSheet(this.shadowRoot,{'--_toolbar-width':'auto','--_toolbar-height':'auto'});
   const frame=document.createElement('div');frame.className='frame';
   frame.innerHTML='<div class="surface" part="container" role="toolbar"><div class="clip leading"><div class="group"><slot name="leading"></slot></div></div><div class="main-content"><div class="scroll-viewport" part="scroll-viewport"><div class="group"><slot></slot></div><span class="scroll-extent" aria-hidden="true"></span></div></div><div class="clip trailing"><div class="group"><slot name="trailing"></slot></div></div></div><div class="fab-slot" part="fab"><slot name="fab"></slot></div>';
   this.shadowRoot.append(frame);this._frame=frame;this._surface=frame.querySelector('.surface');this._fab=frame.querySelector('.fab-slot');
@@ -224,7 +226,7 @@ export class MdToolbar extends HTMLElement {
  }
  _measureFabConstraints(){
   this.toggleAttribute('data-toolbar-fab',this._hasFab);
-  const sizing=this._sizeStyle.sheet.cssRules[0].style;
+  const sizing=this._sizeStyle.host;
   if(!this._hasFab){if(!this._hasRow){sizing.removeProperty('--_toolbar-width');sizing.removeProperty('--_toolbar-height');this._clearRowRules();}this._constraints=null;return;}
   this._clearRowRules();
   const vertical=this.orientation==='vertical',axis=vertical?'height':'width',cross=vertical?'width':'height';
@@ -374,14 +376,14 @@ export class MdToolbar extends HTMLElement {
   return{vertical,rtl,...this._rowInputs,...this._rowLines,contentPadding:this.contentPadding,padding:values.padding,hasVisibleLeading:this.effectiveExpanded&&this._present('leading'),hasVisibleTrailing:this.effectiveExpanded&&this._present('trailing'),leadingSample:values.leading,trailingSample:values.trailing,
    leadingCurrent:this._alignment?.leading??'none',trailingCurrent:this._alignment?.trailing??'none',leadingDelta:values.leadingOffset,trailingDelta:values.trailingOffset,leadingSettled:settled('leading'),trailingSettled:settled('trailing'),leadingCross:values.leadingCross??this._metrics.leading[vertical?'width':'height'],trailingCross:values.trailingCross??this._metrics.trailing[vertical?'width':'height'],leadingComposed:toolbarGroupComposed(this.effectiveExpanded,this._visibilityState?.leading,animating('leading')),trailingComposed:toolbarGroupComposed(this.effectiveExpanded,this._visibilityState?.trailing,animating('trailing'))};
  }
- _clearRowRules(){const sheet=this._sizeStyle.sheet;while(sheet.cssRules.length>1)sheet.deleteRule(1);this._rowRules=null;}
+ _clearRowRules(){this._sizeStyle.clearRules();this._rowRules=null;}
  _setRowRules(rules){
   // Rewriting identical rules would restyle every placed control each frame.
   const text=rules.join('');if(text===this._rowRules)return;
-  this._clearRowRules();for(const rule of rules)this._sizeStyle.sheet.insertRule(rule,this._sizeStyle.sheet.cssRules.length);this._rowRules=text;
+  this._sizeStyle.setRules(rules);this._rowRules=text;
  }
  _drawRow(values,vertical,rtl){
-  const options=this._rowOptions(values,vertical,rtl),preferred=toolbarRowLayout(options),sizing=this._sizeStyle.sheet.cssRules[0].style;
+  const options=this._rowOptions(values,vertical,rtl),preferred=toolbarRowLayout(options),sizing=this._sizeStyle.host;
   const weighted=Object.values(this._rowInputs).some(group=>group.some(child=>child.weight>0));
   for(const key of ['width','height']){const property='--_toolbar-'+key,text=weighted&&key===(vertical?'height':'width')?'100%':preferred.size[key]+'px';if(sizing.getPropertyValue(property)!==text)sizing.setProperty(property,text);}
   const dimension=key=>{const css=getComputedStyle(this);let value=parseFloat(css[key])||0;if(css.boxSizing==='border-box')value-=key==='width'?(parseFloat(css.paddingLeft)||0)+(parseFloat(css.paddingRight)||0)+(parseFloat(css.borderLeftWidth)||0)+(parseFloat(css.borderRightWidth)||0):(parseFloat(css.paddingTop)||0)+(parseFloat(css.paddingBottom)||0)+(parseFloat(css.borderTopWidth)||0)+(parseFloat(css.borderBottomWidth)||0);return Math.max(0,Math.round(value));};
@@ -435,7 +437,7 @@ export class MdToolbar extends HTMLElement {
   const target=this._scrollTarget,position=()=>target===window?(document.scrollingElement?.scrollTop||0):(target?.scrollTop||0);let last=position();
   target?.addEventListener('scroll',()=>{const current=position(),delta=last-current;last=current;if(delta)this.postScroll({x:0,y:delta});},{signal,passive:true});
   target?.addEventListener('scrollend',()=>this.postFling(),{signal,passive:true});
-  const parent=this.parentElement;this._scrollResize=new ResizeObserver(()=>{this._queueLayout();this._measureScrollLimit();this._drawScroll();});if(parent)this._scrollResize.observe(parent);
+  const parent=this.parentElement;this._scrollResize=new FrameResizeObserver(()=>{this._queueLayout();this._measureScrollLimit();this._drawScroll();});if(parent)this._scrollResize.observe(parent);
   this.addEventListener('pointerdown',event=>this._toolbarDragStart(event),{signal});
   this.addEventListener('pointermove',event=>this._toolbarDragMove(event),{signal});
   const stop=event=>this._toolbarDragStop(event);this.addEventListener('pointerup',stop,{signal});this.addEventListener('pointercancel',stop,{signal});
@@ -534,4 +536,4 @@ export class MdToolbar extends HTMLElement {
   event.preventDefault();(controls[target]?.shadowRoot?.querySelector('button')||controls[target])?.focus();
  }
 }
-if(!customElements.get('md-toolbar'))customElements.define('md-toolbar',delegateHostAria(MdToolbar));
+if(!customElements.get('md-toolbar'))customElements.define('md-toolbar',delegateHostAria(MdToolbar, '[role="toolbar"]'));

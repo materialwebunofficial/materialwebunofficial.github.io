@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 import { delegateHostAria } from '../utils/host-aria.js';
 import {observeThemeContext} from '../theme/theme-context.js';
 import {tweenFraction} from '../motion/native-easing.js';
@@ -45,7 +46,7 @@ export class MdProgressIndicator extends HTMLElement {
     });
     if(typeof ResizeObserver!=='undefined'){
       // The observed size is retained, so value changes never force a layout read.
-      this._resizeObserver=new ResizeObserver(entries=>{const box=entries.at(-1)?.contentRect;if(box&&box.width>0)this._observedWidth=Math.round(box.width);this._startAnimation();});this._resizeObserver.observe(this);
+      this._resizeObserver=new FrameResizeObserver(entries=>{const box=entries.at(-1)?.contentRect;if(box&&box.width>0)this._observedWidth=Math.round(box.width);this._startAnimation();});this._resizeObserver.observe(this);
     }
     this._syncDimensions();this._startAnimation();
   }
@@ -242,4 +243,4 @@ export class MdProgressIndicator extends HTMLElement {
     this._syncDimensions();
   }
 }
-if(!customElements.get('md-progress-indicator'))customElements.define('md-progress-indicator',delegateHostAria(MdProgressIndicator));
+if(!customElements.get('md-progress-indicator'))customElements.define('md-progress-indicator',delegateHostAria(MdProgressIndicator, '.progress-root'));

@@ -77,7 +77,7 @@ export async function testToolbarParity(browser,base){
 export async function testToolbarShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.goto(base+'/#toolbars',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{await document.fonts.ready;return true;});await page.waitForTimeout(500);
+  await page.goto(base+'/#toolbars',{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(async()=>{await document.fonts.ready;return true;});await page.waitForTimeout(500);
   assert.equal(await page.locator('#toolbars .comp-card').count(),7);
   for(const width of [1440,390])for(const mode of ['light','dark']){
    await page.setViewportSize({width,height:1100});await page.evaluate(mode=>{customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode:mode});},mode);await page.waitForTimeout(500);assert.equal(await page.locator('html').getAttribute('data-theme'),mode);
@@ -87,13 +87,13 @@ export async function testToolbarShowcase(browser,base){
     if(id!=='editing-toolbar')assert.equal(await page.locator('#'+id+' md-fab button').evaluate(n=>n.getBoundingClientRect().width),80);
     await control.press('Enter');await page.waitForTimeout(500);assert.equal(await page.locator('#'+id).evaluate(n=>n.expanded),true);assert.equal(await control.locator('button').getAttribute('aria-expanded'),'true');
     if(id!=='editing-toolbar')assert.equal(await page.locator('#'+id+' md-fab button').evaluate(n=>n.getBoundingClientRect().width),56);
-      if(id==='create-toolbar'){
-       const fab=page.locator('#create-toolbar [data-toolbar-fab-toggle]');
+      if(id==='create-toolbar'||id==='drawing-toolbar'){
+       const fab=page.locator('#'+id+' [data-toolbar-fab-toggle]');
        await fab.locator('button').click();await page.waitForTimeout(500);
-       assert.equal(await page.locator('#create-toolbar').evaluate(n=>n.expanded),false);
-       assert.equal(await fab.locator('button').getAttribute('aria-expanded'),'false');assert.equal(await fab.locator('button').evaluate(b=>b.ariaControlsElements?.map(n=>n.id).join(' ')),'create-toolbar');
+       assert.equal(await page.locator('#'+id).evaluate(n=>n.expanded),false);
+       assert.equal(await fab.locator('button').getAttribute('aria-expanded'),'false');assert.equal(await fab.locator('button').evaluate(b=>b.ariaControlsElements?.map(n=>n.id).join(' ')),id);
        await fab.locator('button').press('Enter');await page.waitForTimeout(500);
-       assert.equal(await page.locator('#create-toolbar').evaluate(n=>n.expanded),true);assert.equal(await fab.locator('button').getAttribute('aria-expanded'),'true');
+       assert.equal(await page.locator('#'+id).evaluate(n=>n.expanded),true);assert.equal(await fab.locator('button').getAttribute('aria-expanded'),'true');
       }
    }
    const italic=page.locator('#formatting-toolbar md-icon-button').nth(1);await italic.click();assert.equal(await italic.evaluate(n=>n.selected),true);await italic.press('Space');assert.equal(await italic.evaluate(n=>n.selected),false);

@@ -1,137 +1,197 @@
-/**
- * Material Design 3 Expressive (M3 Expressive) Web Component: <md-segmented-button>
+/* Copyright 2023 The Android Open Source Project
+ * Licensed under the Apache License, Version 2.0; obtain a copy at
+ * https://www.apache.org/licenses/LICENSE-2.0 . Distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND. See the License for details.
  *
- * Spec: research/MD3E-actions-inputs-research.md §12 (Segmented Buttons)
- *   Standart M3 (Connected Button Group), 40dp container height, CornerFull (20dp outer radius),
- *   1dp outline, 18dp icons, single-select / multi-select support, LabelLarge.
+ * <md-segmented-button>: port of Compose Material3 SegmentedButton.kt and
+ * OutlinedSegmentedButtonTokens at AndroidX a095da93. Expressive did not
+ * change this component; MD3E recommends connected button groups
+ * (<md-button-group variant="connected">) for new selection UI.
  *
- * Contract: docs/AGENT-INTERACTION-CONTRACT.md & docs/SECURITY-AND-A11Y-SPEC.md
- *   - Space/Enter and arrow keys keyboard accessibility
- *   - Single event activation guarantee (no double-dispatch)
- *   - XSS sanitization and safe JSON parsing
- *   - Memory safety via AbortSignal
- *   - Inner content scaling to prevent container clipping/gaps on press
+ * Source behavior:
+ * - SingleChoice/MultiChoiceSegmentedButtonRow: width(IntrinsicSize.Min) with
+ *   weight(1f) items, so every segment takes the widest segment's width, and
+ *   Arrangement.spacedBy(-space) (space defaults to BorderWidth, 1dp) so
+ *   neighbouring outlines overlap. Min height 40dp (ContainerHeight).
+ * - itemShape: CornerFull start corners on the first item, end corners on the
+ *   last, RectangleShape between, the full shape for a single item.
+ * - Each item is a Surface: 1dp Outline border drawn over the content and
+ *   ripple; min size ButtonDefaults.MinWidth 58dp x MinHeight 40dp; content
+ *   padding 12dp horizontal, 8dp vertical; LabelLarge.
+ * - Colors are returned directly (no color animation): active
+ *   SecondaryContainer/OnSecondaryContainer, inactive transparent/OnSurface,
+ *   disabled content OnSurface 38%, disabled border Outline 12%, and a
+ *   disabled active item keeps SecondaryContainer.
+ * - interactionZIndex: pressed and focused interactions plus 5 for checked.
+ * - SegmentedButtonContentMeasurePolicy: width = max(18dp, icon) + 8dp + label.
+ *   Without an icon the label is offset by -(18 + 8) / 2 so it stays centred;
+ *   the Int offset animates with FastSpatial. Placement uses place(), which
+ *   does not mirror in RTL, so the icon stays on the left.
+ * - SegmentedButtonDefaults.Icon: with no inactive icon the check enters with
+ *   fadeIn(DefaultEffects) + scaleIn(0, origin bottom-left, FastSpatial) and
+ *   exits with ExitTransition.None. An item icon crossfades with the check on
+ *   DefaultEffects.
+ *
+ * Web adapters: the 48dp minimum touch target is a pseudo-element (layout
+ * stays 40dp, as in the other components here); arrow keys move focus and, in
+ * single choice, selection (radio group convention); the 3dp focus ring
+ * follows the other components. Labels do not wrap (Compose's min intrinsic
+ * width can wrap multi-word labels).
  */
 
 import { delegateHostAria, labelledByText } from '../utils/host-aria.js';
-import { bindPress, pressScale, releaseScale } from '../motion/interactions.js';
+import { bindPress, createRipple } from '../motion/interactions.js';
+import { bindStateLayer } from '../motion/state-layer.js';
+import { SelectionMotion } from '../motion/selection-motion.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+import { MENU_ICONS } from './menu-icons.js';
+
+const ICON_SIZE = 18;
+const ICON_SPACING = 8;
+// -(IconSize + IconSpacing) / 2 with Kotlin Int division.
+const NO_ICON_OFFSET = -Math.trunc((ICON_SIZE + ICON_SPACING) / 2);
+const CHECKED_Z_INDEX_FACTOR = 5;
 
 const defaultStyle = `
   :host {
-    display: inline-flex;
-    outline: none;
+    display: inline-block;
     vertical-align: middle;
+    --_space: 1px;
   }
 
-  .container {
-    display: inline-flex;
+  /* Equal tracks of (w - space); each item is w wide and overlaps the next by
+     space, as spacedBy(-space) places weight(1f) children. The negative end
+     margin keeps the intrinsic track at (widest item - space). */
+  .row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     align-items: center;
-    height: 40px;
     min-height: 40px;
-    border-radius: 9999px;
-    border: 1px solid var(--md-sys-color-outline, #79747E);
+    padding-inline-end: var(--_space);
     box-sizing: border-box;
-    overflow: hidden;
-    background-color: transparent;
+    width: 100%;
   }
 
   .segment {
     position: relative;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    padding: 0 16px;
+    width: calc(100% + var(--_space));
+    min-width: 58px;
+    min-height: 40px;
+    margin: 0;
+    margin-inline-end: calc(-1 * var(--_space));
+    padding: 8px 12px;
     box-sizing: border-box;
     border: none;
+    border-radius: 0;
     background-color: transparent;
     color: var(--md-sys-color-on-surface, #1D1B20);
     font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
     font-size: var(--md-sys-typescale-label-large-size, 14px);
     font-weight: var(--md-sys-typescale-label-large-weight, 500);
     line-height: var(--md-sys-typescale-label-large-line-height, 20px);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
     cursor: pointer;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    border-right: 1px solid var(--md-sys-color-outline, #79747E);
-    transition:
-      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-      color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
     outline: none;
+    transition: none;
+    --md-button-state-alpha: 0;
   }
-  .segment:last-child {
-    border-right: none;
-  }
-  .segment:focus { outline: none; }
+  .segment.first { border-start-start-radius: 9999px; border-end-start-radius: 9999px; }
+  .segment.last { border-start-end-radius: 9999px; border-end-end-radius: 9999px; }
+
   .segment:focus-visible {
-    outline: 3px solid var(--md-sys-color-primary, #6750A4);
-    outline-offset: -2px;
-    z-index: 3;
+    outline: 3px solid var(--md-sys-color-secondary, #625B71);
+    outline-offset: 2px;
   }
 
-  .seg-content {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 100%;
-    pointer-events: none;
-    isolation: isolate;
-  }
-
-  .segment::after {
-    content: '';
-    position: absolute;
-    inset: calc((48px - 100%) / 2) 0;
-    pointer-events: auto;
-  }
-
+  /* minimumInteractiveComponentSize */
   .segment::before {
     content: '';
     position: absolute;
-    inset: 0;
-    background: currentColor;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease);
-  }
-  .segment:hover:not(.disabled)::before {
-    opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-  }
-  .segment:focus-visible:not(.disabled)::before {
-    opacity: var(--md-sys-state-focus-state-layer-opacity, 0.12);
-  }
-  .segment.pressed:not(.disabled)::before {
-    opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
+    inset: min(0px, calc((100% - 48px) / 2)) 0;
+    pointer-events: auto;
   }
 
   .segment.selected {
     background-color: var(--md-sys-color-secondary-container, #E8DEF8);
-    color: var(--md-sys-color-on-secondary-container, #1D192B);
+    color: var(--md-sys-color-on-secondary-container, #4A4458);
+  }
+  .segment:disabled {
+    cursor: default;
+    color: color-mix(in srgb, var(--md-sys-color-on-surface, #1D1B20) 38%, transparent);
   }
 
-  .segment.disabled {
-    opacity: 0.38;
-    cursor: not-allowed;
+  .content {
+    position: relative;
+    display: block;
+    padding-left: ${ICON_SIZE + ICON_SPACING}px;
     pointer-events: none;
   }
-
-  .ico {
-    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
-    font-size: 18px;
-    line-height: 1;
-    display: inline-flex;
+  .label {
+    display: block;
+    white-space: nowrap;
+  }
+  .icon {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: ${ICON_SIZE}px;
+    height: ${ICON_SIZE}px;
+    margin-top: -${ICON_SIZE / 2}px;
+  }
+  .icon > span {
+    position: absolute;
+    inset: 0;
+    display: flex;
     align-items: center;
     justify-content: center;
-    font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    transform-origin: 0 100%;
+  }
+  .icon[hidden] { display: none; }
+  .icon svg { width: ${ICON_SIZE}px; height: ${ICON_SIZE}px; fill: currentColor; }
+  .glyph {
+    font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
+    font-size: ${ICON_SIZE}px;
+    line-height: ${ICON_SIZE}px;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  .state-layer {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: var(--md-button-state-alpha, 0);
     pointer-events: none;
+  }
+
+  /* Modifier.border sits before the indication, so it draws above the ripple. */
+  .outline {
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--md-sys-color-outline, #79747E);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .segment:disabled .outline {
+    border-color: color-mix(in srgb, var(--md-sys-color-outline, #79747E) 12%, transparent);
   }
 `;
 
 const segmentedButtonSheet = createComponentSheet(defaultStyle);
+
+function itemParts(item) {
+  if (typeof item === 'object' && item !== null) {
+    return { label: String(item.label ?? item.text ?? ''), icon: item.icon ? String(item.icon) : '', disabled: !!item.disabled };
+  }
+  return { label: String(item), icon: '', disabled: false };
+}
 
 export class MdSegmentedButton extends HTMLElement {
   static get observedAttributes() {
@@ -145,6 +205,7 @@ export class MdSegmentedButton extends HTMLElement {
     this._rendered = false;
     this._selectedIndices = new Set();
     this._abortController = null;
+    this._items = [];
   }
 
   connectedCallback() {
@@ -152,19 +213,23 @@ export class MdSegmentedButton extends HTMLElement {
       this._parseInitialAttributes();
       this.render();
       this._rendered = true;
+    } else if (this._motionDisposed) {
+      this.render();
     }
     this._setup();
-    this._sync();
+    this._sync(false);
   }
 
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
+    this._disposeMotion();
+    this._motionDisposed = true;
   }
 
   /** The radio group / group name: an author label, or the text an aria-labelledby names. */
   _syncGroupLabel() {
-    const group = this.shadowRoot.querySelector('.container');
+    const group = this.shadowRoot.querySelector('.row');
     if (!group) return;
     const label = this.getAttribute('aria-label') || labelledByText(this, this.getAttribute('aria-labelledby'));
     if (label) group.setAttribute('aria-label', label); else group.removeAttribute('aria-label');
@@ -173,16 +238,21 @@ export class MdSegmentedButton extends HTMLElement {
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     if (name === 'aria-label' || name === 'aria-labelledby') { this._syncGroupLabel(); return; }
-    if (name === 'items' || name === 'space') {
+    if (name === 'space') { this._syncSpace(); return; }
+    if (name === 'items' || name === 'multi-select') {
+      if (name === 'multi-select' && this.multiSelect) this._parseSelectedIndices();
       this.render();
       this._setup();
-    } else if (name === 'selected-indices' && this.multiSelect) {
+      this._sync(false);
+      return;
+    }
+    if (name === 'selected-indices' && this.multiSelect) {
       this._parseSelectedIndices();
     } else if (name === 'selected' || name === 'checked') {
       const idx = parseInt(newVal, 10);
       if (!isNaN(idx)) this.selectedIndex = idx;
     }
-    this._sync();
+    this._sync(true);
   }
 
   get selectedIndex() {
@@ -191,6 +261,11 @@ export class MdSegmentedButton extends HTMLElement {
   }
   set selectedIndex(val) {
     this.setAttribute('selected-index', String(val));
+  }
+
+  get selectedIndices() { return Array.from(this._selectedIndices); }
+  set selectedIndices(val) {
+    this.setAttribute('selected-indices', JSON.stringify(Array.isArray(val) ? val : []));
   }
 
   get multiSelect() { return this.hasAttribute('multi-select'); }
@@ -205,9 +280,10 @@ export class MdSegmentedButton extends HTMLElement {
     else this.removeAttribute('disabled');
   }
 
+  /** The row's `space`: how far neighbouring items overlap (spacedBy(-space)), in px. */
   get space() {
-    const s = parseInt(this.getAttribute('space'), 10);
-    return isNaN(s) ? 0 : s;
+    const s = parseFloat(this.getAttribute('space'));
+    return Number.isFinite(s) ? s : 1;
   }
   set space(val) {
     this.setAttribute('space', String(val));
@@ -229,81 +305,126 @@ export class MdSegmentedButton extends HTMLElement {
 
   get itemsList() {
     const raw = this.getAttribute('items');
-    return safeJsonParse(raw, ['Segment 1', 'Segment 2']);
+    const parsed = safeJsonParse(raw, null);
+    if (Array.isArray(parsed)) return parsed;
+    // Comma-separated text, as the showcase snippets write it.
+    if (raw && raw.trim()) return raw.split(',').map(s => s.trim()).filter(Boolean);
+    return ['Segment 1', 'Segment 2'];
   }
 
   _parseInitialAttributes() {
     if (this.multiSelect) {
       this._parseSelectedIndices();
-    } else {
-      if (this.hasAttribute('selected') || this.hasAttribute('checked')) {
-        const val = parseInt(this.getAttribute('selected') || this.getAttribute('checked'), 10);
-        if (!isNaN(val)) this.selectedIndex = val;
-      }
+    } else if (this.hasAttribute('selected') || this.hasAttribute('checked')) {
+      const val = parseInt(this.getAttribute('selected') || this.getAttribute('checked'), 10);
+      if (!isNaN(val)) this.selectedIndex = val;
     }
   }
 
   _parseSelectedIndices() {
     const raw = this.getAttribute('selected-indices');
     const parsed = safeJsonParse(raw, []);
-    this._selectedIndices = new Set(Array.isArray(parsed) ? parsed : []);
+    this._selectedIndices = new Set(Array.isArray(parsed) ? parsed.map(Number).filter(Number.isInteger) : []);
   }
 
-  _sync() {
-    const segments = this.shadowRoot.querySelectorAll('.segment');
+  _syncSpace() {
+    const row = this.shadowRoot.querySelector('.row');
+    if (row) row.style.setProperty('--_space', `${this.space}px`);
+  }
+
+  _isActive(idx) {
+    return this.multiSelect ? this._selectedIndices.has(idx) : idx === this.selectedIndex;
+  }
+
+  _isEnabled(idx) {
+    return !this.disabled && !this._items[idx]?.disabled;
+  }
+
+  /** Apply state. `animate` is false for the first composition (initial state, no transition). */
+  _sync(animate) {
     const isMulti = this.multiSelect;
-    const currentIdx = this.selectedIndex;
-
+    const segments = this._segments || [];
+    let tabStop = -1;
+    if (!isMulti) {
+      tabStop = segments.findIndex((_, idx) => this._isActive(idx) && this._isEnabled(idx));
+      if (tabStop < 0) tabStop = segments.findIndex((_, idx) => this._isEnabled(idx));
+    }
     segments.forEach((seg, idx) => {
-      let isSelected = false;
-      if (isMulti) {
-        isSelected = this._selectedIndices.has(idx);
-      } else {
-        isSelected = (idx === currentIdx);
-      }
-
-      seg.setAttribute('aria-checked', isSelected ? 'true' : 'false');
-      seg.setAttribute('aria-disabled', this.disabled ? 'true' : 'false');
-      seg.tabIndex = this.disabled ? -1 : (isSelected || (!isMulti && currentIdx === 0 && idx === 0) ? 0 : -1);
-
-      if (isSelected) seg.classList.add('selected');
-      else seg.classList.remove('selected');
-
-      if (this.disabled) seg.classList.add('disabled');
-      else seg.classList.remove('disabled');
-
-      const checkIco = seg.querySelector('.check-ico');
-      const itemIco = seg.querySelector('.item-ico');
-      if (checkIco) {
-        checkIco.style.display = isSelected ? 'inline-flex' : 'none';
-      }
-      if (itemIco) {
-        itemIco.style.display = isSelected ? 'none' : 'inline-flex';
-      }
+      const active = this._isActive(idx);
+      const enabled = this._isEnabled(idx);
+      seg.setAttribute('aria-checked', active ? 'true' : 'false');
+      seg.disabled = !enabled;
+      seg.tabIndex = !enabled ? -1 : isMulti ? 0 : idx === tabStop ? 0 : -1;
+      seg.classList.toggle('selected', active);
+      this._paintZ(seg);
+      this._syncContent(seg, active, animate);
+      seg._stateLayer?.refresh?.();
     });
   }
 
-  _handleSegmentActivation(idx, seg) {
-    if (this.multiSelect) {
-      if (this._selectedIndices.has(idx)) {
-        this._selectedIndices.delete(idx);
-      } else {
-        this._selectedIndices.add(idx);
+  _paintZ(seg) {
+    const z = (seg._focused ? 1 : 0) + (seg._pressed ? 1 : 0) + (seg.classList.contains('selected') ? CHECKED_Z_INDEX_FACTOR : 0);
+    seg.style.zIndex = String(z);
+  }
+
+  /** SegmentedButtonDefaults.Icon plus SegmentedButtonContentMeasurePolicy's label offset. */
+  _syncContent(seg, active, animate) {
+    const state = seg._content;
+    if (!state || state.active === active) return;
+    state.active = active;
+    const reduce = !animate;
+    if (state.itemIcon) {
+      // Crossfade(targetState = active, DefaultEffects); the icon slot stays 18dp.
+      state.motion.set({
+        check: { value: active ? 1 : 0, role: 'expressiveEffectMedium' },
+        item: { value: active ? 0 : 1, role: 'expressiveEffectMedium' },
+      });
+      if (reduce) state.motion.finish();
+      return;
+    }
+    if (active) {
+      // AnimatedVisibility enters from PreEnter (alpha 0, scale 0) each time;
+      // the exit left no running channel to continue from.
+      state.iconSlot.hidden = false;
+      for (const key of ['alpha', 'scale']) {
+        const channel = state.motion.channels[key];
+        channel.value = channel.target = 0;
+        channel.animation = null;
       }
+    } else {
+      // ExitTransition.None: the icon leaves the layout at once.
+      state.iconSlot.hidden = true;
+    }
+    state.motion.set({
+      alpha: { value: active ? 1 : 0, role: 'expressiveEffectMedium', snap: !active },
+      scale: { value: active ? 1 : 0, role: 'expressiveSpatialFast', snap: !active },
+      offset: { value: active ? 0 : NO_ICON_OFFSET, role: 'expressiveSpatialFast', roundInitial: true },
+    });
+    if (reduce) state.motion.finish();
+  }
+
+  _disposeMotion() {
+    for (const seg of this._segments || []) seg._content?.motion.dispose();
+  }
+
+  _handleSegmentActivation(idx) {
+    if (!this._isEnabled(idx)) return;
+    if (this.multiSelect) {
+      if (this._selectedIndices.has(idx)) this._selectedIndices.delete(idx);
+      else this._selectedIndices.add(idx);
       this.setAttribute('selected-indices', JSON.stringify(Array.from(this._selectedIndices)));
-      this._sync();
+      this._sync(true);
       this.dispatchEvent(new CustomEvent('change', {
         detail: { selectedIndices: Array.from(this._selectedIndices) },
         bubbles: true,
         composed: true
       }));
     } else {
+      if (idx === this.selectedIndex) return;
       this.selectedIndex = idx;
-      this._sync();
-      const rawItem = this.itemsList[idx];
-      const label = typeof rawItem === 'object' && rawItem !== null ? (rawItem.label || rawItem.text) : rawItem;
+      this._sync(true);
       this.dispatchEvent(new CustomEvent('change', {
-        detail: { selectedIndex: idx, label },
+        detail: { selectedIndex: idx, label: this._items[idx]?.label },
         bubbles: true,
         composed: true
       }));
@@ -312,79 +433,105 @@ export class MdSegmentedButton extends HTMLElement {
 
   _setup() {
     this._syncGroupLabel();
+    this._syncSpace();
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
 
-    const segments = Array.from(this.shadowRoot.querySelectorAll('.segment'));
+    const segments = this._segments || [];
     segments.forEach((seg, idx) => {
-      const content = seg.querySelector('.seg-content');
+      seg._stateLayer = bindStateLayer(seg, { disabled: () => !this._isEnabled(idx), signal });
 
-      const press = () => {
-        if (content) pressScale(content, 0.92, 'expressiveSpatialFast');
-      };
-
-      const release = () => {
-        if (content) releaseScale(content, 0.92, 'expressiveSpatialMedium');
-      };
-
-      seg.addEventListener('click', () => {
-        if (this.disabled) return;
-        this._handleSegmentActivation(idx, seg);
-      }, { signal });
+      seg.addEventListener('click', () => this._handleSegmentActivation(idx), { signal });
 
       bindPress(seg, {
-        disabled: () => this.disabled,
-        onPress: press,
-        onRelease: release,
+        disabled: () => !this._isEnabled(idx),
+        onPress: (e) => {
+          seg._pressed = true;
+          this._paintZ(seg);
+          createRipple(e, seg, { before: seg.querySelector('.outline') });
+        },
+        onRelease: () => {
+          seg._pressed = false;
+          this._paintZ(seg);
+        },
         signal
       });
 
+      seg.addEventListener('focus', () => { seg._focused = true; this._paintZ(seg); }, { signal });
+      seg.addEventListener('blur', () => { seg._focused = false; this._paintZ(seg); }, { signal });
+
       seg.addEventListener('keydown', (e) => {
-        if (this.disabled) return;
-        let targetIdx = idx;
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-          targetIdx = (idx + 1) % segments.length;
-        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-          targetIdx = (idx - 1 + segments.length) % segments.length;
-        } else {
-          return;
+        const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1
+          : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+        if (!step) return;
+        // Arrow keys follow visual order in RTL.
+        const dir = getComputedStyle(this).direction === 'rtl' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft') ? -step : step;
+        let target = idx;
+        for (let n = 0; n < segments.length; n++) {
+          target = (target + dir + segments.length) % segments.length;
+          if (this._isEnabled(target)) break;
         }
+        if (target === idx || !this._isEnabled(target)) return;
         e.preventDefault();
-        segments[targetIdx]?.focus();
-        if (!this.multiSelect) {
-          this._handleSegmentActivation(targetIdx, segments[targetIdx]);
-        }
+        segments[target].focus();
+        if (!this.multiSelect) this._handleSegmentActivation(target);
       }, { signal });
     });
   }
 
   render() {
-    const items = this.itemsList;
+    this._disposeMotion();
+    this._motionDisposed = false;
     const isMulti = this.multiSelect;
+    this._items = this.itemsList.map(itemParts);
+    const count = this._items.length;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
 
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="container" role="${isMulti ? 'group' : 'radiogroup'}" style="${this.space ? `gap: ${this.space}px;` : ''}">
-        ${items.map((item) => {
-          const icon = typeof item === 'object' && item !== null ? item.icon : '';
-          const label = typeof item === 'object' && item !== null ? (item.label || item.text || '') : String(item);
-          return `
-            <button class="segment" role="${isMulti ? 'checkbox' : 'radio'}" aria-checked="false" tabindex="-1">
-              <span class="seg-content">
-                <span class="ico check-ico" aria-hidden="true" style="display: none;">check</span>
-                ${icon ? `<span class="ico item-ico" aria-hidden="true">${escapeHtml(icon)}</span>` : ''}
-                <span class="label-text">${escapeHtml(label)}</span>
+      <div class="row" role="${isMulti ? 'group' : 'radiogroup'}">
+        ${this._items.map(({ label, icon }, idx) => `
+          <button type="button" class="segment${idx === 0 ? ' first' : ''}${idx === count - 1 ? ' last' : ''}" role="${isMulti ? 'checkbox' : 'radio'}" aria-checked="false" tabindex="-1">
+            <span class="content">
+              <span class="icon" aria-hidden="true"${icon ? '' : ' hidden'}>
+                <span class="check">${MENU_ICONS.check}</span>
+                ${icon ? `<span class="item glyph">${escapeHtml(icon)}</span>` : ''}
               </span>
-            </button>
-          `;
-        }).join('')}
+              <span class="label">${escapeHtml(label)}</span>
+            </span>
+            <span class="state-layer"></span>
+            <span class="outline"></span>
+          </button>
+        `).join('')}
       </div>
     `;
+
+    this._segments = Array.from(this.shadowRoot.querySelectorAll('.segment'));
+    this._segments.forEach((seg, idx) => {
+      const itemIcon = !!this._items[idx].icon;
+      const iconSlot = seg.querySelector('.icon');
+      const check = seg.querySelector('.check');
+      const item = seg.querySelector('.item');
+      const label = seg.querySelector('.label');
+      const active = this._isActive(idx);
+      const motion = itemIcon
+        ? new SelectionMotion(seg, { check: active ? 1 : 0, item: active ? 0 : 1 }, ({ check: c, item: i }) => {
+          check.style.opacity = String(Math.min(1, Math.max(0, c)));
+          item.style.opacity = String(Math.min(1, Math.max(0, i)));
+        })
+        : new SelectionMotion(seg, { alpha: active ? 1 : 0, scale: active ? 1 : 0, offset: active ? 0 : NO_ICON_OFFSET }, ({ alpha, scale, offset }) => {
+          check.style.opacity = String(Math.min(1, Math.max(0, alpha)));
+          check.style.transform = `scale(${scale})`;
+          // Animatable<Int>: the drawn offset is the rounded value.
+          label.style.transform = `translateX(${Math.round(offset)}px)`;
+        });
+      if (!itemIcon) iconSlot.hidden = !active;
+      seg._content = { active, itemIcon, iconSlot, motion };
+    });
   }
 }
 
 if (!customElements.get('md-segmented-button')) {
-  customElements.define('md-segmented-button', delegateHostAria(MdSegmentedButton));
+  customElements.define('md-segmented-button', delegateHostAria(MdSegmentedButton, '.row'));
 }

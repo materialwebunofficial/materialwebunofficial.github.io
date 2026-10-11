@@ -1,0 +1,20 @@
+[
+  {
+    "engine": "chromium",
+    "customFocused": false,
+    "nativeFocused": true,
+    "ax": "- main:\n  - text: Customer name\n  - textbox \"Text field\":\n    - /placeholder: \"\"\n  - text: Native customer name\n  - textbox \"Native customer name\""
+  },
+  {
+    "engine": "firefox",
+    "customFocused": false,
+    "nativeFocused": true,
+    "ax": "- main:\n  - text: Customer name\n  - textbox \"Text field\":\n    - /placeholder: \"\"\n  - text: Native customer name\n  - textbox \"Native customer name\""
+  },
+  {
+    "engine": "webkit",
+    "customFocused": false,
+    "nativeFocused": true,
+    "ax": "- main:\n  - text: Customer name\n  - textbox \"Text field\":\n    - /placeholder: \"\"\n  - text: Native customer name\n  - textbox \"Native customer name\""
+  }
+]

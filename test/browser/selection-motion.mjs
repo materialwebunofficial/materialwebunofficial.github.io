@@ -12,7 +12,7 @@ export async function testSelectionMotion(browser, base) {
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   try {
-    await page.goto(base, {waitUntil:'domcontentloaded'});
+    await page.goto(base, {waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));
     await page.clock.install({time: new Date('2026-09-29T10:00:00Z')});
     // Playwright RAF uses16ms ticks; put each mutation on a frame boundary.
     await page.clock.pauseAt(new Date('2026-09-29T10:00:01.008Z'));
@@ -71,7 +71,12 @@ export async function testSelectionMotion(browser, base) {
     assert.equal(interruption.velocity,interruption.prior.velocity);
     assert.ok(Math.abs(interruption.width-interruption.after)<.0001,'retarget without jump');
 
+    // MediaQueryList change events arrive with a rendering update, not with the
+    // emulation command. Listeners run in registration order, so this one
+    // resolving means the controls' own listeners have already run.
+    await page.evaluate(()=>{window.__reducedMotionChange=new Promise(resolve=>matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',resolve,{once:true}));});
     await page.emulateMedia({reducedMotion:'reduce'});
+    await page.evaluate(()=>window.__reducedMotionChange);
     await page.clock.runFor(16);
     assert.equal(await page.locator('#motion-radio .dot').evaluate(el=>el.getBoundingClientRect().width),10);
     await page.locator('#motion-check').evaluate(el=>{el.indeterminate=true;});

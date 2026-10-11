@@ -75,7 +75,7 @@ export async function testAutocompleteComposition(browser,base){
 export async function testAutocompleteShowcase(browser,base){
  const page=await browser.newPage({viewport:{width:1440,height:760}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
  try{
-  await page.goto(base+'/#autocomplete');await page.evaluate(()=>customElements.whenDefined('md-autocomplete'));
+  await page.goto(base+'/#autocomplete').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(()=>customElements.whenDefined('md-autocomplete'));
   for(const width of[1440,390])for(const colorMode of['light','dark']){
    await page.setViewportSize({width,height:760});await page.evaluate(colorMode=>customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode}),colorMode);
    await page.locator('#demo-autocomplete input').fill('Vue');await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');

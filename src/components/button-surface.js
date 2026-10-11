@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * Retained web painting adapter for AndroidX clickable/toggle Surface.
  * Surface clips content after painting its background, while its shadow and
@@ -29,7 +30,7 @@ export class ButtonSurface {
     host.shadowRoot.append(this.probe);
     // The first observation measures the surface; until then nothing is laid out to clip.
     this.measured = false;
-    this.resize = new ResizeObserver(() => { this.measured = true; this.clip(); });
+    this.resize = new FrameResizeObserver(() => { this.measured = true; this.clip(); });
     for (const node of [button, ...this.children]) this.resize.observe(node);
     this.onFonts = () => this.clip();
     document.fonts?.addEventListener('loadingdone', this.onFonts);

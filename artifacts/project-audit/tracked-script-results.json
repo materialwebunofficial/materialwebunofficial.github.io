@@ -1,0 +1,35 @@
+{
+  "scriptFileCount": 98,
+  "missing": [
+    {
+      "path": "scripts/audit-showcase-tokens.mjs",
+      "existsLocally": true,
+      "ignore": ".git/info/exclude:2:scripts/*\tscripts/audit-showcase-tokens.mjs"
+    },
+    {
+      "path": "scripts/test-all-components.js",
+      "existsLocally": true,
+      "ignore": ".git/info/exclude:2:scripts/*\tscripts/test-all-components.js"
+    },
+    {
+      "path": "scripts/test-audit-security-fixes.js",
+      "existsLocally": true,
+      "ignore": ".git/info/exclude:2:scripts/*\tscripts/test-audit-security-fixes.js"
+    },
+    {
+      "path": "test/unit/carousel-keylines.test.mjs",
+      "existsLocally": true,
+      "ignore": ""
+    },
+    {
+      "path": "scripts/test-fabs.mjs",
+      "existsLocally": true,
+      "ignore": ".git/info/exclude:2:scripts/*\tscripts/test-fabs.mjs"
+    },
+    {
+      "path": "scripts/test-chips.mjs",
+      "existsLocally": true,
+      "ignore": ".git/info/exclude:2:scripts/*\tscripts/test-chips.mjs"
+    }
+  ]
+}

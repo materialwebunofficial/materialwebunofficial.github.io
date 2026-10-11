@@ -2,21 +2,21 @@
 import {measureSelectionLayout} from '../motion/selection-layout.js';
 import {roundedPointerHit,capturedPointerOutOfBounds} from '../motion/pointer-geometry.js';
 import {observeThemeContext} from '../theme/theme-context.js';
+import {HostStyleSheet} from '../utils/host-style.js';
 const INF=2147483647,PROBE=1000000;
 const dimensions={checkbox:{width:18,height:18},radio:{width:24,height:24},switch:{width:52,height:32}};
 const properties=['position','left','top','width','height'];
 export class SelectionDOMLayout{
   constructor(host,{kind,control,canvas,ripple,signal}){
     Object.assign(this,{host,kind,control,canvas,ripple});this.disposed=false;this.raf=null;this.owned=new Map();
-    this.style=document.createElement('style');this.style.textContent=':host{--_md-selection-width:0px;--_md-selection-height:0px}';host.shadowRoot.append(this.style);
-    this.sizing=this.style.sheet.cssRules[0].style;
+    this.style=new HostStyleSheet(host.shadowRoot,{'--_md-selection-width':'0px','--_md-selection-height':'0px'});
     this.probe=document.createElement('span');this.probe.setAttribute('aria-hidden','true');this.probe.style.cssText='position:absolute;visibility:hidden;pointer-events:none;width:max(0px,var(--md-minimum-interactive-component-size,48px));height:0;';host.shadowRoot.append(this.probe);
     this.resize=new ResizeObserver(()=>this.schedule());this.resize.observe(host);if(host.parentElement)this.resize.observe(host.parentElement);
     this.stopTheme=observeThemeContext(host,()=>this.schedule());
     signal?.addEventListener('abort',()=>this.dispose(),{once:true});
     this.measure();
   }
-  setSize(width,height){this.sizing.setProperty('--_md-selection-width',width+'px');this.sizing.setProperty('--_md-selection-height',height+'px');}
+  setSize(width,height){this.style.host.setProperty('--_md-selection-width',width+'px');this.style.host.setProperty('--_md-selection-height',height+'px');}
   contentSize(axis){const css=getComputedStyle(this.host);let value=parseFloat(css[axis])||0;if(css.boxSizing==='border-box')for(const side of axis==='width'?['Left','Right']:['Top','Bottom'])value-=(parseFloat(css['padding'+side])||0)+(parseFloat(css['border'+side+'Width'])||0);return Math.max(0,Math.round(value));}
   own(node,name,value){let records=this.owned.get(node);if(!records){records=new Map(properties.map(property=>[property,{value:node.style.getPropertyValue(property),priority:node.style.getPropertyPriority(property),written:null}]));this.owned.set(node,records);}const record=records.get(name);if(record.written!==null&&(node.style.getPropertyValue(name)!==record.written||node.style.getPropertyPriority(name)!=='')){record.value=node.style.getPropertyValue(name);record.priority=node.style.getPropertyPriority(name);}node.style.setProperty(name,value);record.written=node.style.getPropertyValue(name);}
   rect(node,r){this.own(node,'position','absolute');for(const [name,value]of Object.entries({left:r.x,top:r.y,width:r.width,height:r.height}))this.own(node,name,value+'px');}

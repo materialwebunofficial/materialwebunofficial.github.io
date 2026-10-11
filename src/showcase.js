@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from './utils/resize-observer.js';
 /**
  * Showcase controller: theme state, adaptive navigation, the component
  * catalog, copy actions, and the wiring of interactive examples.
@@ -39,14 +40,11 @@ const storage = {
   set(key, value) { try { localStorage.setItem(key, value); } catch {} }
 };
 
-export function initShowcase() {
-  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  const root = document.documentElement;
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-
-  // =========================================================================
-  // 1. Theme state
-  // =========================================================================
+// =========================================================================
+// 1. Theme state
+// =========================================================================
+/** The visitor's saved theme, or the system color mode and the default seed. */
+function readTheme() {
   const savedMode = storage.get(STORAGE_KEYS.THEME_MODE);
   const theme = {
     dark: savedMode === 'dark' || (savedMode !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches),
@@ -66,21 +64,43 @@ export function initShowcase() {
       migrated = storage.get(STORAGE_KEYS.HCT_STATE) !== null || storage.get(STORAGE_KEYS.SEED_HEX) !== null;
     }
   } catch {}
+  return { theme, migrated };
+}
 
+function applyThemeState(theme) {
+  const root = document.documentElement;
+  root.setAttribute('data-theme', theme.dark ? 'dark' : 'light');
+  // The expressive theme pairs MaterialExpressiveTheme with the expressive
+  // motion scheme; the palette variant is chosen independently.
+  root.setAttribute('data-theme-scheme', theme.motion);
+  root.setAttribute('data-motion-scheme', theme.motion);
+  root.setAttribute('data-palette-variant', theme.variant);
+  root.setAttribute('data-contrast', theme.contrast);
+  SpringPhysics.setScheme(theme.motion);
+  applyDynamicTheme(theme.hct, theme.dark, theme.variant);
+}
+
+/**
+ * Applies the visitor's theme before the components are defined, so they are
+ * created with their final color roles instead of all updating once the
+ * showcase starts.
+ */
+export function applyInitialTheme() {
+  applyThemeState(readTheme().theme);
+}
+
+export function initShowcase() {
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  const root = document.documentElement;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  const { theme, migrated } = readTheme();
   const seedHex = () => hctToHex(theme.hct.hue, theme.hct.chroma, theme.hct.tone);
   // Stored colors from an older release are rewritten once in the current format.
   if (migrated) persistColor();
 
   function applyTheme() {
-    root.setAttribute('data-theme', theme.dark ? 'dark' : 'light');
-    // The expressive theme pairs MaterialExpressiveTheme with the expressive
-    // motion scheme; the palette variant is chosen independently.
-    root.setAttribute('data-theme-scheme', theme.motion);
-    root.setAttribute('data-motion-scheme', theme.motion);
-    root.setAttribute('data-palette-variant', theme.variant);
-    root.setAttribute('data-contrast', theme.contrast);
-    SpringPhysics.setScheme(theme.motion);
-    applyDynamicTheme(theme.hct, theme.dark, theme.variant);
+    applyThemeState(theme);
     cacheScheme();
     syncThemeControls();
   }
@@ -202,6 +222,8 @@ export function initShowcase() {
   const pending = new Set(document.querySelectorAll('template[data-defer]'));
   const mountHooks = [];
   let nearViewport = null;
+  // The running section scroll (see scrollToSection), which follows layout changes itself.
+  let sectionScroll = null;
   function mountTemplate(template) {
     if (!pending.delete(template)) return;
     const grid = template.parentElement, section = template.closest('.category-section');
@@ -216,12 +238,23 @@ export function initShowcase() {
     // A section with every card created no longer needs to be watched.
     if (section && !section.querySelector('template[data-defer]')) nearViewport?.unobserve(section);
     if (card) for (const hook of mountHooks) hook(card);
+    // A grid above the viewport is corrected for in this same task, so nothing
+    // that reads layout before the next paint (a popup following its anchor)
+    // sees the content below it moved. Only grids known to be above it are
+    // measured: a card created on or below the screen costs no extra layout.
+    if (activeTab === 'components' && !sectionScroll && gridsAbove.has(grid)) {
+      const rect = grid.getBoundingClientRect(), previous = gridHeights.get(grid);
+      if (rect.bottom <= 0 && previous !== undefined) {
+        gridHeights.set(grid, rect.height);
+        if (rect.height !== previous) { window.scrollBy({ top: rect.height - previous, behavior: 'instant' }); compensatedY = Math.round(window.scrollY); }
+      }
+    }
   }
   // A grid above the viewport that changes height (a card created, or drawn
   // for the first time) moves everything below it. Keep what is on screen
   // still by scrolling by that change, after layout and before paint.
   const gridHeights = new WeakMap();
-  const gridSizes = new ResizeObserver(entries => {
+  const gridSizes = new FrameResizeObserver(entries => {
     let delta = 0;
     // A section scroll follows its target's live position itself.
     const following = !!sectionScroll;
@@ -233,7 +266,15 @@ export function initShowcase() {
     }
     if (delta && !following) { window.scrollBy({ top: delta, behavior: 'instant' }); compensatedY = Math.round(window.scrollY); }
   });
-  document.querySelectorAll('#tab-view-components .cards-grid').forEach(grid => gridSizes.observe(grid));
+  // Which grids lie entirely above the viewport, as of the last frame.
+  const gridsAbove = new Set();
+  const gridPlaces = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting && entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0)) gridsAbove.add(entry.target);
+      else gridsAbove.delete(entry.target);
+    }
+  });
+  document.querySelectorAll('#tab-view-components .cards-grid').forEach(grid => { gridSizes.observe(grid); gridPlaces.observe(grid); });
   function mountSection(section) {
     section?.querySelectorAll('template[data-defer]').forEach(mountTemplate);
   }
@@ -273,12 +314,26 @@ export function initShowcase() {
     if (Math.round(window.scrollY) === compensatedY) { compensatedY = null; return; }
     lastScroll = performance.now();
   }, { passive: true });
+  // Creating the rest of the catalog ahead of time is speculative work: it
+  // waits until the page has been left alone for five seconds (no scroll, key,
+  // pointer or wheel input), so it never competes with loading or with what
+  // the reader is doing. A card is created in one piece, which on a slow
+  // phone can take longer than a frame. Sections the reader goes to are
+  // created at once.
+  let lastInput = performance.now();
+  for (const type of ['pointerdown', 'keydown', 'wheel', 'touchstart']) {
+    window.addEventListener(type, () => { lastInput = performance.now(); }, { passive: true, capture: true });
+  }
+  const QUIET = 5000;
+  const quietFor = () => performance.now() - Math.max(lastInput, lastScroll);
   function mountInIdle() {
     if (idleScheduled || !pending.size) return;
     idleScheduled = true;
+    const wait = QUIET - quietFor();
+    if (wait > 0) { setTimeout(() => { idleScheduled = false; mountInIdle(); }, wait); return; }
     requestIdle(deadline => {
       idleScheduled = false;
-      if (performance.now() - lastScroll < 200) { setTimeout(mountInIdle, 200); return; }
+      if (quietFor() < QUIET) { mountInIdle(); return; }
       // One card per idle period, more while the period lasts, so the catalog
       // keeps filling in even while animations leave only short idle periods.
       do mountTemplate(pending.values().next().value);
@@ -326,6 +381,8 @@ export function initShowcase() {
     if (drawer.variant === 'modal') drawer.close();
     syncDrawerVariant();
     if (tabId === 'components') mountInIdle();
+    // The home seed chips are created when Home is first shown.
+    if (tabId === 'home') populateSeedChips(document.getElementById('home-seed-chips'));
     if (scroll) window.scrollTo({ top: 0, behavior: 'instant' });
     if (hash) history.replaceState(null, '', `#${tabId}`);
   }
@@ -349,7 +406,6 @@ export function initShowcase() {
   // page scrolls to it. The scroll follows the section's live position (a
   // critically damped spring, or a direct jump with reduced motion) until it
   // rests on it; any wheel, touch, key or pointer input hands control back.
-  let sectionScroll = null;
   function scrollToSection(target, smooth) {
     sectionScroll?.stop();
     const root = document.documentElement, animate = smooth && !reducedMotion.matches;
@@ -369,7 +425,7 @@ export function initShowcase() {
     const step = now => {
       const to = destination();
       if (animate) {
-        const state = SpringPhysics.solve({ from: position, to, velocity, dampingRatio: 1, stiffness: 200, time: Math.min(64, now - last) / 1000 });
+        const state = SpringPhysics.solve({ from: position, to, velocity, dampingRatio: 1, stiffness: 200, time: Math.max(0, Math.min(64, now - last)) / 1000 });
         position = state.position; velocity = state.velocity;
       } else position = to;
       last = now;
@@ -517,8 +573,6 @@ export function initShowcase() {
       set.append(chip);
     }
   }
-  populateSeedChips(document.getElementById('home-seed-chips'));
-
   // Color lab controls exist once the Color section is mounted.
   const lab = {};
 
@@ -678,7 +732,7 @@ export function initShowcase() {
   // =========================================================================
   const snackbarExamples = () => [...document.querySelectorAll('#snackbars md-snackbar')];
   const positionSnackbarExamples = () => snackbarExamples().concat(appSnackbar ? [appSnackbar] : []).forEach(positionSnackbar);
-  const snackbarLayout = new ResizeObserver(positionSnackbarExamples);
+  const snackbarLayout = new FrameResizeObserver(positionSnackbarExamples);
   snackbarLayout.observe(mainEl);
   snackbarLayout.observe(bottomNav);
   new MutationObserver(positionSnackbarExamples).observe(root, { attributes: true, attributeFilter: ['dir'] });
@@ -695,6 +749,18 @@ export function initShowcase() {
       if (button && target && claim(button)) button.addEventListener('click', () => target.show());
     }
 
+    within(scope, '[data-toggle-side-sheet]').forEach(button => {
+      const sheet = document.getElementById(button.dataset.toggleSideSheet);
+      if (!sheet || !claim(button)) return;
+      button.addEventListener('change', () => { sheet.open = button.selected; });
+      sheet.addEventListener('close', () => { button.selected = false; });
+    });
+
+    // ModalWideNavigationRail: the caller expands its state; the rail collapses itself.
+    within(scope, '[data-open-rail]').forEach(button => {
+      if (!claim(button)) return;
+      button.addEventListener('click', () => document.getElementById(button.dataset.openRail)?.expand?.());
+    });
     within(scope, '[data-toggle-rail]').forEach(button => {
       if (!claim(button)) return;
       button.addEventListener('click', () => {
@@ -781,10 +847,11 @@ export function initShowcase() {
     within(scope, '[data-toolbar-fab-toggle]').forEach(fab => {
       if (!claim(fab)) return;
       const toolbar=document.getElementById(fab.dataset.toolbarFabToggle);if(!toolbar)return;
-      // AndroidX HorizontalFloatingToolbarWithFabSample owns this callback.
+      // AndroidX Horizontal/VerticalFloatingToolbarWithFabSample own this callback.
+      const noun=toolbar.orientation==='vertical'?'tools':'actions';
       const update=()=>{
         const expanded=String(toolbar.expanded);
-        fab.setAttribute('aria-label',toolbar.expanded?'Collapse actions':'Expand actions');
+        fab.setAttribute('aria-label',`${toolbar.expanded?'Collapse':'Expand'} ${noun}`);
         fab.setAttribute('aria-controls',toolbar.id);fab.setAttribute('aria-expanded',expanded);
       };
       fab.addEventListener('click',()=>toolbar.toggle());toolbar.addEventListener('expanded-change',update);update();

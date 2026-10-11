@@ -340,10 +340,6 @@ export class MdSwitch extends HTMLElement {
       {key:'icon',scope:handle,node:handle,property:'color',token:'--_md-switch-icon',snapAlways:true,
         disabledColor:disabled=>disabled?over(this.checked?'on-surface':'surface-container-highest',.38):null}
     ],{disabled:()=>this.disabled,signal});
-    this.addEventListener('click', event => {
-      if (event.composedPath()[0] === this && !this.disabled) root.click();
-    }, { signal });
-
     this._stateLayer=bindStateLayer(root,{disabled:()=>this.disabled,hitTest:event=>this._layout.hoverHitTest(event),property:'--md-selection-state-alpha',onChange:kind=>{root.classList.toggle('interacting',kind!==null);this._colorBinding.refresh();},signal});
     const press = event => {
       if (this.disabled) return;
@@ -372,6 +368,7 @@ export class MdSwitch extends HTMLElement {
     };
 
     this._pressBinding=bindPress(root, {
+      hostActivation: true,
       disabled: () => this.disabled,
       pointerPolicy:{input:event=>({...this._layout.pointerInput(event),clipping:false}),hitTest:event=>this._layout.hitTest(event),outOfBounds:event=>this._layout.outOfBounds(event)},
       keyboardActivation: true,

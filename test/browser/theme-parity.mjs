@@ -155,4 +155,5 @@ export async function testThemeParity(page) {
     }
   },storage);
   await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000});
 }

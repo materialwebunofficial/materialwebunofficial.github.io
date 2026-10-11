@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** AndroidX Snackbar/SnackbarHost a095da93, with HTML positioning/event adapters. */
 import { delegateHostAria } from '../utils/host-aria.js';
 import {SelectionMotion} from '../motion/selection-motion.js';
@@ -86,7 +87,7 @@ export class MdSnackbar extends HTMLElement {
     this.ownerDocument.addEventListener('keydown', this._keydown, {signal: this._abort.signal});
     this.ownerDocument.fonts?.addEventListener('loadingdone', this._layoutAll, {signal: this._abort.signal});
     this._stopTheme?.(); this._stopTheme = observeThemeContext(this, () => { this._syncColors(); this._layoutAll(); });
-    this._hostResize?.disconnect(); this._hostResize = new ResizeObserver(this._layoutAll); this._hostResize.observe(this._stack);
+    this._hostResize?.disconnect(); this._hostResize = new FrameResizeObserver(this._layoutAll); this._hostResize.observe(this._stack);
     const initiallyOpen = this.open; this._bindState(); if (initiallyOpen && !this._current) this.show();
   }
   disconnectedCallback() {
@@ -158,7 +159,7 @@ export class MdSnackbar extends HTMLElement {
     const baseline = first.cloneNode(); probe.append(this.ownerDocument.createTextNode('Mg'), baseline);
     node.append(message, action, dismiss, tooltip, probe); presentation.append(node); this._stack.append(presentation);
     const record = {data, presentation, node, message, text, first, last, probe, baseline, action, dismiss, tooltip, shadow: new OutlineShadow(presentation), motion: null}; this._records.set(data, record); this._syncRecord(record, this._attributeRequests.has(data) ? this._legacyVisuals() : data.visuals);
-    record.resize = new ResizeObserver(() => this._syncLayout(record)); this._observeRecord(record);
+    record.resize = new FrameResizeObserver(() => this._syncLayout(record)); this._observeRecord(record);
     action.addEventListener('click', e => {
       if (data !== this._current || action.hidden) return;
       e.stopPropagation(); this.dispatchEvent(new CustomEvent('action', {bubbles: true, composed: true})); if (data !== this._current) return; data.performAction();

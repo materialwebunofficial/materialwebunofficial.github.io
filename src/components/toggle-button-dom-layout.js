@@ -1,6 +1,7 @@
 /** Retained DOM/font leaves for the original ToggleButton measurement tree. */
 import {toggleButtonLayout,toggleButtonMetrics} from './button-layout.js';
 import {minimumInteractiveLayout} from './row-column-layout.js';
+import {HostStyleSheet} from '../utils/host-style.js';
 const INF=2147483647,PROBE=1000000;
 const write=(e,n,v)=>{if(e.style[n]!==v)e.style[n]=v;};
 const dimension=(e,n)=>Math.ceil(parseFloat(getComputedStyle(e)[n])||0);
@@ -9,8 +10,8 @@ const leased=['position','left','right','top','bottom','width','height','min-wid
 export class ToggleButtonDOMLayout{
  constructor(host){
   this.host=host;this.owned=new Map();this.disposed=false;this.raf=null;
-  this.style=document.createElement('style');this.style.textContent=':host([toggle]){--_toggle-width:0px;--_toggle-height:0px}';host.shadowRoot.append(this.style);
-  this.sizing=this.style.sheet.cssRules[0].style;
+  this.style=new HostStyleSheet(host.shadowRoot,{'--_toggle-width':'0px','--_toggle-height':'0px'},':host([toggle])');
+  this.sizing=this.style.host;
   this.probe=document.createElement('span');this.probe.setAttribute('aria-hidden','true');this.probe.style.cssText='position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;display:block;box-sizing:border-box;min-height:1lh;overflow-wrap:anywhere;';host.shadowRoot.append(this.probe);
   this.resize=new ResizeObserver(()=>this.schedule());this.resize.observe(host);
   this.mutations=new MutationObserver(()=>this.schedule());this.observe();

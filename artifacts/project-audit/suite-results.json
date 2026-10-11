@@ -1,0 +1,47 @@
+[
+  {
+    "name": "testSelectComposition",
+    "pass": true,
+    "elapsedMs": 20329
+  },
+  {
+    "name": "testAutocompleteComposition",
+    "pass": true,
+    "elapsedMs": 12396
+  },
+  {
+    "name": "testDialogLifecycle",
+    "pass": true,
+    "elapsedMs": 4358
+  },
+  {
+    "name": "testNavigationRailModal",
+    "pass": true,
+    "elapsedMs": 8900
+  },
+  {
+    "name": "testSearchBarParity",
+    "pass": true,
+    "elapsedMs": 8514
+  },
+  {
+    "name": "testSegmentedButtonParity",
+    "pass": true,
+    "elapsedMs": 2653
+  },
+  {
+    "name": "testTextFieldEditor",
+    "pass": true,
+    "elapsedMs": 5008
+  },
+  {
+    "name": "testSelectionKeyboard",
+    "pass": true,
+    "elapsedMs": 3599
+  },
+  {
+    "name": "testTooltipFocusParity",
+    "pass": true,
+    "elapsedMs": 1470
+  }
+]

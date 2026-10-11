@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * AndroidX SingleRowTopAppBar / TwoRowsTopAppBar, a095da93.
  * DOM text/slot measurements, CSS constraints and safe-area insets are platform
@@ -15,6 +16,7 @@ import {normalizeToolbarPadding,serializeToolbarPadding} from './toolbar-padding
 import {HorizontalTouchSlop,pointerSlop} from '../motion/touch-slop.js';
 import {PointerVelocityTracker} from '../motion/velocity-tracker.js';
 import {ScrollPosition} from '../motion/scroll-position.js';
+import { HostStyleSheet } from '../utils/host-style.js';
 
 const style=`
  :host{display:block;box-sizing:border-box;width:100%;min-width:0;height:var(--_top-app-bar-height,auto);touch-action:var(--_top-app-bar-touch-action,auto);-webkit-tap-highlight-color:transparent}
@@ -108,10 +110,10 @@ export class MdTopAppBar extends HTMLElement{
    this._titles[name]={group,records};
   }
   this._probe=make('span','color-probe',this.shadowRoot);this._probe.setAttribute('aria-hidden','true');
-  this._sizes=make('style','',this.shadowRoot);this._sizes.textContent=':host{}';this._rendered=true;
+  this._sizes=new HostStyleSheet(this.shadowRoot);this._rendered=true;
  }
  _queue(){if(this._queued||!this.isConnected)return;this._queued=true;queueMicrotask(()=>{if(!this._queued)return;this._queued=false;if(this.isConnected)this._sync();});}
- _clearRules(){while(this._sizes.sheet.cssRules.length>1)this._sizes.sheet.deleteRule(1);}
+ _clearRules(){this._sizes.clearRules();}
  _sync({layout=true}={}){
   // A synchronous pre/post-scroll render already consumes queued state work.
   this._queued=false;
@@ -162,7 +164,7 @@ export class MdTopAppBar extends HTMLElement{
   return{id,width:Math.round(r.width),height:Math.round(r.height),line:n.hasAttribute('data-last-baseline')&&Number.isFinite(baseline)?Math.round(baseline):null,weight:weight>0?f(Math.min(weight,3.4028234663852886e38)):0,fill:n.getAttribute('data-app-bar-fill')!=='false',ink:b?{width:Math.round(parseFloat(b.width)),height:Math.round(parseFloat(b.height)),minimum:Number.isFinite(minimum)?minimum:48}:null};
  }
  _layout(){
-  this._clearRules();const rtl=getComputedStyle(this).direction==='rtl',sizing=this._sizes.sheet.cssRules[0].style;
+  this._clearRules();const rtl=getComputedStyle(this).direction==='rtl',sizing=this._sizes.host;
   const dimension=()=>{const s=getComputedStyle(this);return Math.max(0,Math.round(parseFloat(s.height)||0)-(s.boxSizing==='border-box'?(parseFloat(s.paddingTop)||0)+(parseFloat(s.paddingBottom)||0)+(parseFloat(s.borderTopWidth)||0)+(parseFloat(s.borderBottomWidth)||0):0));};
   sizing.setProperty('--_top-app-bar-height','0px');const minHeight=dimension();sizing.setProperty('--_top-app-bar-height','1000000px');const cap=dimension(),maxHeight=cap>=1000000?INF:Math.max(minHeight,cap);sizing.removeProperty('--_top-app-bar-height');
   const inset=Math.round(parseFloat(getComputedStyle(this._bar).paddingTop)||0);
@@ -189,7 +191,7 @@ export class MdTopAppBar extends HTMLElement{
     const body=leafInput.ink?minimumInteractiveLayout({...leafInput.ink,...leaf.constraints}).body:null;
     const native=body?`--md-toolbar-control-position:absolute;--md-toolbar-control-x:${body.x}px;--md-toolbar-control-y:${body.y}px;--md-toolbar-control-layout-width:${leaf.size.width}px;--md-toolbar-control-layout-height:${leaf.size.height}px;`:'';
     const index=[...this.children].indexOf(n)+1;
-    this._sizes.sheet.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-parent.x-leaf.offset.x}px!important;top:${p.y-parent.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`,this._sizes.sheet.cssRules.length);
+    this._sizes.insertRule(`::slotted(:nth-child(${index})){position:absolute!important;left:${p.x-parent.x-leaf.offset.x}px!important;top:${p.y-parent.y-leaf.offset.y}px!important;width:${leaf.size.width}px!important;height:${leaf.size.height}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;--md-toolbar-control-min-width:${leaf.constraints.minWidth}px;--md-toolbar-control-min-height:${leaf.constraints.minHeight}px;--md-toolbar-control-max-width:${leaf.constraints.maxWidth}px;--md-toolbar-control-max-height:${leaf.constraints.maxHeight}px;${native}}`,this._sizes.sheet.cssRules.length);
    }
    y+=layout.size.height;
   }
@@ -226,7 +228,7 @@ export class MdTopAppBar extends HTMLElement{
   const stop=event=>this._barDragStop(event);for(const type of ['pointerup','pointercancel','lostpointercapture'])this.addEventListener(type,stop,{signal});
   this.addEventListener('click',event=>{if(this._suppressDragClick&&event.detail!==0){this._suppressDragClick=false;event.preventDefault();event.stopImmediatePropagation();}},{signal,capture:true});
   this._reduced=matchMedia('(prefers-reduced-motion: reduce)');this._reduced.addEventListener('change',()=>{if(this._reduced.matches){this._scrollSettle?.finish();this._scrollTick(performance.now());}},{signal});
-  this._sizes.sheet.cssRules[0].style.setProperty('--_top-app-bar-touch-action',this._scrollBehavior&&!this._scrollBehavior.isPinned?'pan-x':'auto');
+  this._sizes.host.setProperty('--_top-app-bar-touch-action',this._scrollBehavior&&!this._scrollBehavior.isPinned?'pan-x':'auto');
  }
  _cancelScrollSettle(){
   if(this._scrollRaf)cancelAnimationFrame(this._scrollRaf);this._scrollRaf=0;this._scrollSettle=null;this._scrollResolve?.({x:0,y:0});this._scrollResolve=null;
@@ -260,7 +262,7 @@ export class MdTopAppBar extends HTMLElement{
  setupInteractions(){
   this._abort?.abort();this._resize?.disconnect();this._mutation?.disconnect();this._abort=new AbortController();const{signal}=this._abort;
   for(const slot of this.shadowRoot.querySelectorAll('slot'))slot.addEventListener('slotchange',()=>this._queue(),{signal});
-  this._observedChildren=new Set();this._resize=new ResizeObserver(()=>this._queue());this._resize.observe(this);
+  this._observedChildren=new Set();this._resize=new FrameResizeObserver(()=>this._queue());this._resize.observe(this);
   this._mutation=new MutationObserver(()=>this._queue());this._mutation.observe(this,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['slot','size','variant','width','style','class','disabled','hidden','label','icon','data-last-baseline','data-app-bar-weight','data-app-bar-fill']});
   const stopTheme=observeThemeContext(this,()=>this._queue());signal.addEventListener('abort',stopTheme,{once:true});
   document.fonts?.addEventListener('loadingdone',()=>this._queue(),{signal});document.fonts?.ready.then(()=>{if(!signal.aborted)this._queue();});

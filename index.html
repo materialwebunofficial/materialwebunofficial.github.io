@@ -34,8 +34,7 @@
   </script>
   <link rel="preload" href="dist/fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="dist/fonts/material-symbols-rounded.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="dist/tokens.min.css">
-  <link rel="stylesheet" href="styles/showcase.css">
+  <link rel="stylesheet" href="assets/showcase.css">
 </head>
 <body class="app" data-active-tab="home">
 
@@ -383,7 +382,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Buttons prompt most actions in a UI. They come in five sizes, and their shape responds to press and selection.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1040px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
                 <md-button variant="filled" label="Filled" icon="add"></md-button>
@@ -430,7 +429,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Button groups organize buttons and add interactions between them. Standard groups react to presses; connected groups replace segmented buttons for selection.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1560px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-button-group aria-label="Media controls">
@@ -494,7 +493,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">A floating action button (FAB) holds the primary action on a screen.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
                 <md-fab size="baseline" color="primary-container" icon="add" aria-label="Create"></md-fab>
@@ -521,7 +520,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Extended FABs show a label next to the icon. Collapse them to the icon when space is tight.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; max-width: 100%;">
                 <div id="extended-fab-examples" class="extended-fab-grid">
@@ -552,7 +551,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">A FAB menu opens a list of related actions from a FAB.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div class="fab-menu-demo">
                 <md-fab-menu icon="add" color="primary" items='[{"icon":"edit","label":"Document"},{"icon":"image","label":"Photo"},{"icon":"videocam","label":"Video"}]'></md-fab-menu>
@@ -578,7 +577,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Icon buttons perform compact actions. Toggle icon buttons change shape and fill when selected.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1560px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <md-icon-button variant="standard" icon="favorite_border" aria-label="Favorite"></md-icon-button>
@@ -638,9 +637,9 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
             <h3 class="section-title" id="segmented-buttons-title">Segmented buttons</h3>
             <md-icon-button class="section-link" icon="link" data-anchor="segmented-buttons" aria-label="Copy link to Segmented buttons"></md-icon-button>
           </div>
-          <p class="section-desc">Segmented buttons help people select options, switch views, or sort elements.</p>
+          <p class="section-desc">Segmented buttons help people select options, switch views, or sort elements. Expressive leaves them unchanged and recommends connected button groups for new designs.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1040px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-segmented-button items='["Day","Week","Month","Year"]' selected-index="0"></md-segmented-button>
@@ -650,20 +649,20 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
               <span class="comp-desc">One option is selected at a time.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-segmented-button items=&quot;Day,Week,Month,Year&quot; selected-index=&quot;0&quot;&gt;&lt;/md-segmented-button&gt;</code>
+              <code>&lt;md-segmented-button items='[&quot;Day&quot;,&quot;Week&quot;,&quot;Month&quot;,&quot;Year&quot;]' selected-index=&quot;0&quot;&gt;&lt;/md-segmented-button&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
-              <md-segmented-button items='["Bold","Italic","Underline"]' multi-select></md-segmented-button>
+              <md-segmented-button multi-select items='[{"label":"Walk","icon":"directions_walk"},{"label":"Ride","icon":"directions_bus"},{"label":"Drive","icon":"directions_car"}]' selected-indices="[0]" aria-label="Travel modes"></md-segmented-button>
             </div>
             <div class="comp-info">
               <span class="comp-name">Multiple choice</span>
-              <span class="comp-desc">Any number of options can be selected.</span>
+              <span class="comp-desc">Any number of options can be selected. Item icons crossfade with the check.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-segmented-button multi-select items=&quot;Bold,Italic,Underline&quot; selected-indices=&quot;[0,1,2]&quot;&gt;&lt;/md-segmented-button&gt;</code>
+              <code>&lt;md-segmented-button multi-select items='[{&quot;label&quot;:&quot;Walk&quot;,&quot;icon&quot;:&quot;directions_walk&quot;},{&quot;label&quot;:&quot;Ride&quot;,&quot;icon&quot;:&quot;directions_bus&quot;},{&quot;label&quot;:&quot;Drive&quot;,&quot;icon&quot;:&quot;directions_car&quot;}]' selected-indices=&quot;[0]&quot;&gt;&lt;/md-segmented-button&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -678,7 +677,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">A split button pairs a primary action with a menu of related actions.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <md-split-button label="Save" icon="save" items='[{"icon":"cloud_upload","label":"Save to Cloud"},{"icon":"download","label":"Export as JSON"}]'></md-split-button>
@@ -690,6 +689,24 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
             </div>
             <div class="comp-code-box">
               <code>&lt;md-split-button label=&quot;Save&quot; icon=&quot;save&quot; items='[{&quot;icon&quot;:&quot;cloud_upload&quot;,&quot;label&quot;:&quot;Save to Cloud&quot;},{&quot;icon&quot;:&quot;download&quot;,&quot;label&quot;:&quot;Export as JSON&quot;}]'&gt;&lt;/md-split-button&gt;</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div>
+          </div></template>
+          <template data-defer><div class="comp-card">
+            <div class="comp-preview">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <md-split-button label="Filled" icon="edit"></md-split-button>
+                <md-split-button label="Tonal" icon="edit" variant="tonal"></md-split-button>
+                <md-split-button label="Elevated" icon="edit" variant="elevated"></md-split-button>
+                <md-split-button label="Outlined" icon="edit" variant="outlined"></md-split-button>
+              </div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Styles and sizes</span>
+              <span class="comp-desc">Filled, tonal, elevated and outlined use the button colors. Sizes xs to xl set the height, padding and corners.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-split-button variant=&quot;outlined&quot; size=&quot;m&quot; label=&quot;Outlined&quot; icon=&quot;edit&quot;&gt;&lt;/md-split-button&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -709,29 +726,19 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Badges show notifications, counts, or status information on navigation items and icons.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
-              <div style="display: flex; gap: 24px; align-items: center; justify-content: center; flex-wrap: wrap;">
-                <div style="position: relative; display: inline-block;">
-                  <md-icon-button variant="standard" icon="notifications" aria-label="Notifications"></md-icon-button>
-                  <md-badge style="position: absolute; top: 8px; right: 8px;"></md-badge>
-                </div>
-                <div style="position: relative; display: inline-block;">
-                  <md-icon-button variant="tonal" icon="mail" aria-label="Mail"></md-icon-button>
-                  <md-badge label="4" style="position: absolute; top: 4px; right: 4px;"></md-badge>
-                </div>
-                <div style="position: relative; display: inline-block;">
-                  <md-icon-button variant="filled" icon="chat" aria-label="Chat"></md-icon-button>
-                  <md-badge label="99+" style="position: absolute; top: 4px; right: 4px;"></md-badge>
-                </div></div>
+              <md-icon-button variant="standard" aria-label="Notifications, new"><md-badge>notifications</md-badge></md-icon-button>
+              <md-icon-button variant="tonal" aria-label="Mail, 4 new"><md-badge label="4">mail</md-badge></md-icon-button>
+              <md-icon-button variant="filled" aria-label="Chat, 999 or more new"><md-badge label="1200" max="999">chat</md-badge></md-icon-button>
             </div>
             <div class="comp-info">
               <span class="comp-name">Small and large badges</span>
               <span class="comp-desc">A small badge marks a status. A large badge shows a count.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-badge label=&quot;4&quot;&gt;&lt;/md-badge&gt;</code>
+              <code>&lt;md-icon-button aria-label=&quot;Mail, 4 new&quot;&gt;&lt;md-badge label=&quot;4&quot;&gt;mail&lt;/md-badge&gt;&lt;/md-icon-button&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -746,7 +753,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Loading indicators show progress for short waits, cycling through a sequence of morphing shapes.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <div style="display: flex; gap: 36px; align-items: center; justify-content: center;">
@@ -779,7 +786,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Progress indicators show the status of a process. A wave adds expression to long waits.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1040px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview" style="width: 100%;">
               <div style="width: 100%; max-width: 280px; display: flex; flex-direction: column; gap: 10px;">
                 <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant);">Linear Standard (Determinate 65%)</span>
@@ -840,7 +847,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Snackbars show short updates about app processes at the bottom of the screen.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1560px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-button variant="tonal" label="Archive document" data-snackbar-target="sample-snackbar"></md-button>
@@ -894,7 +901,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Tooltips show brief labels or messages.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
                 <md-button id="btn-tip-1" variant="outlined" label="Save document" icon="save"></md-button>
@@ -929,7 +936,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Bottom sheets show secondary content anchored to the bottom of the screen.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <md-button variant="tonal" label="Open Bottom Sheet" id="open-bottom-sheet-btn"></md-button>
               <md-bottom-sheet id="sample-bottom-sheet" modal headline="Share Media">
@@ -962,7 +969,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Cards display content and actions about a single subject.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:3120px;--deferred-two:1560px">
+        <div class="cards-grid" data-deferred style="--deferred-one:3056px;--deferred-two:1520px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-card class="demo-card" variant="filled" interactive>
@@ -1073,17 +1080,80 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Carousels show a collection of items that can be scrolled on and off the screen.</p>
         </header>
-        <div class="cards-grid full-width" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid full-width" data-deferred style="--deferred-one:1520px;--deferred-two:1520px">
           <template data-defer><div class="comp-card full-col">
-            <div class="comp-preview" style="padding: 16px; overflow: hidden;">
-              <md-carousel active-index="0" style="width: 100%;"></md-carousel>
+            <div class="comp-preview carousel-preview">
+              <md-carousel preferred-item-width="186" item-spacing="8" content-padding="16" aria-label="Multi-browse photos">
+                <img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Family 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Festival 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Forest 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Architecture 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Ocean 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Landscape 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Family 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Festival 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Forest 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Architecture 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Ocean 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Landscape 2" loading="lazy">
+              </md-carousel>
             </div>
             <div class="comp-info">
               <span class="comp-name">Multi-browse carousel</span>
-              <span class="comp-desc">Large, medium, and small items. Focus an item and use the arrow keys to move through the collection.</span>
+              <span class="comp-desc">Large, medium and small items; each release advances at most one item.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-carousel layout=&quot;multi-browse&quot; items='[{&quot;title&quot;:&quot;City&quot;},{&quot;title&quot;:&quot;Nature&quot;}]'&gt;&lt;/md-carousel&gt;</code>
+              <code>&lt;md-carousel preferred-item-width=&quot;186&quot; item-spacing=&quot;8&quot; content-padding=&quot;16&quot;&gt;&lt;img src=&quot;…&quot; alt=&quot;…&quot;&gt;&lt;/md-carousel&gt;</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div></div></template>
+          <template data-defer><div class="comp-card full-col">
+            <div class="comp-preview carousel-preview">
+              <md-carousel layout="uncontained" item-width="186" item-spacing="8" content-padding="16" aria-label="Uncontained photos">
+                <img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Family 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Festival 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Forest 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Architecture 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Ocean 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Landscape 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Family 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Festival 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Forest 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Architecture 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Ocean 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Landscape 2" loading="lazy">
+              </md-carousel>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Uncontained carousel</span>
+              <span class="comp-desc">Items of one size scroll freely and are cut off at the edge.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-carousel layout=&quot;uncontained&quot; item-width=&quot;186&quot; item-spacing=&quot;8&quot;&gt;&lt;img src=&quot;…&quot; alt=&quot;…&quot;&gt;&lt;/md-carousel&gt;</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div></div></template>
+          <template data-defer><div class="comp-card full-col">
+            <div class="comp-preview carousel-preview">
+              <md-carousel layout="hero" item-spacing="8" content-padding="16" aria-label="Hero photos">
+                <img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Family 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Festival 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Forest 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Architecture 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Ocean 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Landscape 1" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Family 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Festival 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Forest 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Architecture 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Ocean 2" loading="lazy">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Landscape 2" loading="lazy">
+              </md-carousel>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Center-aligned hero carousel</span>
+              <span class="comp-desc">One large item centered between small items.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-carousel layout=&quot;hero&quot; item-spacing=&quot;8&quot;&gt;&lt;img src=&quot;…&quot; alt=&quot;…&quot;&gt;&lt;/md-carousel&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div></div></template>
         </div>
@@ -1097,7 +1167,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Dialogs provide important prompts in a user flow.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-button variant="filled" label="Open Sample Dialog" id="open-dialog-btn"></md-button>
@@ -1122,7 +1192,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Dividers are thin lines that group content in lists or other containers.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-list class="divider-demo" aria-label="Connections">
@@ -1131,14 +1201,16 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
                 <md-list-item icon="bluetooth" headline="Bluetooth" supporting-text="On"></md-list-item>
                 <md-divider inset></md-divider>
                 <md-list-item icon="flight" headline="Airplane mode" supporting-text="Off"></md-list-item>
+                <md-divider inset="middle"></md-divider>
+                <md-list-item icon="dark_mode" headline="Dark theme" supporting-text="System"></md-list-item>
               </md-list>
             </div>
             <div class="comp-info">
-              <span class="comp-name">Full-width and inset</span>
-              <span class="comp-desc">A full-width divider, then an inset divider, between list items.</span>
+              <span class="comp-name">Full-width, inset and middle inset</span>
+              <span class="comp-desc">Between list items: full width, then 16dp in at the start, then 16dp in at both ends.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-divider&gt;&lt;/md-divider&gt;</code>
+              <code>&lt;md-divider&gt;&lt;/md-divider&gt; &lt;md-divider inset&gt;&lt;/md-divider&gt; &lt;md-divider inset=&quot;middle&quot;&gt;&lt;/md-divider&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -1154,7 +1226,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           <p class="section-desc">Expansion panels show a summary and reveal details on demand.</p>
           <p class="section-note"><span class="mat-sym" aria-hidden="true">extension</span><span>Web extension. Material 3 has no component with this name; this one is composed from Material components and follows their specs.</span></p>
         </header>
-        <div class="cards-grid full-width" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid full-width" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card full-col">
             <div class="comp-preview comp-preview-stack">
               <md-expansion-panel headline="Shipping" supporting-text="Arrives in 3–5 business days" open>
@@ -1189,7 +1261,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Lists are continuous, vertical indexes of text and images.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1560px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%;">
               <md-list style="width: 100%;">
@@ -1251,18 +1323,18 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Side sheets show secondary content anchored to the side of the screen.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-button variant="outlined" label="Open Side Sheet" id="open-side-sheet-btn"></md-button>
-              <md-side-sheet id="sample-side-sheet" modal headline="Details Panel">
-                <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
-                  <p class="md-body-medium" style="margin: 0; opacity: 0.8;">Detailed properties and metadata for the selected item.</p>
-                  <md-list>
-                    <md-list-item icon="info" headline="File Size" trailing-text="2.4 MB"></md-list-item>
-                    <md-list-item icon="schedule" headline="Modified" trailing-text="10 min ago"></md-list-item>
-                  </md-list>
-                </div>
+              <md-side-sheet id="sample-side-sheet" headline="Details Panel" divider style="--md-side-sheet-width: 320px">
+                <p class="md-body-medium side-sheet-note">Properties of the selected file.</p>
+                <md-list>
+                  <md-list-item icon="info" headline="Size" trailing-text="2.4 MB"></md-list-item>
+                  <md-list-item icon="schedule" headline="Modified" trailing-text="10 min ago"></md-list-item>
+                </md-list>
+                <md-button slot="actions" variant="filled" label="Save"></md-button>
+                <md-button slot="actions" variant="outlined" label="Cancel"></md-button>
               </md-side-sheet>
             </div>
             <div class="comp-info">
@@ -1270,7 +1342,31 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
               <span class="comp-desc">Supporting content and actions beside the main content.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-side-sheet headline=&quot;Filter&quot;&gt;&lt;/md-side-sheet&gt;</code>
+              <code>&lt;md-side-sheet headline=&quot;Filter&quot; divider&gt;&lt;md-button slot=&quot;actions&quot; variant=&quot;filled&quot; label=&quot;Save&quot;&gt;&lt;/md-button&gt;&lt;/md-side-sheet&gt;</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div>
+          </div></template>
+          <template data-defer><div class="comp-card full-col">
+            <div class="comp-preview side-sheet-preview">
+              <div class="side-sheet-demo">
+                <div class="side-sheet-demo-main">
+                  <md-button variant="tonal" toggle selected icon="filter_list" label="Filters" data-toggle-side-sheet="standard-side-sheet-demo"></md-button>
+                  <p class="md-body-medium">The content beside a standard side sheet narrows as the sheet slides in and widens as it leaves.</p>
+                </div>
+                <md-side-sheet id="standard-side-sheet-demo" variant="standard" open headline="Filters">
+                  <md-list>
+                    <md-list-item headline="In stock" trailing-text="128"></md-list-item>
+                    <md-list-item headline="On sale" trailing-text="24"></md-list-item>
+                  </md-list>
+                </md-side-sheet>
+              </div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Standard side sheet</span>
+              <span class="comp-desc">Coplanar with the page: no scrim, Surface color, no elevation.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-side-sheet variant=&quot;standard&quot; open headline=&quot;Filters&quot;&gt;&lt;/md-side-sheet&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -1290,7 +1386,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Top app bars show the title and actions for the current screen. Bottom app bars hold actions at the bottom of the screen.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:4160px;--deferred-two:2080px">
+        <div class="cards-grid" data-deferred style="--deferred-one:4080px;--deferred-two:2032px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; padding: 0;">
               <md-top-app-bar headline="Page Title" variant="small">
@@ -1459,7 +1555,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Navigation bars let people switch between the main destinations on compact screens.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1040px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; padding: 0;">
               <md-navigation-bar items='[{"icon":"mail","label":"Mail"},{"icon":"chat","label":"Chat"},{"icon":"group","label":"Spaces"},{"icon":"videocam","label":"Meet"}]' selected="0"></md-navigation-bar>
@@ -1496,7 +1592,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Navigation drawers list destinations and can be organized into sections.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1040px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; display: flex; justify-content: center;">
               <md-navigation-drawer items='[{"icon":"inbox","label":"Inbox","badge":"12"},{"icon":"star","label":"Starred"},{"icon":"send","label":"Sent"},{"icon":"drafts","label":"Drafts"}]' selected="0" headline="Mailbox"></md-navigation-drawer>
@@ -1537,7 +1633,7 @@ document.getElementById('mail-drawer').show();</code>
           </div>
           <p class="section-desc">Navigation rails let people switch between destinations on medium and expanded screens.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1040px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; display: flex; justify-content: center;">
               <md-navigation-rail items='[{"icon":"folder","label":"Files"},{"icon":"star","label":"Starred"},{"icon":"schedule","label":"Recent"},{"icon":"offline_pin","label":"Offline"}]' selected="0"></md-navigation-rail>
@@ -1564,6 +1660,20 @@ document.getElementById('mail-drawer').show();</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
+          <template data-defer><div class="comp-card">
+            <div class="comp-preview" style="width: 100%; display: flex; justify-content: center; align-items: center;">
+              <md-button variant="tonal" icon="menu" data-open-rail="modal-rail-demo">Open modal rail</md-button>
+              <md-navigation-rail id="modal-rail-demo" modal hide-on-collapse aria-label="Modal rail" items='[{"icon":"inbox","label":"Inbox"},{"icon":"send","label":"Outbox"},{"icon":"favorite","label":"Favorites"},{"icon":"delete","label":"Trash"}]' selected="0"></md-navigation-rail>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Modal rail</span>
+              <span class="comp-desc">The expanded rail slides in from the start edge over a scrim. Drag it back, tap the scrim or press Escape to close it.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-navigation-rail modal hide-on-collapse items='[…]'&gt;&lt;/md-navigation-rail&gt; rail.expand();</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div>
+          </div></template>
         </div>
       </section>
 
@@ -1576,7 +1686,7 @@ document.getElementById('mail-drawer').show();</code>
           <p class="section-desc">A paginator moves through pages of data and sets how many items each page shows.</p>
           <p class="section-note"><span class="mat-sym" aria-hidden="true">extension</span><span>Web extension. Material 3 has no component with this name; this one is composed from Material components and follows their specs.</span></p>
         </header>
-        <div class="cards-grid full-width" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid full-width" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card full-col" style="grid-column: 1 / -1; overflow: visible;">
             <div class="comp-preview" style="padding: 24px; width: 100%; display: flex; flex-direction: column; gap: 16px; overflow: visible;">
               <div id="paginator-content-preview" class="paginator-preview">
@@ -1604,7 +1714,7 @@ document.getElementById('mail-drawer').show();</code>
           </div>
           <p class="section-desc">Search lets people enter a query and get relevant information.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%;">
               <md-search-bar placeholder="Search components" aria-label="Search components" suggestions='[{"label":"Buttons","icon":"history"},{"label":"Navigation rail","icon":"history"},{"label":"Date pickers","icon":"history"},{"label":"Loading indicator","icon":"history"}]'></md-search-bar>
@@ -1615,6 +1725,19 @@ document.getElementById('mail-drawer').show();</code>
             </div>
             <div class="comp-code-box">
               <code>&lt;md-search-bar placeholder=&quot;Search components&quot; suggestions='[{&quot;label&quot;:&quot;Buttons&quot;,&quot;icon&quot;:&quot;history&quot;}]'&gt;&lt;/md-search-bar&gt;</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div>
+          </div></template>
+          <template data-defer><div class="comp-card">
+            <div class="comp-preview" style="width: 100%;">
+              <md-search-bar full-screen placeholder="Search mail" aria-label="Search mail" suggestions='[{"label":"Invoices","icon":"history"},{"label":"Travel plans","icon":"history"},{"label":"Team meeting notes","icon":"history"}]'></md-search-bar>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Full-screen search</span>
+              <span class="comp-desc">The bar grows into a full-window view for results. The back button, Escape or a chosen result collapses it.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-search-bar full-screen placeholder=&quot;Search mail&quot; suggestions='[{&quot;label&quot;:&quot;Invoices&quot;,&quot;icon&quot;:&quot;history&quot;}]'&gt;&lt;/md-search-bar&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -1630,7 +1753,7 @@ document.getElementById('mail-drawer').show();</code>
           <p class="section-desc">A stepper divides a task into numbered steps.</p>
           <p class="section-note"><span class="mat-sym" aria-hidden="true">extension</span><span>Web extension. Material 3 has no component with this name; this one is composed from Material components and follows their specs.</span></p>
         </header>
-        <div class="cards-grid full-width" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid full-width" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card full-col">
             <div class="comp-preview comp-preview-stack">
               <md-stepper id="demo-stepper" active-step="0">
@@ -1685,7 +1808,7 @@ document.getElementById('mail-drawer').show();</code>
           </div>
           <p class="section-desc">Tabs organize content across different screens and views.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:2080px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:2032px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <div class="tabs-demo">
@@ -1761,7 +1884,7 @@ document.getElementById('mail-drawer').show();</code>
           </div>
           <p class="section-desc">Toolbars show frequently used actions relevant to the current page.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:3640px;--deferred-two:2080px">
+        <div class="cards-grid" data-deferred style="--deferred-one:3568px;--deferred-two:2032px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview toolbar-preview">
               <md-toolbar id="editing-toolbar" variant="floating" expanded aria-label="Editing actions">
@@ -1802,12 +1925,13 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
                 <md-icon-button icon="draw" aria-label="Draw"></md-icon-button>
                 <md-icon-button icon="palette" aria-label="Choose color"></md-icon-button>
                 <md-icon-button icon="layers" aria-label="Layers"></md-icon-button>
-                <md-fab slot="fab" icon="add" aria-label="Add layer"></md-fab>
+                <md-fab slot="fab" icon="add" data-toolbar-fab-toggle="drawing-toolbar" aria-label="Collapse tools" aria-controls="drawing-toolbar" aria-expanded="true"></md-fab>
               </md-toolbar>
               <md-button variant="text" data-toolbar-toggle="drawing-toolbar" label="Collapse tools" aria-controls="drawing-toolbar" aria-expanded="true"></md-button>
             </div>
-            <div class="comp-info"><span class="comp-name">Vertical floating toolbar</span><span class="comp-desc">Drawing tools sit along the side of a canvas, with a separate action for adding a layer.</span></div>
-            <div class="comp-code-box"><code>&lt;md-toolbar variant=&quot;floating&quot; orientation=&quot;vertical&quot; expanded&gt;&lt;md-icon-button icon=&quot;draw&quot; aria-label=&quot;Draw&quot;&gt;&lt;/md-icon-button&gt;&lt;md-fab slot=&quot;fab&quot; icon=&quot;add&quot; aria-label=&quot;Add layer&quot;&gt;&lt;/md-fab&gt;&lt;/md-toolbar&gt;</code>
+            <div class="comp-info"><span class="comp-name">Vertical floating toolbar</span><span class="comp-desc">Drawing tools sit along the side of a canvas. Use the FAB to collapse or expand them.</span></div>
+            <div class="comp-code-box"><code>&lt;md-toolbar id=&quot;tools&quot; variant=&quot;floating&quot; orientation=&quot;vertical&quot; expanded&gt;&lt;md-icon-button icon=&quot;draw&quot; aria-label=&quot;Draw&quot;&gt;&lt;/md-icon-button&gt;&lt;md-fab slot=&quot;fab&quot; icon=&quot;add&quot; aria-label=&quot;Toggle tools&quot;&gt;&lt;/md-fab&gt;&lt;/md-toolbar&gt;
+&lt;script&gt;const tools = document.querySelector('#tools'); tools.querySelector('[slot="fab"]').addEventListener('click', () =&gt; tools.toggle());&lt;/script&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button></div>
           </div></template>
           <template data-defer><div class="comp-card">
@@ -1913,7 +2037,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Checkboxes let people select one or more items from a list, or turn an item on or off.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
                 <md-checkbox aria-label="Unchecked"></md-checkbox>
@@ -1942,15 +2066,15 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Chips help people enter information, make selections, filter content, or trigger actions.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1560px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
-                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;">
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                   <md-chip variant="filter" icon="mail" label="Unread"></md-chip>
                   <md-chip variant="filter" selected label="Important"></md-chip>
                 </div>
-                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;">
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                   <md-chip variant="assist" icon="event" label="Add to calendar"></md-chip>
                   <md-chip variant="assist" icon="navigation" label="Directions"></md-chip>
                 </div></div>
@@ -1967,11 +2091,11 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
-                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;">
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                   <md-chip variant="input" icon="person" label="Design Lead" removable></md-chip>
                   <md-chip variant="input" icon="code" label="TypeScript" removable></md-chip>
                 </div>
-                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap;">
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                   <md-chip variant="assist" elevated icon="star" label="Elevated Assist"></md-chip>
                   <md-chip variant="filter" elevated selected label="Elevated Selected"></md-chip>
                 </div></div>
@@ -2018,7 +2142,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Date pickers let people select a date, or a range of dates.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1560px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-date-picker variant="docked" value="08/17/2025" inline></md-date-picker>
@@ -2067,7 +2191,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Menus display a list of choices on a temporary surface.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1560px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; min-height: 128px; align-items: flex-start; overflow: visible;">
               <md-menu id="demo-menu-1">
@@ -2160,7 +2284,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Radio buttons let people select one option from a set.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
                 <md-radio-button name="radio-demo" value="1" checked aria-label="Radio 1"></md-radio-button>
@@ -2188,7 +2312,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Sliders let people make selections from a range of values.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:2600px;--deferred-two:1560px">
+        <div class="cards-grid" data-deferred style="--deferred-one:2544px;--deferred-two:1520px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
               <div style="display:flex; justify-content:space-between; width:100%; max-width:280px; gap:16px; font:var(--md-sys-typescale-label-medium); letter-spacing:var(--md-sys-typescale-label-medium-tracking); color:var(--md-sys-color-on-surface-variant);">
@@ -2274,7 +2398,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Switches toggle the selection of an item on or off.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap; max-width: 100%;">
                 <md-switch aria-label="Unchecked"></md-switch>
@@ -2302,7 +2426,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Time pickers help people select and set a specific time.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1560px;--deferred-two:1040px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <md-button variant="tonal" label="Open Time Picker Dialog" id="open-time-picker-btn"></md-button>
@@ -2357,7 +2481,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           <p class="section-desc">An editable text field that suggests matching options as people type.</p>
           <p class="section-note"><span class="mat-sym" aria-hidden="true">extension</span><span>Web extension. Material 3 has no component with this name; this one is composed from Material components and follows their specs.</span></p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview comp-preview-dropdown">
               <md-autocomplete id="demo-autocomplete" label="Search Framework" placeholder="Type to filter..." options='["React 19", "Next.js 15", "Vue 3", "Svelte 5", "Angular 18", "SolidJS", "Qwik", "Lit", "Vanilla JS"]'></md-autocomplete>
@@ -2383,7 +2507,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           <p class="section-desc">A read-only text field that opens a menu of options.</p>
           <p class="section-note"><span class="mat-sym" aria-hidden="true">extension</span><span>Web extension. Material 3 has no component with this name; this one is composed from Material components and follows their specs.</span></p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1040px;--deferred-two:520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview comp-preview-dropdown">
               <md-select label="UI Architecture" value="compose">
@@ -2430,7 +2554,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Text fields let people enter text into a UI.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:3640px;--deferred-two:2080px">
+        <div class="cards-grid" data-deferred style="--deferred-one:3568px;--deferred-two:2032px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%;">
               <md-text-field variant="outlined" label="Fixed Header Label" float-label="always" value="Pre-filled data" supporting-text="Label remains anchored at the top notch" style="width: 100%; max-width: 280px;"></md-text-field>
@@ -2538,7 +2662,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Dynamic color creates a full scheme of color roles from one seed color.</p>
         </header>
-        <div class="cards-grid full-width" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid full-width" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card full-col theme-lab">
             <div class="comp-preview theme-lab-preview">
               <div class="theme-lab-controls">
@@ -2643,7 +2767,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Expressive shapes from the Material shape library add emphasis and personality.</p>
         </header>
-        <div class="cards-grid full-width" data-deferred style="--deferred-one:520px;--deferred-two:520px">
+        <div class="cards-grid full-width" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card full-col">
             <div class="comp-preview shape-gallery">
               <figure class="shape-tile"><md-shape name="sunny" size="48px" color="primary" aria-hidden="true"></md-shape><figcaption>sunny</figcaption></figure>
@@ -2731,8 +2855,30 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
       } catch { setTimeout(done); }
       setTimeout(done, 1000);
     });
-    const { initShowcase } = await import('./src/showcase.js');
+    // A yielded task resumes without the timer throttling of background tabs.
+    const nextTask = () => globalThis.scheduler?.yield ? scheduler.yield() : new Promise(resolve => {
+      const channel = new MessageChannel();
+      channel.port1.onmessage = () => { channel.port1.close(); resolve(); };
+      channel.port2.postMessage(null);
+    });
+    // Defining a component upgrades every one of its elements already on the
+    // page. The bundle's definitions are collected and registered one per task,
+    // in their original order, so upgrading the page never blocks input for
+    // long. The visitor's theme is applied before them, so components are
+    // created with their final colors; starting the showcase is a task of its own.
+    const definitions = [], define = customElements.define.bind(customElements);
+    customElements.define = (...definition) => { definitions.push(definition); };
+    try { await import('./dist/md3-expressive.esm.js'); } finally { customElements.define = define; }
+    const { applyInitialTheme, initShowcase } = await import('./assets/showcase.js');
+    await nextTask();
+    applyInitialTheme();
+    for (const definition of definitions) {
+      await nextTask();
+      if (!customElements.get(definition[0])) define(...definition);
+    }
+    await nextTask();
     initShowcase();
+    document.documentElement.setAttribute('data-showcase-ready', '');
   </script>
 </body>
 </html>

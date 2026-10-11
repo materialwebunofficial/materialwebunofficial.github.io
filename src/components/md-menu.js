@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /* Public AndroidX DropdownMenuPopup/Group/Item web adaptation.
  * Reference a095da93f8e98dea8748ceed79ea8427aade245f. */
 import {safeJsonParse} from '../utils/security.js';
@@ -97,7 +98,7 @@ export class MdMenu extends HTMLElement {
   // A closed menu's groups and items are not drawn; a theme change reaches
   // them when the menu opens.
   this._themeObserver=observeThemeContext(this,()=>{if(this._visible)this._sync();else this._themeStale=true;});
-  this._resizeObserver=new ResizeObserver(()=>{if(this._visible)this._position();});this._resizeObserver.observe(this._menu);this._resizeObserver.observe(this._trigger);if(this._externalAnchor)this._resizeObserver.observe(this._externalAnchor);
+  this._resizeObserver=new FrameResizeObserver(()=>{if(this._visible)this._position();});this._resizeObserver.observe(this._menu);this._resizeObserver.observe(this._trigger);if(this._externalAnchor)this._resizeObserver.observe(this._externalAnchor);
  }
  disconnectedCallback(){
   this._abortController?.abort();this._popupAbort?.abort();this._observer?.disconnect();this._resizeObserver?.disconnect();this._themeObserver?.();this._themeObserver=null;
@@ -291,7 +292,9 @@ const itemStyle=`
  .item:disabled{cursor:default}
  .leading,.trailing{display:flex;align-items:center;flex:none;min-width:20px}
  .leading.selected-only{min-width:0;overflow:hidden;justify-content:flex-end}
- .text{min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
+ /* Flex layout reserves the icon, shortcut and gaps before wrapping text.
+    A measured max-width feeds rounded CSS widths back into intrinsic sizing. */
+ .text{min-width:0;flex:0 1 auto;white-space:pre-wrap;overflow-wrap:anywhere}
  .text .label{display:block;min-height:20px}
  .supporting-text,slot[name="supporting"]{display:block;font:var(--md-sys-typescale-body-medium,400 14px/20px Roboto,sans-serif);letter-spacing:var(--md-sys-typescale-body-medium-tracking,.2px)}
  .ico{display:flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;direction:ltr}
@@ -337,9 +340,9 @@ export class MdMenuItem extends HTMLElement{
  _optional(name,value){if(value==null)this.removeAttribute(name);else this.setAttribute(name,String(value));}
  connectedCallback(){
   if(!this._button)this.render();if(!this.hasAttribute('selection-mode')&&(this.hasAttribute('selected')||this.hasAttribute('checked')))this.selectionMode=this.hasAttribute('checked')?'multiple':'single';
-  this.setupInteractions();this._themeObserver=observeThemeContext(this,()=>this._syncContext());this._resizeObserver=new ResizeObserver(()=>this._measure());this._resizeObserver.observe(this._button);this._syncContext();
+  this.setupInteractions();this._themeObserver=observeThemeContext(this,()=>this._syncContext());this._syncContext();
  }
- disconnectedCallback(){this._abortController?.abort();this._themeObserver?.();this._themeObserver=null;this._resizeObserver?.disconnect();this._shapeMotion?.dispose();this._shapeMotion=null;this._containerMotion?.dispose();this._containerMotion=null;}
+ disconnectedCallback(){this._abortController?.abort();this._themeObserver?.();this._themeObserver=null;this._shapeMotion?.dispose();this._shapeMotion=null;this._containerMotion?.dispose();this._containerMotion=null;}
  attributeChangedCallback(name,oldValue,newValue){if(this._button&&oldValue!==newValue){if((name==='selected'||name==='checked')&&this.selected&&this.selectionMode==='single')(owningMenu(this)||owningGroup(this))?._select(this);this._syncContext();}}
  focus(options){this._button?.focus(options);}
  render(){
@@ -385,9 +388,9 @@ export class MdMenuItem extends HTMLElement{
   const arrangement=this.getAttribute('horizontal-arrangement')||owningMenu(this)?.horizontalArrangement||'menu';this._button.style.justifyContent=['start','end','center','space-between','space-around','space-evenly'].includes(arrangement)?({start:'flex-start',end:'flex-end'}[arrangement]||arrangement):'';this._trailing.style.marginInlineStart=arrangement==='menu'?'auto':'0';
   const group=owningGroup(this),items=group?group._items:owningMenu(this)?._items||[this];const corners=menuItemCorners({selected:this.selected,index:items.indexOf(this),count:items.length,dropdown,small:radius(this,'extra-small',4),medium:radius(this,'medium',12)});
   const leadingWidth=only?(this.selected?Math.max(20,this._leading.querySelector('.ico').offsetWidth):0):0;
-  this._drawExtra=values=>{if(!this._selectedOnly)return;this._leading.style.width=Math.max(0,Math.round(values.leadingWidth))+'px';this._leading.style.opacity=Math.max(0,Math.min(1,values.leadingAlpha));this._measure();};
+  this._drawExtra=values=>{if(!this._selectedOnly)return;this._leading.style.width=Math.max(0,Math.round(values.leadingWidth))+'px';this._leading.style.opacity=Math.max(0,Math.min(1,values.leadingAlpha));};
   setCornerTargets(this,this._button,shape(this.shapes[this.selected?'selectedShape':'shape'],corners),{leadingWidth:{value:leadingWidth,role:'expressiveSpatialFast',roundInitial:true},leadingAlpha:{value:only&&this.selected?1:0,role:'expressiveEffectFast'}});
-  this._syncColors();this._measure();
+  this._syncColors();
   if(owningMenu(this)&&!owningMenu(this)._visible){this._shapeMotion?.finish();this._containerMotion?.finish();}
  }
  _syncColors(){
@@ -402,15 +405,6 @@ export class MdMenuItem extends HTMLElement{
   this._button.style.color=resolved.content;this._leading.style.color=resolved.leading;this._trailing.style.color=resolved.trailing;
   if(!this._containerMotion)this._containerMotion=new ColorMotion(this,this._probe,resolved.container,value=>this._button.style.backgroundColor=value,{role:'expressiveEffectFast'});
   else this._containerMotion.set(resolved.container);
- }
- _measure(){
-  // Layout must use untransformed dimensions. The popup's animated graphics scale
-  // otherwise feeds back into text wrapping, intrinsic width and anchor placement.
-  if(!this.isConnected||!this._button||this._button.offsetWidth===0)return;const style=getComputedStyle(this._button),width=number(style.width,this._button.clientWidth)-number(style.paddingInlineStart,12)-number(style.paddingInlineEnd,12);
-  const leading=this._leading.hidden?0:number(getComputedStyle(this._leading).width,0),trailing=this._trailing.hidden?0:number(getComputedStyle(this._trailing).width,0),gap=number(style.columnGap,8);
-  // CSS serializes fractional widths with fewer digits than layout retains.
-  // Round up to the layout unit so a fitting final glyph cannot wrap by that loss.
-  this.shadowRoot.querySelector('.text').style.maxWidth=(Math.ceil(Math.max(0,width-leading-trailing-(this._leading.hidden?0:gap)-(this._trailing.hidden?0:gap))*64)/64)+'px';
  }
  _openSubmenu(focus){const submenu=this.querySelector('md-menu[slot="submenu"]');if(!submenu)return;
   const owner=owningMenu(this);for(const child of owner?._items||[])if(child!==this)child.querySelector('md-menu[slot="submenu"]')?._requestClose(false);

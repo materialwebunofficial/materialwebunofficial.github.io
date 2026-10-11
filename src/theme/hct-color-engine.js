@@ -141,6 +141,7 @@ export const MD3_PRESETS = [
 
 let globalActiveHct = describe(sourceHct(DEFAULT_SEED));
 
+let lastScheme = null;
 export function applyDynamicTheme(source, isDark = null, variant = null, target = null, contrastLevel = null) {
   if (!target && typeof document !== 'undefined') {
     target = document.documentElement;
@@ -165,17 +166,28 @@ export function applyDynamicTheme(source, isDark = null, variant = null, target 
   }
   target._activeHct = { ...resolvedHct };
 
-  const tokens = generateM3Scheme(resolvedHct, isDark, variant, contrastLevel);
+  // The same inputs give the same scheme: the last one is reused.
+  const key = `${resolvedHct.hue},${resolvedHct.chroma},${resolvedHct.tone},${isDark},${variant},${contrastLevel}`;
+  if (lastScheme?.key !== key) lastScheme = { key, tokens: generateM3Scheme(resolvedHct, isDark, variant, contrastLevel) };
+  const tokens = { ...lastScheme.tokens };
+  // Roles that already have their value are not written again, and a theme
+  // that changes nothing is not announced, so components do no work for it.
+  let changed = false;
   if (target.style) {
     for (const [key, value] of Object.entries(tokens)) {
+      if (target.style.getPropertyValue(key) === value) continue;
       target.style.setProperty(key, value);
+      changed = true;
     }
   }
 
   const seedHex = hctToHex(resolvedHct.hue, resolvedHct.chroma, resolvedHct.tone);
-  target.setAttribute('data-seed-color', seedHex);
+  if (target.getAttribute('data-seed-color') !== seedHex) {
+    target.setAttribute('data-seed-color', seedHex);
+    changed = true;
+  }
 
-  if (typeof window !== 'undefined') {
+  if (changed && typeof window !== 'undefined') {
     const event = new CustomEvent('theme-color-change', {
       detail: { hct: resolvedHct, seedHex, isDark, variant, contrastLevel, tokens, target },
       bubbles: true,

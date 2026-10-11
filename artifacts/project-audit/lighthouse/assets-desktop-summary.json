@@ -1,0 +1,281 @@
+[
+  {
+    "name": "assets-desktop-home-1",
+    "version": "13.5.0",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "compressed": false,
+    "scores": {
+      "performance": 0.99,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    },
+    "audits": {
+      "first-contentful-paint": {
+        "score": 1,
+        "value": 500,
+        "display": "0.5 s"
+      },
+      "largest-contentful-paint": {
+        "score": 0.99,
+        "value": 700,
+        "display": "0.7 s"
+      },
+      "total-blocking-time": {
+        "score": 1,
+        "value": 0,
+        "display": "0 ms"
+      },
+      "cumulative-layout-shift": {
+        "score": 1,
+        "value": 0.010799324177314813,
+        "display": "0.011"
+      },
+      "speed-index": {
+        "score": 0.96,
+        "value": 1052.7474363175718,
+        "display": "1.1 s"
+      },
+      "unminified-javascript": {
+        "score": 1,
+        "value": 0,
+        "display": "",
+        "savings": 0
+      },
+      "unused-javascript": {
+        "score": 0.5,
+        "value": 0,
+        "display": "Est savings of 585 KiB",
+        "savings": 599108
+      },
+      "forced-reflow-insight": {
+        "score": 0
+      },
+      "network-dependency-tree-insight": {
+        "score": 0
+      },
+      "render-blocking-insight": {
+        "score": 0,
+        "display": "Est savings of 80 ms"
+      },
+      "long-tasks": {
+        "score": 1,
+        "display": "1 long task found"
+      },
+      "total-byte-weight": {
+        "score": 1,
+        "value": 1915146,
+        "display": "Total size was 1,870 KiB"
+      }
+    }
+  },
+  {
+    "name": "assets-desktop-components-1",
+    "version": "13.5.0",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "compressed": false,
+    "scores": {
+      "performance": 0.91,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    },
+    "audits": {
+      "first-contentful-paint": {
+        "score": 1,
+        "value": 500,
+        "display": "0.5 s"
+      },
+      "largest-contentful-paint": {
+        "score": 0.66,
+        "value": 1900,
+        "display": "1.9 s"
+      },
+      "total-blocking-time": {
+        "score": 1,
+        "value": 0,
+        "display": "0 ms"
+      },
+      "cumulative-layout-shift": {
+        "score": 1,
+        "value": 0,
+        "display": "0"
+      },
+      "speed-index": {
+        "score": 0.94,
+        "value": 1154.512870748902,
+        "display": "1.2 s"
+      },
+      "unminified-javascript": {
+        "score": 1,
+        "value": 0,
+        "display": "",
+        "savings": 0
+      },
+      "unused-javascript": {
+        "score": 0,
+        "value": 440,
+        "display": "Est savings of 584 KiB",
+        "savings": 598305
+      },
+      "forced-reflow-insight": {
+        "score": 0
+      },
+      "network-dependency-tree-insight": {
+        "score": 0
+      },
+      "render-blocking-insight": {
+        "score": 0,
+        "display": "Est savings of 80 ms"
+      },
+      "long-tasks": {
+        "score": null
+      },
+      "total-byte-weight": {
+        "score": 1,
+        "value": 1915146,
+        "display": "Total size was 1,870 KiB"
+      }
+    }
+  },
+  {
+    "name": "assets-desktop-home-2",
+    "version": "13.5.0",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "compressed": false,
+    "scores": {
+      "performance": 0.91,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    },
+    "audits": {
+      "first-contentful-paint": {
+        "score": 1,
+        "value": 500,
+        "display": "0.5 s"
+      },
+      "largest-contentful-paint": {
+        "score": 0.66,
+        "value": 1900,
+        "display": "1.9 s"
+      },
+      "total-blocking-time": {
+        "score": 1,
+        "value": 0,
+        "display": "0 ms"
+      },
+      "cumulative-layout-shift": {
+        "score": 1,
+        "value": 0.010799324177314813,
+        "display": "0.011"
+      },
+      "speed-index": {
+        "score": 0.95,
+        "value": 1089.2330734553589,
+        "display": "1.1 s"
+      },
+      "unminified-javascript": {
+        "score": 1,
+        "value": 0,
+        "display": "",
+        "savings": 0
+      },
+      "unused-javascript": {
+        "score": 0,
+        "value": 440,
+        "display": "Est savings of 583 KiB",
+        "savings": 597320
+      },
+      "forced-reflow-insight": {
+        "score": 0
+      },
+      "network-dependency-tree-insight": {
+        "score": 0
+      },
+      "render-blocking-insight": {
+        "score": 0,
+        "display": "Est savings of 80 ms"
+      },
+      "long-tasks": {
+        "score": 1,
+        "display": "1 long task found"
+      },
+      "total-byte-weight": {
+        "score": 1,
+        "value": 1915146,
+        "display": "Total size was 1,870 KiB"
+      }
+    }
+  },
+  {
+    "name": "assets-desktop-components-2",
+    "version": "13.5.0",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "compressed": false,
+    "scores": {
+      "performance": 0.91,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    },
+    "audits": {
+      "first-contentful-paint": {
+        "score": 1,
+        "value": 500,
+        "display": "0.5 s"
+      },
+      "largest-contentful-paint": {
+        "score": 0.66,
+        "value": 1900,
+        "display": "1.9 s"
+      },
+      "total-blocking-time": {
+        "score": 1,
+        "value": 0,
+        "display": "0 ms"
+      },
+      "cumulative-layout-shift": {
+        "score": 1,
+        "value": 0,
+        "display": "0"
+      },
+      "speed-index": {
+        "score": 0.94,
+        "value": 1157.877469755816,
+        "display": "1.2 s"
+      },
+      "unminified-javascript": {
+        "score": 1,
+        "value": 0,
+        "display": "",
+        "savings": 0
+      },
+      "unused-javascript": {
+        "score": 0,
+        "value": 440,
+        "display": "Est savings of 584 KiB",
+        "savings": 598305
+      },
+      "forced-reflow-insight": {
+        "score": 0
+      },
+      "network-dependency-tree-insight": {
+        "score": 0
+      },
+      "render-blocking-insight": {
+        "score": 0,
+        "display": "Est savings of 80 ms"
+      },
+      "long-tasks": {
+        "score": 1,
+        "display": "1 long task found"
+      },
+      "total-byte-weight": {
+        "score": 1,
+        "value": 1915146,
+        "display": "Total size was 1,870 KiB"
+      }
+    }
+  }
+]

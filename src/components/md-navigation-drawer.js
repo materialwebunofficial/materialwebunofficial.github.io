@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** Web adaptation of AndroidX NavigationDrawer/DrawerSheet/NavigationDrawerItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f. */
 import { delegateHostAria } from '../utils/host-aria.js';
@@ -94,7 +95,7 @@ export class MdNavigationDrawer extends HTMLElement {
  get drawerContentColor(){return this.getAttribute('drawer-content-color')||'';} set drawerContentColor(value){this._optional('drawer-content-color',value);}
  _optional(name,value){if(value==null)this.removeAttribute(name);else this.setAttribute(name,String(value));}
  connectedCallback(){if(!this._rendered)this.render();this.setupInteractions();this._applySelection();this._syncSurface();this._syncOpen(false);
-   this._resizeObserver=new ResizeObserver(()=>this._syncOpen(false));this._resizeObserver.observe(this._drawer);}
+   this._resizeObserver=new FrameResizeObserver(()=>this._resize());this._resizeObserver.observe(this._drawer);}
  disconnectedCallback(){this._abortController?.abort();this._abortController=null;this._resizeObserver?.disconnect();this._resizeObserver=null;
    this._motion?.dispose();this._motion=null;this._drag=null;this._releaseGestureOwner();if(this._layer?.localName==='dialog'&&this._layer.open)this._layer.close();}
  attributeChangedCallback(name,oldValue,newValue){if(!this._rendered||oldValue===newValue)return;
@@ -152,11 +153,26 @@ export class MdNavigationDrawer extends HTMLElement {
    if(Math.abs(target-content.scrollTop)>=1)content.scrollTo({top:target,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
  _select(index){const r=this._records.find(record=>record.index===index);if(!r||r.button.disabled||this.selected===index)return;
    this.selected=index;this.dispatchEvent(new CustomEvent('change',{detail:{index,value:r.item.value??null,item:r.item},bubbles:true,composed:true}));}
- _syncOpen(animate){if(!this.isConnected||!this._drawer)return;
+ _measureWidth(){
    if(this.variant==='dismissible'){
      const style=getComputedStyle(this),requested=parseFloat(style.getPropertyValue('--md-navigation-drawer-width'))||(this.items.length?360:240);
      this._width=Math.min(requested,360,this.parentElement?.clientWidth||innerWidth);this.style.setProperty('--drawer-measured-width',`${this._width}px`);
    }else this._width=this._drawer.offsetWidth;
+ }
+ _resize(){
+   if(!this.isConnected||!this._drawer)return;
+   const previous=this._width;this._measureWidth();
+   // Initial/height-only deliveries must not snap a caught gesture back to the
+   // open attribute. Only changed anchor geometry needs a new offset target.
+   if(previous===this._width)return;
+   if(this._drag?.started&&this._motion){
+     const channel=this._motion.channels.offset;
+     channel.value=channel.target=clamp(channel.value,-this._width,0);channel.animation=null;
+     this._motion.tick(performance.now());
+   }else this._syncOpen(!!this._motion?.channels.offset.animation);
+ }
+ _syncOpen(animate){if(!this.isConnected||!this._drawer)return;
+   this._measureWidth();
    if(!this._motion){this._motion=new SelectionMotion(this,{offset:this.open?0:-this._width},values=>this._drawOffset(values.offset));
      this._motion.channels.offset=new DrawerOffset(this.open?0:-this._width);}
    if(this.modal&&this.open&&!this._layer.open){this._drawOffset(this._offset);this._layer.showModal();this._focusable()[0]?.focus();}
@@ -252,4 +268,4 @@ export class MdNavigationDrawer extends HTMLElement {
  _cancelDrag(){const drag=this._drag;this._drag=null;this._releaseGestureOwner();if(!drag?.started)return;
    this._settleDrag(0,drag.id);}
 }
-if(!customElements.get('md-navigation-drawer'))customElements.define('md-navigation-drawer',delegateHostAria(MdNavigationDrawer));
+if(!customElements.get('md-navigation-drawer'))customElements.define('md-navigation-drawer',delegateHostAria(MdNavigationDrawer, '.drawer'));

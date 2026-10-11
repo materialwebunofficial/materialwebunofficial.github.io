@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * AndroidX BottomAppBar (80dp) and Expressive FlexibleBottomAppBar (64dp).
  * Source defaults/Surface/Row: test/fixtures/androidx/app-bars/AppBar.kt.
@@ -14,6 +15,7 @@ import { BottomAppBarSettling } from './bottom-app-bar-scroll.js';
 import { HorizontalTouchSlop, pointerSlop } from '../motion/touch-slop.js';
 import { PointerVelocityTracker } from '../motion/velocity-tracker.js';
 import {ScrollPosition} from '../motion/scroll-position.js';
+import { HostStyleSheet } from '../utils/host-style.js';
 
 const defaultStyle = `
   :host { display: block; position: relative; width: 100%; min-width: 0; height: var(--_bottom-app-bar-height, 80px); touch-action:var(--_bottom-app-bar-touch-action,auto); -webkit-tap-highlight-color: transparent; }
@@ -111,7 +113,7 @@ export class MdBottomAppBar extends HTMLElement {
           <div class="fab" part="fab"><slot name="fab"></slot></div>
         </div>
       </div><span class="color-probe" aria-hidden="true"></span><span class="inset-probe" aria-hidden="true"></span><span class="minimum-probe" aria-hidden="true"></span>`;
-    this._sizes=document.createElement('style');this._sizes.textContent=':host{}';this.shadowRoot.append(this._sizes);
+    this._sizes=new HostStyleSheet(this.shadowRoot);
     this._rendered = true;
   }
   // Content, size, theme and attribute changes measure the bar again; scroll
@@ -173,11 +175,10 @@ export class MdBottomAppBar extends HTMLElement {
   _setRules(rules){
     // Rewriting identical rules would restyle every placed control each frame.
     const text=rules.join('');if(text===this._rulesText)return;this._rulesText=text;
-    while(this._sizes.sheet.cssRules.length>1)this._sizes.sheet.deleteRule(1);
-    for(const rule of rules)this._sizes.sheet.insertRule(rule,this._sizes.sheet.cssRules.length);
+    this._sizes.setRules(rules);
   }
   _layout(measure=true){
-    const sizing=this._sizes.sheet.cssRules[0].style;
+    const sizing=this._sizes.host;
     if(measure||!this._layoutInput)this._measureInput(sizing);
     const input=this._layoutInput,entries=this._layoutEntries,rules=[];
     const bar=this.shadowRoot.querySelector('.bar'),content=this.shadowRoot.querySelector('.content'),actions=this.shadowRoot.querySelector('.actions'),fab=this.shadowRoot.querySelector('.fab');
@@ -205,7 +206,7 @@ export class MdBottomAppBar extends HTMLElement {
     const stop=event=>this._barDragStop(event);for(const type of ['pointerup','pointercancel','lostpointercapture'])this.addEventListener(type,stop,{signal});
     this.addEventListener('click',event=>{if(this._suppressDragClick&&event.detail!==0){this._suppressDragClick=false;event.preventDefault();event.stopImmediatePropagation();}},{signal,capture:true});
     this._reduced=matchMedia('(prefers-reduced-motion: reduce)');this._reduced.addEventListener('change',()=>{if(this._reduced.matches){this._scrollSettle?.finish();this._scrollTick(performance.now());}},{signal});
-    this._sizes.sheet.cssRules[0].style.setProperty('--_bottom-app-bar-touch-action',this._activeScrollBehavior&&!this._activeScrollBehavior.isPinned?'pan-x':'auto');
+    this._sizes.host.setProperty('--_bottom-app-bar-touch-action',this._activeScrollBehavior&&!this._activeScrollBehavior.isPinned?'pan-x':'auto');
   }
   _cancelScrollSettle(){
     if(this._scrollRaf)cancelAnimationFrame(this._scrollRaf);this._scrollRaf=0;this._scrollSettle=null;this._scrollResolve?.({x:0,y:0});this._scrollResolve=null;
@@ -243,7 +244,7 @@ export class MdBottomAppBar extends HTMLElement {
     this._observedChildren=new Set();
     // The bar's own height while it scrolls away and back is drawn from the
     // measured content; only other size changes are measured again.
-    this._resize=new ResizeObserver(entries=>{
+    this._resize=new FrameResizeObserver(entries=>{
       const drawn=entries.every(entry=>{if(entry.target!==this)return false;const width=entry.contentRect.width,previous=this._observedWidth;this._observedWidth=width;
         return previous!==undefined&&Math.abs(width-previous)<.5&&this._layoutResult&&Math.abs(entry.contentRect.height-this._layoutResult.size.height)<.5;});
       if(!drawn)this._queue();
@@ -265,4 +266,4 @@ export class MdBottomAppBar extends HTMLElement {
     signal.addEventListener('abort', stopTheme, {once: true});
   }
 }
-if (!customElements.get('md-bottom-app-bar')) customElements.define('md-bottom-app-bar', delegateHostAria(MdBottomAppBar));
+if (!customElements.get('md-bottom-app-bar')) customElements.define('md-bottom-app-bar', delegateHostAria(MdBottomAppBar, '.bar'));

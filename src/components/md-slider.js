@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** Material 3 slider. Source geometry: Slider.kt / SliderTokens.kt, see NOTICE. */
 import { delegateHostAria } from '../utils/host-aria.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
@@ -116,7 +117,7 @@ export class MdSlider extends HTMLElement {
       this._defaultValue = this.value; this._defaultRange = [this.rangeStart, this.rangeEnd];
     }
     this._setup(); this._sync();
-    this._resizeObserver = new ResizeObserver(() => this._sync()); this._resizeObserver.observe(this._root);
+    this._resizeObserver = new FrameResizeObserver(() => this._sync()); this._resizeObserver.observe(this._root);
     this._unobserveTheme = observeThemeContext(this, () => this._sync());
     // The accessible name comes from elements in the host's tree; only changes
     // to those elements (or to ids and label associations) can alter it.
@@ -344,4 +345,4 @@ export class MdSlider extends HTMLElement {
     this._thumb = this.shadowRoot.querySelector('.thumb:not(.range-start-thumb)'); this._startThumb = this.shadowRoot.querySelector('.range-start-thumb');
   }
 }
-if (!customElements.get('md-slider')) customElements.define('md-slider',delegateHostAria(MdSlider));
+if (!customElements.get('md-slider')) customElements.define('md-slider',delegateHostAria(MdSlider, '.slider-root'));

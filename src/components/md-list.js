@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** Web adaptation of AndroidX public Expressive ListItem/SegmentedListItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f. */
 import { delegateHostAria } from '../utils/host-aria.js';
@@ -127,7 +128,7 @@ export class MdListItem extends HTMLElement {
  _optional(name,value){if(value==null)this.removeAttribute(name);else this.setAttribute(name,String(value));}
  connectedCallback(){
    if(!this._item)this.render();this._setup();this._syncContent();this._syncHierarchy();
-   this._resizeObserver=new ResizeObserver(()=>this._measure());
+   this._resizeObserver=new FrameResizeObserver(()=>this._measure());
    for(const node of [this._item,this._leading,this._trailing,this._content])this._resizeObserver.observe(node);
    this._themeObserver=observeThemeContext(this,()=>{this._syncVisuals();this._measure();});
    this._fontListener=()=>this._measure();this.ownerDocument.fonts?.addEventListener('loadingdone',this._fontListener);
@@ -275,5 +276,5 @@ for(const name of fields){
  const property=name.replace(/-([a-z])/g,(_,char)=>char.toUpperCase());
  Object.defineProperty(MdListItem.prototype,property,{get(){return this.getAttribute(name)||'';},set(value){this._optional(name,value);},configurable:true});
 }
-if(!customElements.get('md-list'))customElements.define('md-list',delegateHostAria(MdList));
+if(!customElements.get('md-list'))customElements.define('md-list',delegateHostAria(MdList, '.list'));
 if(!customElements.get('md-list-item'))customElements.define('md-list-item',delegateHostAria(MdListItem));

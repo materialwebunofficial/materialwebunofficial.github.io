@@ -77,41 +77,50 @@ Install via npm or yarn:
 npm install @materialwebunofficial/md3e-web
 ```
 
-#### Global Import (In your app's root / `main.js` / `_app.tsx`):
+#### Global Import (in the browser entry, e.g. Vite's `main.js`):
 ```javascript
 // 1. Import Design Tokens (Colors, Typography, Shapes, Motion, Icons)
 import '@materialwebunofficial/md3e-web/tokens';
 
-// 2. Import & Register All 36 Components
+// 2. Import & register the complete component catalog
 import '@materialwebunofficial/md3e-web';
 ```
 
-#### Selective / Tree-shakeable Import:
+#### Selective Import:
 ```javascript
-import '@materialwebunofficial/md3e-web/tokens/colors';
-import '@materialwebunofficial/md3e-web/tokens/shapes';
-import { MdButton, MdSlider, MdDatePicker } from '@materialwebunofficial/md3e-web';
+import '@materialwebunofficial/md3e-web/tokens';
+import { MdButton } from '@materialwebunofficial/md3e-web/components/md-button.js';
+import '@materialwebunofficial/md3e-web/components/md-slider.js';
+import '@materialwebunofficial/md3e-web/components/md-date-picker.js';
 ```
+
+The root import registers every component, including when it imports just one named
+class. Component paths register only that component and its composition dependencies.
+Registration is a side effect; the package deliberately does not declare `sideEffects: false`.
 
 ---
 
 ### 3. Framework Integration (React / Next.js, Vue 3, Svelte, Angular)
 
-Because MD3E components are standard W3C Custom Elements, they work natively across all modern frontend frameworks:
+MD3E uses browser Custom Elements. Component modules require `HTMLElement`,
+`customElements`, and a DOM at import time. Import them only in a browser entry or
+client lifecycle. A Next.js `'use client'` directive alone does not prevent server
+prerendering from evaluating static imports. Components do not render their shadow
+content on the server; they upgrade after client registration.
 
 #### React / Next.js:
 ```tsx
-import '@materialwebunofficial/md3e-web/tokens';
-import '@materialwebunofficial/md3e-web';
+'use client';
+import { createElement, useEffect } from 'react';
+// Import '@materialwebunofficial/md3e-web/tokens' in app/layout.tsx.
 
 export default function MyPage() {
-  return (
-    <div className="container">
-      <md-button variant="filled" onClick={() => alert('Clicked!')}>
-        Next.js + MD3E
-      </md-button>
-    </div>
-  );
+  useEffect(() => {
+    void import('@materialwebunofficial/md3e-web/components/md-button.js');
+  }, []);
+  return createElement('md-button', {
+    variant: 'filled', onClick: () => alert('Clicked!')
+  }, 'Next.js + MD3E');
 }
 ```
 
@@ -119,16 +128,41 @@ export default function MyPage() {
 ```vue
 <template>
   <md-button variant="elevated" @click="handleAction">Vue 3 Expressive</md-button>
-  <md-slider v-model="sliderVal" labeled></md-slider>
+  <md-slider :value="sliderVal" @input="sliderVal = $event.detail.value" labeled></md-slider>
 </template>
 
 <script setup>
 import '@materialwebunofficial/md3e-web/tokens';
-import '@materialwebunofficial/md3e-web';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
+onMounted(async () => {
+  await import('@materialwebunofficial/md3e-web/components/md-button.js');
+  await import('@materialwebunofficial/md3e-web/components/md-slider.js');
+});
 const sliderVal = ref(50);
 </script>
 ```
+
+Configure Vue's `compilerOptions.isCustomElement` to accept tags starting with
+`md-`. Native `v-model` does not know this library's CustomEvent value contract;
+bind `value` and read `event.detail.value` explicitly.
+
+Pure color computation is server-safe through the separate theme entry:
+
+```js
+import { generateM3Scheme } from '@materialwebunofficial/md3e-web/theme';
+const colors = generateM3Scheme('#6750A4', false);
+```
+
+DOM theme application helpers such as `applyDynamicTheme` still require a browser.
+See [MIGRATION.md](MIGRATION.md) for form, selection, date and packaging contracts.
+
+`npm run test:frameworks` installs the packed library into an isolated consumer,
+builds a production Next.js app and checks React/Vue server rendering, hydration,
+client registration and custom events. The fixture dependencies have their own
+lockfile in `test/frameworks`; they are not library runtime dependencies.
+The lifecycle patterns follow the [Next.js client component guidance](https://nextjs.org/docs/app/getting-started/server-and-client-components),
+[React custom element support](https://react.dev/reference/react-dom/components#custom-html-elements)
+and [Vue Web Components guidance](https://vuejs.org/guide/extras/web-components.html).
 
 ---
 
@@ -166,8 +200,9 @@ fixed accent roles, surface tint, shadow and scrim. Use corresponding on-color
 roles for text and icons. See [source and regeneration notes](tools/material-color-utilities/README.md).
 
 The CSS package includes a local variable Roboto font and its OFL license in
-`dist/fonts`, split into Latin and Greek/Cyrillic files that browsers load only
-for the scripts a page uses. It also includes the Material Symbols Rounded
+`dist/fonts`, split into Latin, Latin Extended and Greek/Cyrillic files that
+browsers load only for the scripts a page uses (weight axis 100-900; the width
+axis is pinned to 100%, since the type roles vary weight only). It also includes the Material Symbols Rounded
 subset the components use (variable `FILL` and `wght`; add symbols with
 `tools/material-symbols`, or load the full Material Symbols Rounded stylesheet
 from Google Fonts after the tokens CSS). Keep that folder beside the
@@ -1038,6 +1073,15 @@ motion and disposal/reconnect. Full native layout coordinators, optional inset
 focus rings, platform rendering and other engines remain outside this verified
 adapter scope. Run `node scripts/test-selection.mjs --source --indication` or
 `npm run test:selection`.
+
+## Showcase development
+
+Run `npm run build` after editing `src/showcase.js`, `styles/showcase.css`, or
+component sources. The page loads generated `assets/showcase.js` and
+`assets/showcase.css`; `npm run check:dist` checks their source consistency too.
+The controller shares the library bundle, and the combined stylesheet preserves
+the complete token and page cascade for the first paint. These site assets are
+outside the npm package. `npm run build:showcase` prepares the static site.
 
 ## 🧪 Testing
 

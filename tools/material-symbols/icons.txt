@@ -63,6 +63,9 @@ delete
 delete_outline
 density_medium
 description
+directions_bus
+directions_car
+directions_walk
 done
 download
 drafts

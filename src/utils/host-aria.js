@@ -1,165 +1,172 @@
-/**
- * ARIA written on a component host belongs to the component's inner control.
- *
- * A custom element host has no role, and ARIA states, properties and names on
- * a role-less element are ignored by assistive technology and reported as
- * prohibited (aria-label, aria-labelledby) or not allowed (aria-expanded,
- * aria-controls, aria-haspopup, ...). Each component already applies these
- * values to its native control or semantic container. This keeps them as the
- * component's own state instead of host attributes: getAttribute, hasAttribute,
- * setAttribute, removeAttribute, toggleAttribute and the ARIAMixin string
- * properties keep working on the host, and attributeChangedCallback still runs
- * for observed names, but the host element itself carries no ARIA. aria-hidden
- * is valid on any element and stays a real attribute.
- */
-const native = {
-  get: Element.prototype.getAttribute,
-  has: Element.prototype.hasAttribute,
-  set: Element.prototype.setAttribute,
-  remove: Element.prototype.removeAttribute,
-};
-const KEPT = new Set(['aria-hidden']);
-const isDelegated = name => typeof name === 'string' && /^aria-/i.test(name) && !KEPT.has(name.toLowerCase());
-const REFLECTED = {
-  ariaLabel: 'aria-label', ariaDescription: 'aria-description', ariaExpanded: 'aria-expanded',
-  ariaHasPopup: 'aria-haspopup', ariaPressed: 'aria-pressed', ariaChecked: 'aria-checked',
-  ariaSelected: 'aria-selected', ariaDisabled: 'aria-disabled', ariaCurrent: 'aria-current',
-  ariaRoleDescription: 'aria-roledescription', ariaKeyShortcuts: 'aria-keyshortcuts',
-};
+/** Public host attributes stay in the DOM; semantics are forwarded to the control. */
+const ARIA = ['aria-label', 'aria-labelledby', 'aria-describedby', 'aria-description',
+  'aria-expanded', 'aria-haspopup', 'aria-controls'];
+const bindings = new WeakMap();
+const forwarded = new WeakMap();
+const names = new WeakMap();
+const descriptions = new WeakMap();
+const selector = 'button:not([hidden]),[role="button"],[role="slider"],[role="switch"],[role="checkbox"],[role="radio"],input:not([hidden]),textarea:not([hidden]),[tabindex="0"]';
 
-// Per-element state lives beside the element rather than on it.
-const stores = new WeakMap(), adopted = new WeakSet(), adopting = new WeakSet(), described = new WeakSet();
-function store(element) {
-  let map = stores.get(element);
-  if (!map) stores.set(element, map = new Map());
-  return map;
+function references(host, value) {
+  const root = host.getRootNode();
+  return (value || '').split(/\s+/).filter(Boolean)
+    .map(id => root.getElementById?.(id)).filter(Boolean);
 }
 
-/** Moves any real host ARIA attribute (parsed markup, raw writes) into the component state. */
-function adopt(element, force = false) {
-  if (adopting.has(element) || (!force && adopted.has(element))) return;
-  adopted.add(element);
-  if (!element.hasAttributes()) return;
-  // Collected first: removing attributes while walking the live map skips some.
-  let names = null;
-  const attributes = element.attributes;
-  for (let i = 0; i < attributes.length; i++) if (isDelegated(attributes[i].name)) (names ||= []).push(attributes[i].name);
-  if (!names) return;
-  for (const name of names) {
-    store(element).set(name, native.get.call(element, name));
-    adopting.add(element);
-    try { native.remove.call(element, name); } finally { adopting.delete(element); }
-  }
+export function labelledByText(host, value) {
+  return references(host, value).map(node => node.textContent.trim()).filter(Boolean).join(' ');
 }
 
-/**
- * aria-describedby names elements in the host's tree (a tooltip, a supporting
- * text), which an ID reference inside the shadow root cannot reach. The inner
- * control refers to them by element reflection, or carries their text as its
- * description where reflection is unavailable.
- */
-function syncDescription(element) {
-  // Nothing to apply or to clear for a component that never had a description.
-  const value = store(element).get('aria-describedby') || '';
-  if (!value && !described.has(element)) return;
-  const control = element.shadowRoot?.querySelector('button:not([hidden]),[role="button"],[role="slider"],[role="switch"],[role="checkbox"],[role="radio"],input,textarea,[tabindex="0"]');
+/** Name precedence follows HTML: labelledby, aria-label, external labels, component label. */
+export function syncControlName(host, control, fallback = '') {
   if (!control) return;
-  if (value) described.add(element); else described.delete(element);
-  const root = element.getRootNode();
-  const targets = value.split(/\s+/).filter(Boolean).map(id => root.getElementById?.(id) || element.ownerDocument.getElementById(id)).filter(Boolean);
-  if ('ariaDescribedByElements' in control) control.ariaDescribedByElements = targets.length ? targets : null;
-  else if (targets.length) control.setAttribute('aria-description', targets.map(target => target.textContent.trim()).join(' '));
-  else control.removeAttribute('aria-description');
+  const targets = references(host, host.getAttribute('aria-labelledby'));
+  const labels = [...(host._internals?.labels || [])];
+  const text = targets.map(node => node.textContent.trim()).join(' ').trim()
+    || host.getAttribute('aria-label') || labels.map(node => node.textContent.trim()).join(' ').trim()
+    || host.getAttribute('label') || fallback;
+  if (text) control.setAttribute('aria-label', text); else control.removeAttribute('aria-label');
+  control.removeAttribute('aria-labelledby');
+  if ('ariaLabelledByElements' in control) control.ariaLabelledByElements = targets.length ? targets : null;
 }
 
-export function delegateHostAria(Class) {
-  const proto = Class.prototype;
-  if (Object.prototype.hasOwnProperty.call(proto, '__hostAriaDelegated')) return Class;
-  Object.defineProperty(proto, '__hostAriaDelegated', { value: true });
-  const connected = proto.connectedCallback, changed = proto.attributeChangedCallback;
-  // Changes kept as component state reach the component's own callback.
-  const notify = (element, name, previous, value) => {
-    if (previous !== value && (Class.observedAttributes || []).includes(name)) changed?.call(element, name, previous, value);
-  };
-  Object.defineProperties(proto, {
-    connectedCallback: { configurable: true, writable: true, value(...args) { adopt(this, true); const result = connected?.apply(this, args); syncDescription(this); return result; } },
-    attributeChangedCallback: {
-      configurable: true, writable: true,
-      value(name, previous, value) {
-        if (isDelegated(name)) {
-          // The browser reports a real attribute (markup at upgrade, reflection,
-          // raw writes): adopt it, then report the change from component state.
-          if (adopting.has(this)) return;
-          if (value !== null && native.has.call(this, name)) {
-            const before = store(this).has(name) ? store(this).get(name) : null;
-            adopt(this, true);
-            if (name === 'aria-describedby') syncDescription(this);
-            if (before !== value) changed?.call(this, name, before, value);
-            return;
-          }
-          return;
-        }
-        return changed?.call(this, name, previous, value);
-      },
-    },
-    getAttribute: { configurable: true, writable: true, value(name) {
-      if (!isDelegated(name)) return native.get.call(this, name);
-      adopt(this); const key = name.toLowerCase(); return store(this).has(key) ? store(this).get(key) : null;
-    } },
-    hasAttribute: { configurable: true, writable: true, value(name) {
-      if (!isDelegated(name)) return native.has.call(this, name);
-      adopt(this); return store(this).has(name.toLowerCase());
-    } },
-    setAttribute: { configurable: true, writable: true, value(name, value) {
-      if (!isDelegated(name)) return native.set.call(this, name, value);
-      adopt(this); const key = name.toLowerCase(), previous = store(this).has(key) ? store(this).get(key) : null, next = String(value);
-      store(this).set(key, next); if (key === 'aria-describedby') syncDescription(this); notify(this, key, previous, next);
-    } },
-    removeAttribute: { configurable: true, writable: true, value(name) {
-      if (!isDelegated(name)) return native.remove.call(this, name);
-      adopt(this); const key = name.toLowerCase();
-      if (!store(this).has(key)) return;
-      const previous = store(this).get(key); store(this).delete(key); if (key === 'aria-describedby') syncDescription(this); notify(this, key, previous, null);
-    } },
-    toggleAttribute: { configurable: true, writable: true, value(name, force) {
-      if (!isDelegated(name)) return Element.prototype.toggleAttribute.call(this, name, force);
-      const present = this.hasAttribute(name), next = force === undefined ? !present : !!force;
-      if (next && !present) this.setAttribute(name, ''); else if (!next && present) this.removeAttribute(name);
-      return next;
-    } },
-  });
-  for (const [property, name] of Object.entries(REFLECTED)) {
-    Object.defineProperty(proto, property, { configurable: true,
-      get() { return this.getAttribute(name); },
-      set(value) { if (value === null || value === undefined) this.removeAttribute(name); else this.setAttribute(name, value); } });
+function syncDescription(host, control) {
+  if (!control) return;
+  const active = host.hasAttribute('aria-describedby') || host.hasAttribute('aria-description');
+  let saved = descriptions.get(control);
+  if (!active) {
+    if (saved) {
+      if ('ariaDescribedByElements' in control) control.ariaDescribedByElements = null;
+      for (const [name, value] of saved) {
+        if (value === null) control.removeAttribute(name); else control.setAttribute(name, value);
+      }
+      descriptions.delete(control);
+    }
+    return;
   }
+  if (!saved) descriptions.set(control, saved = new Map(['aria-description','aria-describedby'].map(name => [name, control.getAttribute(name)])));
+  const targets = references(host, host.getAttribute('aria-describedby'));
+  const text = targets.map(node => node.textContent.trim()).join(' ') || host.getAttribute('aria-description');
+  if (text) control.setAttribute('aria-description', text); else control.removeAttribute('aria-description');
+  if (host.hasAttribute('aria-describedby')) control.removeAttribute('aria-describedby');
+  if ('ariaDescribedByElements' in control) {
+    control.ariaDescribedByElements = targets.length ? targets : null;
+  }
+}
+
+/** Observe relevant label/reference changes with one observer per host tree. */
+const trees = new WeakMap();
+export function observeControlLabels(host, refresh) {
+  const root = host.getRootNode();
+  let tree = trees.get(root);
+  if (!tree) {
+    const clients = new Map();
+    const observer = new MutationObserver(records => {
+      for (const [element, update] of clients) {
+        const ids = [element.getAttribute('aria-labelledby'), element.getAttribute('aria-describedby')]
+          .filter(Boolean).join(' ').split(/\s+/);
+        const labels = [...(element._internals?.labels || [])];
+        if (records.some(record => {
+          const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+          if (!target) return false;
+          if (target === element) return record.type === 'attributes' && (ARIA.includes(record.attributeName) || record.attributeName === 'id');
+          if (labels.some(label => label.contains(target)) || ids.some(id => root.getElementById?.(id)?.contains(target))) return true;
+          if (record.type === 'attributes') return record.attributeName === 'for' || record.attributeName === 'id';
+          return [...record.addedNodes, ...record.removedNodes].some(node => node.nodeType === 1 &&
+            (node.matches('label,[id]') || node.querySelector('label,[id]')));
+        })) update();
+      }
+    });
+    observer.observe(root, {subtree:true, childList:true, characterData:true, attributes:true,
+      attributeFilter:[...ARIA, 'id', 'for']});
+    tree = {clients, observer}; trees.set(root, tree);
+  }
+  tree.clients.set(host, refresh);
+  return () => {
+    tree.clients.delete(host);
+    if (!tree.clients.size) { tree.observer.disconnect(); trees.delete(root); }
+  };
+}
+
+export function delegateHostAria(Class, targetSelector = selector) {
+  const proto = Class.prototype;
+  if (Object.hasOwn(proto, '__hostAriaDelegated')) return Class;
+  Object.defineProperty(proto, '__hostAriaDelegated', {value:true});
+  const connected = proto.connectedCallback, disconnected = proto.disconnectedCallback;
+  const changed = proto.attributeChangedCallback, observed = Class.observedAttributes || [];
+  Object.defineProperty(Class, 'observedAttributes', {configurable:true, get:()=>[...new Set([...observed, ...ARIA])]});
+  const sync = host => {
+    const control = host.shadowRoot?.querySelector(targetSelector);
+    if (!control) return;
+    const role=control.getAttribute('role');
+    let saved = names.get(control);
+    const current = control.getAttribute('aria-label');
+    if (!saved) {
+      saved = {base:current === host.getAttribute('aria-label') ? null : current, last:undefined};
+      names.set(control, saved);
+    } else if (current !== saved.last) saved.base = current;
+    if (host._syncAccessibleName) host._syncAccessibleName();
+    else {
+      const fallback=host.getAttribute('icon') || ({checkbox:'Checkbox',switch:'Switch',radio:'Radio',slider:'Slider'})[role] || saved.base || '';
+      syncControlName(host, control, fallback);
+    }
+    saved.last = control.getAttribute('aria-label');
+    forwardControlAria(host, control);
+    syncDescription(host, control);
+  };
+  proto.connectedCallback = function(...args) {
+    const result = connected?.apply(this, args);
+    bindings.get(this)?.();
+    bindings.set(this, observeControlLabels(this, () => sync(this)));
+    sync(this); return result;
+  };
+  proto.disconnectedCallback = function(...args) {
+    bindings.get(this)?.(); bindings.delete(this);
+    return disconnected?.apply(this, args);
+  };
+  proto.attributeChangedCallback = function(name, oldValue, value) {
+    const result = changed?.call(this, name, oldValue, value);
+    if (this.isConnected && oldValue !== value) sync(this);
+    return result;
+  };
+  // State/form updates can write the component's default name without a host
+  // attribute change. Reapply author relationships after that synchronization.
+  const componentSync = proto._sync;
+  if (componentSync) proto._sync = function(...args) {
+    const result = componentSync.apply(this, args);
+    if (this.isConnected) sync(this);
+    return result;
+  };
   return Class;
 }
 
-/**
- * Applies the popup/expansion ARIA an author or owner gives a component host to
- * its native control. aria-controls names elements in the host's tree, which an
- * ID reference inside the shadow root cannot reach: the control refers to them
- * by element reflection instead.
- */
 export function forwardControlAria(host, control) {
+  let owned = forwarded.get(control);
+  if (!owned) { owned = new Map(); forwarded.set(control, owned); }
   for (const name of ['aria-expanded', 'aria-haspopup']) {
-    if (host.hasAttribute(name)) control.setAttribute(name, host.getAttribute(name));
+    let saved = owned.get(name);
+    const current = control.getAttribute(name);
+    if (saved && current !== saved.last) saved.base = current;
+    if (host.hasAttribute(name)) {
+      if (!saved) owned.set(name, saved = {base:current});
+      control.setAttribute(name, host.getAttribute(name)); saved.last = control.getAttribute(name);
+    } else if (saved) {
+      if (saved.base === null) control.removeAttribute(name); else control.setAttribute(name, saved.base);
+      owned.delete(name);
+    }
   }
-  const ids = (host.getAttribute('aria-controls') || '').split(/\s+/).filter(Boolean);
-  control.removeAttribute('aria-controls');
-  if (!('ariaControlsElements' in control)) return;
-  const root = host.getRootNode();
-  const targets = ids.map(id => root.getElementById?.(id) || host.ownerDocument.getElementById(id)).filter(Boolean);
-  control.ariaControlsElements = targets.length ? targets : null;
-}
-
-/**
- * Text of the elements an aria-labelledby value names, resolved in the host's
- * tree: an ID reference cannot cross into the component's shadow root.
- */
-export function labelledByText(host, value) {
-  if (!value) return '';
-  const root = host.getRootNode();
-  return value.split(/\s+/).map(id => (root.getElementById?.(id) || host.ownerDocument.getElementById(id))?.textContent?.trim() || '').filter(Boolean).join(' ');
+  const targets = references(host, host.getAttribute('aria-controls'));
+  if (host.hasAttribute('aria-controls') || owned.has('aria-controls')) {
+    let saved = owned.get('aria-controls');
+    const current = control.getAttribute('aria-controls');
+    if (!saved) owned.set('aria-controls', saved = {base:current});
+    else if (current !== saved.last) saved.base = current;
+    control.removeAttribute('aria-controls');
+    if ('ariaControlsElements' in control) control.ariaControlsElements = targets.length ? targets : null;
+    saved.last = control.getAttribute('aria-controls');
+    if (!host.hasAttribute('aria-controls')) {
+      if (saved.base !== null) control.setAttribute('aria-controls', saved.base);
+      owned.delete('aria-controls');
+    }
+  }
 }

@@ -1,15 +1,12 @@
 /**
- * Material Design 3 Expressive (M3 Expressive) Web Component: <md-checkbox>
- *
- * Spec: research/MD3E-actions-inputs-research.md §8 (Checkbox)
- *   Updated MD3 styling (indeterminate + error state), 18×18dp canvas, 2dp corner radius,
- *   40×40dp state layer, 48×48dp min touch target.
- *
- * Contract: docs/AGENT-INTERACTION-CONTRACT.md & docs/SECURITY-AND-A11Y-SPEC.md
- *   - Form-Associated Custom Element (FACE) support
- *   - Native opacity hover/focus and a separate unbounded press ripple.
- *   - Single release via setPointerCapture; keyboard Space/Enter parity; focus-visible.
- *   - Memory safety via AbortSignal.
+ * <md-checkbox>: port of Compose Material3 Checkbox.kt (Checkbox, TriStateCheckbox,
+ * CheckboxDefaults, CheckboxTokens) at AndroidX a095da93. Expressive left the
+ * checkbox unchanged.
+ *   - 18dp box with 2dp corners, the check/dash path and box fill animated as
+ *     the source draws them, indeterminate and error states, 40dp state layer.
+ *   - State layer and unbounded press ripple from the shared ports.
+ *   - Web adapters: form-associated custom element, keyboard activation,
+ *     48dp minimum touch target, AbortSignal cleanup.
  */
 
 import { delegateHostAria } from '../utils/host-aria.js';
@@ -380,10 +377,6 @@ export class MdCheckbox extends HTMLElement {
       {key:'mark',scope:box,node:box.querySelector('.mark-check'),property:'stroke',token:'--_md-checkbox-mark'}
     ],{disabled:()=>this.disabled,role:()=>this.checked||this.indeterminate?'expressiveEffectMedium':'expressiveEffectFast',onPaint:()=>this._paintBox(),signal});
 
-    this.addEventListener('click', event => {
-      if (event.composedPath()[0] === this && !this.disabled) root.click();
-    }, { signal });
-
     this._stateLayer=bindStateLayer(root,{disabled:()=>this.disabled,hitTest:event=>this._layout.hoverHitTest(event),property:'--md-selection-state-alpha',onChange:kind=>{
       root.classList.toggle('interacting',kind!==null);this._colorBinding.refresh();
     },signal});
@@ -407,6 +400,7 @@ export class MdCheckbox extends HTMLElement {
     };
 
     this._pressBinding=bindPress(root, {
+      hostActivation: true,
       disabled: () => this.disabled,
       pointerPolicy:{input:event=>({...this._layout.pointerInput(event),clipping:false}),hitTest:event=>this._layout.hitTest(event),outOfBounds:event=>this._layout.outOfBounds(event)},
       keyboardActivation: true,

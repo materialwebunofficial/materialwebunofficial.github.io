@@ -106,7 +106,7 @@ export async function testTooltipParity(browser,base) {
 export async function testTooltipShowcase(browser,base){
   for(const width of [1440,390])for(const mode of ['light','dark']){
     const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'});
-    try{await page.goto(base+'/#tooltips');await page.evaluate(async mode=>{await customElements.whenDefined('md-tooltip');await document.fonts.ready;document.documentElement.setAttribute('data-theme',mode);},mode);
+    try{await page.goto(base+'/#tooltips').then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(async mode=>{await customElements.whenDefined('md-tooltip');await document.fonts.ready;document.documentElement.setAttribute('data-theme',mode);},mode);
       await page.locator('#btn-tip-1').hover();assert.equal(await page.locator('md-tooltip[for="btn-tip-1"]').evaluate(n=>n.open),true);
       await page.locator('#btn-tip-2').hover();assert.equal(await page.locator('md-tooltip[for="btn-tip-2"]').evaluate(n=>n.open),true);
       const result=await page.locator('md-tooltip[for="btn-tip-2"]').evaluate(n=>({x:n._positionResult.x,y:n._positionResult.y,width:n._tip.offsetWidth,height:n._tip.offsetHeight,window:innerWidth,windowH:innerHeight}));assert.ok(result.x>=0&&result.y>=0&&result.x+result.width<=result.window&&result.y+result.height<=result.windowH);

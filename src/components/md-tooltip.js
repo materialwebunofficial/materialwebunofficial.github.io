@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** AndroidX Tooltip / BasicTooltip a095da93, with DOM input and popup adapters. */
 import {createComponentSheet, adoptSheet} from '../utils/styles.js';
 import {SelectionMotion} from '../motion/selection-motion.js';
@@ -89,7 +90,7 @@ export class MdTooltip extends HTMLElement {
     this.ownerDocument.defaultView.addEventListener('resize',this._reposition,{signal});
     this.ownerDocument.fonts?.addEventListener('loadingdone',this._contentChanged,{signal});
     this._stopTheme?.(); this._stopTheme = observeThemeContext(this,() => { this._sync(); this._reposition(); });
-    this._resize?.disconnect(); this._resize = new ResizeObserver(entries=>{if(entries.some(e=>e.target!==this._tip&&e.target!==this._target))this._layoutDirty=true;this._reposition();}); this._resize.observe(this._tip);
+    this._resize?.disconnect(); this._resize = new FrameResizeObserver(entries=>{if(entries.some(e=>e.target!==this._tip&&e.target!==this._target))this._layoutDirty=true;this._reposition();}); this._resize.observe(this._tip);
     if (this._target) this._resize.observe(this._target);
     for(const element of this._domLayout.owned.keys())this._resize.observe(element);
     this._contentObserver?.disconnect(); this._contentObserver = new MutationObserver(() => { this._sync(); this._reposition(); this._focusScope.ensureFocus(); });

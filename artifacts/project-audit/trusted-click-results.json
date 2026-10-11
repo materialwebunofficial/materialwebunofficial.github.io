@@ -1,0 +1,26 @@
+[
+  {
+    "engine": "chromium",
+    "actual": {
+      "submissions": 1,
+      "customChecked": true,
+      "nativeChecked": false
+    }
+  },
+  {
+    "engine": "firefox",
+    "actual": {
+      "submissions": 1,
+      "customChecked": true,
+      "nativeChecked": false
+    }
+  },
+  {
+    "engine": "webkit",
+    "actual": {
+      "submissions": 1,
+      "customChecked": true,
+      "nativeChecked": false
+    }
+  }
+]

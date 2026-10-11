@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * Web adaptation of AndroidX ButtonGroup (Material 3 Expressive).
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f, ButtonGroup.kt.
@@ -66,7 +67,7 @@ export class MdButtonGroup extends HTMLElement {
     this.addEventListener('keyup', event => { if (event.key === ' ' || event.key === 'Enter') this._press(event, false); }, { signal });
     this.addEventListener('focusout', event => this._press(event, false), { signal });
     this.addEventListener('change', event => this._selectionChange(event), { signal });
-    this._resize = new ResizeObserver(() => this._measure());
+    this._resize = new FrameResizeObserver(() => this._measure());
     this._resize.observe(this);
     this._sync();
   }

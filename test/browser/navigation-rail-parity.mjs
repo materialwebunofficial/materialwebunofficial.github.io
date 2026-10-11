@@ -10,7 +10,7 @@ import {floatBits,floatFromBits,composeFloatToHalf,composeHalfToFloat} from '../
 export async function testNavigationRailParity(browser,base){
  const page=await browser.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  try{
-  await page.goto(base,{waitUntil:'domcontentloaded'});await page.evaluate(()=>document.fonts.ready);
+  await page.goto(base,{waitUntil:'domcontentloaded'}).then(()=>page.waitForFunction(()=>document.documentElement.hasAttribute('data-showcase-ready'),null,{timeout:20000}));await page.evaluate(()=>document.fonts.ready);
   await page.evaluate(async()=>{window.colorRoleTestBinding=await import('/src/motion/compose-color-css.js');});
   await page.clock.install({time:new Date('2026-10-02T10:00:00Z')});await page.clock.pauseAt(new Date('2026-10-02T10:00:01.008Z'));
   await page.evaluate(()=>{

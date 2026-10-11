@@ -1,25 +1,71 @@
-/**
- * Material Design 3 Expressive (M3 Expressive) Web Component: <md-split-button>
+import {FrameResizeObserver} from '../utils/resize-observer.js';
+/* Copyright 2024 The Android Open Source Project
+ * Licensed under the Apache License, Version 2.0; obtain a copy at
+ * https://www.apache.org/licenses/LICENSE-2.0 . Distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND. See the License for details.
  *
- * Spec: research/MD3E-actions-inputs-research.md §2 (Split Button — Expressive new)
- *   Common (leading) button + separate menu (trailing) icon button.
- *   Sizes XS/S/M/L/XL = 32/40/56/96/136dp. Between-gap 2dp. Outer corners CornerFull.
- *   Inner corners morph on press and the menu button spins + morphs on open.
- *   Color styles: filled / tonal / elevated / outlined (leading = button, trailing = icon button).
+ * <md-split-button>: port of Compose Material3 SplitButton.kt
+ * (SplitButtonLayout, SplitButtonDefaults, LeadingButton, TrailingButton with
+ * checked), SplitButtonXSmall-XLargeTokens, HorizontalCenterOptically.kt and
+ * AnimatedShape.kt at AndroidX a095da93. Split buttons are new in Expressive.
  *
- * Interaction: content-color hover layer; pressed/checked shape morph.
- * Single focus ring, expanded hit target and keyboard menu navigation.
+ * Source behavior:
+ * - SplitButtonLayout: leading and trailing buttons 2dp apart (BetweenSpace),
+ *   measured to the same height.
+ * - Sizes (ContainerHeight 32/40/56/96/136dp) pick the leading/trailing
+ *   content padding, trailing icon size (22/22/26/38/50dp) and inner corners
+ *   (ExtraSmall/ExtraSmall/ExtraSmall/Small/Medium, pressed Small/Medium/
+ *   Medium/LargeIncreased/LargeIncreased). Outer corners are CornerFull.
+ *   Leading content follows ButtonDefaults.iconSizeFor, iconSpacingFor and
+ *   textStyleFor; both buttons are at least 48dp wide.
+ * - shapeByInteraction: pressed, else checked (CircleShape for the trailing
+ *   button), else the shape, animated by rememberAnimatedShape on MotionScheme
+ *   DefaultEffects. There is no hover shape.
+ * - The trailing content is moved by horizontalCenterOptically:
+ *   0.11 * (average start corner - average end corner), corners limited to
+ *   half the height, the offset limited to the content padding.
+ * - Checked trailing buttons draw their outline in the content color at the
+ *   pressed state-layer alpha (0.1) over everything else.
+ * - Colors and elevation are ButtonDefaults' filled, filled tonal, elevated
+ *   and outlined values (outlinedButtonBorder for the outlined style).
+ * - The samples rotate Icons.Filled.KeyboardArrowDown 180 degrees with
+ *   animateFloatAsState's default spring and open a DropdownMenu anchored to
+ *   the split button; this element includes both.
+ *
+ * Web adapters: the 48dp minimum touch target is a pseudo-element; the menu
+ * is <md-menu variant="dropdown">; arrow keys on the trailing button open it.
  */
 
-import { bindPress } from '../motion/interactions.js';
+import { bindPress, createRipple } from '../motion/interactions.js';
+import { bindStateLayer } from '../motion/state-layer.js';
+import { bindButtonElevation, buttonElevationDefaults } from '../motion/button-elevation.js';
+import { SelectionMotion } from '../motion/selection-motion.js';
 import { SpringPhysics } from '../motion/spring-physics.js';
+import { ButtonShapeComposition, buttonCornerRadius } from './button-shape.js';
 import { escapeHtml, sanitizeAttribute, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+import './md-menu.js';
+
+// SplitButton*Tokens plus ButtonDefaults.iconSizeFor/iconSpacingFor/textStyleFor.
+const SIZES = {
+  xs: { height: 32, lead: [12, 10], trail: [13, 13], trailIcon: 22, leadIcon: 20, iconSpacing: 4, inner: 4, pressed: 8, type: 'label-large' },
+  s: { height: 40, lead: [16, 12], trail: [13, 13], trailIcon: 22, leadIcon: 20, iconSpacing: 8, inner: 4, pressed: 12, type: 'label-large' },
+  m: { height: 56, lead: [24, 24], trail: [15, 15], trailIcon: 26, leadIcon: 24, iconSpacing: 8, inner: 4, pressed: 12, type: 'title-medium' },
+  l: { height: 96, lead: [48, 48], trail: [29, 29], trailIcon: 38, leadIcon: 32, iconSpacing: 12, inner: 8, pressed: 20, type: 'headline-small' },
+  xl: { height: 136, lead: [64, 64], trail: [43, 43], trailIcon: 50, leadIcon: 40, iconSpacing: 16, inner: 12, pressed: 20, type: 'headline-large' },
+};
+const MIN_WIDTH = 48;
+const CENTER_OPTICALLY_COEFFICIENT = 0.11;
+// animateFloatAsState's default spring().
+const ROTATION_SPRING = { dampingRatio: 1, stiffness: 1500 };
+// Icons.Filled.KeyboardArrowDown
+const ARROW_DOWN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
+const DEFAULT_ITEMS = [{ icon: 'edit', label: 'Edit' }, { icon: 'content_copy', label: 'Duplicate' }, { icon: 'delete', label: 'Delete' }];
 
 const defaultStyle = `
-  :host { display: inline-block; outline: none; position: relative; vertical-align: middle; user-select: none; }
+  :host { display: inline-block; vertical-align: middle; position: relative; outline: none; }
 
-  .split-container { display: inline-flex; align-items: center; gap: var(--split-gap, 2px); position: relative; }
+  .layout { display: inline-flex; align-items: stretch; gap: var(--_spacing, 2px); }
 
   .btn-left, .btn-right {
     position: relative;
@@ -27,146 +73,105 @@ const defaultStyle = `
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    border: none;
+    min-width: ${MIN_WIDTH}px;
+    min-height: var(--_height);
     margin: 0;
+    border: none;
+    outline: none;
     cursor: pointer;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    height: var(--split-height, 40px);
-    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
-    font-size: var(--md-sys-typescale-label-large-size, 14px);
-    font-weight: var(--md-sys-typescale-label-large-weight, 500);
-    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-    color: var(--md-sys-color-on-primary, #fff);
-    outline: none;
-    transition:
-      background-color var(--md-sys-motion-duration-short2, 200ms) var(--md-sys-motion-easing-expressive-effects, ease),
-      border-radius var(--md-sys-motion-effect-medium-duration, 250ms) var(--md-sys-motion-effect-medium-easing, ease),
-      box-shadow var(--md-sys-motion-duration-medium1, 300ms) var(--md-sys-motion-easing-expressive-spatial, ease);
-    isolation: isolate;
+    font: inherit;
+    transition: none;
+    --md-button-state-alpha: 0;
   }
-  .btn-left:focus, .btn-right:focus { outline: none; }
-  .btn-left:focus-visible, .btn-right:focus-visible {
-    outline: 3px solid var(--md-sys-color-primary, #6750A4);
-    outline-offset: 2px;
+  .btn-left {
+    padding: 0 var(--_lead-end) 0 var(--_lead-start);
+    padding-inline: var(--_lead-start) var(--_lead-end);
+    gap: var(--_icon-spacing);
+    font: var(--_type-font);
+    letter-spacing: var(--_type-tracking);
+  }
+  .btn-right { padding: 0; padding-inline: var(--_trail-start) var(--_trail-end); }
+
+  /* minimumInteractiveComponentSize on the layout */
+  .btn-left::after, .btn-right::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, calc((100% - 48px) / 2)) 0;
   }
 
-  .btn-left  { gap: var(--split-label-gap, 8px); padding-block: 0; padding-inline: var(--split-leading-start, 16px) var(--split-leading-end, 12px); border-radius: 9999px var(--split-inner, 4px) var(--split-inner, 4px) 9999px; font: var(--split-label-font); letter-spacing: var(--split-label-tracking); }
-  .btn-right { width: var(--split-trailing-width, 48px); padding: 0; border-radius: var(--split-inner, 4px) 9999px 9999px var(--split-inner, 4px); }
-  .btn-left::before, .btn-right::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: currentColor; opacity: 0; pointer-events: none; }
-  .btn-left:hover::before, .btn-right:hover::before { opacity: 0.08; }
-  .btn-left.pressed::before, .btn-right.pressed::before, .btn-left:focus-visible::before, .btn-right:focus-visible::before { opacity: 0.1; }
-  .btn-left::after, .btn-right::after { content: ''; position: absolute; width: 100%; height: max(100%, 48px); min-width: 48px; }
-
-  .material-symbols-outlined {
+  .content { position: relative; display: inline-flex; align-items: center; gap: inherit; pointer-events: none; }
+  .glyph {
     font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
+    font-size: var(--_lead-icon);
+    line-height: var(--_lead-icon);
+    width: var(--_lead-icon);
+    height: var(--_lead-icon);
     font-weight: normal;
     font-style: normal;
-    font-size: var(--split-icon, 22px);
-    line-height: 1;
-    display: inline-block;
+    letter-spacing: normal;
     white-space: nowrap;
-    direction: ltr;
-    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    flex: none;
   }
+  .label { white-space: nowrap; }
+  .arrow { display: block; width: var(--_trail-icon); height: var(--_trail-icon); fill: currentColor; flex: none; }
+  .arrow svg { display: block; width: 100%; height: 100%; }
 
-  /* Inner corner morphs larger on hover/press */
-  .btn-left.pressed { border-radius: 9999px var(--split-pressed, 12px) var(--split-pressed, 12px) 9999px; }
-  .btn-right.pressed { border-radius: var(--split-pressed, 12px) 9999px 9999px var(--split-pressed, 12px); }
+  .state-layer {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: var(--md-button-state-alpha, 0);
+    pointer-events: none;
+  }
+  .outline {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    border: 0 solid transparent;
+  }
+  /* Checked trailing button: drawOutline(contentColor, alpha = 0.1) last. */
+  .btn-right::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .btn-right.checked::before { opacity: 0.1; }
 
-  .chevron { display: inline-block; transition: transform 0.2s var(--md-sys-motion-easing-expressive-spatial, ease); }
-  .btn-right.open:not(.pressed) { border-radius: 9999px; }
-  .btn-right.open::before { opacity: 0.1; }
-  .btn-right.open .chevron { transform: rotate(180deg); }
-  .btn-left .material-symbols-outlined { font-size: var(--split-leading-icon, 20px); }
-  :host(:dir(rtl)) .btn-left { border-radius: var(--split-inner, 4px) 9999px 9999px var(--split-inner, 4px); }
-  :host(:dir(rtl)) .btn-right { border-radius: 9999px var(--split-inner, 4px) var(--split-inner, 4px) 9999px; }
-  :host(:dir(rtl)) .btn-left.pressed { border-radius: var(--split-pressed, 12px) 9999px 9999px var(--split-pressed, 12px); }
-  :host(:dir(rtl)) .btn-right.pressed { border-radius: 9999px var(--split-pressed, 12px) var(--split-pressed, 12px) 9999px; }
-  :host(:dir(rtl)) .btn-right.open:not(.pressed) { border-radius: 9999px; }
+  /* ButtonDefaults colors; elevation is written by the elevation port. */
+  .v-filled :is(.btn-left,.btn-right) { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+  .v-tonal :is(.btn-left,.btn-right) { background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+  .v-elevated :is(.btn-left,.btn-right) { background-color: var(--md-sys-color-surface-container-low); color: var(--md-sys-color-primary); }
+  .v-outlined :is(.btn-left,.btn-right) { background-color: transparent; color: var(--md-sys-color-on-surface-variant); }
+  .v-outlined .outline { border-width: 1px; border-color: var(--md-sys-color-outline-variant); }
 
-  /* SplitButton uses ButtonColors; checked adds a content-color state layer. */
-  .v-filled .btn-left, .v-filled .btn-right {
-    background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: none;
-  }
-  .v-tonal .btn-left, .v-tonal .btn-right {
-    background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); box-shadow: none;
-  }
-  .v-filled :is(.btn-left,.btn-right):hover, .v-tonal :is(.btn-left,.btn-right):hover { box-shadow: var(--md-sys-elevation-level-1); }
-  .v-filled :is(.btn-left,.btn-right).pressed, .v-tonal :is(.btn-left,.btn-right).pressed { box-shadow: none; }
-  .v-elevated .btn-left, .v-elevated .btn-right {
-    background: var(--md-sys-color-surface-container-low); color: var(--md-sys-color-primary); box-shadow: var(--md-sys-elevation-level-1);
-  }
-  .v-elevated :is(.btn-left,.btn-right):hover { box-shadow: var(--md-sys-elevation-level-2); }
-  .v-elevated :is(.btn-left,.btn-right).pressed { box-shadow: var(--md-sys-elevation-level-1); }
-  .v-outlined .btn-left, .v-outlined .btn-right {
-    background: transparent; color: var(--md-sys-color-on-surface-variant); border: 1px solid var(--md-sys-color-outline-variant);
-  }
-  :host([disabled]) :is(.btn-left,.btn-right) {
-    opacity: 1; box-shadow: none; pointer-events: none;
-    background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+  :is(.btn-left,.btn-right):disabled { cursor: default; }
+  .v-filled :is(.btn-left,.btn-right):disabled, .v-elevated :is(.btn-left,.btn-right):disabled {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
     color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent);
   }
-  :host([disabled]) .v-tonal :is(.btn-left,.btn-right) {
-    background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  .v-tonal :is(.btn-left,.btn-right):disabled {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
     color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
   }
-  :host([disabled]) .v-outlined :is(.btn-left,.btn-right) { background: transparent; }
-  :host([disabled]) :is(.btn-left,.btn-right)::before { opacity: 0; }
-
-  /* Dropdown menu */
-  .dropdown-menu {
-    position: absolute;
-    top: 100%;
-    inset-inline-end: 0;
-    margin-top: 8px;
-    background-color: var(--md-sys-color-surface-container-high, #ECE6F0);
-    color: var(--md-sys-color-on-surface, #1D1B20);
-    border-radius: 16px;
-    padding: 8px 0;
-    min-width: 150px;
-    box-shadow: var(--md-sys-elevation-level-3, 0 4px 8px 3px rgba(0,0,0,0.15));
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(-8px) scale(0.92, 0.85);
-    transform-origin: top right;
-    /* Visibility changes synchronously so keyboard focus can enter on open. */
-    z-index: 100;
-    text-align: left;
-  }
-  .dropdown-menu.open {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    transform: translateY(0) scale(1, 1);
-  }
-
-  .menu-item {
-    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
-    font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif);
-    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
-    cursor: pointer; outline: none;
-    transition: background-color 0.15s ease;
-  }
-  .menu-item:hover { background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
-  .menu-item:focus-visible { outline: 3px solid var(--md-sys-color-primary, #6750A4); outline-offset: -3px; background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750A4) 12%, transparent); }
-  .menu-item .material-symbols-outlined { font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif); font-size: 18px; }
+  .v-outlined :is(.btn-left,.btn-right):disabled { color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 38%, transparent); }
+  .v-outlined :is(.btn-left,.btn-right):disabled .outline { border-color: color-mix(in srgb, var(--md-sys-color-outline-variant) 10%, transparent); }
 `;
 
 const splitButtonSheet = createComponentSheet(defaultStyle);
 
-const SIZE = {
-  xs:  { h: 32,  leadPadX: 12, leadPadT: 10, icon: 22, inner: 4  },
-  s:   { h: 40,  leadPadX: 16, leadPadT: 12, icon: 22, inner: 4  },
-  m:   { h: 56,  leadPadX: 24, leadPadT: 24, icon: 26, inner: 4  },
-  l:   { h: 96,  leadPadX: 48, leadPadT: 48, icon: 38, inner: 8  },
-  xl:  { h: 136, leadPadX: 64, leadPadT: 64, icon: 50, inner: 12 },
-};
-
 export class MdSplitButton extends HTMLElement {
   static get observedAttributes() {
-    return ['size', 'variant', 'label', 'icon', 'open', 'items', 'spacing', 'disabled'];
+    return ['size', 'variant', 'label', 'icon', 'open', 'items', 'spacing', 'disabled', 'menu-label'];
   }
 
   constructor() {
@@ -175,35 +180,46 @@ export class MdSplitButton extends HTMLElement {
     adoptSheet(this.shadowRoot, splitButtonSheet);
     this._rendered = false;
     this._abortController = null;
-    this._docClick = this._docClick.bind(this);
+    this._sides = null;
   }
 
   connectedCallback() {
-    if (!this._rendered) { this.render(); this._rendered = true; }
+    if (!this._rendered || this._disposed) { this.render(); this._rendered = true; this._disposed = false; }
     this._setup();
-    document.addEventListener('click', this._docClick);
     this._sync();
   }
 
   disconnectedCallback() {
     this._abortController?.abort();
     this._abortController = null;
-    this.shadowRoot.querySelector('.dropdown-menu')?._springAnim?.cancel();
-    this._closing = false;
-    document.removeEventListener('click', this._docClick);
+    this._disposeMotion();
+    this._disposed = true;
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
-    if (name === 'size' || name === 'variant' || name === 'icon' || name === 'label' || name === 'items' || name === 'spacing') { this.render(); this._setup(); }
+    if (name === 'variant' || name === 'icon' || name === 'label' || name === 'size') {
+      this.render(); this._setup();
+    }
     this._sync();
   }
 
-  get size() { return SIZE[this.getAttribute('size')] ? this.getAttribute('size') : 'm'; }
-  get variant() { return sanitizeAttribute(this.getAttribute('variant') || 'filled'); }
-  get label() { return this.getAttribute('label') || 'Option'; }
-  get icon() { return this.getAttribute('icon') || 'edit'; }
+  get size() { return SIZES[this.getAttribute('size')] ? this.getAttribute('size') : 's'; }
+  set size(value) { this.setAttribute('size', String(value)); }
+  get variant() {
+    const v = sanitizeAttribute(this.getAttribute('variant') || 'filled');
+    return ['filled', 'tonal', 'elevated', 'outlined'].includes(v) ? v : 'filled';
+  }
+  set variant(value) { this.setAttribute('variant', String(value)); }
+  get label() { return this.getAttribute('label') ?? 'Option'; }
+  set label(value) { this.setAttribute('label', String(value)); }
+  /** The leading icon; an empty attribute leaves it out. */
+  get icon() { return this.getAttribute('icon') ?? 'edit'; }
+  set icon(value) { this.setAttribute('icon', String(value)); }
+  get menuLabel() { return this.getAttribute('menu-label') || 'More options'; }
+  set menuLabel(value) { this.setAttribute('menu-label', String(value)); }
   get open() { return this.hasAttribute('open'); }
+  set open(value) { this.toggleAttribute('open', !!value); }
   get spacing() {
     const s = parseFloat(this.getAttribute('spacing'));
     return isNaN(s) || s < 0 ? 2 : s;
@@ -212,261 +228,266 @@ export class MdSplitButton extends HTMLElement {
     if (val === null || val === undefined) this.removeAttribute('spacing');
     else this.setAttribute('spacing', String(val));
   }
-
-  _dim() { return SIZE[this.size]; }
   get disabled() { return this.hasAttribute('disabled'); }
   set disabled(value) { this.toggleAttribute('disabled', Boolean(value)); }
 
+  /** The DropdownMenu this split button opens. */
+  get menu() { return this._menu || null; }
+
+  _dim() { return SIZES[this.size]; }
+
   _parseItems() {
     const raw = this.getAttribute('items');
-    if (!raw) return [ { icon: 'edit', label: 'Edit' }, { icon: 'content_copy', label: 'Duplicate' }, { icon: 'delete', label: 'Delete' } ];
-    if (typeof raw === 'string' && (raw.trim().startsWith('[') || raw.trim().startsWith('{'))) {
-      const parsed = safeJsonParse(raw, null);
+    if (!raw) return DEFAULT_ITEMS;
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[')) {
+      const parsed = safeJsonParse(trimmed, null);
       if (Array.isArray(parsed)) {
-        return parsed.map((item) => {
-          if (typeof item === 'string') return { icon: '', label: item };
-          return { icon: item.icon || '', label: item.label || item.text || '' };
-        }).filter(it => it.label);
+        return parsed.map(item => typeof item === 'string' ? { label: item }
+          : item && typeof item === 'object' ? { icon: item.icon || '', label: item.label || item.text || '', trailing: item.trailing, disabled: !!item.disabled } : null)
+          .filter(item => item && item.label);
       }
     }
-    return raw.split('|').map((s) => {
-      s = s.trim();
+    return trimmed.split('|').map(part => {
+      const s = part.trim();
       if (!s) return null;
       const m = s.match(/^([a-z_]+):(.*)$/);
-      if (m) return { icon: m[1], label: m[2] };
-      return { icon: '', label: s };
+      return m ? { icon: m[1], label: m[2].trim() } : { label: s };
     }).filter(Boolean);
   }
 
   openMenu() {
     if (this.disabled) return;
-    if(this.open&&!this._closing){this._sync();return;}
-    this._closing = false;
-    this.shadowRoot.querySelector('.dropdown-menu')?._springAnim?.cancel();
-    document.querySelectorAll('md-split-button[open]').forEach(sb => {
-      if (sb !== this) sb.close();
-    });
-    if (this.open) this._sync();
-    else this.setAttribute('open', '');
+    document.querySelectorAll('md-split-button[open]').forEach(other => { if (other !== this) other.close(); });
+    this.open = true;
   }
 
-  toggle() {
-    this.open && !this._closing ? this.close() : this.openMenu();
+  close() { this.open = false; }
+
+  toggle() { this.open ? this.close() : this.openMenu(); }
+
+  /** Container sizes: known from the tokens, corrected by resize observation. */
+  _size(side) {
+    const d = this._dim();
+    const fallback = side === 'trailing' ? Math.max(MIN_WIDTH, d.trail[0] + d.trailIcon + d.trail[1]) : Math.max(MIN_WIDTH, d.height);
+    const measured = this._measured?.[side];
+    return measured ? measured : { width: fallback, height: d.height };
   }
 
-  close() {
-    if (!this.open || this._closing) return;
-    this._closing = true;
-    const menu = this.shadowRoot.querySelector('.dropdown-menu');
-    // checked changes on activation. The exiting popup has its own lifetime;
-    // keeping checked until exit made pressed -> checked -> default replay.
-    const current=menu?getComputedStyle(menu):null;
-    const from=current?{transform:current.transform,opacity:current.opacity}:{transform:'none',opacity:1};
-    this.removeAttribute('open');
-    if (menu && this.isConnected) {
-      menu._springAnim?.cancel?.();
-      const anim = menu.animate([
-        from,
-        { transform: 'scale(0.9, 0.82) translateY(-8px)', opacity: 0 }
-      ], {
-        duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150,
-        easing: 'cubic-bezier(0.4, 0, 1, 1)',
-        fill: 'forwards'
-      });
-      menu._springAnim = anim;
-      anim.onfinish = () => {
-        if(menu._springAnim!==anim)return;
-        this._closing = false;
-        menu.style.visibility = 'hidden';
-        menu.style.pointerEvents = 'none';
-        menu._springAnim = null;
-        anim.cancel();
-      };
-    } else {
-      this._closing = false;
+  _shapes(side) {
+    const d = this._dim();
+    const shapes = { shape: { unit: 'px', value: d.inner }, pressedShape: { unit: 'px', value: d.pressed } };
+    if (side === 'trailing') shapes.checkedShape = { unit: 'percent', value: 50 };
+    return shapes;
+  }
+
+  /** shapeByInteraction + rememberAnimatedShape on DefaultEffects. */
+  _updateShape(side) {
+    const s = this._sides?.[side];
+    if (!s) return;
+    if (side === 'trailing') this._rtl = getComputedStyle(this).direction === 'rtl';
+    const now = performance.now();
+    const spec = SpringPhysics.getPreset('expressiveEffectMedium', this);
+    const state = s.composition.update(this._shapes(side), !!s.pressed, spec, now, side === 'trailing' && this.open);
+    if (state !== s.state || !s.motion || s.motion.disposed) {
+      s.motion?.dispose();
+      s.state = state;
+      s.motion = new SelectionMotion(this, { progress: state.progress.sample(now).position }, values => this._drawShape(side, state.getMorphedShape(null, values.progress)));
+      s.motion.channels.progress = state.progress;
     }
+    if (s.motion.media?.matches) s.motion.finish();
+    else s.motion.tick(now);
+  }
+
+  _drawShape(side, shape) {
+    const s = this._sides?.[side];
+    if (!s) return;
+    const { width, height } = this._size(side);
+    // CornerFull resolves to half the smaller side. It is written in pixels:
+    // CSS scales every radius down when one edge's radii overflow, which
+    // would flatten the inner corners next to a 9999px outer corner.
+    const full = Math.min(width, height) / 2;
+    const inner = Math.max(0, Math.min(full, buttonCornerRadius(shape, width, height)));
+    const btn = s.btn;
+    if (side === 'leading') {
+      btn.style.borderStartStartRadius = btn.style.borderEndStartRadius = `${full}px`;
+      btn.style.borderStartEndRadius = btn.style.borderEndEndRadius = `${inner}px`;
+      return;
+    }
+    btn.style.borderStartStartRadius = btn.style.borderEndStartRadius = `${inner}px`;
+    btn.style.borderStartEndRadius = btn.style.borderEndEndRadius = `${full}px`;
+    // horizontalCenterOptically (AnimatedShape.offset): corners limited to
+    // half the height, the offset to the content padding, rounded to pixels.
+    const d = this._dim(), half = height / 2;
+    const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+    const offset = clamp(CENTER_OPTICALLY_COEFFICIENT * (clamp(inner, 0, half) - clamp(full, 0, half)), -d.trail[0], d.trail[1]);
+    // placeRelative mirrors the offset in RTL.
+    s.content.style.transform = `translateX(${Math.round(offset) * (this._rtl ? -1 : 1)}px)`;
+  }
+
+  _updateRotation(animate) {
+    const r = this._rotation;
+    if (!r) return;
+    const target = this.open ? 180 : 0;
+    const now = performance.now();
+    const channel = r.channels.rotation;
+    if (!animate) { channel.value = channel.target = target; channel.animation = null; r.render(now); return; }
+    channel.to(target, ROTATION_SPRING, { now });
+    if (r.media?.matches) r.finish(); else r.tick(now);
+  }
+
+  _disposeMotion() {
+    for (const s of Object.values(this._sides || {})) s.motion?.dispose();
+    this._rotation?.dispose();
+    this._rotation = null;
+    this._resizeObserver?.disconnect();
+    this._resizeObserver = null;
   }
 
   _sync() {
     const d = this._dim();
-    const container = this.shadowRoot.querySelector('.split-container');
+    const layout = this.shadowRoot.querySelector('.layout');
+    if (!layout) return;
     const vars = {
-      'height': `${d.h}px`, 'gap': `${this.spacing}px`,
-      'leading-start': `${d.leadPadX}px`, 'leading-end': `${d.leadPadT}px`,
-      'trailing-width': `${Math.max(48, d.h)}px`, 'icon': `${d.icon}px`,
-      'leading-icon': `${d.h >= 136 ? 40 : d.h >= 96 ? 32 : d.h >= 56 ? 24 : 20}px`,
-      'label-gap': `${d.h >= 136 ? 16 : d.h >= 96 ? 12 : 8}px`,
-      'inner': `${d.inner}px`, 'pressed': `${this.size === 'xs' ? 8 : d.h >= 96 ? 20 : 12}px`,
-      'label-tracking': `var(--md-sys-typescale-${d.h >= 136 ? 'headline-large' : d.h >= 96 ? 'headline-small' : d.h >= 56 ? 'title-medium' : 'label-large'}-tracking)`,
-      'label-font': `var(--md-sys-typescale-${d.h >= 136 ? 'headline-large' : d.h >= 96 ? 'headline-small' : d.h >= 56 ? 'title-medium' : 'label-large'})`
+      '--_height': `${d.height}px`, '--_spacing': `${this.spacing}px`,
+      '--_lead-start': `${d.lead[0]}px`, '--_lead-end': `${d.lead[1]}px`,
+      '--_trail-start': `${d.trail[0]}px`, '--_trail-end': `${d.trail[1]}px`,
+      '--_lead-icon': `${d.leadIcon}px`, '--_trail-icon': `${d.trailIcon}px`, '--_icon-spacing': `${d.iconSpacing}px`,
+      '--_type-font': `var(--md-sys-typescale-${d.type})`, '--_type-tracking': `var(--md-sys-typescale-${d.type}-tracking)`,
     };
-    if (container) for (const [key, value] of Object.entries(vars)) container.style.setProperty(`--split-${key}`, value);
-    this.shadowRoot.querySelectorAll('.btn-left,.btn-right').forEach(el => {
-      el.tabIndex = this.disabled ? -1 : 0;
-      el.setAttribute('aria-disabled', String(this.disabled));
-    });
-    const right = this.shadowRoot.querySelector('.btn-right');
-    const menu = this.shadowRoot.querySelector('.dropdown-menu');
-    if (right) {
-      right.setAttribute('aria-expanded', this.open ? 'true' : 'false');
-      right.setAttribute('aria-pressed', String(this.open));
-      right.classList.toggle('open', this.open);
-    }
+    for (const [key, value] of Object.entries(vars)) layout.style.setProperty(key, value);
+    const { leading, trailing } = this._sides;
+    const disabled = this.disabled;
+    if (disabled && this.open) this.removeAttribute('open');
+    leading.btn.disabled = trailing.btn.disabled = disabled;
+    leading.btn.setAttribute('aria-label', this.label || this.icon);
+    trailing.btn.setAttribute('aria-label', this.menuLabel);
+    trailing.btn.setAttribute('aria-expanded', String(this.open));
+    trailing.btn.classList.toggle('checked', this.open);
+    const menu = this._menu;
     if (menu) {
-      menu.inert = !this.open || this.disabled;
-      if (this.open) {
-        this._closing=false;
-        menu.style.visibility = 'visible';
-        menu.style.pointerEvents = this.disabled?'none':'auto';
-
-        // Attribute/configuration refreshes must not restart an opening job.
-        if(menu.dataset.open==='true')return;
-        menu.dataset.open='true';
-
-        const { keyframes, duration } = SpringPhysics.generateKeyframes({
-          from: 0.62,
-          to: 1.0,
-          ...SpringPhysics.getPreset('expressiveSpatialFast', this)
-        });
-
-        const animKeyframes = keyframes.map((scale, i) => {
-          const progress = i / (keyframes.length - 1);
-          const opacity = Math.min(1, progress * 4.0);
-          const ty = (1 - scale) * 16;
-          return {
-            transform: `scale(${scale.toFixed(4)}) translateY(${-ty.toFixed(2)}px)`,
-            opacity: opacity.toFixed(3)
-          };
-        });
-
-        menu._springAnim?.cancel?.();
-        const anim = menu.animate(animKeyframes, {
-          duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : duration,
-          easing: 'linear',
-          fill: 'forwards'
-        });
-        menu._springAnim = anim;
-      } else {
-        menu.dataset.open='false';
-        if(!this._closing){menu._springAnim?.cancel();menu._springAnim=null;menu.style.visibility = 'hidden';}
-        menu.style.pointerEvents = 'none';
-      }
+      menu.setAttribute('label', this.menuLabel);
+      const items = JSON.stringify(this._parseItems());
+      if (menu.getAttribute('items') !== items) menu.setAttribute('items', items);
+      if (menu.open !== this.open) menu.open = this.open;
     }
-  }
-
-  _docClick(e) {
-    if (!this.open) return;
-    const path = e.composedPath ? e.composedPath() : [];
-    if (!path.includes(this)) {
-      this.close();
-    }
+    const rotationChanged = this._rotationOpen !== this.open;
+    this._rotationOpen = this.open;
+    if (rotationChanged) this._updateRotation(this._synced);
+    this._updateShape('leading');
+    this._updateShape('trailing');
+    leading.stateLayer?.refresh?.();
+    trailing.stateLayer?.refresh?.();
+    leading.elevation?.refresh?.();
+    trailing.elevation?.refresh?.();
+    this._synced = true;
   }
 
   _setup() {
     this._abortController?.abort();
     this._abortController = new AbortController();
     const { signal } = this._abortController;
+    const { leading, trailing } = this._sides;
+    const disabled = () => this.disabled;
 
-    const left = this.shadowRoot.querySelector('.btn-left');
-    const right = this.shadowRoot.querySelector('.btn-right');
-
-    if (left) {
-      left.addEventListener('click', () => {
-        if (this.disabled) return;
-        this.dispatchEvent(new CustomEvent('action', { detail: { label: this.label }, bubbles: true }));
-      }, { signal });
-      bindPress(left, {
-        disabled: () => this.disabled,
-        signal
-      });
-    }
-    if (right) {
-      right.addEventListener('click', (e) => {
-        if (this.disabled) return;
-        e.stopPropagation();
-        this.toggle();
-        this._focusFirstItem();
-      }, { signal });
-      bindPress(right, {
-        disabled: () => this.disabled,
+    for (const [side, s] of Object.entries(this._sides)) {
+      s.stateLayer = bindStateLayer(s.btn, { disabled, signal });
+      s.elevation = bindButtonElevation(s.btn, { configuration: () => buttonElevationDefaults(this.variant), disabled, signal });
+      bindPress(s.btn, {
+        disabled,
+        onInteraction: ({ type, press }) => s.elevation?.press?.(type === 'press', press),
+        onPress: (e) => {
+          s.pressed = true;
+          this._updateShape(side);
+          createRipple(e, s.btn, { before: s.btn.querySelector('.outline') });
+        },
+        onRelease: () => {
+          s.pressed = false;
+          this._updateShape(side);
+        },
         signal
       });
     }
 
-    // Escape closes the menu
-    this.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.open) {
-        this.close();
-        right && right.focus();
-        e.preventDefault();
-        return;
-      }
-      const target = e.composedPath()[0];
-      if (target === right && ['ArrowDown','ArrowUp'].includes(e.key)) {
-        e.preventDefault();
-        this.openMenu();
-        const items = [...this.shadowRoot.querySelectorAll('.menu-item')];
-        (e.key === 'ArrowUp' ? items.at(-1) : items[0])?.focus();
-      } else if (this.open && target.classList?.contains('menu-item')) {
-        const items = [...this.shadowRoot.querySelectorAll('.menu-item')];
-        const index = items.indexOf(target);
-        if (['ArrowDown','ArrowUp','Home','End'].includes(e.key)) {
-          e.preventDefault();
-          const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length-1 : (index + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
-          items[next]?.focus();
-        } else if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault(); target.click();
-        } else if (e.key === 'Tab') this.close();
-      }
+    leading.btn.addEventListener('click', () => {
+      if (this.disabled) return;
+      // A tap outside the open popup dismisses it.
+      if (this.open) this.close();
+      this.dispatchEvent(new CustomEvent('action', { detail: { label: this.label }, bubbles: true }));
+    }, { signal });
+    trailing.btn.addEventListener('click', () => {
+      if (this.disabled) return;
+      this.toggle();
+    }, { signal });
+    trailing.btn.addEventListener('keydown', (e) => {
+      if (this.disabled || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
+      // The opening menu listens on the document; this key must not move its focus.
+      e.preventDefault();
+      e.stopPropagation();
+      this.openMenu();
     }, { signal });
 
-    // Outside click closes.
-    document.removeEventListener('click', this._docClick);
-    document.addEventListener('click', this._docClick);
+    const menu = this._menu;
+    menu.anchorElement = this;
+    // The menu's own events stay inside; the split button reports them.
+    menu.addEventListener('expanded-change', (e) => {
+      e.stopPropagation();
+      if (!e.detail.expanded && this.open) this.removeAttribute('open');
+    }, { signal });
+    menu.addEventListener('select', (e) => {
+      e.stopPropagation();
+      this.dispatchEvent(new CustomEvent('menu-select', { detail: { index: e.detail.index, label: e.detail.item?.label }, bubbles: true }));
+    }, { signal });
+    for (const type of ['close', 'change', 'menu-item-click']) menu.addEventListener(type, e => e.stopPropagation(), { signal });
 
-    // Menu item activation.
-    this.shadowRoot.querySelectorAll('.menu-item').forEach((item, i) => {
-      item.addEventListener('click', () => {
-        if (this.disabled) return;
-        this.dispatchEvent(new CustomEvent('menu-select', { detail: { index: i, label: item.dataset.label }, bubbles: true }));
-        this.close();
-        right?.focus();
-      }, { signal });
+    this._resizeObserver?.disconnect();
+    this._resizeObserver = new FrameResizeObserver(entries => {
+      this._measured ||= {};
+      for (const entry of entries) {
+        const side = entry.target === leading.btn ? 'leading' : 'trailing';
+        const box = entry.borderBoxSize?.[0];
+        this._measured[side] = box ? { width: box.inlineSize, height: box.blockSize } : { width: entry.target.offsetWidth, height: entry.target.offsetHeight };
+        const s = this._sides[side];
+        if (s.state) this._drawShape(side, s.state.getMorphedShape(performance.now()));
+      }
     });
-  }
-
-  _focusFirstItem() {
-    requestAnimationFrame(() => {
-      const first = this.shadowRoot.querySelector('.menu-item');
-      if (first) first.focus();
-    });
+    this._resizeObserver.observe(leading.btn);
+    this._resizeObserver.observe(trailing.btn);
   }
 
   render() {
-    const d = this._dim();
-    const v = this.variant;
-    const inner = d.inner;
-    const trailPad = Math.max(0, (d.h - d.icon) / 2);
-    const items = this._parseItems();
+    this._disposeMotion();
+    this._abortController?.abort();
+    this._measured = null;
+    this._synced = false;
+    this._rotationOpen = undefined;
     const hasAdopted = !!(this.shadowRoot.adoptedStyleSheets && this.shadowRoot.adoptedStyleSheets.length > 0);
-
+    const icon = this.icon;
     this.shadowRoot.innerHTML = `
       ${hasAdopted ? '' : `<style>${defaultStyle}</style>`}
-      <div class="split-container v-${escapeHtml(v)}">
-        <div class="btn-left" role="button" tabindex="0" aria-label="${escapeHtml(this.label)}">
-          <span class="material-symbols-outlined" aria-hidden="true">${escapeHtml(this.icon)}</span>
-          <span>${escapeHtml(this.label)}</span>
-        </div>
-        <div class="btn-right" role="button" tabindex="0"
-          aria-label="Open menu" aria-haspopup="menu" aria-expanded="${this.open ? 'true' : 'false'}" aria-pressed="${this.open ? 'true' : 'false'}">
-          <span class="material-symbols-outlined chevron" aria-hidden="true">expand_more</span>
-        </div>
-
-        <div class="dropdown-menu" role="menu">
-          ${items.map((it) => `<div class="menu-item" role="menuitem" tabindex="-1" data-label="${escapeHtml(it.label)}">${it.icon ? `<span class="material-symbols-outlined" aria-hidden="true">${escapeHtml(it.icon)}</span>` : ''}<span>${escapeHtml(it.label)}</span></div>`).join('')}
-        </div>
+      <div class="layout v-${escapeHtml(this.variant)}">
+        <button class="btn-left" type="button" part="leading">
+          <span class="content">${icon ? `<span class="glyph" aria-hidden="true">${escapeHtml(icon)}</span>` : ''}<span class="label">${escapeHtml(this.label)}</span></span>
+          <span class="state-layer"></span>
+          <span class="outline"></span>
+        </button>
+        <button class="btn-right" type="button" part="trailing" aria-haspopup="menu" aria-expanded="false">
+          <span class="content"><span class="arrow">${ARROW_DOWN}</span></span>
+          <span class="state-layer"></span>
+          <span class="outline"></span>
+        </button>
       </div>
+      <md-menu variant="dropdown"></md-menu>
     `;
+    const side = selector => {
+      const btn = this.shadowRoot.querySelector(selector);
+      return { btn, content: btn.querySelector('.content'), composition: new ButtonShapeComposition(), pressed: false };
+    };
+    this._sides = { leading: side('.btn-left'), trailing: side('.btn-right') };
+    this._menu = this.shadowRoot.querySelector('md-menu');
+    const arrow = this.shadowRoot.querySelector('.arrow');
+    const open = this.open ? 180 : 0;
+    this._rotation = new SelectionMotion(this, { rotation: open }, ({ rotation }) => { arrow.style.transform = `rotate(${rotation}deg)`; });
   }
 }
 

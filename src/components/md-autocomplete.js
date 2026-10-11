@@ -78,8 +78,7 @@ export class MdAutocomplete extends MdTextField {
   menu.open=this.open;
   input.setAttribute('aria-expanded',String(this.open));
   input.setAttribute('aria-required',String(input.required));
-  const missing=!this.disabled&&input.validity.valueMissing;
-  this._internals?.setValidity(missing?{valueMissing:true}:{},missing?input.validationMessage:'',input);
+  this._syncValidity();
   this._syncActiveOption();
   this._layoutField();
  }

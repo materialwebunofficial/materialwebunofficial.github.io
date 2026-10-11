@@ -1,0 +1,6 @@
+# Generated distribution bytes must survive checkout unchanged on all platforms.
+dist/** text eol=lf
+dist/**/*.woff2 -text
+types/** text eol=lf
+assets/showcase.js text eol=lf
+assets/showcase.css text eol=lf

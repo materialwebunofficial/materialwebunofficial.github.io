@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** Web adaptation of AndroidX ShortNavigationBar / ShortNavigationBarItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f.
  * Vertical/horizontal item tokens describe icon placement, not bar orientation. */
@@ -120,7 +121,7 @@ export class MdNavigationBar extends HTMLElement {
     this.setupInteractions();
     this._applySelection(false);
     this._measureLayout();
-    this._resizeObserver = new ResizeObserver(() => this._measureLayout());
+    this._resizeObserver = new FrameResizeObserver(() => this._measureLayout());
     this._resizeObserver.observe(this.shadowRoot.querySelector('.items'));
     this._themeCleanup = observeThemeContext(this, () => this._measureLayout());
     this.ownerDocument.fonts?.addEventListener('loadingdone', this._onFonts = () => this._measureLayout());
@@ -297,4 +298,5 @@ export class MdNavigationBar extends HTMLElement {
     }
   }
 }
-if (!customElements.get('md-navigation-bar')) customElements.define('md-navigation-bar', delegateHostAria(MdNavigationBar));
+
+if (!customElements.get('md-navigation-bar')) customElements.define('md-navigation-bar', delegateHostAria(MdNavigationBar, '.bar'));

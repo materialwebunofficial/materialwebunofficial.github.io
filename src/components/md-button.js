@@ -1,3 +1,4 @@
+import {FrameResizeObserver} from '../utils/resize-observer.js';
 /**
  * Material Design 3 Expressive (MD3E) Web Component: <md-button>
  *
@@ -21,6 +22,9 @@ import { AsStateColorMotion as ColorMotion } from '../motion/animate-as-state.js
 import {composeColorWithAlpha} from '../motion/compose-color-css.js';
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { ButtonShapeComposition, buttonCornerRadius } from './button-shape.js';
+
+// A corner radius past any button's half size: CSS scales it down to a pill.
+const PILL_RADIUS = 9999;
 import { buttonBorderStroke } from './button-border.js';
 import { bindButtonElevation, buttonElevationDefaults, buttonElevationDefinition, buttonElevationValues } from '../motion/button-elevation.js';
 import { observeThemeContext } from '../theme/theme-context.js';
@@ -372,7 +376,7 @@ export class MdButton extends HTMLElement {
     this._connecting = !this._laidOut;
     try { this._sync(); } finally { this._connecting = false; }
     this._resize?.disconnect();
-    this._resize = new ResizeObserver(() => { this._laidOut = true; this._updateShape(); this._updateBorder(); });
+    this._resize = new FrameResizeObserver(() => { this._laidOut = true; this._updateShape(); this._updateBorder(); });
     this._resize.observe(this.shadowRoot.querySelector('.btn'));
     this._stopThemeObservation?.();
     this._stopThemeObservation = observeThemeContext(this, () => {
@@ -521,8 +525,16 @@ export class MdButton extends HTMLElement {
       this._shapeMotion?.dispose();
       this._shapeState = state;
       this._shapeMotion = new SelectionMotion(this, {progress: state.progress.sample(now).position}, values => {
-        if (this._connecting) return;
         const shape = state.getMorphedShape(null, values.progress);
+        if (this._connecting) {
+          // Not laid out yet: paint without measuring. A full corner is a pill
+          // at any size (CSS scales overlapping radii) and a fixed corner keeps
+          // its length; the first resize observation repaints with the size.
+          // Until then the button is never left with square corners.
+          const radius = buttonCornerRadius(shape, Infinity, Infinity);
+          if (!Number.isNaN(radius)) this._applyRadius(btn, Math.max(0, Math.min(radius, PILL_RADIUS)), true);
+          return;
+        }
         this._applyRadius(btn, Math.max(0, buttonCornerRadius(shape, btn.offsetWidth, btn.offsetHeight)));
         this._surface?.clip();
       });
@@ -533,14 +545,14 @@ export class MdButton extends HTMLElement {
   }
 
   /** Uniform corners, or a connected group's fixed full outer corners and morphing inner corners. */
-  _applyRadius(btn, radius) {
+  _applyRadius(btn, radius, unmeasured = false) {
     const position = this.connected;
     if (!position) {
       for (const name of ['border-start-start-radius', 'border-end-start-radius', 'border-start-end-radius', 'border-end-end-radius']) btn.style.removeProperty(name);
       btn.style.borderRadius = `${radius}px`;
       return;
     }
-    const full = Math.min(btn.offsetWidth, btn.offsetHeight) / 2;
+    const full = unmeasured ? PILL_RADIUS : Math.min(btn.offsetWidth, btn.offsetHeight) / 2;
     const start = position === 'leading' ? full : radius, end = position === 'trailing' ? full : radius;
     btn.style.removeProperty('border-radius');
     btn.style.setProperty('border-start-start-radius', `${start}px`);
@@ -654,6 +666,7 @@ export class MdButton extends HTMLElement {
     this._stateLayer = bindStateLayer(btn, {disabled: () => this.disabled, hitTest: event => this._surface?.hitTest(event) ?? true, signal});
 
     this._pressBinding = bindPress(btn, {
+      hostActivation: true,
       disabled: () => this.disabled,
       keyboardActivation: true,
       ignoreEvent: event => nestedInteractiveEvent(event,btn),
