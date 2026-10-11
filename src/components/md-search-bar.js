@@ -30,6 +30,7 @@
  * Not ported: AppBarWithSearch, the contained variants and predictive back.
  */
 import { delegateHostAria } from '../utils/host-aria.js';
+import { lockPageScroll, unlockPageScroll } from '../utils/scroll-lock.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
@@ -331,7 +332,7 @@ export class MdSearchBar extends HTMLElement {
     const signal = this._optionAbort.signal;
     this._options.forEach((option, index) => {
       bindPress(option, { signal, disabled: () => this.disabled, onPress: event => createRipple(event, option), onActivate: () => this._choose(index) });
-      option.addEventListener('pointerdown', event => event.preventDefault(), { signal });
+      option.addEventListener('mousedown', event => event.preventDefault(), { signal });
     });
     this._setActive(-1);
   }
@@ -577,12 +578,14 @@ export class MdSearchBar extends HTMLElement {
     this._results.style.opacity = '0';
     this._back.hidden = false;
     this._leadingDefault.hidden = true;
+    lockPageScroll(this);
     try { this._fsLayer.showModal(); } catch { this._fsLayer.setAttribute('open', ''); }
     // Focus the input field on the first expansion.
     this._input.focus({ preventScroll: true });
   }
 
   _closeFullScreen() {
+    unlockPageScroll(this);
     if (!this._fsOpen) return;
     this._fsOpen = false;
     this._surface.prepend(this._field);

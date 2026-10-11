@@ -68,3 +68,4 @@ Thumbs.db
 !scripts/test-frameworks.mjs
 !scripts/test-ui-followup.mjs
 !scripts/build-showcase-assets.mjs
+!scripts/test-mobile.mjs

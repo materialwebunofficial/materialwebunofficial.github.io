@@ -81,6 +81,10 @@ export async function testChipFoundation(browser,base){
     node.variant='input';node.removable=true;node.label='<img src=x onerror=alert(1)>';node.contentColor='var(--md-sys-color-on-tertiary-container)';node.containerColor='var(--md-sys-color-tertiary-container)';
     return control===root.querySelector('.chip')&&label===root.querySelector('.lbl')&&leading===root.querySelector('slot[name=leading-icon]')&&!root.querySelector('.lbl-text img');
    });assert.equal(retained,true);checks++;
+   assert.equal(await chip.evaluate(node=>{
+    const primary=node.shadowRoot.querySelector('.primary-action'),remove=node.shadowRoot.querySelector('.remove-btn');
+    return primary.getAttribute('role')==='checkbox'&&!primary.contains(remove)&&!remove.closest('[role="button"],[role="checkbox"]')&&primary.tabIndex===0;
+   }),true,'removable chips expose separate selection and removal actions');checks++;
    await page.evaluate(()=>{window.chipRemoves=0;document.querySelector('#chip').addEventListener('remove',event=>{chipRemoves++;event.preventDefault();});});
    const remove=chip.locator('.remove-btn');await remove.click();await remove.focus();await page.keyboard.press('Enter');
    assert.equal(await page.evaluate(()=>chipRemoves),2);assert.equal(await page.evaluate(()=>chipChanges),5);assert.equal(await chip.count(),1);checks+=3;

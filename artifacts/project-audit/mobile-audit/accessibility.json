@@ -1,0 +1,1118 @@
+[
+  {
+    "theme": "light",
+    "id": "home",
+    "previews": 0,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 9
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "get-started",
+    "previews": 0,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 63
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "buttons",
+    "previews": 2,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "button-groups",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "fabs",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "extended-fabs",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "fab-menu",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-required-children",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "icon-buttons",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "segmented-buttons",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "split-button",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "badges",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "loading-indicator",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "progress-indicators",
+    "previews": 2,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "snackbars",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "tooltips",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "bottom-sheet",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "cards",
+    "previews": 6,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "carousel",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "dialogs",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "dividers",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "expansion-panel",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "lists",
+    "previews": 3,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "side-sheet",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "app-bars",
+    "previews": 8,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 9
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "nav-bar",
+    "previews": 2,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "nav-drawer",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "nav-rail",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "paginator",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "search",
+    "previews": 2,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "stepper",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "tabs",
+    "previews": 4,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "toolbars",
+    "previews": 7,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 2
+      },
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "checkbox",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "chips",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "date-pickers",
+    "previews": 3,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 1128
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "menus",
+    "previews": 3,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 2
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 2
+      },
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "radio-button",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "sliders",
+    "previews": 5,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "switch",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "light",
+    "id": "time-pickers",
+    "previews": 3,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "autocomplete",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "select",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "text-fields",
+    "previews": 7,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "theming",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "shapes",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "home",
+    "previews": 0,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 9
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "get-started",
+    "previews": 0,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 63
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "buttons",
+    "previews": 2,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "button-groups",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "fabs",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "extended-fabs",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "fab-menu",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-required-children",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "icon-buttons",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "segmented-buttons",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "split-button",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "badges",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "loading-indicator",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "progress-indicators",
+    "previews": 2,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "snackbars",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "tooltips",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "bottom-sheet",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "cards",
+    "previews": 6,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "carousel",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "dialogs",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "dividers",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "expansion-panel",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "lists",
+    "previews": 3,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "side-sheet",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "app-bars",
+    "previews": 8,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 9
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "nav-bar",
+    "previews": 2,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "nav-drawer",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "nav-rail",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "paginator",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "search",
+    "previews": 2,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "stepper",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "tabs",
+    "previews": 4,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "toolbars",
+    "previews": 7,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 2
+      },
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "checkbox",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "chips",
+    "previews": 3,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "date-pickers",
+    "previews": 3,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 1128
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "menus",
+    "previews": 3,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 2
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 2
+      },
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "radio-button",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "sliders",
+    "previews": 5,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "switch",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "theme": "dark",
+    "id": "time-pickers",
+    "previews": 3,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "autocomplete",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "select",
+    "previews": 2,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "text-fields",
+    "previews": 7,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "theming",
+    "previews": 1,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "shapes",
+    "previews": 1,
+    "violations": [],
+    "incomplete": []
+  }
+]

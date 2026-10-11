@@ -1,6 +1,6 @@
 {
   "name": "@materialwebunofficial/md3e-web",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Unofficial Web Adaptation of Material Design 3 Expressive (M3 Expressive) - Web Components, Design Tokens, Spring Physics, and HCT Dynamic Theme Engine",
   "type": "module",
   "main": "./dist/md3-expressive.esm.js",
@@ -92,6 +92,7 @@
     "test:text-fields": "node test/unit/text-field-state.test.mjs && node test/unit/text-field-cutout.test.mjs && node test/unit/text-field-layout.test.mjs && npm run build && node scripts/test-text-fields.mjs",
     "test:chips": "node test/unit/chip-state.test.mjs && node test/unit/chip-elevation.test.mjs && node test/unit/chip-layout.test.mjs && node test/unit/chip-retained-content.test.mjs && npm run build && node scripts/test-chips.mjs",
     "test:ui-followup": "node scripts/test-ui-followup.mjs",
+    "test:mobile": "node scripts/test-mobile.mjs",
     "test:web": "node scripts/test-web-platform.mjs",
     "test:types": "node scripts/test-package-contract.mjs",
     "check:dist": "node scripts/check-dist.mjs",

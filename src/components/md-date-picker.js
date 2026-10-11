@@ -118,6 +118,7 @@ const defaultStyle = MODAL_STYLE+`
 
   .docked-nav-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     padding: 0 4px;
@@ -372,7 +373,7 @@ const defaultStyle = MODAL_STYLE+`
 
   .weekdays-row {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     text-align: center;
     font: var(--md-sys-typescale-body-large, 400 16px/24px Roboto, sans-serif);
     letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
@@ -386,7 +387,7 @@ const defaultStyle = MODAL_STYLE+`
 
   .days-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     grid-template-rows: repeat(6, 48px);
     gap: 0;
     height: 288px;
@@ -422,12 +423,15 @@ const defaultStyle = MODAL_STYLE+`
     position: relative;
     z-index: 2;
     width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
+    height: auto;
+    /* Keep the 40dp indicator at the native width; a constrained web pane
+       may have less than 40dp per column. The row's touch height stays 48dp. */
+    min-width: 0;
+    min-height: 0;
     max-width: 40px;
     max-height: 40px;
     aspect-ratio: 1 / 1;
+    flex-shrink: 1;
     border-radius: 50%;
     display: flex;
     align-items: center;

@@ -34,7 +34,14 @@ const defaultStyle = MODAL_STYLE+`
   }
   :host([inline]) {
     display: inline-block;
+    width: 328px;
+    max-width: 100%;
+    flex-shrink: 0;
+    container-type: inline-size;
   }
+  :host([inline][variant="horizontal"]),
+  :host([inline][layout-type="horizontal"]) { width: 580px; }
+  :host([inline]) .inline-content { width: 100%; min-width: 0; }
 
   .scrim {
     position: fixed;
@@ -66,7 +73,7 @@ const defaultStyle = MODAL_STYLE+`
 
   :host([inline]) .picker-dialog {
     width: 100%;
-    max-width: 328px;
+    max-width: min(328px, 100%);
     box-shadow: none;
     margin: 0 auto;
   }
@@ -462,6 +469,16 @@ const defaultStyle = MODAL_STYLE+`
       flex-direction: column !important;
       gap: 16px !important;
     }
+  }
+  /* Inline pickers fit their pane, which can be much narrower than the
+     window (a catalog card, split view or sidebar). Preserve the 256dp dial. */
+  :host([inline]) .picker-dialog {
+    max-width: 100% !important;
+    padding-inline: clamp(0px, calc(50% - 128px), 24px) !important;
+  }
+  @container (max-width: 579px) {
+    :host([inline]) .picker-dialog.horizontal { width: 328px; max-width: 100%; }
+    .main-layout-wrap.horizontal { flex-direction: column; gap: 16px; }
   }
 `;
 

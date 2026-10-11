@@ -928,6 +928,9 @@ export function initShowcase() {
   // =========================================================================
   // 8. Code highlighting (color roles only)
   // =========================================================================
+  // Declared scroll regions need a keyboard entry point even while their card
+  // is skipped by content-visibility. Measuring offscreen overflow would remove
+  // that entry point and prevent Tab from revealing the example.
   // One left-to-right scan, so a URL inside a string is never read as a comment.
   const SYNTAX = new RegExp([
     '(?<comment>&lt;!--[\\s\\S]*?--&gt;|\\/\\/[^\\n]*)',
@@ -951,6 +954,9 @@ export function initShowcase() {
         return `<span class="syn-${kind}">${match}</span>`;
       });
       el.dataset.highlighted = 'true';
+    });
+    scope.querySelectorAll('.comp-code-box code, .code-block-wrapper pre, .docs-table-wrapper').forEach(node => {
+      node.tabIndex = 0;
     });
   }
 

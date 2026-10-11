@@ -92,7 +92,7 @@ function wake(root) {
   const group = waiting.get(root);
   if (!group) return;
   release(root, group);
-  for (const [element, run] of group.runs) if (element.isConnected) run();
+  for (const [run, element] of group.runs) if (element.isConnected) run();
 }
 function skipRoot(element) {
   // Hidden only because a content-visibility:auto container skips its
@@ -121,9 +121,11 @@ function whenRendered(element, callback) {
     if (group.observer) group.observer.observe(root);
     else root.addEventListener('contentvisibilityautostatechange', group.onState);
   }
-  group.runs.set(element, callback);
+  // One component can own several theme bindings (colors, container, geometry).
+  // Each subscription must wake and retire independently.
+  group.runs.set(callback, element);
   return () => {
-    if (group.runs.delete(element) && !group.runs.size && waiting.get(root) === group) release(root, group);
+    if (group.runs.delete(callback) && !group.runs.size && waiting.get(root) === group) release(root, group);
   };
 }
 function rendered(element) {

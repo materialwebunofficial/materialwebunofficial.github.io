@@ -2,6 +2,7 @@ import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** Web adaptation of AndroidX NavigationDrawer/DrawerSheet/NavigationDrawerItem.
  * Reference: a095da93f8e98dea8748ceed79ea8427aade245f. */
 import { delegateHostAria } from '../utils/host-aria.js';
+import { lockPageScroll, unlockPageScroll } from '../utils/scroll-lock.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
 import { DrawerOffset, drawerTarget } from '../motion/drawer-motion.js';
 import { PointerVelocityTracker } from '../motion/velocity-tracker.js';
@@ -97,7 +98,7 @@ export class MdNavigationDrawer extends HTMLElement {
  connectedCallback(){if(!this._rendered)this.render();this.setupInteractions();this._applySelection();this._syncSurface();this._syncOpen(false);
    this._resizeObserver=new FrameResizeObserver(()=>this._resize());this._resizeObserver.observe(this._drawer);}
  disconnectedCallback(){this._abortController?.abort();this._abortController=null;this._resizeObserver?.disconnect();this._resizeObserver=null;
-   this._motion?.dispose();this._motion=null;this._drag=null;this._releaseGestureOwner();if(this._layer?.localName==='dialog'&&this._layer.open)this._layer.close();}
+   this._motion?.dispose();this._motion=null;this._drag=null;this._releaseGestureOwner();this._closeModalLayer();}
  attributeChangedCallback(name,oldValue,newValue){if(!this._rendered||oldValue===newValue)return;
    if(name==='items'||name==='modal'||name==='variant'){this.render();if(this.isConnected){this.setupInteractions();this._resizeObserver?.disconnect();this._resizeObserver?.observe(this._drawer);}
      this._applySelection();this._syncOpen(false);}
@@ -111,7 +112,7 @@ export class MdNavigationDrawer extends HTMLElement {
  /** DrawerState.snapTo: moves to open or closed at once, without the sheet motion. */
  snapTo(value){this._snapping=true;try{this.open=value===true||value==='open';}finally{this._snapping=false;}}
  close(){if(!this.open)return;this.open=false;this.dispatchEvent(new CustomEvent('close',{bubbles:true,composed:true}));}
- render(){this._abortController?.abort();this._drag=null;this._releaseGestureOwner();if(this._layer?.localName==='dialog'&&this._layer.open)this._layer.close();
+ render(){this._abortController?.abort();this._drag=null;this._releaseGestureOwner();this._closeModalLayer();
    this.dataset.variant=this.variant;const items=this.items,tag=this.modal?'dialog':'div';
    this.style.setProperty('--drawer-default-width',items.length?'360px':'240px');
    this.shadowRoot.innerHTML=`${this.shadowRoot.adoptedStyleSheets?.length?'':`<style>${defaultStyle}</style>`}
@@ -175,7 +176,7 @@ export class MdNavigationDrawer extends HTMLElement {
    this._measureWidth();
    if(!this._motion){this._motion=new SelectionMotion(this,{offset:this.open?0:-this._width},values=>this._drawOffset(values.offset));
      this._motion.channels.offset=new DrawerOffset(this.open?0:-this._width);}
-   if(this.modal&&this.open&&!this._layer.open){this._drawOffset(this._offset);this._layer.showModal();this._focusable()[0]?.focus();}
+   if(this.modal&&this.open&&!this._layer.open){this._drawOffset(this._offset);lockPageScroll(this);this._layer.showModal();this._focusable()[0]?.focus();}
    const release=this._release;this._release=null;
    if(release?.gesture&&animate){this._motion.channels.offset.settle(this.open?0:-this._width,release.velocity);
      if(this._motion.media?.matches)this._motion.finish();else this._motion.tick(performance.now());}
@@ -193,7 +194,8 @@ export class MdNavigationDrawer extends HTMLElement {
    this._drawer.inert=!visible;this._drawer.style.visibility=visible?'visible':'hidden';
    if(this._scrim)this._scrim.style.opacity=String(fraction);
    if(this.variant==='dismissible')this.style.setProperty('--drawer-revealed-width',`${Math.max(0,this._width+Math.round(offset))}px`);
-   if(this.modal&&!this.open&&!this._drag?.started&&fraction===0&&!this._motion?.channels.offset.animation&&this._layer.open)this._layer.close();}
+   if(this.modal&&!this.open&&!this._drag?.started&&fraction===0&&!this._motion?.channels.offset.animation&&this._layer.open)this._closeModalLayer();}
+ _closeModalLayer(){if(this._layer?.localName==='dialog'&&this._layer.open)this._layer.close();unlockPageScroll(this);}
  _focusable(){const result=[];
    const walk=node=>{for(const child of node.children??[]){
      if(child.hidden||child.inert||child.matches(':disabled')||getComputedStyle(child).visibility==='hidden'||getComputedStyle(child).display==='none')continue;
@@ -242,7 +244,7 @@ export class MdNavigationDrawer extends HTMLElement {
  _beginDrag(event){this._drag.started=true;
    const channel=this._motion.channels.offset,current=channel.sample(performance.now()).position;
    channel.value=channel.target=clamp(current,-this._width,0);channel.animation=null;this._motion.tick(performance.now());
-   if(this.modal&&!this._layer.open)this._layer.showModal();try{this._layer.setPointerCapture(event.pointerId);}catch{}}
+   if(this.modal&&!this._layer.open){lockPageScroll(this);this._layer.showModal();}try{this._layer.setPointerCapture(event.pointerId);}catch{}}
  _moveDrag(event){const drag=this._drag;if(!drag||drag.id!==event.pointerId)return;
    if(event.defaultPrevented){this._cancelDrag();return;}
    for(const sample of event.getCoalescedEvents?.()??[]){

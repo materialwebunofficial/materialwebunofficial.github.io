@@ -1,0 +1,329 @@
+{
+  "engine": "chromium",
+  "checks": [
+    {
+      "width": 320,
+      "height": 640,
+      "id": "dialogs",
+      "bounds": {
+        "x": 24,
+        "y": 186,
+        "width": 272,
+        "height": 268
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "date-pickers",
+      "bounds": {
+        "x": 16,
+        "y": 35.5,
+        "width": 288,
+        "height": 569
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "date-pickers",
+      "confirm": "trusted touch reaches the action and commits once"
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "time-pickers",
+      "bounds": {
+        "x": 16,
+        "y": 42,
+        "width": 288,
+        "height": 556
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "time-pickers",
+      "confirm": "trusted touch reaches the action and commits once"
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "bottom-sheet",
+      "expanded": "trusted handle activation keeps the expanded sheet inside both viewport axes"
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "bottom-sheet",
+      "bounds": {
+        "x": 0,
+        "y": 360,
+        "width": 320,
+        "height": 280
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "side-sheet",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 320,
+        "height": 640
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "nav-drawer",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 320,
+        "height": 640
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "nav-rail",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 220,
+        "height": 640
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "id": "search",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 320,
+        "height": 640
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "dialogs",
+      "bounds": {
+        "x": 24,
+        "y": 292.5,
+        "width": 336,
+        "height": 268
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "date-pickers",
+      "bounds": {
+        "x": 16,
+        "y": 142,
+        "width": 352,
+        "height": 569
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "date-pickers",
+      "confirm": "trusted touch reaches the action and commits once"
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "time-pickers",
+      "bounds": {
+        "x": 28,
+        "y": 148.5,
+        "width": 328,
+        "height": 556
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "time-pickers",
+      "confirm": "trusted touch reaches the action and commits once"
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "bottom-sheet",
+      "expanded": "trusted handle activation keeps the expanded sheet inside both viewport axes"
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "bottom-sheet",
+      "bounds": {
+        "x": 0,
+        "y": 629,
+        "width": 384,
+        "height": 224
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "side-sheet",
+      "bounds": {
+        "x": 64,
+        "y": 0,
+        "width": 320,
+        "height": 853
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "nav-drawer",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 360,
+        "height": 853
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "nav-rail",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 220,
+        "height": 853
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "id": "search",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 384,
+        "height": 853
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "dialogs",
+      "bounds": {
+        "x": 146.5,
+        "y": 68,
+        "width": 560,
+        "height": 248
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "date-pickers",
+      "bounds": {
+        "x": 246.5,
+        "y": 24,
+        "width": 360,
+        "height": 336
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "date-pickers",
+      "confirm": "trusted touch reaches the action and commits once"
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "time-pickers",
+      "bounds": {
+        "x": 262.5,
+        "y": 24,
+        "width": 328,
+        "height": 336
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "time-pickers",
+      "confirm": "trusted touch reaches the action and commits once"
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "bottom-sheet",
+      "expanded": "trusted handle activation keeps the expanded sheet inside both viewport axes"
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "bottom-sheet",
+      "bounds": {
+        "x": 106.5,
+        "y": 192,
+        "width": 640,
+        "height": 204
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "side-sheet",
+      "bounds": {
+        "x": 533,
+        "y": 0,
+        "width": 320,
+        "height": 384
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "nav-drawer",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 360,
+        "height": 384
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "nav-rail",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 220,
+        "height": 384
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "id": "search",
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 853,
+        "height": 384
+      }
+    }
+  ],
+  "errors": [],
+  "current": {
+    "width": 853,
+    "height": 384,
+    "id": "search"
+  }
+}

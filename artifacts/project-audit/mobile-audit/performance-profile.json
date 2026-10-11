@@ -1,0 +1,497 @@
+[
+  {
+    "id": "dialogs",
+    "hot": [
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 915.522
+      },
+      {
+        "functionName": "showModal",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 61.405
+      },
+      {
+        "functionName": "close",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 42.382
+      },
+      {
+        "functionName": "",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 307,
+        "columnNumber": 6500,
+        "selfMs": 7.636
+      },
+      {
+        "functionName": "query",
+        "scriptId": "30",
+        "url": "",
+        "lineNumber": 5815,
+        "columnNumber": 20,
+        "selfMs": 6.442
+      },
+      {
+        "functionName": "elementsFromPoint",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 4.674
+      },
+      {
+        "functionName": "checkVisibility",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 4.661
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 4.579
+      },
+      {
+        "functionName": "n",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 0,
+        "columnNumber": 25203,
+        "selfMs": 3.123
+      },
+      {
+        "functionName": "getPropertyValue",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.11
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.076
+      },
+      {
+        "functionName": "S",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 0,
+        "columnNumber": 23615,
+        "selfMs": 3.056
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.034
+      },
+      {
+        "functionName": "pointer",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 0,
+        "columnNumber": 35212,
+        "selfMs": 3.032
+      },
+      {
+        "functionName": "clip",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 9,
+        "columnNumber": 185891,
+        "selfMs": 3.023
+      },
+      {
+        "functionName": "elementsFromPoint",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.014
+      },
+      {
+        "functionName": "querySelectorAll",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 2.96
+      },
+      {
+        "functionName": "",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 2.938
+      },
+      {
+        "functionName": "outOfBounds",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 9,
+        "columnNumber": 184900,
+        "selfMs": 2.026
+      },
+      {
+        "functionName": "",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 0,
+        "columnNumber": 40883,
+        "selfMs": 1.706
+      }
+    ]
+  },
+  {
+    "id": "nav-drawer",
+    "hot": [
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 638.707
+      },
+      {
+        "functionName": "showModal",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 67.867
+      },
+      {
+        "functionName": "close",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 65.866
+      },
+      {
+        "functionName": "_drawOffset",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 1858,
+        "columnNumber": 3823,
+        "selfMs": 16.603
+      },
+      {
+        "functionName": "query",
+        "scriptId": "30",
+        "url": "",
+        "lineNumber": 5815,
+        "columnNumber": 20,
+        "selfMs": 11.981
+      },
+      {
+        "functionName": "query",
+        "scriptId": "30",
+        "url": "",
+        "lineNumber": 5815,
+        "columnNumber": 20,
+        "selfMs": 10.313
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 7.852
+      },
+      {
+        "functionName": "elementsFromPoint",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 6.255
+      },
+      {
+        "functionName": "",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 307,
+        "columnNumber": 6500,
+        "selfMs": 6.088
+      },
+      {
+        "functionName": "render",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 0,
+        "columnNumber": 17981,
+        "selfMs": 6.033
+      },
+      {
+        "functionName": "elementsFromPoint",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 5.664
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 5.483
+      },
+      {
+        "functionName": "_measureWidth",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 1858,
+        "columnNumber": 2273,
+        "selfMs": 4.587
+      },
+      {
+        "functionName": "",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 0,
+        "columnNumber": 1423,
+        "selfMs": 4.574
+      },
+      {
+        "functionName": "Ie",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 1480,
+        "columnNumber": 251,
+        "selfMs": 4.572
+      },
+      {
+        "functionName": "",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.326
+      },
+      {
+        "functionName": "elementsFromPoint",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.106
+      },
+      {
+        "functionName": "matches",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.083
+      },
+      {
+        "functionName": "requestAnimationFrame",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 2.705
+      },
+      {
+        "functionName": "elementsFromPoint",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 2.683
+      }
+    ]
+  },
+  {
+    "id": "nav-rail",
+    "hot": [
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 584.106
+      },
+      {
+        "functionName": "showModal",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 69.269
+      },
+      {
+        "functionName": "close",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 50.048
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 22.614
+      },
+      {
+        "functionName": "query",
+        "scriptId": "30",
+        "url": "",
+        "lineNumber": 5815,
+        "columnNumber": 20,
+        "selfMs": 16.893
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 8.68
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 8.002
+      },
+      {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 7.616
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 7.279
+      },
+      {
+        "functionName": "",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 307,
+        "columnNumber": 6500,
+        "selfMs": 6.157
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 6.15
+      },
+      {
+        "functionName": "",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 4.609
+      },
+      {
+        "functionName": "elementsFromPoint",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 4.577
+      },
+      {
+        "functionName": "query",
+        "scriptId": "30",
+        "url": "",
+        "lineNumber": 5815,
+        "columnNumber": 20,
+        "selfMs": 4.523
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.23
+      },
+      {
+        "functionName": "insertBefore",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.212
+      },
+      {
+        "functionName": "sample",
+        "scriptId": "20",
+        "url": "http://127.0.0.1:24528/dist/md3-expressive.esm.js",
+        "lineNumber": 0,
+        "columnNumber": 16346,
+        "selfMs": 3.075
+      },
+      {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.053
+      },
+      {
+        "functionName": "previewNode",
+        "scriptId": "30",
+        "url": "",
+        "lineNumber": 7985,
+        "columnNumber": 13,
+        "selfMs": 3.049
+      },
+      {
+        "functionName": "elementsFromPoint",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 3.025
+      }
+    ]
+  }
+]

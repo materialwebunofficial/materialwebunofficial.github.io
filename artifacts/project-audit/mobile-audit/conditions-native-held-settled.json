@@ -1,0 +1,22 @@
+{
+  "checks": [
+    "light: seed touch selection commits",
+    "light: seed controls wrap within the page",
+    "light: seed touch selection commits",
+    "light: seed controls wrap within the page",
+    "light: seed touch selection commits",
+    "light: seed controls wrap within the page",
+    "light: seed touch selection commits",
+    "light: seed controls wrap within the page",
+    "light: seed touch selection commits",
+    "light: seed controls wrap within the page",
+    "light: seed touch selection commits",
+    "light: seed controls wrap within the page",
+    "light: primary tab touch selects Explore",
+    "light: horizontal touch drag updates slider",
+    "light: carousel responds to a horizontal swipe",
+    "light: both panes of the standard sheet example are reachable"
+  ],
+  "errors": [],
+  "failure": "AssertionError [ERR_ASSERTION]: light: standard side sheet toggles from its first pane\n    at check (file:///C:/Users/sagla/OneDrive/Belgeler/MD3E%20for%20web/material-design-3-expressive-unofficial/artifacts/project-audit/mobile-audit/conditions-native-held-settled.mjs:6:32)\n    at file:///C:/Users/sagla/OneDrive/Belgeler/MD3E%20for%20web/material-design-3-expressive-unofficial/artifacts/project-audit/mobile-audit/conditions-native-held-settled.mjs:34:3"
+}

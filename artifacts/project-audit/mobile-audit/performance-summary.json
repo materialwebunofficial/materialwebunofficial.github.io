@@ -1,0 +1,73 @@
+{
+  "context": {
+    "viewport": "384x853 CSS px",
+    "dpr": 2.8125,
+    "browser": "156.0.8078.4",
+    "cpuRates": [
+      1,
+      4
+    ],
+    "cycles": 2,
+    "baseline": "f145527",
+    "method": "trusted touch; rAF delivery intervals, Long Tasks/Event Timing, CDP main-thread/layout counters; local emulation, not physical-device FPS or field INP"
+  },
+  "errors": [],
+  "groups": [
+    {
+      "cpu": 1,
+      "version": "before",
+      "samples": 32,
+      "p95Median": 16.700000000000728,
+      "maxFrame": 16.80000000000291,
+      "gaps": 0,
+      "longTasks": 0,
+      "longTaskMs": 0,
+      "maxLongTask": 0,
+      "taskMsMedian": 79.56299999999983,
+      "openTaskMsMedian": 110.8829999999994,
+      "closeTaskMsMedian": 73.06800000000013
+    },
+    {
+      "cpu": 1,
+      "version": "after",
+      "samples": 32,
+      "p95Median": 16.700000000000728,
+      "maxFrame": 16.80000000000291,
+      "gaps": 0,
+      "longTasks": 0,
+      "longTaskMs": 0,
+      "maxLongTask": 0,
+      "taskMsMedian": 73.71400000000028,
+      "openTaskMsMedian": 100.35300000000014,
+      "closeTaskMsMedian": 67.97399999999998
+    },
+    {
+      "cpu": 4,
+      "version": "before",
+      "samples": 32,
+      "p95Median": 16.700000000004366,
+      "maxFrame": 166.70000000000073,
+      "gaps": 53,
+      "longTasks": 32,
+      "longTaskMs": 2809,
+      "maxLongTask": 140,
+      "taskMsMedian": 450.73500000000035,
+      "openTaskMsMedian": 583.6769999999998,
+      "closeTaskMsMedian": 326.7900000000008
+    },
+    {
+      "cpu": 4,
+      "version": "after",
+      "samples": 32,
+      "p95Median": 16.799999999999272,
+      "maxFrame": 133.40000000000146,
+      "gaps": 51,
+      "longTasks": 33,
+      "longTaskMs": 2994,
+      "maxLongTask": 119,
+      "taskMsMedian": 401.50900000000036,
+      "openTaskMsMedian": 575.3850000000007,
+      "closeTaskMsMedian": 328.9799999999996
+    }
+  ]
+}

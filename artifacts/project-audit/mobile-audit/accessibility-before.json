@@ -1,0 +1,3354 @@
+[
+  {
+    "theme": "light",
+    "id": "home",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 9
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "get-started",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".code-block-wrapper:nth-child(3) > pre > code[data-highlighted=\"true\"] > .syn-comment"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.29 (foreground color: #7d7983, background color: #e7e0ec, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".docs-card[variant=\"outlined\"]:nth-child(1) > .code-block-wrapper > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".docs-card[variant=\"outlined\"]:nth-child(2) > .code-block-wrapper > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#quickstart-example > .code-block-wrapper > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#fw-react > .code-block-wrapper > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#developer-api > .code-block-wrapper:nth-child(3) > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".code-block-wrapper:nth-child(5) > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".docs-table-wrapper"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 63
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "buttons",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#buttons > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#button-sizes > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "button-groups",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#button-groups > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#button-groups > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 33
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "fabs",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#fabs > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "extended-fabs",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#extended-fabs > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "fab-menu",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#fab-menu > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-required-children",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "icon-buttons",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#icon-buttons > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#icon-buttons > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#icon-buttons > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 18
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "segmented-buttons",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#segmented-buttons > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#segmented-buttons > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 16
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "split-button",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#split-button > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#split-button > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 17
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "badges",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#badges > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "loading-indicator",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#loading-indicator > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "progress-indicators",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#progress-indicators > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#progress-indicators > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 10
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "snackbars",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#snackbars > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#snackbars > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#snackbars > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "tooltips",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#tooltips > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 9
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "bottom-sheet",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#bottom-sheet > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "cards",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".comp-card:nth-child(6) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 24
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "carousel",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".full-col.comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".full-col.comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".full-col.comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 23
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "dialogs",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#dialogs > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "dividers",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#dividers > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 13
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "expansion-panel",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#expansion-panel > .full-width.cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 10
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "lists",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#lists > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#lists > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#lists > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 28
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "side-sheet",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#side-sheet > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#side-sheet > .cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 16
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "app-bars",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(6) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".comp-card:nth-child(7) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".comp-card:nth-child(8) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 215
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "nav-bar",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#nav-bar > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#nav-bar > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "nav-drawer",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#nav-drawer > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#nav-drawer > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 17
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "nav-rail",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#nav-rail > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#nav-rail > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "paginator",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#paginator > .full-width.cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "search",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#search > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#search > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "stepper",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#stepper > .full-width.cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 22
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "tabs",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#tabs > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#tabs > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#tabs > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#tabs > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "toolbars",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(6) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(7) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 5
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 110
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "checkbox",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#checkbox > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "chips",
+    "violations": [
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "help": "Interactive controls must not be nested",
+        "nodes": [
+          {
+            "target": [
+              [
+                "md-chip[icon=\"person\"]",
+                ".input.chip[part=\"chip\"]"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants. Move them outside of the element, or remove them."
+          },
+          {
+            "target": [
+              [
+                "md-chip[label=\"TypeScript\"]",
+                ".input.chip[part=\"chip\"]"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants. Move them outside of the element, or remove them."
+          },
+          {
+            "target": [
+              [
+                "md-chip[label=\"Alex\"]",
+                ".input.chip[part=\"chip\"]"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants. Move them outside of the element, or remove them."
+          }
+        ]
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#chips > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#chips > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#chips > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "date-pickers",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#date-pickers > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#date-pickers > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#date-pickers > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 767
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "menus",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#menus > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#menus > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#menus > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 4
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 4
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 23
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "radio-button",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#radio-button > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "sliders",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "switch",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#switch > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "time-pickers",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#time-pickers > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#time-pickers > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#time-pickers > .cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 20
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "autocomplete",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#autocomplete > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "select",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#select > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#select > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 13
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "text-fields",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(6) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(7) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 49
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "theming",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".theme-lab > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 10
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "id": "shapes",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#shapes > .full-width.cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "home",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".install-snippet > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 9
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "get-started",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".code-block-wrapper:nth-child(3) > pre > code[data-highlighted=\"true\"] > .syn-comment"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.3 (foreground color: #78737e, background color: #27242d, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".docs-card:nth-child(1) > .code-block-wrapper > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".docs-card:nth-child(2) > .code-block-wrapper > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#quickstart-example > .code-block-wrapper > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#fw-react > .code-block-wrapper > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#developer-api > .code-block-wrapper:nth-child(3) > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".code-block-wrapper:nth-child(5) > pre"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".docs-table-wrapper"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 63
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "buttons",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#buttons > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#button-sizes > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "button-groups",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#button-groups > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#button-groups > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#button-groups > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 33
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "fabs",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#fabs > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "extended-fabs",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#extended-fabs > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "fab-menu",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#fab-menu > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-required-children",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "icon-buttons",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#icon-buttons > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#icon-buttons > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#icon-buttons > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 18
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "segmented-buttons",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#segmented-buttons > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#segmented-buttons > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 16
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "split-button",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#split-button > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#split-button > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 17
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "badges",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#badges > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "loading-indicator",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#loading-indicator > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "progress-indicators",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#progress-indicators > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#progress-indicators > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 10
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "snackbars",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#snackbars > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#snackbars > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#snackbars > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "tooltips",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#tooltips > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 9
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "bottom-sheet",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#bottom-sheet > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "cards",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".comp-card:nth-child(6) > .comp-preview > .demo-card > .card-heading > .card-subhead"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.17 (foreground color: #aea9b4, background color: #fdf7fe, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".comp-card:nth-child(6) > .comp-preview > .demo-card > .card-text"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.17 (foreground color: #aea9b4, background color: #fdf7fe, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              [
+                "md-button[label=\"Not me\"]",
+                ".lbl"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.61 (foreground color: #cdc0ec, background color: #fdf7fe, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#cards > .cards-grid > .comp-card:nth-child(6) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 24
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "carousel",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#carousel > .full-width.cards-grid > .full-col.comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".full-width.cards-grid > .full-col.comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".full-width.cards-grid > .full-col.comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 23
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "dialogs",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#dialogs > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "dividers",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#dividers > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 13
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "expansion-panel",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#expansion-panel > .full-width.cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 10
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "lists",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#lists > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#lists > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#lists > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 28
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "side-sheet",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#side-sheet > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#side-sheet > .cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 16
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "app-bars",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(6) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#app-bars > .cards-grid > .comp-card:nth-child(7) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              ".comp-card:nth-child(8) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 215
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "nav-bar",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#nav-bar > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#nav-bar > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "nav-drawer",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#nav-drawer > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#nav-drawer > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 17
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "nav-rail",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#nav-rail > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#nav-rail > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "paginator",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#paginator > .full-width.cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "search",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#search > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#search > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 8
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "stepper",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#stepper > .full-width.cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 22
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "tabs",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#tabs > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#tabs > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#tabs > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#tabs > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "toolbars",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(6) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#toolbars > .cards-grid > .comp-card:nth-child(7) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 5
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 110
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "checkbox",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#checkbox > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "chips",
+    "violations": [
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "help": "Interactive controls must not be nested",
+        "nodes": [
+          {
+            "target": [
+              [
+                "md-chip[label=\"Design Lead\"]",
+                ".input.chip[part=\"chip\"]"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants. Move them outside of the element, or remove them."
+          },
+          {
+            "target": [
+              [
+                "md-chip[label=\"TypeScript\"]",
+                ".input.chip[part=\"chip\"]"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants. Move them outside of the element, or remove them."
+          },
+          {
+            "target": [
+              [
+                "md-chip[label=\"Alex\"]",
+                ".input.selected.chip"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants. Move them outside of the element, or remove them."
+          }
+        ]
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#chips > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#chips > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#chips > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "date-pickers",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              [
+                ".comp-card:nth-child(1) > .comp-preview > md-date-picker",
+                "#docked-text-input",
+                "#field-supporting"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.01 (foreground color: #615d68, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#date-pickers > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#date-pickers > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#date-pickers > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1135
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "menus",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#menus > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#menus > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#menus > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-allowed-attr",
+        "nodes": 4
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 4
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 23
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "radio-button",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#radio-button > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "sliders",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#sliders > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "switch",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#switch > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "time-pickers",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#time-pickers > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#time-pickers > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#time-pickers > .cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 20
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "autocomplete",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#autocomplete > .cards-grid > .comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "select",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#select > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#select > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 2
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 13
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "text-fields",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              [
+                "md-text-field[label=\"Fixed Header Label\"]",
+                "#field-supporting"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.01 (foreground color: #615d68, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              [
+                "md-text-field[label=\"Price / Amount\"]",
+                "#field-supporting"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.01 (foreground color: #615d68, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              [
+                "md-text-field[label=\"User Name\"]",
+                "#field-supporting"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.01 (foreground color: #615d68, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              [
+                "md-text-field[label=\"Password\"]",
+                "#field-supporting"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.03 (foreground color: #a8364b, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              [
+                "md-text-field[label=\"Password\"]",
+                "#field-counter"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.03 (foreground color: #a8364b, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              [
+                "md-text-field[label=\"Notes\"]",
+                "#field-supporting"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.01 (foreground color: #615d68, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              [
+                "md-text-field[label-position=\"above\"]",
+                "label[for=\"field-textarea\"]"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.01 (foreground color: #615d68, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              [
+                "md-text-field[label-position=\"above\"]",
+                "#field-supporting"
+              ]
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.01 (foreground color: #615d68, background color: #0f0d12, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(1) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(2) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(3) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(4) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(5) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(6) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          },
+          {
+            "target": [
+              "#text-fields > .cards-grid > .comp-card:nth-child(7) > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 50
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "theming",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".theme-lab > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "aria-valid-attr-value",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 10
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "id": "shapes",
+    "violations": [
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              "#shapes > .full-width.cards-grid > .full-col.comp-card > .comp-code-box > code[data-highlighted=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      }
+    ]
+  }
+]

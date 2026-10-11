@@ -64,7 +64,8 @@ const defaultStyle = `
   .remove-btn::before { content:''; position:absolute; inset:3px; border-radius:inherit;
     background:currentColor; opacity:var(--md-chip-remove-alpha,0); pointer-events:none; }
   /* Keyboard outline is the library's declared web accessibility adapter. */
-  .chip:focus-visible,.remove-btn:focus-visible { outline:3px solid var(--md-sys-color-secondary); outline-offset:2px; }
+  .primary-action { position:absolute; inset:0; pointer-events:none; outline:none; }
+  .chip:focus-visible,.chip:has(.primary-action:focus-visible),.remove-btn:focus-visible { outline:3px solid var(--md-sys-color-secondary); outline-offset:2px; }
 `;
 const chipSheet=createComponentSheet(defaultStyle);
 const hasContent=slot=>slot.assignedNodes({flatten:true}).some(node=>node.nodeType===1||node.textContent.trim());
@@ -136,9 +137,18 @@ export class MdChip extends HTMLElement {
     for(const name of ['assist','filter','input','suggestion'])chip.classList.toggle(name,name===family);
     chip.classList.toggle('selected',selectable&&this.selected);chip.classList.toggle('disabled',this.disabled);
     chip.classList.toggle('elevated',this.elevated&&family!=='input');
-    chip.tabIndex=this.disabled?-1:0;chip.setAttribute('aria-disabled',String(this.disabled));
-    chip.setAttribute('role',selectable?'checkbox':'button');
-    if(selectable)chip.setAttribute('aria-checked',String(this.selected));else chip.removeAttribute('aria-checked');
+    // A removable chip has two sibling actions in the accessibility tree.
+    // Nesting its remove button inside a checkbox/button hides that action in AT.
+    const control=this.removable?this._primaryAction:chip;
+    this._primaryAction.hidden=!this.removable;
+    for(const node of [chip,this._primaryAction]){
+      node.tabIndex=node===control&&!this.disabled?0:-1;
+      if(node===control){
+        node.setAttribute('role',selectable?'checkbox':'button');
+        node.setAttribute('aria-disabled',String(this.disabled));
+        if(selectable)node.setAttribute('aria-checked',String(this.selected));else node.removeAttribute('aria-checked');
+      }else for(const name of ['role','aria-disabled','aria-checked'])node.removeAttribute(name);
+    }
     put(chip,'background-color',!this.disabled&&this.containerColor||chipCssColor(colors.container));
     put(chip,'color',!this.disabled&&this.contentColor||chipCssColor(colors.label));
     put(chip,'--md-chip-label-color',!this.disabled&&this.contentColor||chipCssColor(colors.label));
@@ -316,7 +326,7 @@ export class MdChip extends HTMLElement {
     },MotionClass:ChipElevationMotion,disabled:()=>this.disabled,hitTest:event=>this._hitTest(event),signal});
     this._stateLayer=bindStateLayer(this._chip,{disabled:()=>this.disabled,hitTest:event=>this._hitTest(event),property:'--md-chip-state-alpha',signal});
     this._pressBinding=bindPress(this._chip,{disabled:()=>this.disabled,keyboardActivation:true,hostActivation:true,
-      ignoreEvent:event=>nestedInteractiveEvent(event,this._chip),
+      ignoreEvent:event=>!event.composedPath().includes(this._primaryAction)&&nestedInteractiveEvent(event,this._chip),
       pointerPolicy:{input:event=>this._pointerInput(event),hitTest:event=>this._hitTest(event),outOfBounds:event=>{
         const input=this._pointerInput(event);return input!==null&&capturedPointerOutOfBounds(input);
       }},onInteraction:({type,press})=>this._elevationMotion.press(type==='press',press),
@@ -336,11 +346,11 @@ export class MdChip extends HTMLElement {
   render() {
     const adopted=this.shadowRoot.adoptedStyleSheets?.length;
     this.shadowRoot.innerHTML=`${adopted?'':`<style>${defaultStyle}</style>`}
-      <div class="chip" part="chip"><span class="hit" aria-hidden="true"></span><div class="content">
+      <div class="chip" part="chip"><span class="primary-action" aria-labelledby="chip-label" hidden></span><span class="hit" aria-hidden="true"></span><div class="content">
         <span class="leading-ico" part="leading-icon" aria-hidden="true"><span class="leading-content">
           <span class="glyph leading-icon-text"></span><slot name="leading-icon"></slot><slot name="avatar"></slot>
         </span></span>
-        <span class="lbl" part="label"><span class="label-content"><span class="lbl-text"></span><slot></slot></span></span>
+        <span class="lbl" id="chip-label" part="label"><span class="label-content"><span class="lbl-text"></span><slot></slot></span></span>
         <span class="trailing-ico" part="trailing-icon"><span class="trailing-content">
           <span class="glyph trailing-icon-text" aria-hidden="true"></span><slot name="trailing-icon"></slot>
           <button class="remove-btn" part="remove-button" type="button" aria-label="Remove"><span class="glyph" aria-hidden="true">close</span></button>
@@ -348,6 +358,7 @@ export class MdChip extends HTMLElement {
       </div></div>`;
     const query=selector=>this.shadowRoot.querySelector(selector);
     this._chip=query('.chip');this._label=query('.lbl');this._labelContent=query('.label-content');
+    this._primaryAction=query('.primary-action');
     this._leading=query('.leading-ico');this._leadingContent=query('.leading-content');this._leadingText=query('.leading-icon-text');
     this._trailing=query('.trailing-ico');this._trailingContent=query('.trailing-content');this._trailingText=query('.trailing-icon-text');
     this._leadingSlot=query('slot[name=leading-icon]');this._avatarSlot=query('slot[name=avatar]');this._trailingSlot=query('slot[name=trailing-icon]');

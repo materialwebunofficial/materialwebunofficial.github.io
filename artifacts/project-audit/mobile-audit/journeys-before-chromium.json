@@ -1,0 +1,440 @@
+{
+  "engine": "chromium",
+  "cases": [
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "id": "dialogs",
+      "beforeScroll": 19994,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 24,
+          "y": 288,
+          "width": 342,
+          "height": 268,
+          "right": 366,
+          "bottom": 556
+        },
+        "scrollY": 19994,
+        "overflow": 0,
+        "color": "rgb(52, 49, 58)",
+        "background": "rgb(236, 230, 240)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 19994,
+      "closed": true,
+      "afterCloseScroll": 19994
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "id": "bottom-sheet",
+      "beforeScroll": 14267,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 0,
+          "y": 620,
+          "width": 390,
+          "height": 224,
+          "right": 390,
+          "bottom": 844
+        },
+        "scrollY": 14267,
+        "overflow": 0,
+        "color": "rgb(52, 49, 58)",
+        "background": "rgb(248, 241, 250)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 14267,
+      "closed": true,
+      "afterCloseScroll": 14267
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "id": "side-sheet",
+      "beforeScroll": 22433,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 70,
+          "y": 0,
+          "width": 320,
+          "height": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "scrollY": 22433,
+        "overflow": 0,
+        "color": "rgb(52, 49, 58)",
+        "background": "rgb(248, 241, 250)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 22433,
+      "closed": true,
+      "afterCloseScroll": 22433
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "id": "date-pickers",
+      "beforeScroll": 43149,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 16,
+          "y": 137.5,
+          "width": 358,
+          "height": 569,
+          "right": 374,
+          "bottom": 706.5
+        },
+        "scrollY": 43149,
+        "overflow": 0,
+        "color": "rgb(52, 49, 58)",
+        "background": "rgb(236, 230, 240)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 43149,
+      "closed": true,
+      "afterCloseScroll": 43149
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "id": "time-pickers",
+      "beforeScroll": 49364,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 31,
+          "y": 144,
+          "width": 328,
+          "height": 556,
+          "right": 359,
+          "bottom": 700
+        },
+        "scrollY": 49364,
+        "overflow": 0,
+        "color": "rgb(52, 49, 58)",
+        "background": "rgb(236, 230, 240)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 49364,
+      "closed": true,
+      "afterCloseScroll": 49364
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "id": "nav-drawer",
+      "beforeScroll": 28494,
+      "open": {
+        "attribute": false,
+        "window": false,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "right": 0,
+          "bottom": 0
+        },
+        "scrollY": 0,
+        "overflow": 0,
+        "color": "rgb(52, 49, 58)",
+        "background": "rgb(248, 241, 250)",
+        "bodyOverflow": "clip visible"
+      },
+      "afterBackgroundSwipe": 0,
+      "closed": true,
+      "afterCloseScroll": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "id": "nav-rail",
+      "beforeScroll": 30516,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 220,
+          "height": 844,
+          "right": 220,
+          "bottom": 844
+        },
+        "scrollY": 30516,
+        "overflow": 0,
+        "color": "rgb(52, 49, 58)",
+        "background": "rgb(242, 236, 245)",
+        "bodyOverflow": "clip visible"
+      },
+      "afterBackgroundSwipe": 30311,
+      "closed": true,
+      "afterCloseScroll": 30311
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "id": "dialogs",
+      "beforeScroll": 18834,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 24,
+          "y": 288,
+          "width": 342,
+          "height": 268,
+          "right": 366,
+          "bottom": 556
+        },
+        "scrollY": 18834,
+        "overflow": 0,
+        "color": "rgb(234, 227, 239)",
+        "background": "rgb(33, 30, 38)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 18834,
+      "closed": true,
+      "afterCloseScroll": 18834
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "id": "bottom-sheet",
+      "beforeScroll": 14267,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 0,
+          "y": 620,
+          "width": 390,
+          "height": 224,
+          "right": 390,
+          "bottom": 844
+        },
+        "scrollY": 14267,
+        "overflow": 0,
+        "color": "rgb(234, 227, 239)",
+        "background": "rgb(20, 18, 24)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 14267,
+      "closed": true,
+      "afterCloseScroll": 14267
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "id": "side-sheet",
+      "beforeScroll": 22433,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 70,
+          "y": 0,
+          "width": 320,
+          "height": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "scrollY": 22433,
+        "overflow": 0,
+        "color": "rgb(234, 227, 239)",
+        "background": "rgb(20, 18, 24)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 22433,
+      "closed": true,
+      "afterCloseScroll": 22433
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "id": "date-pickers",
+      "beforeScroll": 42234,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 16,
+          "y": 137.5,
+          "width": 358,
+          "height": 569,
+          "right": 374,
+          "bottom": 706.5
+        },
+        "scrollY": 42234,
+        "overflow": 0,
+        "color": "rgb(234, 227, 239)",
+        "background": "rgb(33, 30, 38)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 42234,
+      "closed": true,
+      "afterCloseScroll": 42234
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "id": "time-pickers",
+      "beforeScroll": 48449,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 31,
+          "y": 144,
+          "width": 328,
+          "height": 556,
+          "right": 359,
+          "bottom": 700
+        },
+        "scrollY": 48449,
+        "overflow": 0,
+        "color": "rgb(234, 227, 239)",
+        "background": "rgb(33, 30, 38)",
+        "bodyOverflow": "hidden"
+      },
+      "afterBackgroundSwipe": 48449,
+      "closed": true,
+      "afterCloseScroll": 48449
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "id": "nav-drawer",
+      "beforeScroll": 28494,
+      "open": {
+        "attribute": false,
+        "window": false,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "right": 0,
+          "bottom": 0
+        },
+        "scrollY": 0,
+        "overflow": 0,
+        "color": "rgb(234, 227, 239)",
+        "background": "rgb(20, 18, 24)",
+        "bodyOverflow": "clip visible"
+      },
+      "afterBackgroundSwipe": 0,
+      "closed": true,
+      "afterCloseScroll": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "id": "nav-rail",
+      "beforeScroll": 30516,
+      "open": {
+        "attribute": true,
+        "window": true,
+        "windowScroll": [
+          0,
+          0
+        ],
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 220,
+          "height": 844,
+          "right": 220,
+          "bottom": 844
+        },
+        "scrollY": 30516,
+        "overflow": 0,
+        "color": "rgb(234, 227, 239)",
+        "background": "rgb(27, 24, 31)",
+        "bodyOverflow": "clip visible"
+      },
+      "afterBackgroundSwipe": 30311,
+      "closed": true,
+      "afterCloseScroll": 30311
+    }
+  ],
+  "errors": []
+}

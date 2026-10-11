@@ -187,7 +187,10 @@ export class MdMenu extends HTMLElement {
  _listenPopup(){
   this._popupAbort?.abort();this._popupAbort=new AbortController();const {signal}=this._popupAbort;
   this.ownerDocument.addEventListener('pointerdown',event=>{const path=event.composedPath();if(!path.includes(this)&&!path.includes(this._externalAnchor))this._requestClose(false);},{capture:true,signal});
-  this._menu.addEventListener('pointerdown',event=>{if(this.focusMode==='anchor')event.preventDefault();},{signal});
+  // Keep the editable anchor focused without canceling a touch's native click.
+  // WebKit suppresses that click when pointerdown is canceled; mousedown owns
+  // the focus default for both mouse and touch compatibility events.
+  this._menu.addEventListener('mousedown',event=>{if(this.focusMode==='anchor')event.preventDefault();},{signal});
   this.ownerDocument.addEventListener('keydown',event=>{if(activeMenu(event)===this)this._key(event);},{signal});
   this.ownerDocument.defaultView.addEventListener('resize',()=>this._position(),{signal});this.ownerDocument.defaultView.addEventListener('scroll',()=>this._position(),{capture:true,signal});
   this.ownerDocument.defaultView.visualViewport?.addEventListener('resize',()=>this._position(),{signal});this.ownerDocument.defaultView.visualViewport?.addEventListener('scroll',()=>this._position(),{signal});

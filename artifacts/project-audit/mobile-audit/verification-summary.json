@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-11T21:16:10.893Z",
+  "layout": [
+    {
+      "engine": "chromium",
+      "views": 3150,
+      "pageOverflow": 0
+    },
+    {
+      "engine": "firefox",
+      "views": 3150,
+      "pageOverflow": 0
+    },
+    {
+      "engine": "webkit",
+      "views": 3150,
+      "pageOverflow": 0
+    }
+  ],
+  "mobile": [
+    {
+      "engine": "chromium",
+      "size": "320x640",
+      "checks": 96
+    },
+    {
+      "engine": "chromium",
+      "size": "384x853",
+      "checks": 96
+    },
+    {
+      "engine": "chromium",
+      "size": "853x384",
+      "checks": 96
+    },
+    {
+      "engine": "firefox",
+      "size": "320x640",
+      "checks": 96
+    },
+    {
+      "engine": "firefox",
+      "size": "384x853",
+      "checks": 96
+    },
+    {
+      "engine": "firefox",
+      "size": "853x384",
+      "checks": 96
+    },
+    {
+      "engine": "webkit",
+      "size": "320x640",
+      "checks": 96
+    },
+    {
+      "engine": "webkit",
+      "size": "384x853",
+      "checks": 96
+    },
+    {
+      "engine": "webkit",
+      "size": "853x384",
+      "checks": 96
+    },
+    {
+      "engine": "brave",
+      "size": "384x853",
+      "checks": 96
+    },
+    {
+      "engine": "brave",
+      "size": "853x384",
+      "checks": 96
+    }
+  ],
+  "bounds": [
+    {
+      "engine": "chromium",
+      "checks": 33
+    },
+    {
+      "engine": "firefox",
+      "checks": 33
+    },
+    {
+      "engine": "webkit",
+      "checks": 33
+    }
+  ],
+  "menuBounds": [
+    {
+      "engine": "chromium",
+      "checks": 12
+    },
+    {
+      "engine": "firefox",
+      "checks": 12
+    },
+    {
+      "engine": "webkit",
+      "checks": 12
+    }
+  ],
+  "conditions": 133,
+  "axe": {
+    "scopes": 90,
+    "previews": 206,
+    "violations": 0,
+    "incompleteScopes": 46
+  },
+  "performance": {
+    "samples": 128,
+    "errors": 0
+  },
+  "finalBundleSha256": "24ca9aeea4f1f28b92d9ed50b48cf2f2a27f925729eb40c90100f630d6118574"
+}

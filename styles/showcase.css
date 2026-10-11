@@ -79,6 +79,10 @@ code {
   display: none;
   height: 100vh;
   height: 100dvh;
+  /* Short landscape windows still need access to the rail's theme actions. */
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
 }
 
 .rail-header {
@@ -277,7 +281,7 @@ html[data-start-tab="components"] body:not([data-routed]) #tab-view-components {
 }
 
 /* Syntax colors come from color roles only. */
-.syn-comment { color: var(--md-sys-color-outline); font-style: italic; }
+.syn-comment { color: var(--md-sys-color-on-surface-variant); font-style: italic; }
 .syn-keyword { color: var(--md-sys-color-tertiary); }
 .syn-string { color: var(--md-sys-color-secondary); }
 .syn-tag { color: var(--md-sys-color-primary); }
@@ -852,6 +856,9 @@ html[data-start-tab="components"] body:not([data-routed]) #tab-view-components {
   align-items: flex-start;
   padding: 16px 8px;
 }
+/* Pickers already include their own content insets. Keep that space available
+   for the calendar columns and the native 256dp clock on compact screens. */
+.comp-preview:has(> md-date-picker[inline], > md-time-picker[inline]) { padding-inline: 0; }
 
 .comp-preview md-date-picker,
 .comp-preview md-time-picker {
@@ -1196,6 +1203,13 @@ body:not([data-active-tab="home"]) .ambient-stage-wrapper { display: none; }
   box-sizing: border-box;
 }
 .side-sheet-demo-main p { margin: 0; color: var(--md-sys-color-on-surface-variant); }
+
+/* A coplanar sheet needs room for both panes. On phones, retain its standard
+   behavior in a wider, touch-scrollable example rather than clipping controls. */
+@media (max-width: 599px) {
+  .side-sheet-preview { overflow-x: auto; justify-content: flex-start; }
+  .side-sheet-demo { min-width: 480px; flex: none; }
+}
 
 /* Deferred example grids reserve their approximate height until mounted. The
    catalog keeps the view still itself as cards are created above it, so the

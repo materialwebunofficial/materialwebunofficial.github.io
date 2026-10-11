@@ -15,6 +15,7 @@ import {FrameResizeObserver} from '../utils/resize-observer.js';
  * tap, Escape or collapse() closes it. Predictive back has no web equivalent;
  * the header is not drawn twice (it moves with the content). */
 import { delegateHostAria } from '../utils/host-aria.js';
+import { lockPageScroll, unlockPageScroll } from '../utils/scroll-lock.js';
 import { SelectionMotion } from '../motion/selection-motion.js';
 import { AsStateColorMotion as ColorMotion } from '../motion/animate-as-state.js';
 import {resolveComposeColor,composeColorCSS,composeColorWithAlpha} from '../motion/compose-color-css.js';
@@ -385,10 +386,12 @@ export class MdNavigationRail extends HTMLElement {
       offset.value=offset.target=-width;offset.animation=null;this._slideTarget=-width;
       this._slideTo(this.expanded?0:-width,animate);
     }else this._modalMotion.render(performance.now());
+    lockPageScroll(this);
     try{this._layer.showModal();}catch{this._layer.setAttribute('open','');}
     this._syncScrim();if(!animate)this._modalMotion.finish();
   }
   _closeLayer() {
+    unlockPageScroll(this);
     if(!this._layerOpen)return;this._layerOpen=false;this._drag=null;this._fling=false;this._pendingDismiss=false;
     this._rail.classList.remove('in-modal');this.shadowRoot.insertBefore(this._rail,this._placeholder);
     this._placeholder.hidden=true;this._rail.hidden=this.modal&&this.hideOnCollapse;

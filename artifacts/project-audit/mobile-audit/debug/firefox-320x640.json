@@ -1,0 +1,82 @@
+{
+  "engine": "firefox",
+  "width": 320,
+  "height": 640,
+  "checks": [
+    "main navigation opens get-started",
+    "main navigation opens components",
+    "main navigation opens home"
+  ],
+  "errors": [],
+  "requests": [],
+  "current": {
+    "theme": "light",
+    "id": "nav-drawer",
+    "opener": "[data-open-drawer=\"modal-drawer-demo\"]",
+    "target": "#modal-drawer-demo"
+  },
+  "diagnostics": {
+    "hash": "#nav-drawer",
+    "scrollY": 31428,
+    "events": [
+      {
+        "type": "pointerdown",
+        "target": [
+          "slot",
+          "span",
+          "button",
+          "#document-fragment",
+          "md-button"
+        ],
+        "open": false
+      },
+      {
+        "type": "pointerup",
+        "target": [
+          "button",
+          "#document-fragment",
+          "md-button",
+          "div",
+          "div"
+        ],
+        "open": false
+      }
+    ],
+    "routing": {
+      "owner": "<button class=\"btn tonal s\" type=\"button\" part=\"button\" style=\"box-shadow: var(--md-sys-elevation-level0, var(--md-sys-elevation-level-0, none)); --md-button-state-alpha: 0; height: auto; min-height: 40px; padding: 10px 16px; gap: 8px; font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif); letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px); border-width: 0px; --_button-outline-width: 0px; border-radius: 20px;\" data-elevation=\"0\" aria-disabled=\"false\" tabindex=\"0\" role=\"button\" aria-label=\"menu\">\n        <span class=\"state-layer\"></span>\n        <span class=\"icon lead-ico\" aria-hidden=\"true\" style=\"display: inline-flex; font-size: 20px; height: 20px; width: 20px; clip-path: inset(-10px -104.367px -10px -16px round 20px);\"><span class=\"icon-glyph\">menu</span><slot class=\"icon-slot\" name=\"icon\"></slot></span>\n        <span class=\"lbl-wrapper\" style=\"clip-path: inset(-10px -16px -10px -44.0001px round 20px);\"><span class=\"lbl\" hidden=\"\"></span><slot class=\"label-slot\"></slot></span>\n        <span class=\"icon trail-ico\" aria-hidden=\"true\" style=\"display: none; font-size: 20px; height: 20px; width: 20px; clip-path: inset(824px -230.184px -864px 89.8169px round 20px);\"></span>\n      </button>",
+      "origin": "<button class=\"btn tonal s\" type=\"button\" part=\"button\" style=\"box-shadow: var(--md-sys-elevation-level0, var(--md-sys-elevation-level-0, none)); --md-button-state-alpha: 0; height: auto; min-height: 40px; padding: 10px 16px; gap: 8px; font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif); letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px); border-width: 0px; --_button-outline-width: 0px; border-radius: 20px;\" data-elevation=\"0\" aria-disabled=\"false\" tabindex=\"0\" role=\"button\" aria-label=\"menu\">\n        <span class=\"state-layer\"></span>\n        <span class=\"icon lead-ico\" aria-hidden=\"true\" style=\"display: inline-flex; font-size: 20px; height: 20px; width: 20px; clip-path: inset(-10px -104.367px -10px -16px round 20px);\"><span class=\"icon-glyph\">menu</span><slot class=\"icon-slot\" name=\"icon\"></slot></span>\n        <span class=\"lbl-wrapper\" style=\"clip-path: inset(-10px -16px -10px -44.0001px round 20px);\"><span class=\"lbl\" hidden=\"\"></span><slot class=\"label-slot\"></slot></span>\n        <span class=\"icon trail-ico\" aria-hidden=\"true\" style=\"display: none; font-size: 20px; height: 20px; width: 20px; clip-path: inset(824px -230.184px -864px 89.8169px round 20px);\"></span>\n      </button>",
+      "mismatch": false,
+      "path": [
+        "<button class=\"btn tonal s\" type=\"button\" part=\"button\" style=\"box-shadow: var(--md-sys-elevation-level0, var(--md-sys-elevation-level-0, none)); --md-button-state-alpha: 0; height: auto; min-height: 40px; padding: 10px 16px; gap: 8px; font: var(--md-sys-typescale-label-large, 500 14px/20px Roboto, sans-serif); letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px); border-width: 0px; --_button-outline-width: 0px; border-radius: 20px;\" data-elevation=\"0\" aria-disabled=\"false\" tabindex=\"0\" role=\"button\" aria-label=\"menu\">\n        <span class=\"state-layer\"></span>\n        <span class=\"icon lead-ico\" aria-hidden=\"true\" style=\"display: inline-flex; font-size: 20px; height: 20px; width: 20px; clip-path: inset(-10px -104.367px -10px -16px round 20px);\"><span class=\"icon-glyph\">menu</span><slot class=\"icon-slot\" name=\"icon\"></slot></span>\n        <span class=\"lbl-wrapper\" style=\"clip-path: inset(-10px -16px -10px -44.0001px round 20px);\"><span class=\"lbl\" hidden=\"\"></span><slot class=\"label-slot\"></slot></span>\n        <span class=\"icon trail-ico\" aria-hidden=\"true\" style=\"display: none; font-size: 20px; height: 20px; width: 20px; clip-path: inset(824px -230.184px -864px 89.8169px round 20px);\"></span>\n      </button>"
+      ],
+      "steps": [
+        {
+          "type": "pointerdown",
+          "accepted": true,
+          "blocked": true,
+          "released": false
+        },
+        {
+          "type": "pointerup",
+          "accepted": true,
+          "blocked": false,
+          "released": false
+        },
+        {
+          "type": "lostpointercapture",
+          "blocked": false,
+          "released": true
+        }
+      ]
+    },
+    "drawer": {
+      "open": false,
+      "width": 320,
+      "offset": -320,
+      "drag": null,
+      "clickUntil": 0,
+      "animation": null
+    }
+  },
+  "failure": "page.waitForFunction: Timeout 30000ms exceeded.\n    at testMobileInteractions (C:\\Users\\sagla\\OneDrive\\Belgeler\\MD3E for web\\material-design-3-expressive-unofficial\\test\\browser\\mobile.mjs:70:20)\n    at async file:///C:/Users/sagla/OneDrive/Belgeler/MD3E%20for%20web/material-design-3-expressive-unofficial/scripts/test-mobile.mjs:56:39"
+}

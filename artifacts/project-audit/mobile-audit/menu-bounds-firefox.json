@@ -1,0 +1,142 @@
+{
+  "engine": "firefox",
+  "checks": [
+    {
+      "width": 320,
+      "height": 640,
+      "kind": "select",
+      "bounds": {
+        "x": 48,
+        "y": 388,
+        "width": 224,
+        "height": 164
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "kind": "autocomplete",
+      "bounds": {
+        "x": 48,
+        "y": 388,
+        "width": 224,
+        "height": 52
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "kind": "menus",
+      "bounds": {
+        "x": 75,
+        "y": 92,
+        "width": 137.03334045410156,
+        "height": 244
+      }
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "kind": "submenu",
+      "bounds": {
+        "x": 8,
+        "y": 192,
+        "width": 125.51666259765625,
+        "height": 100
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "kind": "select",
+      "bounds": {
+        "x": 48,
+        "y": 494,
+        "width": 288,
+        "height": 148
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "kind": "autocomplete",
+      "bounds": {
+        "x": 48,
+        "y": 494,
+        "width": 288,
+        "height": 52
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "kind": "menus",
+      "bounds": {
+        "x": 107,
+        "y": 491,
+        "width": 137.03334045410156,
+        "height": 244
+      }
+    },
+    {
+      "width": 384,
+      "height": 853,
+      "kind": "submenu",
+      "bounds": {
+        "x": 240,
+        "y": 591,
+        "width": 125.51666259765625,
+        "height": 100
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "kind": "select",
+      "bounds": {
+        "x": 152,
+        "y": 232,
+        "width": 645,
+        "height": 128
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "kind": "autocomplete",
+      "bounds": {
+        "x": 152,
+        "y": 232,
+        "width": 645,
+        "height": 52
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "kind": "menus",
+      "bounds": {
+        "x": 389,
+        "y": 58,
+        "width": 137.0333251953125,
+        "height": 244
+      }
+    },
+    {
+      "width": 853,
+      "height": 384,
+      "kind": "submenu",
+      "bounds": {
+        "x": 522,
+        "y": 158,
+        "width": 125.51666259765625,
+        "height": 100
+      }
+    }
+  ],
+  "current": {
+    "width": 853,
+    "height": 384,
+    "kind": "menus"
+  }
+}

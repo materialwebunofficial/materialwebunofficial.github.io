@@ -69,6 +69,9 @@ export function observeControlLabels(host, refresh) {
         if (records.some(record => {
           const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
           if (!target) return false;
+          // Components with slotted names also need text-node edits, which do
+          // not dispatch slotchange. Share the existing tree observer.
+          if (element._syncAccessibleName && record.type !== 'attributes' && element.contains(record.target)) return true;
           if (target === element) return record.type === 'attributes' && (ARIA.includes(record.attributeName) || record.attributeName === 'id');
           if (labels.some(label => label.contains(target)) || ids.some(id => root.getElementById?.(id)?.contains(target))) return true;
           if (record.type === 'attributes') return record.attributeName === 'for' || record.attributeName === 'id';

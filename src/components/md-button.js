@@ -12,7 +12,7 @@ import {FrameResizeObserver} from '../utils/resize-observer.js';
  *   - Form association (attachInternals), toggle mode, single-click guarantee
  */
 
-import { delegateHostAria, forwardControlAria } from '../utils/host-aria.js';
+import { delegateHostAria, forwardControlAria, syncControlName } from '../utils/host-aria.js';
 import { followHref } from '../utils/navigation.js';
 import { bindPress, createRipple, nestedInteractiveEvent } from '../motion/interactions.js';
 import { sanitizeAttribute } from '../utils/security.js';
@@ -327,6 +327,8 @@ const defaultStyle = `
     pointer-events: none;
   }
   .lbl-wrapper {display: flex; align-items: center; min-width: 0; overflow-wrap: anywhere;}
+  .label-slot {pointer-events: none;}
+  .label-slot::slotted(*) {pointer-events: auto;}
   .label-slot[hidden], .lbl[hidden] {display: none;}
 `;
 
@@ -697,6 +699,12 @@ export class MdButton extends HTMLElement {
       },
       signal
     });
+  }
+
+  _syncAccessibleName() {
+    const text = this.shadowRoot.querySelector('.label-slot')?.assignedNodes({flatten:true})
+      .map(node => node.textContent).join(' ').trim();
+    syncControlName(this, this.shadowRoot.querySelector('.btn'), text || this.icon || '');
   }
 
   _sync() {
