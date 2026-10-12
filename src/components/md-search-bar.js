@@ -27,7 +27,13 @@
  *   radius 28dp * (1 - progress), the field widening around a moving centre,
  *   8dp top and bottom padding appearing with progress, results fading with
  *   progress. Expanded, the leading icon is a back button, as in the samples.
- * Not ported: AppBarWithSearch, the contained variants and predictive back.
+ * - contained with full-screen (ExpandedFullScreenContainedSearchBar,
+ *   rememberContainedSearchBarState): FastSpatial both ways with 100ms content
+ *   fades; a window-sized SurfaceContainerLow surface fades in with progress
+ *   while the field (SurfaceContainerHigh, 8dp from the sides, 4dp below the
+ *   top inset) moves from the bar; results have no divider and fade with the
+ *   content progress (SearchBarDefaults.containedColors).
+ * Not ported: predictive back.
  */
 import { delegateHostAria } from '../utils/host-aria.js';
 import { lockPageScroll, unlockPageScroll } from '../utils/scroll-lock.js';
@@ -38,6 +44,7 @@ import { SpringValue } from '../motion/selection-motion.js';
 import { SpringPhysics } from '../motion/spring-physics.js';
 import { cubicBezier } from '../motion/easing.js';
 import './md-icon-button.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 
 const INPUT_FIELD_HEIGHT = 56;
 const DOCKED_TABLE_MIN_HEIGHT = 240;
@@ -45,6 +52,9 @@ const EXPANDED_THRESHOLD = 0.02;
 const VISIBLE_DROPDOWN_PROGRESS = 0.1;
 const CORNER_RADIUS = INPUT_FIELD_HEIGHT / 2;
 const VERTICAL_PADDING = 8;
+// FullScreenExpandedHorizontalPadding / AppBarWithSearchVerticalPadding.
+const CONTAINED_HORIZONTAL_PADDING = 8;
+const CONTAINED_VERTICAL_PADDING = 4;
 // AnimationForContentFadeInSpec / AnimationForContentFadeOutSpec.
 const CONTENT_FADE_IN = { duration: 100, delay: 50, easing: [0.3, 0, 1, 1] };
 const CONTENT_FADE_OUT = { duration: 100, delay: 0, easing: [0, 0, 0, 1] };
@@ -181,9 +191,10 @@ const defaultStyle = `
     letter-spacing: var(--md-sys-typescale-body-medium-tracking, 0.25px);
     color: var(--md-sys-color-on-surface-variant, #49454F);
   }
-  .option::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: 0; pointer-events: none; }
-  .option:hover::before { opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08); }
-  .option.active::before, .option.pressed::before { opacity: var(--md-sys-state-focus-state-layer-opacity, 0.1); }
+  /* CommonRippleNode state layer (hover); presses draw only the ripple. The
+     keyboard's active descendant shows the focus layer. */
+  .option::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: var(--_state-alpha, 0); pointer-events: none; }
+  .option.active::before { opacity: var(--md-sys-state-focus-state-layer-opacity, 0.1); }
   .option:focus-visible { outline: 3px solid var(--md-sys-color-secondary, #625B71); outline-offset: -3px; }
   .empty { padding: 16px; color: var(--md-sys-color-on-surface-variant, #49454F); font: var(--md-sys-typescale-body-medium, 400 14px/20px Roboto, sans-serif); }
   .md-ripple-effect { position: absolute; border-radius: 50%; background: currentColor; opacity: 0; animation: search-ripple 450ms linear; pointer-events: none; }
@@ -199,6 +210,10 @@ const defaultStyle = `
   .fs-field .field { width: 100%; }
   .fs-content { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; overflow: hidden; }
   .fs-content .results { flex: 1 1 auto; }
+  /* containedColors: SurfaceContainerLow surface, SurfaceContainerHigh field, no divider. */
+  .fs-layer.contained .fs-surface { background-color: var(--md-search-bar-contained-color, var(--md-sys-color-surface-container-low, #F7F2FA)); }
+  .fs-layer.contained .fs-field { background-color: var(--md-search-bar-container-color, var(--md-sys-color-surface-container-high, #ECE6F0)); }
+  .fs-layer.contained .divider { display: none; }
   .fs-safe { position: fixed; top: 0; height: env(safe-area-inset-top, 0px); visibility: hidden; pointer-events: none; }
 `;
 
@@ -207,7 +222,7 @@ let nextId = 0;
 
 export class MdSearchBar extends HTMLElement {
   static get observedAttributes() {
-    return ['placeholder', 'value', 'query', 'suggestions', 'disabled', 'active', 'expanded', 'dropdown-gap-size', 'dropdown-scrim-color', 'full-screen', 'aria-label'];
+    return ['placeholder', 'value', 'query', 'suggestions', 'disabled', 'active', 'expanded', 'dropdown-gap-size', 'dropdown-scrim-color', 'full-screen', 'contained', 'aria-label'];
   }
 
   constructor() {
@@ -244,6 +259,9 @@ export class MdSearchBar extends HTMLElement {
   /** ExpandedFullScreenSearchBar instead of the docked layouts. */
   get fullScreen() { return this.hasAttribute('full-screen'); }
   set fullScreen(v) { this.toggleAttribute('full-screen', !!v); }
+  /** With full-screen: ExpandedFullScreenContainedSearchBar and rememberContainedSearchBarState. */
+  get contained() { return this.hasAttribute('contained'); }
+  set contained(v) { this.toggleAttribute('contained', !!v); }
   /** SearchBarState.progress: 0 collapsed, 1 expanded. */
   get progress() { return Math.min(1, Math.max(0, this._progress.sample(performance.now()).position)); }
   /** SearchBarDefaults.dockedDropdownGapSize (2dp). Presence selects the with-gap layout. */
@@ -276,7 +294,7 @@ export class MdSearchBar extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (!this._rendered || oldValue === newValue) return;
     if (name === 'suggestions') { this._renderOptions(); this._natural = null; }
-    if (name === 'full-screen') { this._closeFullScreen(); this._resetDocked(); }
+    if (name === 'full-screen' || name === 'contained') { this._closeFullScreen(); this._resetDocked(); }
     if (name === 'expanded' || name === 'active') this._syncExpanded(true);
     else this._syncAll(true);
   }
@@ -331,6 +349,7 @@ export class MdSearchBar extends HTMLElement {
     this._optionAbort = new AbortController();
     const signal = this._optionAbort.signal;
     this._options.forEach((option, index) => {
+      bindStateLayer(option, { property: '--_state-alpha', disabled: () => this.disabled, signal });
       bindPress(option, { signal, disabled: () => this.disabled, onPress: event => createRipple(event, option), onActivate: () => this._choose(index) });
       option.addEventListener('mousedown', event => event.preventDefault(), { signal });
     });
@@ -453,10 +472,11 @@ export class MdSearchBar extends HTMLElement {
     this._syncExpanded(animate);
   }
 
-  /** rememberSearchBarState / rememberSearchBarWithGapState specs. */
+  /** rememberSearchBarState / rememberSearchBarWithGapState / rememberContainedSearchBarState specs. */
   _specs() {
     const gap = !this.fullScreen && this.hasAttribute('dropdown-gap-size');
     const preset = name => SpringPhysics.getPreset(name, this);
+    if (this.fullScreen && this.contained) return { expand: preset('expressiveSpatialFast'), collapse: preset('expressiveSpatialFast'), fade: true, gap: false };
     return gap
       ? { expand: preset('expressiveSpatialMedium'), collapse: preset('expressiveSpatialFast'), fade: true, gap }
       : { expand: preset('expressiveSpatialSlow'), collapse: preset('expressiveSpatialMedium'), fade: false, gap };
@@ -503,8 +523,14 @@ export class MdSearchBar extends HTMLElement {
     const content = this._contentValue(now);
     // SearchBarState.currentValue: Expanded above the 0.02 spring tolerance.
     const shown = raw > EXPANDED_THRESHOLD;
+    // SearchBarState.currentValue/targetValue for an enclosing AppBarWithSearch.
+    if (shown !== this._shown || this._target !== this._reportedTarget) {
+      this._reportedTarget = this._target;
+      this._shown = shown;
+      this.dispatchEvent(new CustomEvent('search-state', { bubbles: true, detail: { expanded: shown, target: !!this._target, fullScreen: this.fullScreen } }));
+    }
     this._shown = shown;
-    if (this.fullScreen) this._drawFullScreen(raw, progress, shown);
+    if (this.fullScreen) this._drawFullScreen(raw, progress, shown, content);
     else this._drawDocked(raw, progress, content, shown, now);
   }
 
@@ -571,6 +597,7 @@ export class MdSearchBar extends HTMLElement {
   _openFullScreen() {
     if (this._fsOpen) return;
     this._fsOpen = true;
+    this._fsLayer.classList.toggle('contained', this.contained);
     this._collapsed = this._surface.getBoundingClientRect();
     this._fsField.append(this._field);
     this._fsContent.append(this._results);
@@ -598,13 +625,14 @@ export class MdSearchBar extends HTMLElement {
   }
 
   /** FullScreenSearchBarLayout without predictive back. */
-  _drawFullScreen(raw, progress, shown) {
+  _drawFullScreen(raw, progress, shown, contentProgress = progress) {
     if (!shown) { this._closeFullScreen(); return; }
     this._openFullScreen();
     const view = this.ownerDocument.defaultView, W = view.innerWidth, H = view.innerHeight;
     // collapsedBounds follow the bar while it is laid out.
     const c = this._collapsed;
     const collapsedWidth = Math.round(c.width) || 360, collapsedHeight = INPUT_FIELD_HEIGHT;
+    if (this.contained) { this._drawContained(raw, progress, contentProgress, c, collapsedWidth, W, H); return; }
     const width = Math.min(W, lerpInt(collapsedWidth, W, progress)), height = Math.min(H, lerpInt(collapsedHeight, H, progress));
     const fieldWidth = lerpInt(collapsedWidth, width, raw);
     const safeTop = parseFloat(getComputedStyle(this.shadowRoot.querySelector('.fs-safe')).height) || 0;
@@ -613,11 +641,27 @@ export class MdSearchBar extends HTMLElement {
     const offsetX = lerpInt(Math.round(c.left), 0, progress), offsetY = lerpInt(Math.round(c.top), 0, progress);
     const centerX = (c.left + c.width / 2) + (offsetX + width / 2 - (c.left + c.width / 2)) * raw;
     const radius = CORNER_RADIUS * Math.max(0, 1 - progress);
-    Object.assign(this._fsSurface.style, { left: `${offsetX}px`, top: `${offsetY}px`, width: `${width}px`, height: `${height}px`, borderRadius: radius < 1e-3 ? '0' : `${radius}px` });
+    Object.assign(this._fsSurface.style, { left: `${offsetX}px`, top: `${offsetY}px`, width: `${width}px`, height: `${height}px`, borderRadius: radius < 1e-3 ? '0' : `${radius}px`, opacity: '' });
     Object.assign(this._fsField.style, { left: `${Math.round(centerX - fieldWidth / 2)}px`, top: `${offsetY + animatedTop}px`, width: `${fieldWidth}px` });
     const contentTop = offsetY + animatedTop + collapsedHeight + bottomPadding;
     Object.assign(this._fsContent.style, { left: `${offsetX}px`, top: `${contentTop}px`, width: `${width}px`,
       height: `${Math.max(0, height - (collapsedHeight + animatedTop + bottomPadding))}px`, opacity: String(progress) });
+    this._results.style.opacity = '';
+  }
+
+  /** FullScreenSearchBarLayout with isContained: the surface is window-sized and fades in. */
+  _drawContained(raw, progress, contentProgress, c, collapsedWidth, W, H) {
+    const fieldWidth = lerpInt(collapsedWidth, W - 2 * CONTAINED_HORIZONTAL_PADDING, raw);
+    const safeTop = parseFloat(getComputedStyle(this.shadowRoot.querySelector('.fs-safe')).height) || 0;
+    const animatedTop = lerpInt(0, Math.round(safeTop) + CONTAINED_VERTICAL_PADDING, progress);
+    const offsetY = lerpInt(Math.round(c.top), 0, progress);
+    const centerX = (c.left + c.width / 2) + (W / 2 - (c.left + c.width / 2)) * raw;
+    const radius = CORNER_RADIUS * Math.max(0, 1 - progress);
+    Object.assign(this._fsSurface.style, { left: '0px', top: '0px', width: `${W}px`, height: `${H}px`, borderRadius: radius < 1e-3 ? '0' : `${radius}px`, opacity: String(progress) });
+    Object.assign(this._fsField.style, { left: `${Math.round(centerX - fieldWidth / 2)}px`, top: `${offsetY + animatedTop}px`, width: `${fieldWidth}px` });
+    const padded = INPUT_FIELD_HEIGHT + animatedTop + VERTICAL_PADDING;
+    Object.assign(this._fsContent.style, { left: '0px', top: `${offsetY + padded}px`, width: `${W}px`,
+      height: `${Math.max(0, H - padded)}px`, opacity: String(contentProgress) });
     this._results.style.opacity = '';
   }
 }

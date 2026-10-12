@@ -39,6 +39,7 @@ export { MdTimePicker } from './components/md-time-picker.js';
 export { MdList, MdListItem } from './components/md-list.js';
 export { MdMenu, MdMenuItem, MdMenuGroup } from './components/md-menu.js';
 export { MdSearchBar } from './components/md-search-bar.js';
+export { MdAppBarWithSearch } from './components/md-app-bar-with-search.js';
 export { MdSideSheet } from './components/md-side-sheet.js';
 export { MdTabs, MdTab } from './components/md-tabs.js';
 export { MdToolbar } from './components/md-toolbar.js';

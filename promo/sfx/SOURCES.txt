@@ -1,0 +1,10 @@
+Sound sources for the promo (all CC0 1.0, public domain; no attribution required)
+
+kenney/   Kenney "Interface Sounds" 1.0, https://kenney.nl/assets/interface-sounds
+          (License.txt from the pack is kept in the folder)
+vsco/     VSCO 2 Community Edition by Versilian Studios, https://github.com/sgossner/VSCO-2-CE
+          Percussion/Marimba: Marimba_hit_Outrigger_{C4,G4,B4,C6}_loud_01.wav
+          Percussion/Glock: glock_medium_{G5,C6}.wav
+          Percussion/BDrumNewhit_v1_rr1_Sum.wav
+
+The transition air sounds are generated from filtered noise in promo/sfx.mjs.

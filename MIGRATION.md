@@ -35,7 +35,10 @@ containing commas cannot be represented unambiguously by this API.
 
 Date picker accepts exact `MM/DD/YYYY` and `YYYY-MM-DD` calendar dates, including
 valid leap days. Invalid and empty values clear selection; `.value` is empty.
-Valid values are returned as `MM/DD/YYYY`. Date/time pickers are interactive
+Valid values are returned as `MM/DD/YYYY`. This value format does not follow
+the locale: the `locale` attribute (else the nearest `lang`, else the browser's
+language) sets only what people see and type, such as weekday order, names,
+headlines and the date input pattern (`DD.MM.YYYY` for `tr-TR`). Date/time pickers are interactive
 pickers and do not currently implement form association. To submit their accepted
 values, synchronize their `change` events into an application's form field.
 

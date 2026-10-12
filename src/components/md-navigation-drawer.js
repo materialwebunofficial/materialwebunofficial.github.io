@@ -10,6 +10,7 @@ import { HorizontalTouchSlop, pointerSlop } from '../motion/touch-slop.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 
 const defaultStyle=`
  :host { display:block; width:var(--md-navigation-drawer-width,var(--drawer-default-width,360px));
@@ -52,9 +53,8 @@ const defaultStyle=`
    letter-spacing:var(--md-sys-typescale-body-large-tracking,.5px); outline:none; -webkit-tap-highlight-color:transparent; }
  .item[aria-selected="true"] { background:var(--md-sys-color-secondary-container,#E8DEF8);
    color:var(--md-sys-color-on-secondary-container,#1D192B); }
- .item::before { content:''; position:absolute; inset:0; border-radius:inherit; background:currentColor; opacity:0; pointer-events:none; }
- .item:not(:disabled):hover::before { opacity:.08; }
- .item:not(:disabled).pressed::before, .item:not(:disabled):focus-visible::before { opacity:.1; }
+ /* CommonRippleNode state layer (hover/focus); presses draw only the ripple. */
+ .item::before { content:''; position:absolute; inset:0; border-radius:inherit; background:currentColor; opacity:var(--_state-alpha, 0); pointer-events:none; }
  .item:focus-visible { outline:3px solid var(--md-sys-color-secondary,#625B71); outline-offset:2px; }
  .item:disabled { cursor:default; }
  .item:disabled .icon, .item:disabled .label, .item:disabled .badge {
@@ -139,7 +139,7 @@ export class MdNavigationDrawer extends HTMLElement {
      if(!node)continue;if(value&&CSS.supports('color',value))node.style.setProperty(name,value);else node.style.removeProperty(name);}}
  _applySelection(){if(!this.enabled)this._cancelDrag();const enabled=r=>this.enabled&&!r.item.disabled&&r.item.enabled!==false;
    const current=this._records.find(r=>r.index===this.selected),entry=current&&enabled(current)?current:this._records.find(enabled);
-   this._records.forEach(r=>{const selected=r.index===this.selected;r.button.disabled=!enabled(r);r.button.tabIndex=r===entry?0:-1;
+   this._records.forEach(r=>{const selected=r.index===this.selected;r.button.disabled=!enabled(r);r.stateLayer?.refresh();r.button.tabIndex=r===entry?0:-1;
      r.button.setAttribute('aria-selected',String(selected));if(selected)r.button.setAttribute('aria-current','page');else r.button.removeAttribute('aria-current');
      const icon=r.button.querySelector('.icon');if(icon)icon.textContent=String(selected?r.item.selectedIcon??r.item.icon:r.item.icon);});
    // Scrolling reads layout, so it waits for the frame that lays the sheet out.
@@ -215,6 +215,7 @@ export class MdNavigationDrawer extends HTMLElement {
    this._layer.addEventListener('cancel',event=>{event.preventDefault();this.close();},{signal});
    this._scrim?.addEventListener('click',()=>{if(this.gesturesEnabled)this.close();},{signal});
    for(const r of this._records){
+     r.stateLayer=bindStateLayer(r.button,{property:'--_state-alpha',disabled:()=>r.button.disabled,signal});
      bindPress(r.button,{signal,disabled:()=>r.button.disabled,onPress:event=>createRipple(event,r.button.querySelector('.ripple')),onActivate:()=>this._select(r.index)});
      r.button.addEventListener('keydown',event=>{const enabled=this._records.filter(item=>!item.button.disabled),current=enabled.indexOf(r);let next;
        if(event.key==='ArrowDown')next=(current+1)%enabled.length;else if(event.key==='ArrowUp')next=(current-1+enabled.length)%enabled.length;

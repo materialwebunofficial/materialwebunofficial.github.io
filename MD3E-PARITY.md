@@ -4,7 +4,194 @@ Status: in progress. Passing tests below verify the listed scope; they do not es
 
 Reference: [AndroidX revision a095da93](https://github.com/androidx/androidx/tree/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3). Motion token fixtures retain their Apache license in `test/fixtures/androidx`. Local research copies live in ignored `research/official-2026-09`.
 
+## Showcase text and review, 2026-10-12
+
+Material writes interface text in sentence case. The showcase's button,
+field, chip, menu and list labels written in title case ("Open Modal Date
+Picker", "Email Address", "Copy Link") now use sentence case ("Open date
+picker", "Email address", "Copy link"); toggle icon buttons are named for what
+they toggle ("Favorite", "Bookmark") rather than "Toggle …". Size names
+(Search XS–XL) and product names keep their capitals. test:mobile looked for
+the full-screen search example with a selector that the full-screen search
+bar inside the AppBarWithSearch example now also matches; it names the
+example it opens. A review of the home page, Get started and the date picker,
+card, list, stepper and autocomplete sections at 1440 px light and 390 px
+dark found no styling outside the system tokens. The pink "Loading" cell in
+dark mode is TertiaryContainer as MCU's 2025 spec generates it (its container
+tones take the most chromatic tone up to 93 in dark), not a fixed color.
+
+## Mobile blocking time on load, 2026-10-12
+
+The mobile Lighthouse follow-up (artifacts/project-audit/LIGHTHOUSE-FOLLOWUP.md)
+recorded a higher total blocking time after its changes (single runs: Home
+76 to 141 ms, Components 58 to 117 ms). Profiling the load at a 4x CPU slowdown
+found two causes outside the bundle's own evaluation and the first component
+definitions.
+
+- The shared label observer (src/utils/host-aria.js, one MutationObserver per
+  tree for every component with forwarded ARIA) checked each mutation record
+  again for every component, including a querySelector over each inserted
+  subtree, and any inserted element with an id updated every component on the
+  page; it was the most expensive script in the load profile. Now what the
+  records changed is worked out once per callback, and inserted or
+  re-identified elements and labels update only the components whose names can
+  depend on them (aria-labelledby / aria-describedby references, or a
+  form-associated element with an id for a `<label for>`). Changes inside a
+  component's own labels, its referenced elements, its slotted name and its own
+  ARIA attributes update it as before. Test: test/browser/host-aria-observer.mjs
+  (7 checks: an inserted id updates only the component with id references; an
+  aria-labelledby target inserted, edited and moved; a `<label for>` for a
+  form-associated button; unrelated edits update nothing).
+- The showcase created the six seed color chips inside its start-up task
+  (about 80 ms at 4x); they are now created one per task right after it.
+
+Measured with Lighthouse 13.5.0 mobile (simulated throttling, Brotli, a cold
+browser per run), both builds served from the same temporary folder and run
+alternately five times; the baseline is the current source with these two
+changes reverted. Median TBT: Home 27 to 0 ms, Components 46 to 12 ms; FCP
+(960 ms), LCP (1,710 ms) and CLS (0.010) are unchanged. Single runs still vary
+widely in both builds (up to 104 / 193 ms baseline, 75 / 25 ms after), so one
+run does not show a trend. An earlier comparison that served the new build
+from the OneDrive folder it had just been written to gave slower, noisier
+results and is not used. Summary with every run:
+artifacts/project-audit/lighthouse/2026-10-12-mobile-ab-summary.json. The
+remaining long tasks are the bundle evaluation (~90 ms at 4x), the theme
+(~60 ms) and the first button definition (~90 ms, mostly the style
+recalculation its first computed-style read triggers).
+
+## Date pickers: locale and layout, 2026-10-12
+
+Date pickers were not redesigned for Expressive (the motion scheme is the only
+Expressive input, through the year picker's springs); this ports them from the pinned
+DatePicker.kt, DateRangePicker.kt, DateInput.kt, DateRangeInput.kt,
+internal/CalendarModel.kt, CalendarModelImpl.android.kt, DatePickerDialog
+(android), DatePickerModalTokens and the Material3 strings.
+
+Locale (src/components/date-locale.js). The locale is the `locale`
+attribute, else the nearest `lang`, else the browser's (CalendarLocale).
+Weekday letters are the narrow names from WeekFields' first day of the week
+(Monday-first ISO list rotated, as WeekDays does), and leading empty cells
+count from that day (getMonth's daysFromStartOfWeek). Headlines use the
+yMMMd skeleton, the month-year button and month subheads yMMMM, and day
+descriptions yMMMMEEEEd ("Start date" / "End date" / "In range" and "Today"
+first, as Day's semantics put them). Years and day numbers are localized
+integers without grouping. The headline descriptions follow DatePickerHeadline
+("Current selection: …", "Entered date: …", "None") and the range headline is
+start, "-", end in a Row spaced 4dp, with "Select dates" / "Enter dates"
+titles. Date input takes its pattern from the locale's SHORT date pattern
+(datePatternAsInputFormat: two-digit day and month, four-digit year, one
+delimiter), accepts digits only (other input reverts, DateInputTransformation),
+draws the delimiters after the typed digits (DateOutputTransformation),
+resolves the day as java.time's SMART resolver does (02/30 is 28 February) and
+reports DateInputValidator's messages (pattern, year range 1900–2100, range
+order). Fields have `inputmode="numeric"`. The `value`, `start-date` and
+`end-date` attributes keep their MM/DD/YYYY or ISO format whatever the locale.
+
+Layout. The header's 120dp minimum includes the divider DateEntryContainer
+composes inside it (the picker was 1px taller, 569dp in a 568dp dialog). The
+headline takes the remaining width with 12dp end padding on one line. The
+month arrows are standard IconButtons (40dp in 48dp, no gap); they were
+squeezed into 36px boxes their 40dp containers overflowed. The month-year
+button is YearPickerMenuButton, a TextButton with CircleShape and no pressed
+shape morph: 12dp side padding, LabelLarge, 8dp icon spacing and a 24dp
+ArrowDropDown turned 180° while open; its description is the text then
+"Activate to change the year" / "Activate to change month and date". The
+YearPicker is drawn over the month list in an AnimatedVisibility clipped to
+its bounds: 335dp of grid (7 × 48dp less the divider) and the divider under
+it, full width with 12dp padding, three 72 × 36dp years per row spaced 16dp,
+the row of the displayed year minus three first (initialFirstVisibleItemIndex),
+years described "Navigate to year …", the displayed year focused on open. It
+expands and shrinks vertically from the bottom edge on DefaultEffects (IntSize,
+1px threshold), fades in from 0.6 on DefaultEffects and out on FastEffects, and
+leaves once both end; the month list under it is inert while it is shown.
+Date input fields sit 24dp from the sides and 10dp below the divider
+(InputTextFieldPadding), range fields 8dp apart (TextFieldSpacing); each keeps
+its 16dp supporting line and 16dp below it, and an error message takes 20dp
+and leaves 12dp, so the picker keeps its height (DateInputTextField). The
+docked picker has no Compose source; its arrows now lay out at their 40dp
+size and its month and year menus use the same menu button, shortening the
+label before the row would overflow. Unused older styles (36px arrows,
+pill and text buttons, a scale-keyframe ripple) were removed.
+
+Tests: test/unit/date-locale.test.mjs (26 checks: input patterns for six
+locales, first day of week, weekday order, skeletons, SMART parsing,
+delimiters, localized digits), test/browser/date-picker-locale.mjs (17 checks
+in en-US, tr-TR and de-DE: texts, grid, input typing and errors, range
+headline and day descriptions) and test/browser/date-picker-geometry.mjs (21
+checks: header, navigation, menu button, weekdays and weeks, dialog buttons,
+the year picker's size, divider, initial row, focus and both spring
+trajectories frame by frame, input padding with and without an error, range
+input, docked row).
+
+## Indicator canvas density, 2026-10-12
+
+Progress indicators sized their canvas backing store only when an animation
+started, but read devicePixelRatio again on every draw. A page zoom or a move
+to a display with another density changes the ratio without resizing the
+element, so the drawing used the new scale on the old store: at 1x to 2x the
+linear and circular indicators showed a cropped, enlarged corner; at 2x to 1x
+they drew a small copy in the top-left quarter and cleared only that quarter,
+leaving the previous drawing around it. md-progress-indicator now watches the
+resolution media query (src/utils/density.js, the pattern md-button already
+uses for its border) and resizes before any frame whose store no longer
+matches. md-loading-indicator already resized every running frame; a still
+(determinate or reduced-motion) indicator now redraws on the same signal.
+Platform adapter only; Compose draws at the current density. Test:
+test/browser/indicator-density.mjs (69 checks at 2x, 1.5x and 1x: backing
+size, drawn pixels and centered circles; headless CDP emulation does not
+notify resolution queries, so the test sends the notification a real zoom
+sends).
+
+Extended FAB, baseline size: collapsing moves the icon to the container's
+start edge for about 80ms and back to 16dp by about 200ms. This is the source
+behavior, not a port error: the baseline ExtendedFloatingActionButton overload
+in FloatingActionButton.kt switches its start/end padding (16/20dp to 0),
+minimum width (80 to 56dp) and arrangement (Start to Center) at once when
+`expanded` changes, while AnimatedVisibility shrinks the text, so the centered
+row starts at its edge until the text is narrower than 56dp. The sized
+Expressive overloads (small, medium, large) lerp the width with constant
+padding and keep the icon still (measured: 16, 16 and 26dp throughout).
+
 ## Source ports, 2026-10-11
+
+Button group: natural item widths were read with getBoundingClientRect, which
+includes the transforms of the group and its ancestors. A group measured while
+an ancestor was scaled (a dialog or card entering with a scale animation)
+stored the scaled widths, and the next press wrote them as item widths, so the
+pressed button collapsed (about 42x96 | 56x192 | 42x96 instead of 140 | 141 |
+140 for three Large buttons). ButtonGroup.kt measures layout sizes, which
+graphicsLayer scale does not change; the port now reads the used border-box
+width from computed style, keeping fractional precision. The default expanded
+ratio was also never applied: expandedRatio read Number(null) as 0 when the
+attribute was absent, so a pressed item did not grow; it now falls back to
+ButtonGroupDefaults.ExpandedRatio (0.15). Test:
+test/browser/button-group-layout.mjs (scaled-ancestor repro, redistribution
+within the 24dp compression limit, constant total width and height).
+
+State layers: navigation bar, rail and drawer items, menu items, list items,
+tabs, FAB menu, date picker year/month options, stepper headers and search
+suggestions drew hover/focus/pressed layers with CSS opacity rules. They now
+use the shared CommonRippleNode state-layer port (bindStateLayer: hover 0.08,
+focus 0.1, the source's incoming/outgoing tweens and interaction order). A
+press draws only the ripple, as in Compose; the CSS rules had added a second
+0.1 layer under it. Keyboard active descendants (select, autocomplete,
+search) keep the focus layer. Test: test/browser/state-layer-components.mjs.
+
+Search: `full-screen contained` ports ExpandedFullScreenContainedSearchBar with
+rememberContainedSearchBarState (FastSpatial both ways, 100ms content fades):
+a window-sized SurfaceContainerLow surface fades in with progress while the
+SurfaceContainerHigh field moves from the bar to 8dp from the sides and 4dp
+below the top inset, results without a divider fade with the content progress.
+The new md-app-bar-with-search ports AppBarWithSearch: navigation icon 4dp from
+the start, the search bar centred in the remaining width (360-720dp, 8dp/4dp
+padding), actions 4dp from the end, Surface turning SurfaceContainer
+(DefaultEffects) and the search bar turning SurfaceContainerHighest once
+content overlaps, enterAlwaysSearchBarScrollBehavior (the bar leaves with the
+content, returns on any upward scroll and snaps to the nearer end when
+scrolling ends) and the hidden bar while a full-screen search collapses. The
+search bar reports its state with a bubbling search-state event. The showcase
+adds an app-bar card. Tests: test/browser/search-bar-parity.mjs (29 checks) and
+test/browser/app-bar-with-search.mjs (17 checks).
 
 Search follows the Expressive SearchBar.kt API at a095da93 (SearchBar,
 ExpandedDockedSearchBar, ExpandedDockedSearchBarWithGap,
@@ -69,7 +256,10 @@ the old popup's internals).
 test/browser/selection-motion.mjs waited a fixed 16ms after switching to
 reduced motion, but MediaQueryList change events arrive with a rendering
 update, so the check failed about one run in four. It now waits for the change
-event first.
+event first. test/browser/card-parity.mjs checked a partial elevation factory
+with the pointer still resting on the re-added card; a synthetic hover after
+the layout change made the target the hovered elevation in about one run in
+three. The pointer now leaves the card first; the expected values are unchanged.
 
 Segmented button is ported from AndroidX a095da93 SegmentedButton.kt and
 OutlinedSegmentedButtonTokens (it was written from research notes; Expressive

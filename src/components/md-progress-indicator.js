@@ -5,6 +5,7 @@ import {tweenFraction} from '../motion/native-easing.js';
 import {AnimationClock} from '../motion/animation-clock.js';
 import {ProgressWaveMotion} from './progress-wave-motion.js';
 import {observeElementVisibility} from '../utils/visibility.js';
+import {observeDensity} from '../utils/density.js';
 import {createComponentSheet, adoptSheet} from '../utils/styles.js';
 import {linearIndeterminateFractions, circularIndeterminateState, standardLinearLayout,
   standardCircularLayout, linearWavyLayout, linearWaveSegments,progressAmplitudeValue} from './progress-indicator-layout.js';
@@ -40,6 +41,8 @@ export class MdProgressIndicator extends HTMLElement {
     this._resetMotion(this._mode===this.type+'/'+this.variant+'/'+this.indeterminate);this._colorDirty=true;this._isVisible=true;
     this._stopThemeWatch=observeThemeContext(this,this._onThemeChange);
     this._motionPreference.addEventListener('change',this._onMotionChange);
+    // Zoom and display changes alter devicePixelRatio without a resize.
+    this._stopDensityWatch=observeDensity(()=>this._startAnimation());
     this._observer=observeElementVisibility(this,visible=>{
       this._isVisible=visible;
       if(visible)this._startAnimation();else this._stopAnimation();
@@ -54,6 +57,7 @@ export class MdProgressIndicator extends HTMLElement {
     this._stopAnimation();this._observer?.disconnect();this._resizeObserver?.disconnect();
     this._observer=null;this._resizeObserver=null;this._stopThemeWatch?.();this._stopThemeWatch=null;
     this._motionPreference.removeEventListener('change',this._onMotionChange);
+    this._stopDensityWatch?.();this._stopDensityWatch=null;
     this._waveMotion?.detach();this._amplitudeRun=null;
   }
   attributeChangedCallback(name,oldValue,newValue) {
@@ -160,6 +164,8 @@ export class MdProgressIndicator extends HTMLElement {
     // ResizeObserver redraws read the retained value without advancing time.
     if(this.indeterminate){this._motionClock.frame(now);this._startTime=this._motionClock.startNanos/1e6;}
     this._amplitudeRun?.clock.frame(now);this._waveMotion?.frame(now);
+    // The backing store follows the current density before anything is drawn.
+    if(this._canvas.width!==Math.max(1,Math.round(this._width*(devicePixelRatio||1))))this._syncDimensions();
     this._draw(this._canvas.getContext('2d'),now);
     if(!this._motionPreference.matches&&this._needsAnimation())this._rafId=requestAnimationFrame(time=>this._frame(time));
   }

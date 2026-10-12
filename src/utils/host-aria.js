@@ -62,21 +62,38 @@ export function observeControlLabels(host, refresh) {
   if (!tree) {
     const clients = new Map();
     const observer = new MutationObserver(records => {
+      // What the records changed, worked out once for every client.
+      const targets = records.map(record => record.target.nodeType === 1 ? record.target : record.target.parentElement);
+      let structure = null;
+      const inserted = () => structure ??= records.reduce((found, record) => {
+        for (const node of [...record.addedNodes, ...record.removedNodes]) {
+          if (node.nodeType !== 1) continue;
+          found.id ||= node.matches('[id]') || !!node.querySelector('[id]');
+          found.label ||= node.matches('label') || !!node.querySelector('label');
+        }
+        return found;
+      }, { id: false, label: false });
       for (const [element, update] of clients) {
         const ids = [element.getAttribute('aria-labelledby'), element.getAttribute('aria-describedby')]
-          .filter(Boolean).join(' ').split(/\s+/);
+          .filter(Boolean).join(' ').split(/\s+/).filter(Boolean);
         const labels = [...(element._internals?.labels || [])];
-        if (records.some(record => {
-          const target = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+        // Only a form-associated element with an id can gain a <label for>.
+        const labelable = !!element.id && !!element._internals && element.constructor.formAssociated === true;
+        if (records.some((record, index) => {
+          const target = targets[index];
           if (!target) return false;
           // Components with slotted names also need text-node edits, which do
           // not dispatch slotchange. Share the existing tree observer.
           if (element._syncAccessibleName && record.type !== 'attributes' && element.contains(record.target)) return true;
           if (target === element) return record.type === 'attributes' && (ARIA.includes(record.attributeName) || record.attributeName === 'id');
           if (labels.some(label => label.contains(target)) || ids.some(id => root.getElementById?.(id)?.contains(target))) return true;
-          if (record.type === 'attributes') return record.attributeName === 'for' || record.attributeName === 'id';
-          return [...record.addedNodes, ...record.removedNodes].some(node => node.nodeType === 1 &&
-            (node.matches('label,[id]') || node.querySelector('label,[id]')));
+          // Elsewhere, ids and labels matter only to names built from references.
+          if (record.type === 'attributes') {
+            return (record.attributeName === 'id' && (ids.length > 0 || labelable)) || (record.attributeName === 'for' && labelable);
+          }
+          if (!ids.length && !labelable) return false;
+          const { id, label } = inserted();
+          return (id && ids.length > 0) || (label && labelable);
         })) update();
       }
     });

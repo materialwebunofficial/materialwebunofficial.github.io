@@ -1,6 +1,6 @@
 # MD3E component inventory
 
-Status on 2026-10-11, compiled from the component sources, their tests and
+Status on 2026-10-12, compiled from the component sources, their tests and
 [MD3E-PARITY.md](MD3E-PARITY.md). It makes the remaining work countable; the
 ledger keeps the detailed evidence. Reference revision: AndroidX
 a095da93f8e98dea8748ceed79ea8427aade245f (Compose Material3 at this revision
@@ -24,7 +24,7 @@ enough detail to say more.
 |---|---|---|---|---|
 | Button, toggle button (`md-button`) | Button.kt, ToggleButton.kt, ButtonDefaults, shapes, elevation, border | Ported | Ripple phase precision, precision focus ring | Kotlin oracles + browser suites |
 | Icon button (`md-icon-button`) | IconButton.kt, IconButtonDefaults, XSmall–XLarge and color tokens | Ported | Outlined uses the spec (Vibrant) border, not LocalContentColor | Browser suites |
-| Button group (`md-button-group`) | ButtonGroup.kt | Ported | No dedicated test file | Covered by button/showcase suites |
+| Button group (`md-button-group`) | ButtonGroup.kt | Ported | — | Scaled-ancestor/press redistribution test + button/showcase suites |
 | Split button (`md-split-button`) | SplitButton.kt, SplitButtonXSmall–XLargeTokens, HorizontalCenterOptically, AnimatedShape, samples | Ported | Multi-line leading labels: heights sync through CSS stretch rather than intrinsic measurement; no tooltip on the trailing button (the samples add one) | 128 browser checks |
 | FAB, extended FAB (`md-fab`) | FloatingActionButton, ExtendedFAB, expansion, surface | Ported | Android raster, full ripple phases | Kotlin oracles + browser suites |
 | FAB menu (`md-fab-menu`) | FloatingActionButtonMenu, ToggleFloatingActionButton | Ported | Audit item stagger and toggle colors against source again | Browser suites |
@@ -38,7 +38,7 @@ enough detail to say more.
 | Navigation drawer | NavigationDrawer, DrawerSheet | Ported | Exact velocity/slop/predictive back | Browser suites |
 | Lists (`md-list`) | Expressive ListItem, SegmentedListItem | Ported | Drag/reorder, long-click APIs | Kotlin oracles + browser suites |
 | Menus (`md-menu`) | DropdownMenuPopup/Group/Item | Ported | — | Browser suites |
-| Search (`md-search-bar`) | SearchBar.kt (SearchBar, ExpandedDocked(WithGap), ExpandedFullScreen, SearchBarState), SearchBar/SearchView tokens | Partial | AppBarWithSearch, contained variants, scroll behavior, predictive back | 23 browser checks |
+| Search (`md-search-bar`, `md-app-bar-with-search`) | SearchBar.kt (SearchBar, ExpandedDocked(WithGap), ExpandedFullScreen(Contained), AppBarWithSearch, SearchBarState, enterAlways scroll), SearchBar/SearchView/AppBar tokens | Ported | Predictive back; scroll consumption follows DOM scroll events, not nested pre-scroll | 46 browser checks |
 | Sliders (`md-slider`) | Slider.kt, SliderTokens | Ported | Expressive slider sizes need an audit; gesture ownership, value label | Kotlin oracles + browser suites |
 | Tabs (`md-tabs`) | Tab, LeadingIconTab, TabRow | Ported | Audit Expressive tab row changes | Browser suites |
 | Shapes (`md-shape`) | Graphics Shapes, MaterialShapes | Ported | — | Generated coefficients |
@@ -55,7 +55,7 @@ enough detail to say more.
 | Switch | Switch (2025 color profile) | Ported | Frame pacing | Browser suites |
 | Checkbox | Checkbox | Ported | — | Browser suites |
 | Radio button | RadioButton | Ported | — | Browser suites |
-| Date pickers | DatePicker, DateRangePicker | Partial | Calendar/input/range geometry, locales; keyboard is a web convention | Browser suites |
+| Date pickers | DatePicker, DateRangePicker, DateInput, DateRangeInput, CalendarModel, DatePickerDialog, DatePickerModalTokens | Ported | The docked variant has no Compose source (spec layout); keyboard is a web convention; no selectableDates / yearRange API | 26 unit + 38 locale/geometry browser checks + picker suites |
 | Time pickers | TimePicker, TimeInput | Ported | — | Kotlin oracles + browser suites |
 | Dialogs | AlertDialogContent (+ MDC window motion) | Ported | — | Browser suites |
 | Bottom sheet | ModalBottomSheet, SheetState | Ported | Predictive back | Browser suites |
@@ -82,20 +82,22 @@ enough detail to say more.
 | Color (HCT, dynamic scheme) | Ported from Material Color Utilities | Canvas color syntax coverage |
 | Motion scheme (springs) | Ported | Older CSS/WAAPI spring completion in some components |
 | Typography | Ported (type roles, Roboto Flex subset) | Per-component role audit |
-| Shape scale, elevation, state layers, ripple | Ported | Precision focus rings, native raster |
+| Shape scale, elevation, state layers, ripple | Ported (all interactive components use the shared state-layer port) | Precision focus rings, native raster |
 
 ## Showcase
 
-The page uses system tokens only (no gradients or custom shadows) and keeps
-the homepage wave animation. Open: review every catalog example at desktop and
-mobile sizes in both themes. Reported issues not yet reproduced (scattered
-checkboxes, empty extended FABs, empty code boxes, very tall list cards) wait
-for environment details.
+The page uses system tokens only (no gradients or custom shadows; checked by
+scripts/audit-showcase-tokens.mjs) and keeps the homepage wave animation. The
+reported empty extended FABs, card heights and code boxes were reproduced in a
+separate Brave profile with standard Shields and fixed (content-visibility
+containment; artifacts/project-audit/UI-FOLLOWUP.md, MOBILE-FOLLOWUP.md). The
+catalog check covers 258 views per engine (Chromium, Firefox, WebKit) with no
+visibility, overflow, runtime or resource failures. Not covered here: physical
+phones, Safari on iOS and screen readers (TalkBack, VoiceOver).
 
 ## Count
 
-37 Material components: 34 ported (one of them from MDC) and 3 partial
-(search, date pickers, cards); none is spec-only any more. 5 extensions
-(7 elements).
+37 Material components: 36 ported (one of them from MDC) and 1 partial
+(cards); none is spec-only any more. 5 extensions (7 elements).
 Each open gap above is one unit of remaining work; "Ported" does not mean
 "no gaps".

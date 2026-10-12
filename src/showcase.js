@@ -553,10 +553,20 @@ export function initShowcase() {
   // =========================================================================
   // 5. Seed color chips, color lab
   // =========================================================================
-  function populateSeedChips(set) {
+  // A task right after the current one, without the timer throttling of background tabs.
+  const nextTask = () => globalThis.scheduler?.yield ? scheduler.yield() : new Promise(resolve => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = () => { channel.port1.close(); resolve(); };
+    channel.port2.postMessage(null);
+  });
+
+  // Each chip is created in a task of its own after the one that shows the
+  // set, so building them never lengthens loading or a navigation task.
+  async function populateSeedChips(set) {
     if (!set || set.dataset.populated) return;
     set.dataset.populated = 'true';
     for (const preset of SEED_PRESETS) {
+      await nextTask();
       const chip = document.createElement('md-chip');
       chip.className = 'preset-swatch-item';
       chip.setAttribute('variant', 'filter');
@@ -863,6 +873,12 @@ export function initShowcase() {
       bar.scrollBehavior=TopAppBarScrollBehavior.enterAlways({isScrollingContentAtStart:()=>content.scrollTop===0});
       bar.scrollTarget=content;
     });
+    // AppBarWithSearch with enterAlwaysSearchBarScrollBehavior over its list.
+    within(scope, '[data-search-app-bar-scroll]').forEach(bar => {
+      if (!claim(bar)) return;
+      const content=document.getElementById(bar.dataset.searchAppBarScroll);if(!content)return;
+      bar.scrollTarget=content;
+    });
     within(scope, '[data-bottom-app-bar-scroll]').forEach(bar => {
       if (!claim(bar)) return;
       const content=document.getElementById(bar.dataset.bottomAppBarScroll);if(!content)return;
@@ -875,7 +891,7 @@ export function initShowcase() {
       const updatePage = () => {
         const start = paginator.length ? paginator.pageIndex * paginator.pageSize + 1 : 0;
         const end = Math.min((paginator.pageIndex + 1) * paginator.pageSize, paginator.length);
-        pagePreview.textContent = `Active Page Records ${start}–${end} (Page ${paginator.pageIndex + 1})`;
+        pagePreview.textContent = `Records ${start}–${end}, page ${paginator.pageIndex + 1}`;
       };
       paginator.addEventListener('page', updatePage);
       updatePage();

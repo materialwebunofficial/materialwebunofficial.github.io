@@ -102,3 +102,18 @@ npm run test:ui-followup
 ```
 
 Gerçek kullanıcı INP/CrUX ölçümü, fiziksel Android raster karşılaştırması, paket yayını veya deploy bu çalışmanın sonucu olarak gösterilmiyor.
+
+## Mobil TBT takibi, 12 Ekim 2026
+
+Yukarıdaki mobil TBT artışı profillendi (4x CPU yavaşlatma). Paket değerlendirmesi ve ilk bileşen tanımları dışında iki neden bulundu:
+
+- `src/utils/host-aria.js` içindeki ortak etiket gözlemcisi her mutasyon kaydını sayfadaki her bileşen için yeniden inceliyor, eklenen her alt ağaçta `querySelector` çalıştırıyor ve `id` taşıyan herhangi bir öğe eklendiğinde bütün bileşenleri güncelliyordu. Yükleme profilindeki en pahalı betik buydu. Artık kayıtların etkisi geri çağrı başına bir kez hesaplanıyor; eklenen veya kimliği değişen öğeler ve etiketler yalnızca adı bunlara bağlı olabilecek bileşenleri güncelliyor (`aria-labelledby`/`aria-describedby` referansları ya da `id`'li form ilişkili öğe). Kendi etiketleri, referans verdiği öğeler, slot'taki adı ve kendi ARIA nitelikleri değişen bileşen eskisi gibi güncelleniyor.
+- Showcase altı tohum renk çipini başlangıç görevinde oluşturuyordu (4x'te yaklaşık 80 ms). Çipler artık bu görevden hemen sonra, her biri ayrı görevde oluşturuluyor.
+
+| Lighthouse 13.5.0 mobil, Brotli, her koşu soğuk tarayıcı; iki derleme aynı geçici klasörden, dönüşümlü 5'er koşu | Temel (iki değişiklik geri alınmış) | Sonra |
+| --- | --- | --- |
+| Home TBT medyanı | 27 ms | 0 ms |
+| Components TBT medyanı | 46 ms | 12 ms |
+| FCP / LCP / CLS | 960 / 1.710 ms / 0,010 | 960 / 1.710 ms / 0,010 |
+
+Tek koşular her iki derlemede de geniş dağılıyor (temelde 104 / 193 ms'ye, sonrasında 75 / 25 ms'ye kadar); tek koşu eğilim göstermez. Yeni derlemenin henüz yazıldığı OneDrive klasöründen sunulduğu önceki karşılaştırma daha yavaş ve gürültülü çıktı; kullanılmadı. Bütün koşular: `lighthouse/2026-10-12-mobile-ab-summary.json`. Kalan uzun görevler paket değerlendirmesi (4x'te ~90 ms), tema (~60 ms) ve ilk düğme tanımıdır (~90 ms; çoğu ilk hesaplanmış stil okumasının tetiklediği stil hesaplaması).

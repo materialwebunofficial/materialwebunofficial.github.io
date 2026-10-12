@@ -11,6 +11,7 @@ import { SelectionMotion } from '../motion/selection-motion.js';
 import { ColorMotion } from '../motion/color-motion.js';
 import { observeThemeContext } from '../theme/theme-context.js';
 import { tabBaselineLayout, fixedTabRow, scrollableTabRow, tabIndicatorGeometry, tabScrollOffset, applyTabScrollDelta, tabContentOffset } from './tab-layout.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 
 const style = `
  :host{display:block;width:100%;min-width:0;box-sizing:border-box;user-select:none;-webkit-user-select:none}
@@ -23,10 +24,8 @@ const style = `
  .tab{position:absolute;box-sizing:border-box;appearance:none;padding:0;border:0;border-radius:0;background:transparent;color:inherit;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent;overflow:visible}
  .tab:disabled{cursor:default}
  .tab::before{content:'';position:absolute;inset:0;min-width:48px;left:50%;transform:translateX(-50%);min-height:48px}
- .state{position:absolute;inset:0;background:var(--tab-selected-color,currentColor);opacity:0;pointer-events:none}
- .tab:hover:enabled .state{opacity:var(--md-sys-state-hover-state-layer-opacity,.08)}
- .tab:focus-visible:enabled .state{opacity:var(--md-sys-state-focus-state-layer-opacity,.1)}
- .tab.pressed:enabled .state{opacity:var(--md-sys-state-pressed-state-layer-opacity,.1)}
+ /* CommonRippleNode state layer (hover/focus) in the ripple color; presses draw only the ripple. */
+ .state{position:absolute;inset:0;background:var(--tab-selected-color,currentColor);opacity:var(--_state-alpha,0);pointer-events:none}
  .tab:focus-visible{outline:3px solid var(--md-sys-color-secondary,#625B71);outline-offset:-3px;z-index:1}
  .tab-content{position:absolute;pointer-events:none}
  .label,.measure{font:var(--md-sys-typescale-title-small,500 14px/20px Roboto,sans-serif);letter-spacing:var(--md-sys-typescale-title-small-tracking,.1px);font-weight:var(--md-sys-typescale-title-small-weight,500)}
@@ -119,6 +118,7 @@ export class MdTabs extends HTMLElement {
  }
  _bind(r){
   r.abort?.abort();r.abort=new AbortController();
+  r.stateLayer=bindStateLayer(r.button,{property:'--_state-alpha',disabled:()=>r.button.disabled,signal:r.abort.signal});
   bindPress(r.button,{disabled:()=>r.button.disabled,signal:r.abort.signal,
    onPress:e=>{r.suppressActivation=false;createRipple(e,r.button);},
    onActivate:()=>{if(r.suppressActivation){r.suppressActivation=false;return;}this._select(this._records.indexOf(r));}});

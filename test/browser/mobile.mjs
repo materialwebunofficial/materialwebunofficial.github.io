@@ -70,7 +70,7 @@ export async function testMobileInteractions(browser,base,{engine,width,height,o
         ['time-pickers','#open-time-picker-btn','#sample-time-picker','.picker-dialog'],
         ['nav-drawer','[data-open-drawer="modal-drawer-demo"]','#modal-drawer-demo','.drawer'],
         ['nav-rail','[data-open-rail="modal-rail-demo"]','#modal-rail-demo','.rail'],
-        ['search','md-search-bar[full-screen] input','md-search-bar[full-screen]','.fs-surface']]){
+        ['search','md-search-bar[full-screen][aria-label="Search mail"] input','md-search-bar[full-screen][aria-label="Search mail"]','.fs-surface']]){
         report.current={theme,id,opener,target};
         if(id==='nav-drawer'){
           await route(page,id);
@@ -119,7 +119,7 @@ export async function testMobileInteractions(browser,base,{engine,width,height,o
       await popupBounds(menu.locator('.menu').first(),width,height);
       const share=menu.locator(':scope > md-menu-item[headline="Share"]');await tap(share);
       await page.waitForTimeout(700);await popupBounds(share.locator('md-menu .menu'),width,height);
-      await tap(share.locator('md-menu-item[headline="Copy Link"]'));
+      await tap(share.locator('md-menu-item[headline="Copy link"]'));
       await page.waitForTimeout(700);check(await menu.evaluate(host=>!host.open),`${theme} nested menu: touch submenu choice closes ancestors`);
       await route(page,'fab-menu');const fab=page.locator('#fab-menu md-fab-menu').first();
       await tap(fab.locator('.fab'));await page.waitForTimeout(700);
@@ -144,7 +144,7 @@ export async function testMobileInteractions(browser,base,{engine,width,height,o
         check(await picker.evaluate(host=>{const surface=host.shadowRoot.querySelector('.picker-dialog');return surface.scrollWidth-surface.clientWidth<=1;}),`${theme} inline time picker: no horizontal overflow`);
       }
       await route(page,'text-fields');
-      const field=page.locator('md-text-field[label="Fixed Header Label"]');
+      const field=page.locator('md-text-field[label="Fixed header label"]');
       await field.evaluate(e=>e.scrollIntoView({block:'center',behavior:'instant'}));await page.waitForTimeout(900);
       check(await field.evaluate(host=>{
         const probe=document.createElement('span');probe.style.color='var(--md-sys-color-on-surface-variant)';host.shadowRoot.append(probe);

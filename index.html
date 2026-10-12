@@ -555,7 +555,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div class="fab-menu-demo">
                 <md-fab-menu icon="add" color="primary" items='[{"icon":"edit","label":"Document"},{"icon":"image","label":"Photo"},{"icon":"videocam","label":"Video"}]'></md-fab-menu>
-                <md-fab-menu icon="share" color="secondary" items='[{"icon":"link","label":"Copy Link"},{"icon":"mail","label":"Send Email"},{"icon":"forum","label":"Message"}]'></md-fab-menu>
+                <md-fab-menu icon="share" color="secondary" items='[{"icon":"link","label":"Copy link"},{"icon":"mail","label":"Send email"},{"icon":"forum","label":"Message"}]'></md-fab-menu>
               </div></div>
             <div class="comp-info">
               <span class="comp-name">FAB menu</span>
@@ -596,10 +596,10 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div></template>
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
-                <md-icon-button variant="standard" toggle icon="favorite_border" selected-icon="favorite" aria-label="Toggle Heart"></md-icon-button>
-                <md-icon-button variant="filled" toggle icon="star_outline" selected-icon="star" aria-label="Toggle Star"></md-icon-button>
-                <md-icon-button variant="tonal" toggle icon="bookmark_border" selected-icon="bookmark" aria-label="Toggle Bookmark"></md-icon-button>
-                <md-icon-button variant="outlined" toggle icon="thumb_up_off_alt" selected-icon="thumb_up" aria-label="Toggle Like"></md-icon-button>
+                <md-icon-button variant="standard" toggle icon="favorite_border" selected-icon="favorite" aria-label="Favorite"></md-icon-button>
+                <md-icon-button variant="filled" toggle icon="star_outline" selected-icon="star" aria-label="Star"></md-icon-button>
+                <md-icon-button variant="tonal" toggle icon="bookmark_border" selected-icon="bookmark" aria-label="Bookmark"></md-icon-button>
+                <md-icon-button variant="outlined" toggle icon="thumb_up_off_alt" selected-icon="thumb_up" aria-label="Like"></md-icon-button>
               </div></div>
             <div class="comp-info">
               <span class="comp-name">Toggle</span>
@@ -681,7 +681,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           <template data-defer><div class="comp-card">        <div class="comp-preview">
               <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <md-split-button label="Save" icon="save" items='[{"icon":"cloud_upload","label":"Save to Cloud"},{"icon":"download","label":"Export as JSON"}]'></md-split-button>
-                <md-split-button label="Share" icon="share" variant="tonal" items='[{"icon":"link","label":"Copy Link"},{"icon":"mail","label":"Send Email"}]'></md-split-button>
+                <md-split-button label="Share" icon="share" variant="tonal" items='[{"icon":"link","label":"Copy link"},{"icon":"mail","label":"Send email"}]'></md-split-button>
               </div></div>
             <div class="comp-info">
               <span class="comp-name">Split buttons</span>
@@ -789,13 +789,13 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
         <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview" style="width: 100%;">
               <div style="width: 100%; max-width: 280px; display: flex; flex-direction: column; gap: 10px;">
-                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant);">Linear Standard (Determinate 65%)</span>
+                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant);">Standard, 65%</span>
                 <md-progress-indicator type="linear" variant="standard" value="65" style="width: 100%;"></md-progress-indicator>
-                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Linear Standard (Indeterminate)</span>
+                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Standard, indeterminate</span>
                 <md-progress-indicator type="linear" variant="standard" indeterminate style="width: 100%;"></md-progress-indicator>
-                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Linear Wavy Expressive (Determinate 75% · 10dp height)</span>
+                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Wavy, 75%, 10dp tall</span>
                 <md-progress-indicator type="linear" variant="wavy" value="75" style="width: 100%;"></md-progress-indicator>
-                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Linear Wavy Expressive (Indeterminate)</span>
+                <span class="md-body-small" style="color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">Wavy, indeterminate</span>
                 <md-progress-indicator type="linear" variant="wavy" indeterminate style="width: 100%;"></md-progress-indicator>
               </div></div>
             <div class="comp-info">
@@ -812,19 +812,19 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
               <div style="display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
                   <md-progress-indicator type="circular" variant="standard" value="75"></md-progress-indicator>
-                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Standard 75%</span>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Standard, 75%</span>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
                   <md-progress-indicator type="circular" variant="standard" indeterminate></md-progress-indicator>
-                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Standard Indet</span>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Standard indeterminate</span>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
                   <md-progress-indicator type="circular" variant="wavy" value="70"></md-progress-indicator>
-                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Wavy 70%</span>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Wavy, 70%</span>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
                   <md-progress-indicator type="circular" variant="wavy" indeterminate></md-progress-indicator>
-                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Wavy Indet</span>
+                  <span class="md-label-small" style="color: var(--md-sys-color-on-surface-variant);">Wavy indeterminate</span>
                 </div></div>
             </div>
             <div class="comp-info">
@@ -938,12 +938,12 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
         </header>
         <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">        <div class="comp-preview">
-              <md-button variant="tonal" label="Open Bottom Sheet" id="open-bottom-sheet-btn"></md-button>
-              <md-bottom-sheet id="sample-bottom-sheet" modal headline="Share Media">
+              <md-button variant="tonal" label="Open bottom sheet" id="open-bottom-sheet-btn"></md-button>
+              <md-bottom-sheet id="sample-bottom-sheet" modal headline="Share media">
                 <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
                   <p class="md-body-medium" style="margin: 0; opacity: 0.8;">Choose how you would like to share this item with your team.</p>
                   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <md-chip variant="assist" icon="link" label="Copy Link"></md-chip>
+                    <md-chip variant="assist" icon="link" label="Copy link"></md-chip>
                     <md-chip variant="assist" icon="mail" label="Email"></md-chip>
                     <md-chip variant="assist" icon="qr_code" label="QR Code"></md-chip>
                   </div></div>
@@ -1170,7 +1170,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
         <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
-              <md-button variant="filled" label="Open Sample Dialog" id="open-dialog-btn"></md-button>
+              <md-button variant="filled" label="Open dialog" id="open-dialog-btn"></md-button>
               <md-dialog id="sample-dialog" icon="delete" headline="Delete Album?" supporting-text="This will permanently remove the selected album and all contained media from your cloud backup." confirm-label="Delete" cancel-label="Cancel"></md-dialog>
             </div>
             <div class="comp-info">
@@ -1326,8 +1326,8 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
         <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
-              <md-button variant="outlined" label="Open Side Sheet" id="open-side-sheet-btn"></md-button>
-              <md-side-sheet id="sample-side-sheet" headline="Details Panel" divider style="--md-side-sheet-width: 320px">
+              <md-button variant="outlined" label="Open side sheet" id="open-side-sheet-btn"></md-button>
+              <md-side-sheet id="sample-side-sheet" headline="Details panel" divider style="--md-side-sheet-width: 320px">
                 <p class="md-body-medium side-sheet-note">Properties of the selected file.</p>
                 <md-list>
                   <md-list-item icon="info" headline="Size" trailing-text="2.4 MB"></md-list-item>
@@ -1389,7 +1389,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
         <div class="cards-grid" data-deferred style="--deferred-one:4080px;--deferred-two:2032px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; padding: 0;">
-              <md-top-app-bar headline="Page Title" variant="small">
+              <md-top-app-bar headline="Page title" variant="small">
                 <md-icon-button slot="leading" icon="menu" aria-label="Open navigation"></md-icon-button>
                 <md-icon-button slot="trailing" icon="search" aria-label="Search"></md-icon-button>
                 <md-icon-button slot="trailing" icon="more_vert" aria-label="More options"></md-icon-button>
@@ -1407,7 +1407,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; padding: 0;">
               <div class="top-app-bar-scroll-stage">
-              <md-top-app-bar id="scroll-top-app-bar" data-top-app-bar-scroll="top-app-bar-content" style="max-height: 300px;" headline="Medium Top Bar" variant="medium-flexible" subtitle="Expanded context subtitle">
+              <md-top-app-bar id="scroll-top-app-bar" data-top-app-bar-scroll="top-app-bar-content" style="max-height: 300px;" headline="Medium top bar" variant="medium-flexible" subtitle="Expanded context subtitle">
                 <md-icon-button slot="leading" icon="arrow_back" aria-label="Back"></md-icon-button>
                 <md-icon-button slot="trailing" icon="more_vert" aria-label="More options"></md-icon-button>
               </md-top-app-bar>
@@ -1690,7 +1690,7 @@ document.getElementById('mail-drawer').show();</code>
           <template data-defer><div class="comp-card full-col" style="grid-column: 1 / -1; overflow: visible;">
             <div class="comp-preview" style="padding: 24px; width: 100%; display: flex; flex-direction: column; gap: 16px; overflow: visible;">
               <div id="paginator-content-preview" class="paginator-preview">
-                <span class="md-title-medium">Active Page Records 1–10 (Page 1)</span>
+                <span class="md-title-medium">Records 1–10, page 1</span>
               </div>
               <md-paginator id="demo-paginator" length="125" page-size="10" page-index="0" show-first-last-buttons></md-paginator>
             </div>
@@ -1712,9 +1712,9 @@ document.getElementById('mail-drawer').show();</code>
             <h3 class="section-title" id="search-title">Search</h3>
             <md-icon-button class="section-link" icon="link" data-anchor="search" aria-label="Copy link to Search"></md-icon-button>
           </div>
-          <p class="section-desc">Search lets people enter a query and get relevant information.</p>
+          <p class="section-desc">Search lets people enter a query and get relevant information. The bar can stand alone or sit in an app bar.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
+        <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%;">
               <md-search-bar placeholder="Search components" aria-label="Search components" suggestions='[{"label":"Buttons","icon":"history"},{"label":"Navigation rail","icon":"history"},{"label":"Date pickers","icon":"history"},{"label":"Loading indicator","icon":"history"}]'></md-search-bar>
@@ -1738,6 +1738,43 @@ document.getElementById('mail-drawer').show();</code>
             </div>
             <div class="comp-code-box">
               <code>&lt;md-search-bar full-screen placeholder=&quot;Search mail&quot; suggestions='[{&quot;label&quot;:&quot;Invoices&quot;,&quot;icon&quot;:&quot;history&quot;}]'&gt;&lt;/md-search-bar&gt;</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div>
+          </div></template>
+          <template data-defer><div class="comp-card">
+            <div class="comp-preview" style="width: 100%; padding: 0;">
+              <div class="top-app-bar-scroll-stage">
+              <md-app-bar-with-search scroll-behavior="enter-always" data-search-app-bar-scroll="search-app-bar-content">
+                <md-icon-button slot="navigation" icon="menu" aria-label="Open menu"></md-icon-button>
+                <md-search-bar full-screen contained placeholder="Search" aria-label="Search" suggestions='[{"label":"Suggestion 0","icon":"history"},{"label":"Suggestion 1","icon":"history"},{"label":"Suggestion 2","icon":"history"}]'></md-search-bar>
+                <md-icon-button slot="actions" icon="more_vert" aria-label="More options"></md-icon-button>
+              </md-app-bar-with-search>
+              <div id="search-app-bar-content" class="top-app-bar-scroll-content" tabindex="0" role="region" aria-label="Scrollable list: the search app bar leaves and returns">
+                <md-list>
+                  <md-list-item headline="Text 0"></md-list-item>
+                  <md-list-item headline="Text 1"></md-list-item>
+                  <md-list-item headline="Text 2"></md-list-item>
+                  <md-list-item headline="Text 3"></md-list-item>
+                  <md-list-item headline="Text 4"></md-list-item>
+                  <md-list-item headline="Text 5"></md-list-item>
+                  <md-list-item headline="Text 6"></md-list-item>
+                  <md-list-item headline="Text 7"></md-list-item>
+                  <md-list-item headline="Text 8"></md-list-item>
+                  <md-list-item headline="Text 9"></md-list-item>
+                  <md-list-item headline="Text 10"></md-list-item>
+                  <md-list-item headline="Text 11"></md-list-item>
+                  <md-list-item headline="Text 12"></md-list-item>
+                  <md-list-item headline="Text 13"></md-list-item>
+                </md-list>
+              </div>
+              </div>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">App bar with search</span>
+              <span class="comp-desc">The bar scrolls away with the list and returns on any upward scroll. Its search opens a contained full-screen view.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-app-bar-with-search scroll-behavior=&quot;enter-always&quot;&gt;&lt;md-icon-button slot=&quot;navigation&quot; icon=&quot;menu&quot;&gt;&lt;/md-icon-button&gt;&lt;md-search-bar full-screen contained&gt;&lt;/md-search-bar&gt;&lt;md-icon-button slot=&quot;actions&quot; icon=&quot;more_vert&quot;&gt;&lt;/md-icon-button&gt;&lt;/md-app-bar-with-search&gt; bar.scrollTarget = list;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -2084,7 +2121,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
               <span class="comp-desc">Filter chips toggle a selection. Assist chips start an action.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-chip variant=&quot;filter&quot; label=&quot;Top Rated&quot; selected&gt;&lt;/md-chip&gt;</code>
+              <code>&lt;md-chip variant=&quot;filter&quot; label=&quot;Top rated&quot; selected&gt;&lt;/md-chip&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -2092,12 +2129,12 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
             <div class="comp-preview">
               <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
                 <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                  <md-chip variant="input" icon="person" label="Design Lead" removable></md-chip>
+                  <md-chip variant="input" icon="person" label="Design lead" removable></md-chip>
                   <md-chip variant="input" icon="code" label="TypeScript" removable></md-chip>
                 </div>
                 <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                  <md-chip variant="assist" elevated icon="star" label="Elevated Assist"></md-chip>
-                  <md-chip variant="filter" elevated selected label="Elevated Selected"></md-chip>
+                  <md-chip variant="assist" elevated icon="star" label="Elevated assist"></md-chip>
+                  <md-chip variant="filter" elevated selected label="Elevated selected"></md-chip>
                 </div></div>
             </div>
             <div class="comp-info">
@@ -2157,7 +2194,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
             </div></div></template>
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
-              <md-button variant="filled" label="Open Modal Date Picker" id="open-date-picker-btn"></md-button>
+              <md-button variant="filled" label="Open date picker" id="open-date-picker-btn"></md-button>
               <md-date-picker id="sample-date-picker" variant="modal" value="08/17/2025"></md-date-picker>
             </div>
             <div class="comp-info">
@@ -2195,7 +2232,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; min-height: 128px; align-items: flex-start; overflow: visible;">
               <md-menu id="demo-menu-1">
-                <md-button slot="trigger" variant="filled" icon="edit" label="Edit Options"></md-button>
+                <md-button slot="trigger" variant="filled" icon="edit" label="Edit options"></md-button>
                 <md-menu-item leading-icon="content_cut" headline="Cut" trailing-text="Ctrl+X">Cut</md-menu-item>
                 <md-menu-item leading-icon="content_copy" headline="Copy" trailing-text="Ctrl+C">Copy</md-menu-item>
                 <md-menu-item leading-icon="content_paste" headline="Paste" trailing-text="Ctrl+V">Paste</md-menu-item>
@@ -2203,7 +2240,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
               </md-menu>
 
               <md-menu id="demo-menu-2" variant="vibrant" label="Export format">
-                <md-button slot="trigger" variant="tonal" icon="share" label="Export Format"></md-button>
+                <md-button slot="trigger" variant="tonal" icon="share" label="Export format"></md-button>
                 <md-menu-item leading-icon="picture_as_pdf" headline="PDF Document">PDF Document</md-menu-item>
                 <md-menu-item leading-icon="image" headline="PNG Image">PNG Image</md-menu-item>
                 <md-menu-item leading-icon="code" headline="JSON Data">JSON Data</md-menu-item>
@@ -2221,13 +2258,13 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="display: flex; gap: 16px; justify-content: center; min-height: 128px; align-items: flex-start; overflow: visible;">
               <md-menu id="demo-menu-nested">
-                <md-button slot="trigger" variant="elevated" icon="folder" label="File Management"></md-button>
-                <md-menu-item leading-icon="edit" headline="New Project"></md-menu-item>
-                <md-menu-item leading-icon="folder" headline="Open Folder"></md-menu-item>
+                <md-button slot="trigger" variant="elevated" icon="folder" label="File management"></md-button>
+                <md-menu-item leading-icon="edit" headline="New project"></md-menu-item>
+                <md-menu-item leading-icon="folder" headline="Open folder"></md-menu-item>
                 <md-menu-item leading-icon="share" headline="Share" has-submenu>
                   <md-menu slot="submenu">
-                    <md-menu-item leading-icon="share" headline="Email Link"></md-menu-item>
-                    <md-menu-item leading-icon="content_copy" headline="Copy Link"></md-menu-item>
+                    <md-menu-item leading-icon="share" headline="Email link"></md-menu-item>
+                    <md-menu-item leading-icon="content_copy" headline="Copy link"></md-menu-item>
                   </md-menu>
                 </md-menu-item>
                 <md-menu-item leading-icon="cloud_download" headline="Export" has-submenu>
@@ -2252,7 +2289,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           <template data-defer><div class="comp-card">
           <div class="comp-preview" style="display:flex;gap:16px;justify-content:center;align-items:flex-start;min-height:128px;overflow:visible;">
             <md-menu id="demo-menu-grouped" label="View options">
-              <md-button slot="trigger" variant="tonal" icon="tune" label="View Options"></md-button>
+              <md-button slot="trigger" variant="tonal" icon="tune" label="View options"></md-button>
               <md-menu-group label="Sort by" selection-mode="single">
                 <md-menu-item headline="Name" leading-icon="sort_by_alpha" selected-icon="check" selected></md-menu-item>
                 <md-menu-item headline="Date modified" leading-icon="schedule" selected-icon="check"></md-menu-item>
@@ -2316,7 +2353,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
               <div style="display:flex; justify-content:space-between; width:100%; max-width:280px; gap:16px; font:var(--md-sys-typescale-label-medium); letter-spacing:var(--md-sys-typescale-label-medium-tracking); color:var(--md-sys-color-on-surface-variant);">
-                <span>Dual-Thumb Range Slider</span>
+                <span>Price range</span>
                 <span id="range-val-disp">20 – 80</span>
               </div>
               <md-slider range range-start="20" range-end="80" style="width: 100%; max-width: 280px;"></md-slider>
@@ -2429,7 +2466,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
         <div class="cards-grid" data-deferred style="--deferred-one:1520px;--deferred-two:1008px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
-              <md-button variant="tonal" label="Open Time Picker Dialog" id="open-time-picker-btn"></md-button>
+              <md-button variant="tonal" label="Open time picker" id="open-time-picker-btn"></md-button>
               <md-time-picker id="sample-time-picker" variant="dial" value="09:30"></md-time-picker>
             </div>
             <div class="comp-info">
@@ -2484,7 +2521,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
         <div class="cards-grid" data-deferred style="--deferred-one:496px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview comp-preview-dropdown">
-              <md-autocomplete id="demo-autocomplete" label="Search Framework" placeholder="Type to filter..." options='["React 19", "Next.js 15", "Vue 3", "Svelte 5", "Angular 18", "SolidJS", "Qwik", "Lit", "Vanilla JS"]'></md-autocomplete>
+              <md-autocomplete id="demo-autocomplete" label="Search framework" placeholder="Type to filter..." options='["React 19", "Next.js 15", "Vue 3", "Svelte 5", "Angular 18", "SolidJS", "Qwik", "Lit", "Vanilla JS"]'></md-autocomplete>
             </div>
             <div class="comp-info">
               <span class="comp-name">Filtered suggestions</span>
@@ -2510,10 +2547,10 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
         <div class="cards-grid" data-deferred style="--deferred-one:1008px;--deferred-two:496px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview comp-preview-dropdown">
-              <md-select label="UI Architecture" value="compose">
+              <md-select label="UI architecture" value="compose">
                 <md-option value="compose" headline="Android Jetpack Compose">Android Jetpack Compose</md-option>
                 <md-option value="flutter" headline="Flutter MD3E">Flutter MD3E</md-option>
-                <md-option value="web" headline="Vanilla Web Components">Vanilla Web Components</md-option>
+                <md-option value="web" headline="Vanilla web components">Vanilla web components</md-option>
               </md-select>
             </div>
             <div class="comp-info">
@@ -2527,10 +2564,10 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div></template>
           <template data-defer><div class="comp-card">
             <div class="comp-preview comp-preview-dropdown">
-              <md-select label="Engineering Roles" multiple value="developer,designer">
-                <md-option value="developer" headline="Frontend Engineer">Frontend Engineer</md-option>
-                <md-option value="designer" headline="UI/UX Designer">UI/UX Designer</md-option>
-                <md-option value="product" headline="Product Manager">Product Manager</md-option>
+              <md-select label="Engineering roles" multiple value="developer,designer">
+                <md-option value="developer" headline="Frontend engineer">Frontend engineer</md-option>
+                <md-option value="designer" headline="UI/UX designer">UI/UX designer</md-option>
+                <md-option value="product" headline="Product manager">Product manager</md-option>
                 <md-option value="qa" headline="QA Engineer">QA Engineer</md-option>
               </md-select>
             </div>
@@ -2557,7 +2594,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
         <div class="cards-grid" data-deferred style="--deferred-one:3568px;--deferred-two:2032px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%;">
-              <md-text-field variant="outlined" label="Fixed Header Label" float-label="always" value="Pre-filled data" supporting-text="Label remains anchored at the top notch" style="width: 100%; max-width: 280px;"></md-text-field>
+              <md-text-field variant="outlined" label="Fixed header label" float-label="always" value="Pre-filled data" supporting-text="Label remains anchored at the top notch" style="width: 100%; max-width: 280px;"></md-text-field>
             </div>
             <div class="comp-info">
               <span class="comp-name">Label always above</span>
@@ -2583,7 +2620,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div></template>
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%;">
-              <md-text-field variant="outlined" single-line icon="person" label="User Name" value="alex_dev" supporting-text="Enter your unique handle" style="width: 100%; max-width: 280px;"></md-text-field>
+              <md-text-field variant="outlined" single-line icon="person" label="User name" value="alex_dev" supporting-text="Enter your unique handle" style="width: 100%; max-width: 280px;"></md-text-field>
             </div>
             <div class="comp-info">
               <span class="comp-name">Outlined</span>
@@ -2596,7 +2633,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div></template>
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%;">
-              <md-text-field variant="filled" type="email" icon="mail" trailing-icon="check" label="Email Address" value="alex@example.com" style="width: 100%; max-width: 280px;"></md-text-field>
+              <md-text-field variant="filled" type="email" icon="mail" trailing-icon="check" label="Email address" value="alex@example.com" style="width: 100%; max-width: 280px;"></md-text-field>
             </div>
             <div class="comp-info">
               <span class="comp-name">Filled</span>

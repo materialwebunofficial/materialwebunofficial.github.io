@@ -8,6 +8,7 @@ import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { observeThemeContext } from '../theme/theme-context.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 
 const defaultStyle = `
   :host { display:block; width:100%; user-select:none; -webkit-user-select:none; }
@@ -29,10 +30,8 @@ const defaultStyle = `
   .indicator, .ripple { border-radius:var(--md-sys-shape-corner-full, 9999px); }
   .indicator { background:var(--md-sys-color-secondary-container, #E8DEF8); }
   .ripple { color:inherit; }
-  .ripple::before { content:''; position:absolute; inset:0; border-radius:inherit; background:currentColor; opacity:0; }
-  .item:not(:disabled):hover .ripple::before { opacity:0.08; }
-  .item:not(:disabled):focus-visible .ripple::before,
-  .item:not(:disabled).pressed .ripple::before { opacity:0.1; }
+  /* CommonRippleNode state layer (hover/focus); presses draw only the ripple. */
+  .ripple::before { content:''; position:absolute; inset:0; border-radius:inherit; background:currentColor; opacity:var(--_state-alpha, 0); }
   .item:focus-visible .ripple { outline:3px solid var(--md-sys-color-secondary, #625B71); outline-offset:2px; }
   .icon {
     font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
@@ -253,6 +252,7 @@ export class MdNavigationBar extends HTMLElement {
     this._records.forEach((record, index) => {
       const active = index === selected;
       record.button.disabled = !enabled(record);
+      record.stateLayer?.refresh();
       record.button.setAttribute('aria-selected', String(active));
       record.button.tabIndex = index === entry ? 0 : -1;
       if (active) record.button.setAttribute('aria-current', 'page');
@@ -278,6 +278,7 @@ export class MdNavigationBar extends HTMLElement {
     const { signal } = this._abortController;
     for (const [index, record] of this._records.entries()) {
       const button = record.button;
+      record.stateLayer = bindStateLayer(button, { property:'--_state-alpha', disabled:() => button.disabled, signal });
       bindPress(button, { signal, disabled:() => button.disabled,
         onPress:event => createRipple(event, record.ripple), onActivate:() => this._select(index) });
       button.addEventListener('keydown', event => {

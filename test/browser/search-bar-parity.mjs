@@ -115,12 +115,42 @@ export async function testSearchBarParity(browser, base, { page: url = '/test/br
     await page.clock.runFor(912);
     equal(await page.locator('#search').evaluate(host => [host.expanded, host.shadowRoot.querySelector('.fs-layer').open, host.shadowRoot.querySelector('.surface').contains(host.shadowRoot.querySelector('.field')), host.shadowRoot.querySelector('.back').hidden]), [false, false, true, true], 'Escape collapses and restores the bar');
 
+    // ExpandedFullScreenContainedSearchBar: window-sized surface fades in; FastSpatial both ways.
+    await mount(`full-screen contained suggestions='${suggestions(3)}'`);
+    const containedBar = await page.locator('#search').evaluate(host => { const r = host.shadowRoot.querySelector('.surface').getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width }; });
+    const containedSprings = await page.locator('#search').evaluate(host => { host.expanded = true; const a = host._progress.animation; return [Math.round(a.stiffness), Math.round(a.dampingRatio * 10) / 10]; });
+    equal(containedSprings, [800, 0.6], 'rememberContainedSearchBarState expands on FastSpatial');
+    await page.locator('#search').evaluate(host => {
+      const root = host.shadowRoot, frames = [], start = performance.now();
+      host._testFrames = frames;
+      const step = now => {
+        const s = root.querySelector('.fs-surface'), f = root.querySelector('.fs-field').getBoundingClientRect(), c = root.querySelector('.fs-content');
+        const sr = s.getBoundingClientRect();
+        frames.push({ open: root.querySelector('.fs-layer').open, surface: [sr.left, sr.top, sr.width, sr.height], alpha: parseFloat(s.style.opacity || '0'),
+          field: [f.left, f.top, f.width], content: parseFloat(c.style.opacity || '0'), contentTop: c.getBoundingClientRect().top,
+          colors: [getComputedStyle(s).backgroundColor, getComputedStyle(root.querySelector('.fs-field')).backgroundColor], divider: getComputedStyle(root.querySelector('.divider')).display });
+        if (now - start < 900) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    await page.clock.runFor(944);
+    const contained = await page.locator('#search').evaluate(host => host._testFrames);
+    const roles = await page.evaluate(() => { const p = document.createElement('span'); document.body.append(p); const r = v => { p.style.color = v; return getComputedStyle(p).color; }; const out = [r('var(--md-sys-color-surface-container-low)'), r('var(--md-sys-color-surface-container-high)')]; p.remove(); return out; });
+    const cOpen = contained.filter(f => f.open), cLast = contained.at(-1);
+    ok(cOpen.length > 2 && cOpen.every(f => f.surface[2] === 900 && f.surface[3] === 720), 'contained surface is window-sized from the start');
+    ok(cOpen[0].alpha < 1 && cOpen.some(f => f.alpha > 0 && f.alpha < 1) && cLast.alpha === 1, `surface alpha follows progress ${cOpen.map(f => f.alpha.toFixed(2))}`);
+    ok(Math.abs(cOpen[0].field[2] - containedBar.width) < 60, 'field starts at the bar width');
+    equal([cLast.field, cLast.contentTop, cLast.content, cLast.colors, cLast.divider], [[8, 4, 884], 68, 1, roles, 'none'], 'field 8dp from the sides and 4dp from the top; content 8dp below; containedColors; no divider');
+    await page.keyboard.press('Escape');
+    await page.clock.runFor(912);
+    equal(await page.locator('#search').evaluate(host => [host.expanded, host.shadowRoot.querySelector('.fs-layer').open]), [false, false], 'contained collapse');
+
     // Reduced motion finishes at once.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await mount(`suggestions='${suggestions(4)}'`);
     equal(await page.locator('#search').evaluate(host => { host.expanded = true; return host.shadowRoot.querySelector('.surface').getBoundingClientRect().height; }), natural, 'reduced motion');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     assert.deepEqual(errors, []);
-    console.log(`Search: ${checks} Expressive SearchBarState checks (docked height limit/minimum/scrolling, SlowSpatial/DefaultSpatial and with-gap DefaultSpatial/FastSpatial springs, dropdown slide/fade/scrim, full-screen morph/padding/focus/Escape, reduced motion) passed.`);
+    console.log(`Search: ${checks} Expressive SearchBarState checks (docked height limit/minimum/scrolling, SlowSpatial/DefaultSpatial and with-gap DefaultSpatial/FastSpatial springs, dropdown slide/fade/scrim, full-screen morph/padding/focus/Escape, contained full-screen fade/padding/colors, reduced motion) passed.`);
   } finally { await page.close(); }
 }

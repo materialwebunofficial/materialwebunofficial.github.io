@@ -10,6 +10,7 @@ import { observeThemeContext } from '../theme/theme-context.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { listItemColorRoles, listItemCorners } from './list-item-state.js';
 import { measureInteractiveListItem } from './list-item-layout.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 
 const listStyle=`
  :host { display:block; width:100%; outline:none; }
@@ -86,9 +87,8 @@ const itemStyle=`
    background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); object-fit:cover; }
  .image-thumb { flex:none; display:block; width:56px; height:56px; border-radius:var(--md-sys-shape-corner-small,8px); object-fit:cover; }
  .ripple { position:absolute; inset:0; border-radius:inherit; pointer-events:none; overflow:hidden; }
- .ripple::before { content:''; position:absolute; inset:0; background:currentColor; opacity:0; }
- .item.interactive:not(.disabled):hover .ripple::before { opacity:.08; }
- .item.interactive:not(.disabled):focus-visible .ripple::before,.item.interactive:not(.disabled).pressed .ripple::before { opacity:.1; }
+ /* CommonRippleNode state layer (hover/focus); presses draw only the ripple. */
+ .ripple::before { content:''; position:absolute; inset:0; background:currentColor; opacity:var(--_state-alpha,0); }
  .md-ripple-effect { position:absolute; background:currentColor; border-radius:50%; animation:list-ripple 450ms linear; opacity:0; }
  @keyframes list-ripple { from { transform:scale(0);opacity:.1; } to { transform:scale(1);opacity:0; } }
  .color-probe { position:absolute; visibility:hidden; pointer-events:none; width:0; height:0; }
@@ -144,6 +144,7 @@ export class MdListItem extends HTMLElement {
    if(['disabled','enabled','interactive','selection-mode'].includes(name)&&this._states.pressed){this._suppressActivation=true;this._setup();}
    if(fields.includes(name))this._syncContent();
    if((name==='selected'||name==='checked')&&this.selected&&this.selectionMode==='single')this.closest('md-list')?._select(this);
+   if(['disabled','enabled','interactive'].includes(name))this._stateLayer?.refresh();
    this._syncHierarchy();
  }
  render(){
@@ -263,6 +264,7 @@ export class MdListItem extends HTMLElement {
  }
  _setup(){
    this._abortController?.abort();this._abortController=new AbortController();const {signal}=this._abortController;
+   this._stateLayer=bindStateLayer(this._item,{property:'--_state-alpha',disabled:()=>!this.interactive||!this.enabled,signal});
    bindPress(this._item,{signal,pointerNode:()=>this.interactive,disabled:()=>!this.interactive||!this.enabled,ignoreEvent:event=>this._nested(event),
      onPress:event=>{this._suppressActivation=false;this._states.pressed=true;this._syncVisuals();createRipple(event,this._item.querySelector('.ripple'));},
      onRelease:()=>{this._states.pressed=false;if(this.isConnected)this._syncVisuals();},onActivate:event=>this._activate(event)});

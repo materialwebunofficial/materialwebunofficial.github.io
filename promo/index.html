@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-theme-scheme="expressive" data-motion-scheme="expressive" data-palette-variant="tonal-spot">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=960, initial-scale=1">
+<title>MD3E promo</title>
+<link rel="stylesheet" href="../dist/tokens.css">
+<link rel="stylesheet" href="promo.css">
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1. Intro ------------------------------------------------------------ -->
+  <section class="scene" id="s1">
+    <svg class="shape-layer" viewBox="0 0 960 540" aria-hidden="true"><path id="s1-shape"/></svg>
+    <div class="s1-title">
+      <div class="line"><span class="word">Material</span> <span class="word">3</span></div>
+      <div class="line accent"><span class="word">Expressive</span></div>
+      <div class="line pill-line"><span class="word pill">for the web</span></div>
+    </div>
+  </section>
+
+  <!-- 2. Shapes that respond ---------------------------------------------- -->
+  <section class="scene" id="s2">
+    <div class="deco">
+      <md-shape class="deco-shape" name="9-sided-cookie" style="--x:742px;--y:-150px;--s:420px" color="var(--md-sys-color-surface-container-high)"></md-shape>
+      <md-shape class="deco-shape" name="4-leaf-clover" style="--x:-120px;--y:330px;--s:300px" color="var(--md-sys-color-surface-container-high)"></md-shape>
+    </div>
+    <div class="headline">
+      <div class="line"><span class="word">Shapes</span> <span class="word">that</span></div>
+      <div class="line accent"><span class="word">respond.</span></div>
+      <p class="sub">Buttons squish, stretch and morph with every press.</p>
+    </div>
+    <div class="s2-board">
+      <md-button-group id="s2-media" class="pop-row" aria-label="Media controls">
+        <md-button size="l" variant="tonal" icon="skip_previous" aria-label="Previous"></md-button>
+        <md-button size="l" variant="filled" icon="play_arrow" aria-label="Play" toggle id="s2-play"></md-button>
+        <md-button size="l" variant="tonal" icon="skip_next" aria-label="Next"></md-button>
+      </md-button-group>
+      <md-button-group id="s2-places" class="pop-row" variant="connected" selection="single" aria-label="Places">
+        <md-button size="m" icon="work" label="Work" selected></md-button>
+        <md-button size="m" icon="restaurant" label="Food"></md-button>
+        <md-button size="m" icon="coffee" label="Coffee" id="s2-coffee"></md-button>
+        <md-button size="m" icon="home" label="Home" id="s2-home"></md-button>
+      </md-button-group>
+      <div class="s2-icons pop-row">
+        <md-icon-button size="m" variant="filled" toggle icon="favorite" id="s2-fav" aria-label="Like"></md-icon-button>
+        <md-icon-button size="m" variant="tonal" toggle icon="bookmark" id="s2-save" aria-label="Save"></md-icon-button>
+        <md-icon-button size="m" variant="outlined" toggle icon="star" id="s2-star" aria-label="Star"></md-icon-button>
+        <md-split-button size="m" label="Share" icon="share" variant="tonal" id="s2-split"></md-split-button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Motion that feels natural ---------------------------------------- -->
+  <section class="scene" id="s3">
+    <div class="headline">
+      <div class="line"><span class="word">Motion</span> <span class="word">that</span></div>
+      <div class="line accent"><span class="word">feels</span> <span class="word">natural.</span></div>
+      <p class="sub">Springs from the MD3E motion scheme, frame by frame.</p>
+    </div>
+    <div class="s3-board">
+      <div class="card pop" id="s3-progress-card">
+        <div class="card-head"><span>Uploading</span><span id="s3-pct">0%</span></div>
+        <md-progress-indicator id="s3-linear" type="linear" variant="wavy" value="0" aria-label="Upload"></md-progress-indicator>
+        <div class="card-row">
+          <md-loading-indicator size="large" variant="contained" aria-label="Loading"></md-loading-indicator>
+          <md-loading-indicator size="large" aria-label="Loading"></md-loading-indicator>
+          <md-progress-indicator type="circular" variant="wavy" indeterminate aria-label="Working"></md-progress-indicator>
+        </div>
+      </div>
+      <div class="card pop" id="s3-controls-card">
+        <div class="card-head"><span>Brightness</span><span id="s3-val">20</span></div>
+        <md-slider id="s3-slider" value="20" size="m" aria-label="Brightness"></md-slider>
+        <div class="card-row between">
+          <span class="label">Wi-Fi</span>
+          <md-switch id="s3-switch" icon aria-label="Wi-Fi"></md-switch>
+        </div>
+      </div>
+    </div>
+    <div class="s3-fab pop" id="s3-fab-wrap">
+      <md-fab-menu id="s3-fab" size="large" icon="add" color="primary" items='[{"icon":"edit","label":"Document"},{"icon":"image","label":"Photo"},{"icon":"videocam","label":"Video"}]'></md-fab-menu>
+    </div>
+  </section>
+
+  <!-- 4. Color that feels personal ---------------------------------------- -->
+  <section class="scene" id="s4">
+    <div class="headline">
+      <div class="line"><span class="word">Color</span> <span class="word">that</span></div>
+      <div class="line accent"><span class="word">feels</span> <span class="word">personal.</span></div>
+      <p class="sub">Pick one seed color. Every role is generated with HCT.</p>
+    </div>
+    <div class="swatches" id="s4-swatches">
+      <md-chip class="pop" variant="filter" label="Purple" selected data-hex="#6750A4"><span slot="leading-icon" class="seed" style="--seed:#6750A4"></span></md-chip>
+      <md-chip class="pop" variant="filter" label="Blue" data-hex="#185EAC"><span slot="leading-icon" class="seed" style="--seed:#185EAC"></span></md-chip>
+      <md-chip class="pop" variant="filter" label="Green" data-hex="#386A20"><span slot="leading-icon" class="seed" style="--seed:#386A20"></span></md-chip>
+      <md-chip class="pop" variant="filter" label="Amber" data-hex="#7D5700"><span slot="leading-icon" class="seed" style="--seed:#7D5700"></span></md-chip>
+      <md-chip class="pop" variant="filter" label="Coral" data-hex="#9C4146"><span slot="leading-icon" class="seed" style="--seed:#9C4146"></span></md-chip>
+      <md-icon-button class="pop" id="s4-dark" variant="tonal" toggle icon="dark_mode" aria-label="Dark theme"></md-icon-button>
+    </div>
+    <div class="phone" id="s4-phone">
+      <div class="app-bar">
+        <md-icon-button icon="expand_more" aria-label="Close"></md-icon-button>
+        <span class="app-title">Now playing</span>
+        <md-icon-button icon="more_vert" aria-label="More"></md-icon-button>
+      </div>
+      <div class="art">
+        <md-shape name="12-sided-cookie" size="196" color="primary-container"></md-shape>
+        <md-shape class="art-inner" name="flower" size="104" color="tertiary"></md-shape>
+      </div>
+      <div class="track">
+        <div><div class="track-title">Expressive Mix</div><div class="track-sub">MD3E Radio</div></div>
+        <md-icon-button variant="tonal" toggle selected icon="favorite" aria-label="Like"></md-icon-button>
+      </div>
+      <md-slider value="38" aria-label="Position"></md-slider>
+      <md-button-group class="controls" aria-label="Playback">
+        <md-button size="m" variant="tonal" icon="skip_previous" aria-label="Previous"></md-button>
+        <md-button size="m" variant="filled" icon="pause" aria-label="Pause" class="wide"></md-button>
+        <md-button size="m" variant="tonal" icon="skip_next" aria-label="Next"></md-button>
+      </md-button-group>
+      <md-navigation-bar class="nav" selected="0" items='[{"icon":"home","label":"Home"},{"icon":"search","label":"Search"},{"icon":"bookmark","label":"Library"}]'></md-navigation-bar>
+    </div>
+  </section>
+
+  <!-- 5. Component wall ---------------------------------------------------- -->
+  <section class="scene" id="s5">
+    <div class="wall" id="s5-wall"></div>
+    <div class="count-card" id="s5-card">
+      <div class="count-num">40+</div>
+      <div class="count-label">components</div>
+      <div class="count-sub">Zero dependencies. Any framework.</div>
+    </div>
+  </section>
+
+  <!-- 6. Outro ------------------------------------------------------------- -->
+  <section class="scene" id="s6">
+    <svg class="shape-layer" viewBox="0 0 960 540" aria-hidden="true"><path id="s6-shape"/></svg>
+    <div class="s6-text">
+      <div class="line"><span class="word">Material</span> <span class="word">3</span> <span class="word">Expressive</span></div>
+      <div class="line pill-line"><span class="word pill">for the web</span></div>
+      <div class="cmd" id="s6-cmd"><span class="prompt">$</span> npm i @materialwebunofficial/md3e-web</div>
+      <div class="url" id="s6-url">materialwebunofficial.github.io</div>
+    </div>
+    <div class="disclaimer" id="s6-note">Independent open-source project (Apache-2.0). Not affiliated with or endorsed by Google.</div>
+  </section>
+
+  <div id="pointer" aria-hidden="true"></div>
+</div>
+<script type="module" src="promo.js"></script>
+</body>
+</html>

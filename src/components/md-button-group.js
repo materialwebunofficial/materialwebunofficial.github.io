@@ -52,7 +52,11 @@ export class MdButtonGroup extends HTMLElement {
   set variant(value) { this.setAttribute('variant', value); }
   get selection() { const value = this.getAttribute('selection'); return value === 'single' || value === 'multiple' ? value : 'none'; }
   set selection(value) { this.setAttribute('selection', value); }
-  get expandedRatio() { const value = Number(this.getAttribute('expanded-ratio')); return Number.isFinite(value) && value >= 0 ? value : EXPANDED_RATIO; }
+  get expandedRatio() {
+    // Number(null) is 0: without the attribute, ButtonGroupDefaults.ExpandedRatio applies.
+    const raw = this.getAttribute('expanded-ratio'), value = raw === null || raw.trim() === '' ? NaN : Number(raw);
+    return Number.isFinite(value) && value >= 0 ? value : EXPANDED_RATIO;
+  }
   set expandedRatio(value) { this.setAttribute('expanded-ratio', String(value)); }
 
   connectedCallback() {
@@ -140,7 +144,7 @@ export class MdButtonGroup extends HTMLElement {
     }
     if (this._items.some(item => (this._state.get(item)?.progress ?? 0) !== 0)) return;
     for (const item of this._items) { item.style.removeProperty('width'); item.style.removeProperty('--md-button-group-item-width'); }
-    this._natural = this._items.map(item => item.getBoundingClientRect().width);
+    this._natural = this._items.map(layoutWidth);
   }
 
   _itemFor(event) { return this._items.find(item => event.composedPath().includes(item)); }
@@ -212,6 +216,23 @@ export class MdButtonGroup extends HTMLElement {
       item.style.setProperty('--md-button-group-item-width', `${widths[index]}px`);
     });
   }
+}
+
+/**
+ * An item's layout (border-box) width. Compose measures before graphicsLayer
+ * transforms; getBoundingClientRect would include the scale of any transformed
+ * ancestor (for example a dialog or card entering with a scale animation) and
+ * store it as the natural width. The used width keeps fractional precision.
+ */
+function layoutWidth(item) {
+  const css = getComputedStyle(item);
+  let width = parseFloat(css.width);
+  if (!Number.isFinite(width)) return item.offsetWidth;
+  if (css.boxSizing !== 'border-box') {
+    width += (parseFloat(css.paddingLeft) || 0) + (parseFloat(css.paddingRight) || 0)
+      + (parseFloat(css.borderLeftWidth) || 0) + (parseFloat(css.borderRightWidth) || 0);
+  }
+  return width;
 }
 
 if (!customElements.get('md-button-group')) customElements.define('md-button-group', MdButtonGroup);

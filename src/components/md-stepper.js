@@ -14,6 +14,7 @@ import {SelectionMotion} from '../motion/selection-motion.js';
 import {bindPress,createRipple} from '../motion/interactions.js';
 import {themeParent} from '../theme/theme-context.js';
 import {createComponentSheet,adoptSheet} from '../utils/styles.js';
+import {bindStateLayer} from '../motion/state-layer.js';
 
 let stepId=0;
 const stepStyle=':host{display:block;width:100%;box-sizing:border-box}:host([hidden]){display:none!important}:host([hidden][data-stacked]){display:block!important;visibility:hidden}.step-content-root{width:100%;box-sizing:border-box}';
@@ -64,9 +65,8 @@ const stepperStyle=`
  .step-header{position:relative;display:flex;align-items:center;gap:12px;box-sizing:border-box;min-height:72px;min-width:56px;max-width:100%;
    padding:12px 16px;margin:0;border:0;border-radius:var(--md-sys-shape-corner-full,9999px);background:transparent;
    color:var(--md-sys-color-on-surface-variant,#49454F);text-align:start;font:inherit;cursor:pointer;outline:none;overflow:hidden}
- .step-header::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--md-sys-color-on-surface,#1D1B20);opacity:0;pointer-events:none}
- .step-header:not(:disabled):hover::before{opacity:var(--md-sys-state-hover-state-layer-opacity,.08)}
- .step-header:not(:disabled):focus-visible::before,.step-header:not(:disabled).pressed::before{opacity:var(--md-sys-state-focus-state-layer-opacity,.1)}
+ /* CommonRippleNode state layer (hover/focus); presses draw only the ripple. */
+ .step-header::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--md-sys-color-on-surface,#1D1B20);opacity:var(--_state-alpha,0);pointer-events:none}
  .step-header:focus-visible{outline:3px solid var(--md-sys-color-secondary,#625B71);outline-offset:-3px}
  .step-header:disabled{cursor:default}
  .step-icon{position:relative;display:inline-flex;flex:none;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--md-sys-shape-corner-full,9999px);
@@ -150,6 +150,7 @@ export class MdStepper extends HTMLElement {
  }
  _bindRecord(record){
   if(!this._abort||record.binding)return;
+  record.stateLayer=bindStateLayer(record.control,{property:'--_state-alpha',disabled:()=>record.control.disabled,signal:this._abort.signal});
   record.binding=bindPress(record.control,{signal:this._abort.signal,disabled:()=>record.control.disabled,
    onPress:event=>createRipple(event,record.control),onActivate:()=>{if(!record.control.disabled)this.goTo(this._records.indexOf(record));}});
  }
@@ -177,10 +178,10 @@ export class MdStepper extends HTMLElement {
    for(let node=focused;node;node=themeParent(node))if(steps.includes(node)&&steps.indexOf(node)!==current){leavingFocused=true;break;}
    const assign=(node,name,value)=>{if(value==null)node.removeAttribute(name);else if(node.getAttribute(name)!==String(value))node.setAttribute(name,String(value));};
    this._header.setAttribute('aria-label',this.getAttribute('aria-label')||'Steps');
-   this._records.forEach(({step,control,number,glyph,label,description},index)=>{
+   this._records.forEach(({step,control,number,glyph,label,description,stateLayer},index)=>{
     const active=index===current&&!step.disabled,completed=index<current&&!step.disabled,text=step.label||'Step '+(index+1);
     step.active=active;step.completed=completed;
-    control.disabled=this.disabled||step.disabled||(this.linear&&index>current);
+    control.disabled=this.disabled||step.disabled||(this.linear&&index>current);stateLayer?.refresh();
     control.dataset.state=step.error?'error':active?'current':completed?'done':'pending';
     number.textContent=String(index+1);glyph.textContent=step.error?'error':'check';
     if(label.textContent!==text)label.textContent=text;if(description.textContent!==step.description)description.textContent=step.description;

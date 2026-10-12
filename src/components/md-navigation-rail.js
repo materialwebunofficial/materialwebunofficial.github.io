@@ -26,6 +26,7 @@ import { observeThemeContext } from '../theme/theme-context.js';
 import { measureAnimatedRailItem, measureIconOnlyRailItem, modalRailTarget } from './navigation-rail-layout.js';
 import { PointerVelocityTracker } from '../motion/velocity-tracker.js';
 import { HorizontalTouchSlop, pointerSlop } from '../motion/touch-slop.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 
 
 const MODAL_EXPANDED_THRESHOLD = .3;
@@ -51,9 +52,8 @@ const defaultStyle = `
   .indicator, .ripple, .icon, .label { position:absolute; pointer-events:none; }
   .indicator, .ripple { border-radius:var(--md-sys-shape-corner-full, 9999px); }
   .indicator { background:var(--md-sys-color-secondary-container, #E8DEF8); }
-  .ripple::before { content:''; position:absolute; inset:0; border-radius:inherit; background:currentColor; opacity:0; }
-  .item:not(:disabled):hover .ripple::before { opacity:.08; }
-  .item:not(:disabled):focus-visible .ripple::before, .item:not(:disabled).pressed .ripple::before { opacity:.1; }
+  /* CommonRippleNode state layer (hover/focus); presses draw only the ripple. */
+  .ripple::before { content:''; position:absolute; inset:0; border-radius:inherit; background:currentColor; opacity:var(--_state-alpha, 0); }
   .item:focus-visible .ripple { outline:3px solid var(--md-sys-color-secondary, #625B71); outline-offset:2px; }
   .icon { font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-size:24px; font-weight:normal; font-style:normal; line-height:24px; width:24px; height:24px;
@@ -246,7 +246,7 @@ export class MdNavigationRail extends HTMLElement {
     const enabled=r=>this.enabled&&!r.item.disabled&&r.item.enabled!==false;
     const entry=enabled(this._records[this.selected]??{item:{disabled:true}})?this.selected:this._records.findIndex(enabled);
     this._records.forEach((r,index)=>{
-      const selected=index===this.selected;r.button.disabled=!enabled(r);
+      const selected=index===this.selected;r.button.disabled=!enabled(r);r.stateLayer?.refresh();
       r.button.setAttribute('aria-selected',String(selected));r.button.tabIndex=index===entry?0:-1;
       if(selected)r.button.setAttribute('aria-current','page');else r.button.removeAttribute('aria-current');
       r.icon.firstElementChild.textContent=String(selected?r.item.selectedIcon??r.item.icon??'':r.item.icon??'');
@@ -448,6 +448,7 @@ export class MdNavigationRail extends HTMLElement {
     this._modalSurface.addEventListener('click',event=>{if(performance.now()<(this._dragClickUntil??0)){event.preventDefault();event.stopPropagation();this._dragClickUntil=0;}},{signal,capture:true});
     this.shadowRoot.querySelector('slot[name="header"]').addEventListener('slotchange',()=>this._measureLayout(),{signal});
     for(const[index,r]of this._records.entries()){
+      r.stateLayer=bindStateLayer(r.button,{property:'--_state-alpha',disabled:()=>r.button.disabled,signal});
       bindPress(r.button,{signal,disabled:()=>r.button.disabled,onPress:event=>createRipple(event,r.ripple),onActivate:()=>this._select(index)});
       r.button.addEventListener('keydown',event=>{
         const enabled=this._records.filter(item=>!item.button.disabled);if(!enabled.length||r.button.disabled)return;

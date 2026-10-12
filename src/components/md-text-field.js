@@ -79,7 +79,7 @@ export class MdTextField extends HTMLElement {
       'error', 'error-text', 'supporting-text', 'icon', 'leading-icon',
       'trailing-icon', 'prefix-text', 'suffix-text', 'currency', 'maxlength', 'name', 'required',
       'single-line', 'min-lines', 'max-lines', 'read-only', 'readonly', 'is-error', 'label-position','float-label','expanded-label-alignment','minimized-label-alignment','aria-label','aria-labelledby','dir',
-      'pattern', 'minlength', 'min', 'max', 'step'
+      'pattern', 'minlength', 'min', 'max', 'step', 'inputmode'
     ];
   }
 
@@ -411,7 +411,8 @@ export class MdTextField extends HTMLElement {
     if (this.maxlength !== null) input.maxLength = Math.max(0, this.maxlength);
     else input.removeAttribute('maxlength');
     if(input.tagName==='INPUT')input.type = this.type;
-    for(const name of ['pattern','minlength','min','max','step']){
+    // inputmode stands in for KeyboardOptions.keyboardType.
+    for(const name of ['pattern','minlength','min','max','step','inputmode']){
       const value=this.getAttribute(name);if(value===null)input.removeAttribute(name);else input.setAttribute(name,value);
     }
     input.placeholder = this.placeholder;

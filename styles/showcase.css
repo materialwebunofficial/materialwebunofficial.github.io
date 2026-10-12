@@ -929,6 +929,7 @@ html[data-start-tab="components"] body:not([data-routed]) #tab-view-components {
 .top-app-bar-scroll-content:focus-visible,
 .bottom-app-bar-scroll-content:focus-visible { outline-offset: -3px; }
 .bottom-app-bar-scroll-stage md-bottom-app-bar { flex: none; }
+.top-app-bar-scroll-stage md-app-bar-with-search { flex: none; }
 
 /* Containment demos */
 .panel-text {

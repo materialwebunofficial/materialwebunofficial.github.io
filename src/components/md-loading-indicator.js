@@ -21,6 +21,7 @@
 import { delegateHostAria } from '../utils/host-aria.js';
 import { observeThemeContext } from '../theme/theme-context.js';
 import { observeElementVisibility } from '../utils/visibility.js';
+import { observeDensity } from '../utils/density.js';
 import { LOADING_MORPHS } from '../tokens/loading-morphs.js';
 import { drawMorph } from '../motion/cubic-morph.js';
 import { SpringPhysics } from '../motion/spring-physics.js';
@@ -100,12 +101,16 @@ export class MdLoadingIndicator extends HTMLElement {
     this._isVisible = true;
     this._stopThemeWatch = observeThemeContext(this, this._onThemeChange);
     this._motionPreference.addEventListener('change', this._onMotionChange);
+    // A running indicator resizes its canvas every frame; a still one redraws here.
+    this._stopDensityWatch = observeDensity(() => { if (this._motionPreference.matches || !this.indeterminate) this._startAnimation(); });
     this._setupIntersectionObserver();
     this._startAnimation();
   }
 
   disconnectedCallback() {
     this._motionPreference.removeEventListener('change', this._onMotionChange);
+    this._stopDensityWatch?.();
+    this._stopDensityWatch = null;
     this._stopAnimation();
     if (this._observer) {
       this._observer.disconnect();

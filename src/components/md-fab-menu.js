@@ -20,6 +20,7 @@ import { SelectionMotion } from '../motion/selection-motion.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+import { bindStateLayer } from '../motion/state-layer.js';
 
 const defaultStyle = `
   :host {
@@ -50,9 +51,8 @@ const defaultStyle = `
     background: var(--_container);
     box-shadow: var(--md-sys-elevation-level3, 0 1px 3px 0 rgba(0,0,0,.3), 0 4px 8px 3px rgba(0,0,0,.15));
   }
-  .fab::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: 0; pointer-events: none; }
-  .fab:hover::before { opacity: var(--md-sys-state-hover-state-layer-opacity, .08); }
-  .fab:focus-visible::before, .fab.pressed::before { opacity: var(--md-sys-state-focus-state-layer-opacity, .1); }
+  /* CommonRippleNode state layer (hover/focus); presses draw only the ripple. */
+  .fab::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: var(--_state-alpha, 0); pointer-events: none; }
   .fab:focus-visible { outline: 3px solid var(--md-sys-color-secondary, #625B71); outline-offset: 2px; }
   .glyph {
     font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
@@ -99,9 +99,7 @@ const defaultStyle = `
     font: inherit;
   }
   :host([fab-position="start"]) .item { justify-content: flex-start; }
-  .item::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: 0; pointer-events: none; z-index: 1; }
-  .item:hover::before { opacity: var(--md-sys-state-hover-state-layer-opacity, .08); }
-  .item:focus-visible::before, .item.pressed::before { opacity: var(--md-sys-state-focus-state-layer-opacity, .1); }
+  .item::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: var(--_state-alpha, 0); pointer-events: none; z-index: 1; }
   .item:focus-visible { outline: 3px solid var(--md-sys-color-secondary, #625B71); outline-offset: 2px; }
   .item-content {
     display: flex;
@@ -237,6 +235,7 @@ export class MdFabMenu extends HTMLElement {
     this._abort?.abort();
     this._abort = new AbortController();
     const { signal } = this._abort;
+    bindStateLayer(this._fab, { property: '--_state-alpha', signal });
     bindPress(this._fab, { signal, onPress: event => createRipple(event, this._fab), onActivate: () => this.toggle() });
     this._fab.addEventListener('keydown', event => {
       if (!this.open) return;
@@ -247,6 +246,7 @@ export class MdFabMenu extends HTMLElement {
       } else if (event.key === 'Escape') { event.preventDefault(); this.close(); }
     }, { signal });
     for (const record of this._records) {
+      bindStateLayer(record.item, { property: '--_state-alpha', signal });
       bindPress(record.item, { signal, onPress: event => createRipple(event, record.item), onActivate: () => {
         this.dispatchEvent(new CustomEvent('select', { detail: { index: record.index, item: this.items[record.index] }, bubbles: true, composed: true }));
         this.close();

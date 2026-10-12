@@ -5,6 +5,7 @@ import {testProgressMotion,testProgressShowcase} from '../test/browser/progress-
 import {testProgressWaveOwner} from '../test/browser/progress-wave-owner.mjs';
 import {testIndicatorVisibility} from '../test/browser/indicator-visibility.mjs';
 import {testLoadingColor} from '../test/browser/loading-color.mjs';
+import {testIndicatorDensity} from '../test/browser/indicator-density.mjs';
 const root=path.resolve(fileURLToPath(new URL('../',import.meta.url)));
 const server=http.createServer((req,res)=>{
  const file=path.resolve(root,'.'+new URL(req.url,'http://localhost').pathname.replace(/\/$/,'/index.html'));
@@ -13,4 +14,4 @@ const server=http.createServer((req,res)=>{
 });
 await listenBrowserTestServer(server);const browser=await chromium.launch(),base='http://127.0.0.1:'+server.address().port;
 const source={newPage:async options=>{const page=await browser.newPage(options);await page.route('**/dist/md3-expressive.esm.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:'export * from "/src/index.js";'}));return page;}};
-try{const target=process.argv.includes('--source')?source:browser;if(process.argv.includes('--visibility')){await testIndicatorVisibility(target,base);await testLoadingColor(target,base);}else if(process.argv.includes('--owners'))await testProgressWaveOwner(target,base);else{if(!process.argv.includes('--showcase')){await testProgressParity(target,base);await testProgressMotion(target,base);await testProgressWaveOwner(target,base);await testIndicatorVisibility(target,base);await testLoadingColor(target,base);}await testProgressShowcase(target,base);}}finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
+try{const target=process.argv.includes('--source')?source:browser;if(process.argv.includes('--visibility')){await testIndicatorVisibility(target,base);await testLoadingColor(target,base);await testIndicatorDensity(target,base);}else if(process.argv.includes('--owners'))await testProgressWaveOwner(target,base);else{if(!process.argv.includes('--showcase')){await testProgressParity(target,base);await testProgressMotion(target,base);await testProgressWaveOwner(target,base);await testIndicatorVisibility(target,base);await testLoadingColor(target,base);await testIndicatorDensity(target,base);}await testProgressShowcase(target,base);}}finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

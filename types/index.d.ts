@@ -765,6 +765,12 @@ export class MdDatePicker extends HTMLElement {
   endDate: string;
   showModeToggle: boolean;
   dateFormatter: string;
+  /**
+   * CalendarLocale: the `locale` attribute, else the nearest `lang`, else the
+   * browser's language. Sets weekday order, names, headlines and the date
+   * input pattern; `value`, `startDate` and `endDate` stay MM/DD/YYYY or ISO.
+   */
+  locale: string;
   show(): void;
   close(): void;
 }
@@ -897,7 +903,7 @@ export class MdMenuItem extends HTMLElement {
 }
 
 export interface SearchSuggestion { label: string; icon?: string; supportingText?: string; }
-/** AndroidX DockedSearchBar with SearchBarDefaults.InputField. */
+/** AndroidX Expressive SearchBar with ExpandedDocked(WithGap)/ExpandedFullScreen(Contained) layouts. */
 export class MdSearchBar extends HTMLElement {
   placeholder: string;
   value: string;
@@ -913,6 +919,20 @@ export class MdSearchBar extends HTMLElement {
   fullScreen: boolean;
   /** SearchBarState.progress (0 collapsed, 1 expanded). */
   readonly progress: number;
+  /** With fullScreen: ExpandedFullScreenContainedSearchBar and rememberContainedSearchBarState. */
+  contained: boolean;
+}
+
+/** AndroidX AppBarWithSearch: navigation icon, a slotted md-search-bar and actions. */
+export class MdAppBarWithSearch extends HTMLElement {
+  /** enterAlwaysSearchBarScrollBehavior when 'enter-always'. */
+  scrollBehavior: 'enter-always' | null;
+  /** The scroller whose content passes under the app bar. */
+  scrollTarget: HTMLElement | Window | null;
+  readonly scrollOffset: number;
+  readonly scrollOffsetLimit: number;
+  readonly contentOffset: number;
+  readonly overlappedFraction: number;
 }
 
 export class MdSideSheet extends HTMLElement {
@@ -1271,6 +1291,7 @@ declare global {
     'md-menu-group': MdMenuGroup;
     'md-menu-item': MdMenuItem;
     'md-search-bar': MdSearchBar;
+    'md-app-bar-with-search': MdAppBarWithSearch;
     'md-side-sheet': MdSideSheet;
     'md-tabs': MdTabs;
     'md-tab': MdTab;

@@ -10,6 +10,7 @@ import {resolveComposeColor,composeColorCSS,composeColorWithAlpha} from '../moti
 import {themeParent,observeThemeContext} from '../theme/theme-context.js';
 import {calculateMenuPosition,calculateExposedMenuPosition,calculateExposedMenuMaxHeight,menuItemCorners,menuGroupCorners,menuItemColorRoles} from './menu-layout.js';
 import {MENU_ICONS} from './menu-icons.js';
+import {bindStateLayer} from '../motion/state-layer.js';
 
 let menuId=0;
 const openMenus=new Set();
@@ -307,10 +308,10 @@ const itemStyle=`
  .trailing-text{font:inherit;letter-spacing:inherit}
  .arrow{width:20px;height:20px;transform:scaleX(var(--arrow-direction,1))}
  .ripple{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden;z-index:-1}
- .ripple::before{content:'';position:absolute;inset:0;background:currentColor;opacity:0}
- .item:hover:not(:disabled) .ripple::before{opacity:.08}
- .item:focus-visible .ripple::before,.item.pressed:not(:disabled) .ripple::before{opacity:.1}
- :host([active]) .item:not(:disabled) .ripple::before{opacity:.1}
+ /* CommonRippleNode state layer (hover/focus); presses draw only the ripple.
+    An active descendant (select/autocomplete keyboard focus) shows the focus layer. */
+ .ripple::before{content:'';position:absolute;inset:0;background:currentColor;opacity:var(--_state-alpha,0)}
+ :host([active]) .item:not(:disabled) .ripple::before{opacity:var(--md-sys-state-focus-state-layer-opacity,.1)}
  .md-ripple-effect{position:absolute;background:currentColor;border-radius:50%;animation:menu-ripple 450ms linear;opacity:0}
  @keyframes menu-ripple{from{transform:scale(0);opacity:.1}to{transform:scale(1);opacity:0}}
  .probe{position:absolute;width:0;height:0;visibility:hidden;pointer-events:none}
@@ -346,7 +347,7 @@ export class MdMenuItem extends HTMLElement{
   this.setupInteractions();this._themeObserver=observeThemeContext(this,()=>this._syncContext());this._syncContext();
  }
  disconnectedCallback(){this._abortController?.abort();this._themeObserver?.();this._themeObserver=null;this._shapeMotion?.dispose();this._shapeMotion=null;this._containerMotion?.dispose();this._containerMotion=null;}
- attributeChangedCallback(name,oldValue,newValue){if(this._button&&oldValue!==newValue){if((name==='selected'||name==='checked')&&this.selected&&this.selectionMode==='single')(owningMenu(this)||owningGroup(this))?._select(this);this._syncContext();}}
+ attributeChangedCallback(name,oldValue,newValue){if(this._button&&oldValue!==newValue){if((name==='selected'||name==='checked')&&this.selected&&this.selectionMode==='single')(owningMenu(this)||owningGroup(this))?._select(this);this._syncContext();if(name==='disabled'||name==='enabled')this._stateLayer?.refresh();}}
  focus(options){this._button?.focus(options);}
  render(){
   this.shadowRoot.innerHTML=`${this.shadowRoot.adoptedStyleSheets?.length?'':`<style>${itemStyle}</style>`}<div class="row"><button class="item" type="button" part="item"><span class="leading"><span class="ico" aria-hidden="true"></span><slot name="start"></slot></span><span class="text"><span class="label"></span><slot></slot><span class="supporting-text"></span><slot name="supporting"></slot></span><span class="trailing"><span class="trailing-text"></span><span class="ico" aria-hidden="true"></span><slot name="end"></slot><span class="ico arrow" aria-hidden="true"></span></span><span class="ripple" aria-hidden="true"></span><span class="probe" aria-hidden="true"></span></button></div><slot name="submenu"></slot>`;
@@ -421,6 +422,7 @@ export class MdMenuItem extends HTMLElement{
  }
  setupInteractions(){
   this._abortController?.abort();this._abortController=new AbortController();const{signal}=this._abortController;
+  this._stateLayer=bindStateLayer(this._button,{property:'--_state-alpha',disabled:()=>!this.enabled,signal});
   bindPress(this._button,{signal,disabled:()=>!this.enabled,ignoreEvent:event=>nestedControl(event,this._button),onPress:event=>{this._suppressActivation=false;this._button.classList.add('pressed');createRipple(event,this._button.querySelector('.ripple'));},onRelease:()=>this._button.classList.remove('pressed'),onActivate:()=>this._activate()});
   this._button.addEventListener('focus',()=>owningMenu(this)?._syncTabStops(),{signal});
   this.addEventListener('pointerenter',()=>{if(this.enabled&&this.hasSubmenu)this._openSubmenu(false);},{signal});

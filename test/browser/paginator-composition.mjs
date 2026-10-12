@@ -58,14 +58,14 @@ export async function testPaginatorShowcase(browser,base){
    await page.setViewportSize({width,height:760});
    await page.evaluate(colorMode=>{customElements.get('md-expressive-theme').applyGlobal({scheme:'expressive',colorMode});const h=document.querySelector('#demo-paginator');h.pageSize=10;h.pageIndex=0;},colorMode);
    await page.locator('#demo-paginator #btn-next').click();
-   assert.equal(await page.locator('#paginator-content-preview .md-title-medium').textContent(),'Active Page Records 11–20 (Page 2)');
+   assert.equal(await page.locator('#paginator-content-preview .md-title-medium').textContent(),'Records 11–20, page 2');
    await page.locator('#demo-paginator #page-size-toggle').click();
    await page.waitForFunction(()=>document.querySelector('#demo-paginator').shadowRoot.querySelector('md-menu').open);
    await page.locator('#demo-paginator md-menu-item[value="25"]').click();
    await page.waitForFunction(()=>!document.querySelector('#demo-paginator').shadowRoot.querySelector('md-menu')._visible);
-   assert.equal(await page.locator('#paginator-content-preview .md-title-medium').textContent(),'Active Page Records 1–25 (Page 1)');
+   assert.equal(await page.locator('#paginator-content-preview .md-title-medium').textContent(),'Records 1–25, page 1');
    await page.locator('#demo-paginator #btn-last').click();
-   assert.equal(await page.locator('#paginator-content-preview .md-title-medium').textContent(),'Active Page Records 101–125 (Page 5)');
+   assert.equal(await page.locator('#paginator-content-preview .md-title-medium').textContent(),'Records 101–125, page 5');
    const bounds=await page.locator('#demo-paginator').boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width,'showcase paginator fits');
   }
   assert.deepEqual(errors,[]);console.log('Paginator showcase: trusted navigation, size selection, live data preview and viewport fit, 1440/390 light/dark passed.');

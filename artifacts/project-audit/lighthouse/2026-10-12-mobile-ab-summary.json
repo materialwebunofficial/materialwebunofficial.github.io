@@ -1,0 +1,574 @@
+{
+  "date": "2026-10-12",
+  "method": "Lighthouse 13.5.0 mobile (simulated throttling), Brotli, cold Chromium per run; baseline and after served from the same temporary folder, runs interleaved (after, baseline) five times",
+  "baseline": "current sources with host-aria.js observer and populateSeedChips reverted",
+  "after": "host-aria.js observer computes record effects once and updates only reference-dependent clients; seed chips created one per task",
+  "medians": {
+    "after home TBT": 0,
+    "after components TBT": 12,
+    "baseline home TBT": 27,
+    "baseline components TBT": 46
+  },
+  "runs": [
+    {
+      "build": "after",
+      "pair": 1,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 3,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          852,
+          151,
+          "Unattributable"
+        ],
+        [
+          3634,
+          55,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3746,
+          51,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 1,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 0,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          863,
+          139,
+          "Unattributable"
+        ],
+        [
+          804,
+          53,
+          "-"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 2,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 4,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          851,
+          155,
+          "Unattributable"
+        ],
+        [
+          3595,
+          58,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3686,
+          50,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 2,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 59,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          859,
+          153,
+          "Unattributable"
+        ],
+        [
+          3594,
+          149,
+          "md3-expressive.esm.js"
+        ],
+        [
+          801,
+          51,
+          "-"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 3,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 25,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          843,
+          143,
+          "Unattributable"
+        ],
+        [
+          3510,
+          73,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3680,
+          52,
+          "showcase.js"
+        ],
+        [
+          3732,
+          52,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 3,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 0,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          859,
+          139,
+          "Unattributable"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 4,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 12,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          846,
+          136,
+          "Unattributable"
+        ],
+        [
+          3510,
+          68,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3682,
+          53,
+          "showcase.js"
+        ],
+        [
+          3578,
+          50,
+          "md3-expressive.esm.js"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 4,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 0,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          860,
+          142,
+          "Unattributable"
+        ],
+        [
+          802,
+          50,
+          "-"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 5,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 17,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          858,
+          164,
+          "Unattributable"
+        ],
+        [
+          3777,
+          56,
+          "showcase.js"
+        ],
+        [
+          3725,
+          52,
+          "showcase.js"
+        ],
+        [
+          3599,
+          51,
+          "md3-expressive.esm.js"
+        ]
+      ]
+    },
+    {
+      "build": "after",
+      "pair": 5,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 75,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          869,
+          169,
+          "Unattributable"
+        ],
+        [
+          3614,
+          116,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3552,
+          62,
+          "md3-expressive.esm.js"
+        ],
+        [
+          803,
+          58,
+          "-"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 1,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 48,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          846,
+          196,
+          "Unattributable"
+        ],
+        [
+          3510,
+          64,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3685,
+          54,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 1,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 29,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          872,
+          144,
+          "Unattributable"
+        ],
+        [
+          3591,
+          96,
+          "showcase.js"
+        ],
+        [
+          803,
+          62,
+          "-"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 2,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 46,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          846,
+          147,
+          "Unattributable"
+        ],
+        [
+          3552,
+          77,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3833,
+          76,
+          "showcase.js"
+        ],
+        [
+          3744,
+          62,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 2,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 19,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          856,
+          142,
+          "Unattributable"
+        ],
+        [
+          3589,
+          88,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 3,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 193,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          3592,
+          284,
+          "md3-expressive.esm.js"
+        ],
+        [
+          849,
+          141,
+          "Unattributable"
+        ],
+        [
+          3916,
+          50,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 3,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 27,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          864,
+          150,
+          "Unattributable"
+        ],
+        [
+          3605,
+          87,
+          "showcase.js"
+        ],
+        [
+          3551,
+          54,
+          "md3-expressive.esm.js"
+        ],
+        [
+          808,
+          52,
+          "-"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 4,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 19,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          849,
+          133,
+          "Unattributable"
+        ],
+        [
+          3510,
+          63,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3681,
+          62,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 4,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 104,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          859,
+          168,
+          "Unattributable"
+        ],
+        [
+          3597,
+          120,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3717,
+          82,
+          "showcase.js"
+        ],
+        [
+          3544,
+          53,
+          "md3-expressive.esm.js"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 5,
+      "view": "components",
+      "lighthouse": "13.5.0",
+      "tbt": 21,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          845,
+          136,
+          "Unattributable"
+        ],
+        [
+          3510,
+          66,
+          "md3-expressive.esm.js"
+        ],
+        [
+          3739,
+          57,
+          "showcase.js"
+        ],
+        [
+          3687,
+          52,
+          "showcase.js"
+        ]
+      ]
+    },
+    {
+      "build": "baseline",
+      "pair": 5,
+      "view": "home",
+      "lighthouse": "13.5.0",
+      "tbt": 22,
+      "fcp": 960,
+      "lcp": 1710,
+      "cls": 0.01,
+      "longTasks": [
+        [
+          860,
+          142,
+          "Unattributable"
+        ],
+        [
+          3597,
+          90,
+          "showcase.js"
+        ],
+        [
+          3545,
+          52,
+          "md3-expressive.esm.js"
+        ],
+        [
+          804,
+          51,
+          "-"
+        ]
+      ]
+    }
+  ]
+}

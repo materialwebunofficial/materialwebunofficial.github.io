@@ -78,6 +78,9 @@ export async function testCardInteractions(browser,base){
    await page.locator('#nested').focus();const nestedBefore=await page.evaluate(()=>window.cardActions);await page.keyboard.press(' ');verify(await page.locator('#nested').inputValue(),' ',`${variant} nested editable keeps Space`);verify(await page.evaluate(()=>window.cardActions),nestedBefore,`${variant} nested keyboard does not activate Card`);
    await card.hover();await page.mouse.down();await host.evaluate(h=>{h.disabled=true;h.disabled=false;});verify((await state()).pressed,false,`${variant} synchronous cancellation`);verify((await state()).alpha,0,`${variant} re-enable no invented Enter`);await page.mouse.up();verify(await page.evaluate(()=>window.cardActions),nestedBefore,`${variant} canceled up no action`);
    verify(await host.evaluate(h=>{const card=h.shadowRoot.querySelector('.card'),old=h._elevationMotion,parent=h.parentNode,slot=h.shadowRoot.querySelector('slot');h.remove();const retired=old.disposed&&old.raf===null&&!card.querySelector('span[hidden]');parent.append(h);return retired&&card===h.shadowRoot.querySelector('.card')&&slot===h.shadowRoot.querySelector('slot');}),true,`${variant} reconnect cleanup/retention`);
+   // The pointer still rests on the re-added card, and the browser may report
+   // a synthetic hover after the layout change. Leave it so only the factory counts.
+   await page.mouse.move(1,1);
    verify(await host.evaluate(h=>{h.elevation={defaultElevation:4};return h._elevationMotion.motion.target;}),4,`${variant} partial factory override`);
   }
   // Four explicit CardColors constructor fields stay independent and immediate.
