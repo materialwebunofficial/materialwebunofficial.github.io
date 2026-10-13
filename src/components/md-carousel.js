@@ -26,6 +26,10 @@ import {FrameResizeObserver} from '../utils/resize-observer.js';
  *   the pager's snapping bounds and positional thresholds, and a
  *   StiffnessMediumLow critically damped spring from the release velocity.
  *   Uncontained releases with noSnapFlingBehavior: Android's spline decay.
+ *   fling-behavior="multi-browse" selects multiBrowseFlingBehavior for the
+ *   multi-browse and hero layouts: PagerSnapLayoutInfoProvider's approach
+ *   offset to the decay's suggested page, a decay (or snap spring) approach
+ *   to one page before it, then the snap with the velocity reached.
  * - Web bindings. A horizontal wheel or trackpad scrolls directly and settles
  *   like a release without velocity. Arrow keys on the carousel animate to the
  *   next or previous item (animateScrollToItem with the default spring), and
@@ -208,6 +212,15 @@ export class MdCarousel extends HTMLElement {
     if (v === null || v === undefined) this.removeAttribute('content-padding');
     else this.setAttribute('content-padding', String(v));
   }
+
+  /**
+   * The release behavior of the pager layouts: 'single-advance' (default,
+   * CarouselDefaults.singleAdvanceFlingBehavior) or 'multi-browse'
+   * (CarouselDefaults.multiBrowseFlingBehavior). Uncontained always uses
+   * noSnapFlingBehavior and multi-aspect the list's decay.
+   */
+  get flingBehavior() { return this.getAttribute('fling-behavior') === 'multi-browse' ? 'multi-browse' : 'single-advance'; }
+  set flingBehavior(v) { this.setAttribute('fling-behavior', v); }
 
   get userScrollEnabled() { return this.getAttribute('user-scroll-enabled') !== 'false'; }
   set userScrollEnabled(v) { this.setAttribute('user-scroll-enabled', v ? 'true' : 'false'); }
@@ -729,10 +742,87 @@ export class MdCarousel extends HTMLElement {
     if (this._list) { if (this._items.length) this._decay(velocity); return; }
     if (!this._strategy.isValid || !this._items.length) return;
     if (this.layout === 'uncontained') { this._decay(velocity); return; }
+    if (this.flingBehavior === 'multi-browse') { this._multiBrowseFling(velocity, dragDelta); return; }
     // singleAdvanceFlingBehavior: with PagerSnapDistance.atMost(1) the
     // approach offset is always zero, so the release snaps directly.
     const snapOffset = this._calculateSnapOffset(velocity, dragDelta);
     this._animateBy(snapOffset, velocity, SNAP_SPRING);
+  }
+
+  /**
+   * multiBrowseFlingBehavior: SnapFlingBehavior.fling with
+   * PagerSnapLayoutInfoProvider and a PagerSnapDistance that keeps the
+   * suggested target page. The approach runs the decay (or, when the decay
+   * cannot cover it, the snap spring) to one page before the target; the snap
+   * then continues with the velocity reached.
+   */
+  _multiBrowseFling(velocity, dragDelta) {
+    this._stopMotion();
+    const decay = new AndroidFlingDecay();
+    const decayOffset = decay.target(0, velocity);
+    const remaining = Math.abs(this._approachOffset(velocity, decayOffset)) * Math.sign(velocity);
+    const snap = finalVelocity => this._animateBy(this._calculateSnapOffset(finalVelocity, dragDelta), finalVelocity, SNAP_SPRING);
+    // No velocity or no approach offset: no approach animation.
+    if (remaining === 0 || velocity === 0) { snap(velocity); return; }
+    if (this._reducedMotion()) { this._scrollBy(remaining); snap(0); return; }
+    const coerceToTarget = (value, target) => target === 0 ? 0 : target > 0 ? Math.min(value, target) : Math.max(value, target);
+    const motion = { frame: 0, start: performance.now(), previous: 0 };
+    const done = finalVelocity => { if (this._motion !== motion) return; this._motion = null; snap(finalVelocity); };
+    let step;
+    if (Math.abs(decayOffset) >= Math.abs(remaining)) {
+      // DecayApproachAnimation: the decay, cut at the approach offset.
+      const duration = decay.info(velocity).duration;
+      step = now => {
+        if (this._motion !== motion) return;
+        const elapsed = Math.min(now - motion.start, duration);
+        const state = decay.sample(elapsed, 0, velocity);
+        let value = state.position, cancel = elapsed >= duration;
+        if (Math.abs(value) >= Math.abs(remaining)) { value = coerceToTarget(value, remaining); cancel = true; }
+        const delta = value - motion.previous;
+        const consumed = this._scrollBy(delta);
+        motion.previous = value;
+        if (Math.abs(delta - consumed) > 0.5) cancel = true;
+        if (cancel) { done(state.velocity); return; }
+        motion.frame = requestAnimationFrame(step);
+      };
+    } else {
+      // TargetApproachAnimation: the snap spring to the approach offset; the
+      // velocity it ends with is kept within the initial velocity.
+      const duration = springDuration({ from: 0, to: remaining, velocity, stiffness: SNAP_SPRING.stiffness, dampingRatio: SNAP_SPRING.dampingRatio, visibilityThreshold: SNAP_SPRING.visibilityThreshold });
+      step = now => {
+        if (this._motion !== motion) return;
+        const elapsed = now - motion.start, finished = elapsed >= duration;
+        const state = finished ? { position: remaining, velocity: 0 }
+          : SpringPhysics.solve({ from: 0, to: remaining, velocity, dampingRatio: SNAP_SPRING.dampingRatio, stiffness: SNAP_SPRING.stiffness, time: elapsed / 1000 });
+        const realValue = coerceToTarget(state.position, remaining);
+        const delta = realValue - motion.previous;
+        const consumed = this._scrollBy(delta);
+        motion.previous += consumed;
+        if (finished || Math.abs(delta - consumed) > 0.5 || realValue !== state.position) { done(coerceToTarget(state.velocity, velocity)); return; }
+        motion.frame = requestAnimationFrame(step);
+      };
+    }
+    this._motion = motion;
+    motion.frame = requestAnimationFrame(step);
+  }
+
+  /**
+   * PagerSnapLayoutInfoProvider.calculateApproachOffset with the suggested
+   * target page: the fling's distance up to one page before that page.
+   */
+  _approachOffset(velocity, decayOffset) {
+    const effectivePageSize = this._pageSize + this._pageSpacing;
+    if (effectivePageSize === 0) return 0;
+    const count = this._items.length;
+    const firstVisiblePage = this._visiblePages()[0]?.index ?? 0;
+    const startPage = velocity < 0 ? firstVisiblePage + 1 : firstVisiblePage;
+    const pagesInAnimationOffset = Math.trunc(Math.fround(decayOffset / effectivePageSize));
+    const targetPage = Math.min(Math.max(startPage + pagesInAnimationOffset, 0), count);
+    // multiBrowseFlingBehavior's PagerSnapDistance returns the suggested page.
+    const correctedTargetPage = Math.min(Math.max(targetPage, 0), count);
+    const proposedFlingOffset = (correctedTargetPage - startPage) * effectivePageSize;
+    const flingApproachOffset = Math.max(Math.abs(proposedFlingOffset) - effectivePageSize, 0);
+    return flingApproachOffset === 0 ? 0 : flingApproachOffset * Math.sign(velocity);
   }
 
   _isScrollingForward(velocity, dragDelta) {

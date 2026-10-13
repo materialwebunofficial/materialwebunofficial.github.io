@@ -775,6 +775,12 @@ export class MdCarousel extends HTMLElement {
   contentPadding: number;
   userScrollEnabled: boolean;
   /**
+   * Release behavior of the multi-browse and hero layouts:
+   * CarouselDefaults.singleAdvanceFlingBehavior (default) or
+   * multiBrowseFlingBehavior.
+   */
+  flingBehavior: 'single-advance' | 'multi-browse';
+  /**
    * The item closest to its resting position (CarouselState.currentItem); for
    * multi-aspect, the list's firstVisibleItemIndex.
    */

@@ -69,11 +69,11 @@ enough detail to say more.
 
 | Component | Built from | Open gaps |
 |---|---|---|
-| Autocomplete | Text field, menu (exposed dropdown) | Review against ExposedDropdownMenu behavior |
-| Select, option | ExposedDropdownMenu, menu | Same |
-| Stepper, step | Buttons, list parts | Layout is our own; no Material reference |
-| Paginator | Buttons, menu | Same |
-| Expansion panel | Card, ListItem | Same |
+| Autocomplete | Shared read-only TextField + exposed Menu; the unchanged ExposedDropdownMenuPositionProvider and calculateMaxHeight are executed (2,268 positions, 72 heights) | Keyboard follows the W3C combobox pattern (Android's Tab can focus the popup); 216 browser checks |
+| Select, option | Same exposed dropdown composition; options map to retained Menu items | Same keyboard adaptation; 232 browser checks |
+| Stepper, step | ListItem, Divider, Card, Button; FastEffects content fade | No Material reference for the layout; 184 browser checks |
+| Paginator | Button, IconButton, Menu, Divider | No Material reference for the layout; 160 browser checks |
+| Expansion panel | Filled Card + interactive ListItem; height and chevron on the spatial spring roles | No Material reference for the layout; 168 browser checks |
 
 ## System
 

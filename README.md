@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="promo/out/md3e-promo-poster.png" alt="Material 3 Expressive for the web" width="720">
+</p>
+
 # MD3E Web
 
 Unofficial Material Design 3 Expressive for the web: dependency-free Web
@@ -19,7 +23,7 @@ Components, design tokens, spring motion and dynamic color theming.
 
 - **No runtime dependencies.** Native Custom Elements, Shadow DOM, CSS custom
   properties and ES modules.
-- **50+ components** modeled on the AndroidX Compose Material 3 sources.
+- **46 components** modeled on the AndroidX Compose Material 3 sources.
 - **Dynamic color.** HCT/CAM16 color schemes from any seed color, using a bundled
   copy of Material Color Utilities.
 - **Spring motion** based on Compose's expressive and standard motion schemes.
@@ -141,12 +145,13 @@ color roles without touching the DOM, so it also runs on the server.
 | Containment | `md-card`, `md-carousel`, `md-list`, `md-menu`, `md-dialog`, `md-bottom-sheet`, `md-side-sheet`, `md-expansion-panel`, `md-accordion`, `md-divider` |
 | Theme | `md-theme`, `md-expressive-theme`, `md-shape` |
 
-Child elements such as `md-list-item`, `md-menu-item`, `md-option`, `md-tab` and
-`md-step` are registered with their parents.
+Their child elements (`md-list-item`, `md-menu-group`, `md-menu-item`,
+`md-option`, `md-tab`, `md-step` and `md-step-panel`) are registered with their
+parents, for 53 custom elements in total.
 
 ## Documentation
 
-- [Component reference](docs/COMPONENTS.md): detailed behavior and API notes
+- [COMPONENTS.md](COMPONENTS.md): detailed behavior and API notes
 - [MIGRATION.md](MIGRATION.md): unreleased changes and web contracts (forms,
   selection, dates, packaging)
 - [MD3E-PARITY.md](MD3E-PARITY.md): comparisons with the AndroidX sources and
