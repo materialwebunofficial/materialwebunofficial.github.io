@@ -32,11 +32,17 @@
  *   exits with ExitTransition.None. An item icon crossfades with the check on
  *   DefaultEffects.
  *
+ * - The row is as narrow as width(IntrinsicSize.Min) makes it: every segment is
+ *   as wide as the widest segment's min intrinsic width (its longest word plus
+ *   the 18 + 8dp icon space and 12dp padding, at least 58dp), so a multi-word
+ *   label wraps; the shorter segments stay centred (CenterVertically). An
+ *   author width (such as 100%) replaces it, as fillMaxWidth would.
+ *
  * Web adapters: the 48dp minimum touch target is a pseudo-element (layout
  * stays 40dp, as in the other components here); arrow keys move focus and, in
  * single choice, selection (radio group convention); the 3dp focus ring
- * follows the other components. Labels do not wrap (Compose's min intrinsic
- * width can wrap multi-word labels).
+ * follows the other components. Text min intrinsic widths come from hidden
+ * min-content copies of the labels.
  */
 
 import { delegateHostAria, labelledByText } from '../utils/host-aria.js';
@@ -46,9 +52,13 @@ import { SelectionMotion } from '../motion/selection-motion.js';
 import { escapeHtml, safeJsonParse } from '../utils/security.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { MENU_ICONS } from './menu-icons.js';
+import { FrameResizeObserver } from '../utils/resize-observer.js';
+import { HostStyleSheet } from '../utils/host-style.js';
 
 const ICON_SIZE = 18;
 const ICON_SPACING = 8;
+// ButtonDefaults.MinWidth and SegmentedButtonDefaults.ContentPadding (12dp horizontal).
+const MIN_WIDTH = 58, PADDING_HORIZONTAL = 12;
 // -(IconSize + IconSpacing) / 2 with Kotlin Int division.
 const NO_ICON_OFFSET = -Math.trunc((ICON_SIZE + ICON_SPACING) / 2);
 const CHECKED_Z_INDEX_FACTOR = 5;
@@ -133,9 +143,22 @@ const defaultStyle = `
     padding-left: ${ICON_SIZE + ICON_SPACING}px;
     pointer-events: none;
   }
+  /* Text's default TextAlign.Start: wrapped lines start at the label's edge. */
   .label {
     display: block;
-    white-space: nowrap;
+    overflow-wrap: normal;
+    text-align: start;
+  }
+  /* Min intrinsic width of each label: min-content copies in LabelLarge. */
+  .measures { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+  .measure {
+    display: block;
+    width: min-content;
+    font-family: var(--md-sys-typescale-font-family, system-ui, sans-serif);
+    font-size: var(--md-sys-typescale-label-large-size, 14px);
+    font-weight: var(--md-sys-typescale-label-large-weight, 500);
+    line-height: var(--md-sys-typescale-label-large-line-height, 20px);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking, 0.1px);
   }
   .icon {
     position: absolute;
@@ -225,6 +248,17 @@ export class MdSegmentedButton extends HTMLElement {
     this._abortController = null;
     this._disposeMotion();
     this._motionDisposed = true;
+    this._measureObserver?.disconnect();
+    this._measureObserver = null;
+  }
+
+  /** width(IntrinsicSize.Min) with weight(1f) segments spaced by -space. */
+  _measureIntrinsic() {
+    const measures = [...this.shadowRoot.querySelectorAll('.measure')];
+    if (!measures.length) { this._hostStyle?.host.removeProperty('width'); return; }
+    // Text reports ceil(minIntrinsicWidth); the content adds the 18 + 8dp icon space.
+    const segment = Math.max(MIN_WIDTH, ...measures.map(m => 2 * PADDING_HORIZONTAL + ICON_SIZE + ICON_SPACING + Math.ceil(m.getBoundingClientRect().width)));
+    this._hostStyle.host.setProperty('width', `${segment * measures.length - this.space * (measures.length - 1)}px`);
   }
 
   /** The radio group / group name: an author label, or the text an aria-labelledby names. */
@@ -330,6 +364,7 @@ export class MdSegmentedButton extends HTMLElement {
   _syncSpace() {
     const row = this.shadowRoot.querySelector('.row');
     if (row) row.style.setProperty('--_space', `${this.space}px`);
+    if (this._hostStyle) this._measureIntrinsic();
   }
 
   _isActive(idx) {
@@ -398,7 +433,7 @@ export class MdSegmentedButton extends HTMLElement {
     state.motion.set({
       alpha: { value: active ? 1 : 0, role: 'expressiveEffectMedium', snap: !active },
       scale: { value: active ? 1 : 0, role: 'expressiveSpatialFast', snap: !active },
-      offset: { value: active ? 0 : NO_ICON_OFFSET, role: 'expressiveSpatialFast', roundInitial: true },
+      offset: { value: active ? 0 : NO_ICON_OFFSET, role: 'expressiveSpatialFast', truncInitial: true },
     });
     if (reduce) state.motion.finish();
   }
@@ -433,6 +468,10 @@ export class MdSegmentedButton extends HTMLElement {
 
   _setup() {
     this._syncGroupLabel();
+    // Label sizes change with fonts and themes; re-measure on the shared frame queue.
+    this._measureObserver?.disconnect();
+    this._measureObserver = new FrameResizeObserver(() => this._measureIntrinsic());
+    for (const measure of this.shadowRoot.querySelectorAll('.measure')) this._measureObserver.observe(measure);
     this._syncSpace();
     this._abortController?.abort();
     this._abortController = new AbortController();
@@ -505,7 +544,9 @@ export class MdSegmentedButton extends HTMLElement {
           </button>
         `).join('')}
       </div>
+      <div class="measures" aria-hidden="true">${this._items.map(({ label }) => `<span class="measure">${escapeHtml(label)}</span>`).join('')}</div>
     `;
+    this._hostStyle = new HostStyleSheet(this.shadowRoot);
 
     this._segments = Array.from(this.shadowRoot.querySelectorAll('.segment'));
     this._segments.forEach((seg, idx) => {
@@ -523,8 +564,8 @@ export class MdSegmentedButton extends HTMLElement {
         : new SelectionMotion(seg, { alpha: active ? 1 : 0, scale: active ? 1 : 0, offset: active ? 0 : NO_ICON_OFFSET }, ({ alpha, scale, offset }) => {
           check.style.opacity = String(Math.min(1, Math.max(0, alpha)));
           check.style.transform = `scale(${scale})`;
-          // Animatable<Int>: the drawn offset is the rounded value.
-          label.style.transform = `translateX(${Math.round(offset)}px)`;
+          // Animatable<Int>: Int.VectorConverter reads the value with toInt(), which truncates.
+          label.style.transform = `translateX(${Math.trunc(offset)}px)`;
         });
       if (!itemIcon) iconSlot.hidden = !active;
       seg._content = { active, itemIcon, iconSlot, motion };

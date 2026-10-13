@@ -1,6 +1,15 @@
 import {FrameResizeObserver} from '../utils/resize-observer.js';
 /** Web adaptation of AndroidX public Expressive ListItem/SegmentedListItem.
- * Reference: a095da93f8e98dea8748ceed79ea8427aade245f. */
+ * Reference: a095da93f8e98dea8748ceed79ea8427aade245f.
+ *
+ * `long-click` is ListItem's onLongClick through foundation combinedClickable:
+ * a press (pointer, Enter or Space) held for longPressTimeoutMillis (400ms,
+ * Android's ViewConfiguration) dispatches `long-click`, and the release that
+ * follows does not click; leaving the item or a cancelled pointer stops it.
+ * The source's onLongClick semantics action (labelled by onLongClickLabel) has
+ * no ARIA counterpart, so the context menu request (secondary click, Shift+F10,
+ * the Menu key) performs the same action, and `long-click-label` becomes the
+ * item's description. */
 import { delegateHostAria } from '../utils/host-aria.js';
 import { safeJsonParse } from '../utils/security.js';
 import { bindPress, createRipple } from '../motion/interactions.js';
@@ -95,6 +104,8 @@ const itemStyle=`
 `;
 const itemSheet=createComponentSheet(itemStyle);
 const fields=['headline','supporting-text','overline','trailing-text','icon','trailing-icon','avatar','image'];
+// ViewConfiguration.longPressTimeoutMillis on Android.
+const LONG_PRESS_TIMEOUT=400;
 const hasContent=slot=>slot.assignedNodes({flatten:true}).some(node=>node.nodeType===1||node.textContent.trim());
 const number=(value,fallback)=>Number.isFinite(parseFloat(value))?parseFloat(value):fallback;
 function safeUrl(value,base,image=false){
@@ -103,7 +114,7 @@ function safeUrl(value,base,image=false){
  return'';
 }
 export class MdListItem extends HTMLElement {
- static get observedAttributes(){return [...fields,'selected','checked','interactive','disabled','enabled','variant','href','shape','shapes','vertical-alignment','selection-mode','dragged','colors','aria-label','dir'];}
+ static get observedAttributes(){return [...fields,'selected','checked','interactive','disabled','enabled','variant','href','shape','shapes','vertical-alignment','selection-mode','dragged','colors','aria-label','dir','long-click','long-click-label'];}
  constructor(){super();this.attachShadow({mode:'open'});adoptSheet(this.shadowRoot,itemSheet);this._states={pressed:false,hovered:false,focused:false};this._colorMotions={};}
  get selected(){return this.hasAttribute('selected')||this.hasAttribute('checked');}
  set selected(value){if(value)this.setAttribute('selected','');else{this.removeAttribute('selected');this.removeAttribute('checked');}}
@@ -125,6 +136,21 @@ export class MdListItem extends HTMLElement {
  get shapes(){const value=safeJsonParse(this.getAttribute('shapes'),{});return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}
  set shapes(value){this.setAttribute('shapes',JSON.stringify(value||{}));}
  get dragged(){return this.hasAttribute('dragged');} set dragged(value){this.toggleAttribute('dragged',!!value);}
+ /** combinedClickable's onLongClick: the item dispatches `long-click`. */
+ get longClick(){return this.hasAttribute('long-click');} set longClick(value){this.toggleAttribute('long-click',!!value);}
+ get longClickLabel(){return this.getAttribute('long-click-label')||'';} set longClickLabel(value){this._optional('long-click-label',value);}
+ _longPressStart(){
+   this._longPressCancel();this._longPressed=false;
+   if(!this.longClick||!this.interactive||!this.enabled)return;
+   this._longTimer=setTimeout(()=>{this._longTimer=null;this._longPress();},LONG_PRESS_TIMEOUT);
+ }
+ _longPressCancel(){if(this._longTimer!=null)clearTimeout(this._longTimer);this._longTimer=null;}
+ /** onLongClick; the release that follows is not a click. */
+ _longPress(){
+   if(!this.isConnected||!this.longClick||!this.interactive||!this.enabled)return;
+   this._longPressed=true;this._suppressActivation=true;
+   this.dispatchEvent(new CustomEvent('long-click',{bubbles:true,composed:true}));
+ }
  _optional(name,value){if(value==null)this.removeAttribute(name);else this.setAttribute(name,String(value));}
  connectedCallback(){
    if(!this._item)this.render();this._setup();this._syncContent();this._syncHierarchy();
@@ -177,6 +203,11 @@ export class MdListItem extends HTMLElement {
  }
  _syncHierarchy(){
    if(!this._item)return;const interactive=this.interactive,enabled=this.enabled;
+   // onLongClickLabel: the long press action's label describes the item.
+   const longLabel=this.longClick&&interactive?this.longClickLabel:'';
+   if(longLabel)this._item.setAttribute('aria-description',longLabel);
+   else if(this._longLabel&&this._item.getAttribute('aria-description')===this._longLabel)this._item.removeAttribute('aria-description');
+   this._longLabel=longLabel;
    this._item.className=`item ${this.variant}${interactive?' interactive':''}${!enabled?' disabled':''}${this._states.pressed?' pressed':''}`;
    this._item.tabIndex=interactive&&enabled?0:-1;this._item.setAttribute('aria-disabled',String(!enabled));
    this._item.setAttribute('role',this.selectionMode==='single'?'radio':this.selectionMode==='multiple'?'checkbox':interactive?this.href?'link':'button':'listitem');
@@ -266,8 +297,20 @@ export class MdListItem extends HTMLElement {
    this._abortController?.abort();this._abortController=new AbortController();const {signal}=this._abortController;
    this._stateLayer=bindStateLayer(this._item,{property:'--_state-alpha',disabled:()=>!this.interactive||!this.enabled,signal});
    bindPress(this._item,{signal,pointerNode:()=>this.interactive,disabled:()=>!this.interactive||!this.enabled,ignoreEvent:event=>this._nested(event),
-     onPress:event=>{this._suppressActivation=false;this._states.pressed=true;this._syncVisuals();createRipple(event,this._item.querySelector('.ripple'));},
-     onRelease:()=>{this._states.pressed=false;if(this.isConnected)this._syncVisuals();},onActivate:event=>this._activate(event)});
+     onPress:event=>{this._suppressActivation=false;this._states.pressed=true;this._syncVisuals();createRipple(event,this._item.querySelector('.ripple'));this._longPressStart();},
+     onRelease:()=>{this._longPressCancel();this._states.pressed=false;if(this.isConnected)this._syncVisuals();},onActivate:event=>this._activate(event)});
+   // Clickable cancels input that leaves the item's bounds before the long press.
+   this._item.addEventListener('pointermove',event=>{
+     if(this._longTimer==null)return;const r=this._item.getBoundingClientRect();
+     if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)this._longPressCancel();
+   },{signal});
+   this._item.addEventListener('contextmenu',event=>{
+     if(!this.longClick||!this.interactive||!this.enabled||this._nested(event))return;
+     event.preventDefault();
+     // A touch long press reaches here after the timer already acted.
+     if(this._longPressed){this._longPressed=false;return;}
+     this._longPressCancel();this._longPress();this._suppressActivation=false;
+   },{signal});
    for(const[event,state,value]of[['pointerenter','hovered',true],['pointerleave','hovered',false],['focusin','focused',true],['focusout','focused',false]])
      this._item.addEventListener(event,e=>{if(!this.enabled||!this.interactive||state==='focused'&&this._nested(e))return;this._states[state]=value;this._syncVisuals();},{signal});
    this._item.addEventListener('keydown',event=>{if(!this._nested(event))this.closest('md-list')?._key(event,this);},{signal});

@@ -4,8 +4,9 @@ import {
   getSnapPositionOffset, calculateMaxScrollOffset, carouselItemPlacement,
 } from '../../src/components/carousel-keylines.js';
 
-// Invariants of the AndroidX a095da93 carousel keyline math. Kotlin oracles are
-// not generated here; these checks follow from the source's definitions.
+// Invariants of the AndroidX a095da93 carousel keyline math, which follow from
+// the source's definitions; carousel-oracle.test.mjs compares the same
+// functions with the unchanged Kotlin sources.
 let checks = 0;
 const close = (actual, expected, message, epsilon = 1e-6) => { assert.ok(Math.abs(actual - expected) <= epsilon, `${message}: ${actual} vs ${expected}`); checks++; };
 const nonAnchors = list => list.filter(k => !k.isAnchor);

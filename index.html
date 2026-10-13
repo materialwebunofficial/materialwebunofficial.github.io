@@ -1080,7 +1080,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
           </div>
           <p class="section-desc">Carousels show a collection of items that can be scrolled on and off the screen.</p>
         </header>
-        <div class="cards-grid full-width" data-deferred style="--deferred-one:1520px;--deferred-two:1520px">
+        <div class="cards-grid full-width" data-deferred style="--deferred-one:2032px;--deferred-two:2032px">
           <template data-defer><div class="comp-card full-col">
             <div class="comp-preview carousel-preview">
               <md-carousel preferred-item-width="186" item-spacing="8" content-padding="16" aria-label="Multi-browse photos">
@@ -1154,6 +1154,24 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
             </div>
             <div class="comp-code-box">
               <code>&lt;md-carousel layout=&quot;hero&quot; item-spacing=&quot;8&quot;&gt;&lt;img src=&quot;…&quot; alt=&quot;…&quot;&gt;&lt;/md-carousel&gt;</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div></div></template>
+          <template data-defer><div class="comp-card full-col">
+            <div class="comp-preview carousel-preview">
+              <md-carousel layout="multi-aspect" item-spacing="8" content-padding="16" aria-label="Multi-aspect photos">
+                <img style="width:305px" src="https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Family" loading="lazy">
+                <img style="width:205px" src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Festival" loading="lazy">
+                <img style="width:275px" src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Forest" loading="lazy">
+                <img style="width:350px" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Architecture" loading="lazy">
+                <img style="width:100px" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&amp;auto=format&amp;fit=crop&amp;q=80" alt="Ocean" loading="lazy">
+              </md-carousel>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Multi-aspect carousel</span>
+              <span class="comp-desc">Items of different widths scroll freely; entering and leaving, they are masked with a parallax shift.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-carousel layout=&quot;multi-aspect&quot; item-spacing=&quot;8&quot; content-padding=&quot;16&quot;&gt;&lt;img style=&quot;width:305px&quot; src=&quot;…&quot; alt=&quot;…&quot;&gt;&lt;/md-carousel&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div></div></template>
         </div>
@@ -1400,7 +1418,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
               <span class="comp-desc">Title Large in a 64dp bar with navigation and action icons.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-top-app-bar headline='Page Title' variant='small'&gt;&lt;md-icon-button slot='leading' icon='menu' aria-label='Open navigation'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
+              <code>&lt;md-top-app-bar headline='Page title' variant='small'&gt;&lt;md-icon-button slot='leading' icon='menu' aria-label='Open navigation'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='search' aria-label='Search'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -1428,7 +1446,7 @@ applyDynamicTheme('#00639B', true, 'vibrant');</code></pre>
               <span class="comp-desc">Scroll the list or drag the bar to collapse and expand the title. The action row stays visible.</span>
             </div>
             <div class="comp-code-box">
-              <code>&lt;md-top-app-bar id='scroll-top-app-bar' data-top-app-bar-scroll='top-app-bar-content' style='max-height: 300px;' headline='Medium Top Bar' variant='medium-flexible' subtitle='Expanded context subtitle'&gt;&lt;md-icon-button slot='leading' icon='arrow_back' aria-label='Back'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
+              <code>&lt;md-top-app-bar id='scroll-top-app-bar' data-top-app-bar-scroll='top-app-bar-content' style='max-height: 300px;' headline='Medium top bar' variant='medium-flexible' subtitle='Expanded context subtitle'&gt;&lt;md-icon-button slot='leading' icon='arrow_back' aria-label='Back'&gt;&lt;/md-icon-button&gt;&lt;md-icon-button slot='trailing' icon='more_vert' aria-label='More options'&gt;&lt;/md-icon-button&gt;&lt;/md-top-app-bar&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>
@@ -1849,7 +1867,7 @@ document.getElementById('mail-drawer').show();</code>
           <template data-defer><div class="comp-card">
             <div class="comp-preview">
               <div class="tabs-demo">
-                <md-tabs id="travel-tabs" aria-label="Travel" tabs='[{"icon":"flight","label":"Flights","panel":"tab-flights"},{"icon":"hotel","label":"Hotels","panel":"tab-hotels"},{"icon":"explore","label":"Explore","panel":"tab-explore"}]'></md-tabs>
+                <md-tabs id="travel-tabs" aria-label="Travel" tabs='[{"icon":"flight","label":"Flights","panel":"tab-flights"},{"icon":"hotel","label":"Hotels","panel":"tab-hotels"},{"icon":"explore","label":"Explore","panel":"tab-explore","badge":""}]'></md-tabs>
                 <div id="tab-flights" class="tab-demo-panel"><span class="tab-demo-title">Your next flight</span><span>Istanbul · 14 October</span></div>
                 <div id="tab-hotels" class="tab-demo-panel" hidden><span class="tab-demo-title">Places to stay</span><span>Find a room for your next trip.</span></div>
                 <div id="tab-explore" class="tab-demo-panel" hidden><span class="tab-demo-title">Explore nearby</span><span>Discover places along the way.</span></div>
@@ -2349,7 +2367,7 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
           </div>
           <p class="section-desc">Sliders let people make selections from a range of values.</p>
         </header>
-        <div class="cards-grid" data-deferred style="--deferred-one:2544px;--deferred-two:1520px">
+        <div class="cards-grid" data-deferred style="--deferred-one:3056px;--deferred-two:1520px">
           <template data-defer><div class="comp-card">
             <div class="comp-preview" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
               <div style="display:flex; justify-content:space-between; width:100%; max-width:280px; gap:16px; font:var(--md-sys-typescale-label-medium); letter-spacing:var(--md-sys-typescale-label-medium-tracking); color:var(--md-sys-color-on-surface-variant);">
@@ -2421,6 +2439,19 @@ toolbar.querySelector('[slot="fab"]').addEventListener('click', () =&gt; toolbar
             </div>
             <div class="comp-code-box">
               <code>&lt;md-slider orientation=&quot;vertical&quot; top-to-bottom=&quot;false&quot; value=&quot;65&quot;&gt;&lt;/md-slider&gt;</code>
+              <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
+            </div>
+          </div></template>
+          <template data-defer><div class="comp-card">
+            <div class="comp-preview">
+              <md-slider value="40" track-height="36" track-corner-size="12" stop-indicator="false" aria-label="Brightness"></md-slider>
+            </div>
+            <div class="comp-info">
+              <span class="comp-name">Track and thumb</span>
+              <span class="comp-desc">Track height, corner size, gap, stop indicator and thumb size are adjustable. This track is 36dp tall with 12dp corners.</span>
+            </div>
+            <div class="comp-code-box">
+              <code>&lt;md-slider track-height=&quot;36&quot; track-corner-size=&quot;12&quot; stop-indicator=&quot;false&quot;&gt;&lt;/md-slider&gt;</code>
               <md-icon-button class="code-copy" icon="content_copy" aria-label="Copy code"></md-icon-button>
             </div>
           </div></template>

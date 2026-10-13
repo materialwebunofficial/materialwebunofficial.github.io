@@ -6,8 +6,12 @@
  *
  * Port of AndroidX a095da93f8e98dea8748ceed79ea8427aade245f
  * compose/material3/carousel: Arrangement.kt, Keylines.kt, KeylineList.kt,
- * Strategy.kt and KeylineSnapPosition.kt. Sizes are pixels; the defaults are
- * CarouselDefaults at one CSS pixel per dp.
+ * Strategy.kt and KeylineSnapPosition.kt, with Carousel.kt's scroll offsets and
+ * Modifier.carouselItem placement. Sizes are pixels; the defaults are
+ * CarouselDefaults at one CSS pixel per dp. The arithmetic is Kotlin Float
+ * arithmetic (every operation rounded with Math.fround, in the source's
+ * order), since some branches (cutoffs, step counts) turn on Float rounding;
+ * tools/androidx-carousel/snapshot.mjs checks it against the sources.
  */
 
 export const CarouselDefaults = Object.freeze({
@@ -18,16 +22,22 @@ export const CarouselDefaults = Object.freeze({
   MediumLargeItemDiffThreshold: 0.85,
 });
 
+const f = Math.fround;
+const FLOAT_MAX_VALUE = f(3.4028234663852886e38);
 const coerceIn = (value, min, max) => Math.min(Math.max(value, min), max);
-const lerpValue = (start, stop, fraction) => start + (stop - start) * fraction;
+/** ui-util lerp in Float arithmetic. */
+const lerpValue = (start, stop, fraction) => f(f(f(1 - fraction) * start) + f(fraction * stop));
 /** Kotlin roundToInt: half rounds up. */
 const roundToInt = value => Math.round(value);
+/** Kotlin Float.toInt: truncation, NaN to 0, clamped to Int. */
+const toInt = value => Number.isNaN(value) ? 0 : Math.trunc(Math.min(Math.max(value, -2147483648), 2147483647));
+const half = value => f(value / 2);
 
 /* ------------------------------------------------------------ Arrangement -- */
 
 // Percentage of a medium item's size by which it can grow or shrink to help
 // an arrangement fit.
-const MediumItemFlexPercentage = 0.1;
+const MediumItemFlexPercentage = f(0.1);
 
 export class Arrangement {
   constructor(priority, smallSize, smallCount, mediumSize, mediumCount, largeSize, largeCount) {
@@ -50,8 +60,8 @@ export class Arrangement {
   }
 
   cost(targetLargeSize) {
-    if (!this.isValid()) return Number.MAX_VALUE;
-    return Math.abs(targetLargeSize - this.largeSize) * this.priority;
+    if (!this.isValid()) return FLOAT_MAX_VALUE;
+    return f(Math.abs(f(targetLargeSize - this.largeSize)) * this.priority);
   }
 
   itemCount() { return this.largeCount + this.mediumCount + this.smallCount; }
@@ -85,35 +95,35 @@ export class Arrangement {
 
 function fit({ priority, availableSpace, itemSpacing, smallCount, smallSize, minSmallSize, maxSmallSize, mediumCount, mediumSize, largeCount, largeSize }) {
   const totalItemCount = largeCount + mediumCount + smallCount;
-  const availableSpaceWithoutSpacing = availableSpace - (totalItemCount - 1) * itemSpacing;
+  const availableSpaceWithoutSpacing = f(availableSpace - f((totalItemCount - 1) * itemSpacing));
   let arrangedSmallSize = coerceIn(smallSize, minSmallSize, maxSmallSize);
   let arrangedMediumSize = mediumSize;
   let arrangedLargeSize = largeSize;
 
-  const totalSpaceTakenByArrangement = arrangedLargeSize * largeCount + arrangedMediumSize * mediumCount + arrangedSmallSize * smallCount;
-  const delta = availableSpaceWithoutSpacing - totalSpaceTakenByArrangement;
+  const totalSpaceTakenByArrangement = f(f(f(arrangedLargeSize * largeCount) + f(arrangedMediumSize * mediumCount)) + f(arrangedSmallSize * smallCount));
+  const delta = f(availableSpaceWithoutSpacing - totalSpaceTakenByArrangement);
   // First resize small items within their range to fit the available space.
   if (smallCount > 0 && delta > 0) {
-    arrangedSmallSize += Math.min(delta / smallCount, maxSmallSize - arrangedSmallSize);
+    arrangedSmallSize = f(arrangedSmallSize + Math.min(f(delta / smallCount), f(maxSmallSize - arrangedSmallSize)));
   } else if (smallCount > 0 && delta < 0) {
-    arrangedSmallSize += Math.max(delta / smallCount, minSmallSize - arrangedSmallSize);
+    arrangedSmallSize = f(arrangedSmallSize + Math.max(f(delta / smallCount), f(minSmallSize - arrangedSmallSize)));
   }
 
   arrangedSmallSize = smallCount > 0 ? arrangedSmallSize : 0;
   arrangedLargeSize = calculateLargeSize(availableSpaceWithoutSpacing, smallCount, arrangedSmallSize, mediumCount, largeCount);
-  arrangedMediumSize = (arrangedLargeSize + arrangedSmallSize) / 2;
+  arrangedMediumSize = half(f(arrangedLargeSize + arrangedSmallSize));
 
   // Counter a large size moved off its target with the medium item's flex.
   if (mediumCount > 0 && arrangedLargeSize !== largeSize) {
-    const targetAdjustment = (largeSize - arrangedLargeSize) * largeCount;
-    const availableMediumFlex = arrangedMediumSize * MediumItemFlexPercentage * mediumCount;
+    const targetAdjustment = f(f(largeSize - arrangedLargeSize) * largeCount);
+    const availableMediumFlex = f(f(arrangedMediumSize * MediumItemFlexPercentage) * mediumCount);
     const distribute = Math.min(Math.abs(targetAdjustment), availableMediumFlex);
     if (targetAdjustment > 0) {
-      arrangedMediumSize -= distribute / mediumCount;
-      arrangedLargeSize += distribute / largeCount;
+      arrangedMediumSize = f(arrangedMediumSize - f(distribute / mediumCount));
+      arrangedLargeSize = f(arrangedLargeSize + f(distribute / largeCount));
     } else {
-      arrangedMediumSize += distribute / mediumCount;
-      arrangedLargeSize -= distribute / largeCount;
+      arrangedMediumSize = f(arrangedMediumSize + f(distribute / mediumCount));
+      arrangedLargeSize = f(arrangedLargeSize - f(distribute / largeCount));
     }
   }
 
@@ -121,7 +131,7 @@ function fit({ priority, availableSpace, itemSpacing, smallCount, smallSize, min
 }
 
 function calculateLargeSize(availableSpace, smallCount, smallSize, mediumCount, largeCount) {
-  return (availableSpace - (smallCount + mediumCount / 2) * smallSize) / (largeCount + mediumCount / 2);
+  return f(f(availableSpace - f(f(smallCount + half(mediumCount)) * smallSize)) / f(largeCount + half(mediumCount)));
 }
 
 /* ------------------------------------------------------------ KeylineList -- */
@@ -136,7 +146,7 @@ export class KeylineList extends Array {
   }
 
   _index() {
-    let min = Number.MAX_VALUE, max = 0;
+    let min = FLOAT_MAX_VALUE, max = 0;
     for (const k of this) {
       if (k.size < min) min = k.size;
       if (k.size > max) max = k.size;
@@ -166,13 +176,13 @@ export class KeylineList extends Array {
   }
 
   isFirstFocalItemAtStartOfContainer() {
-    const firstFocalLeft = this.firstFocal.offset - this.firstFocal.size / 2;
-    return firstFocalLeft >= 0 && this.firstFocal === this.firstNonAnchor;
+    const firstFocalLeft = f(this.firstFocal.offset - half(this.firstFocal.size));
+    return firstFocalLeft >= 0 && keylineEquals(this.firstFocal, this.firstNonAnchor);
   }
 
   isLastFocalItemAtEndOfContainer(carouselMainAxisSize) {
-    const lastFocalRight = this.lastFocal.offset + this.lastFocal.size / 2;
-    return lastFocalRight <= carouselMainAxisSize && this.lastFocal === this.lastNonAnchor;
+    const lastFocalRight = f(this.lastFocal.offset + half(this.lastFocal.size));
+    return lastFocalRight <= carouselMainAxisSize && keylineEquals(this.lastFocal, this.lastNonAnchor);
   }
 
   firstIndexAfterFocalRangeWithSize(size) {
@@ -246,13 +256,13 @@ class KeylineListScope {
     let pivotOffset;
     if (carouselAlignment === CarouselAlignment.Center) {
       // With an even number of keylines the item spacing sits at the center.
-      const itemSpacingSplit = itemSpacing === 0 || focalItemCount % 2 === 0 ? 0 : itemSpacing / 2;
-      const itemSpaceCounts = Math.trunc(focalItemCount / 2) * itemSpacing;
-      pivotOffset = carouselMainAxisSize / 2 - (this.focalItemSize / 2) * focalItemCount - itemSpacingSplit - itemSpaceCounts;
+      const itemSpacingSplit = itemSpacing === 0 || focalItemCount % 2 === 0 ? 0 : half(itemSpacing);
+      const itemSpaceCounts = f(Math.trunc(focalItemCount / 2) * itemSpacing);
+      pivotOffset = f(f(f(half(carouselMainAxisSize) - f(half(this.focalItemSize) * focalItemCount)) - itemSpacingSplit) - itemSpaceCounts);
     } else if (carouselAlignment === CarouselAlignment.End) {
-      pivotOffset = carouselMainAxisSize - this.focalItemSize / 2;
+      pivotOffset = f(carouselMainAxisSize - half(this.focalItemSize));
     } else {
-      pivotOffset = this.focalItemSize / 2;
+      pivotOffset = half(this.focalItemSize);
     }
     return KeylineList.from(this._createKeylinesWithPivot(pivotIndex, pivotOffset, this.firstFocalIndex, lastFocalIndex, this.focalItemSize, carouselMainAxisSize, itemSpacing));
   }
@@ -268,39 +278,39 @@ class KeylineListScope {
     const tmpKeylines = this.tmpKeylines;
     if (!tmpKeylines.length || pivotIndex < 0 || pivotIndex >= tmpKeylines.length) return [];
     const isFocal = index => index >= firstFocalIndex && index <= lastFocalIndex;
-    const isCutoffLeft = (size, offset) => offset - size / 2 < 0 && offset + size / 2 > 0;
-    const isCutoffRight = (size, offset) => offset - size / 2 < carouselMainAxisSize && offset + size / 2 > carouselMainAxisSize;
+    const isCutoffLeft = (size, offset) => f(offset - half(size)) < 0 && f(offset + half(size)) > 0;
+    const isCutoffRight = (size, offset) => f(offset - half(size)) < carouselMainAxisSize && f(offset + half(size)) > carouselMainAxisSize;
     const pivot = tmpKeylines[pivotIndex];
     const keylines = [];
-    const pivotCutoff = isCutoffLeft(pivot.size, pivotOffset) ? pivotOffset - pivot.size / 2
-      : isCutoffRight(pivot.size, pivotOffset) ? pivotOffset + pivot.size / 2 - carouselMainAxisSize
+    const pivotCutoff = isCutoffLeft(pivot.size, pivotOffset) ? f(pivotOffset - half(pivot.size))
+      : isCutoffRight(pivot.size, pivotOffset) ? f(f(pivotOffset + half(pivot.size)) - carouselMainAxisSize)
       : 0;
     keylines.push({ size: pivot.size, offset: pivotOffset, unadjustedOffset: pivotOffset, isFocal: isFocal(pivotIndex), isAnchor: pivot.isAnchor, isPivot: true, cutoff: pivotCutoff });
 
     // Keylines before the pivot, inserted at the start in their original order.
-    let offset = pivotOffset - itemMainAxisSize / 2 - itemSpacing;
-    let unadjustedOffset = pivotOffset - itemMainAxisSize / 2 - itemSpacing;
+    let offset = f(f(pivotOffset - half(itemMainAxisSize)) - itemSpacing);
+    let unadjustedOffset = f(f(pivotOffset - half(itemMainAxisSize)) - itemSpacing);
     for (let originalIndex = pivotIndex - 1; originalIndex >= 0; originalIndex--) {
       const tmp = tmpKeylines[originalIndex];
-      const tmpOffset = offset - tmp.size / 2;
-      const tmpUnadjustedOffset = unadjustedOffset - itemMainAxisSize / 2;
-      const cutoff = isCutoffLeft(tmp.size, tmpOffset) ? Math.abs(tmpOffset - tmp.size / 2) : 0;
+      const tmpOffset = f(offset - half(tmp.size));
+      const tmpUnadjustedOffset = f(unadjustedOffset - half(itemMainAxisSize));
+      const cutoff = isCutoffLeft(tmp.size, tmpOffset) ? Math.abs(f(tmpOffset - half(tmp.size))) : 0;
       keylines.unshift({ size: tmp.size, offset: tmpOffset, unadjustedOffset: tmpUnadjustedOffset, isFocal: isFocal(originalIndex), isAnchor: tmp.isAnchor, isPivot: false, cutoff });
-      offset -= tmp.size + itemSpacing;
-      unadjustedOffset -= itemMainAxisSize + itemSpacing;
+      offset = f(offset - f(tmp.size + itemSpacing));
+      unadjustedOffset = f(unadjustedOffset - f(itemMainAxisSize + itemSpacing));
     }
 
     // Keylines after the pivot, appended in their original order.
-    offset = pivotOffset + itemMainAxisSize / 2 + itemSpacing;
-    unadjustedOffset = pivotOffset + itemMainAxisSize / 2 + itemSpacing;
+    offset = f(f(pivotOffset + half(itemMainAxisSize)) + itemSpacing);
+    unadjustedOffset = f(f(pivotOffset + half(itemMainAxisSize)) + itemSpacing);
     for (let originalIndex = pivotIndex + 1; originalIndex < tmpKeylines.length; originalIndex++) {
       const tmp = tmpKeylines[originalIndex];
-      const tmpOffset = offset + tmp.size / 2;
-      const tmpUnadjustedOffset = unadjustedOffset + itemMainAxisSize / 2;
-      const cutoff = isCutoffRight(tmp.size, tmpOffset) ? tmpOffset + tmp.size / 2 - carouselMainAxisSize : 0;
+      const tmpOffset = f(offset + half(tmp.size));
+      const tmpUnadjustedOffset = f(unadjustedOffset + half(itemMainAxisSize));
+      const cutoff = isCutoffRight(tmp.size, tmpOffset) ? f(f(tmpOffset + half(tmp.size)) - carouselMainAxisSize) : 0;
       keylines.push({ size: tmp.size, offset: tmpOffset, unadjustedOffset: tmpUnadjustedOffset, isFocal: isFocal(originalIndex), isAnchor: tmp.isAnchor, isPivot: false, cutoff });
-      offset += tmp.size + itemSpacing;
-      unadjustedOffset += itemMainAxisSize + itemSpacing;
+      offset = f(offset + f(tmp.size + itemSpacing));
+      unadjustedOffset = f(unadjustedOffset + f(itemMainAxisSize + itemSpacing));
     }
     return keylines;
   }
@@ -328,6 +338,8 @@ export function multiBrowseKeylineList({
   carouselMainAxisSize, preferredItemSize, itemSpacing, itemCount,
   minSmallItemSize = CarouselDefaults.MinSmallItemSize, maxSmallItemSize = CarouselDefaults.MaxSmallItemSize,
 }) {
+  [carouselMainAxisSize, preferredItemSize, itemSpacing, minSmallItemSize, maxSmallItemSize] =
+    [carouselMainAxisSize, preferredItemSize, itemSpacing, minSmallItemSize, maxSmallItemSize].map(f);
   if (carouselMainAxisSize === 0 || preferredItemSize === 0) return emptyKeylineList();
 
   let smallCounts = [1];
@@ -335,15 +347,15 @@ export function multiBrowseKeylineList({
   const targetLargeSize = Math.min(preferredItemSize, carouselMainAxisSize);
   // A small item about a third of the large item, within its range; a medium
   // item between the two.
-  const targetSmallSize = coerceIn(targetLargeSize / 3, minSmallItemSize, maxSmallItemSize);
-  const targetMediumSize = (targetLargeSize + targetSmallSize) / 2;
+  const targetSmallSize = coerceIn(f(targetLargeSize / 3), minSmallItemSize, maxSmallItemSize);
+  const targetMediumSize = half(f(targetLargeSize + targetSmallSize));
 
   // Too little space for a large and a small item: allow no small items.
-  if (carouselMainAxisSize < minSmallItemSize * 2) smallCounts = [0];
+  if (carouselMainAxisSize < f(minSmallItemSize * 2)) smallCounts = [0];
 
-  const minAvailableLargeSpace = carouselMainAxisSize - targetMediumSize * Math.max(...mediumCounts) - maxSmallItemSize * Math.max(...smallCounts);
-  const minLargeCount = Math.max(1, Math.floor(minAvailableLargeSpace / targetLargeSize));
-  const maxLargeCount = Math.ceil(carouselMainAxisSize / targetLargeSize);
+  const minAvailableLargeSpace = f(f(carouselMainAxisSize - f(targetMediumSize * Math.max(...mediumCounts))) - f(maxSmallItemSize * Math.max(...smallCounts)));
+  const minLargeCount = Math.max(1, toInt(Math.floor(f(minAvailableLargeSpace / targetLargeSize))));
+  const maxLargeCount = toInt(Math.ceil(f(carouselMainAxisSize / targetLargeSize)));
   const largeCounts = Array.from({ length: maxLargeCount - minLargeCount + 1 }, (_, i) => maxLargeCount - i);
   const anchorSize = CarouselDefaults.AnchorSize;
   const find = (small, medium) => Arrangement.findLowestCostArrangement({
@@ -370,12 +382,13 @@ export function multiBrowseKeylineList({
 }
 
 export function uncontainedKeylineList({ carouselMainAxisSize, itemSize, itemSpacing }) {
+  [carouselMainAxisSize, itemSize, itemSpacing] = [carouselMainAxisSize, itemSize, itemSpacing].map(f);
   if (carouselMainAxisSize === 0 || itemSize === 0) return emptyKeylineList();
 
-  const largeItemSize = Math.min(itemSize + itemSpacing, carouselMainAxisSize);
+  const largeItemSize = Math.min(f(itemSize + itemSpacing), carouselMainAxisSize);
   // The space left after as many large items as fit.
-  const largeCount = Math.max(1, Math.floor(carouselMainAxisSize / largeItemSize));
-  const remainingSpace = carouselMainAxisSize - largeCount * largeItemSize;
+  const largeCount = Math.max(1, toInt(Math.floor(f(carouselMainAxisSize / largeItemSize))));
+  const remainingSpace = f(carouselMainAxisSize - f(largeCount * largeItemSize));
   const mediumCount = remainingSpace > 0 ? 1 : 0;
   const defaultAnchorSize = CarouselDefaults.AnchorSize;
   const mediumItemSize = calculateMediumChildSize(defaultAnchorSize, largeItemSize, remainingSpace);
@@ -383,7 +396,7 @@ export function uncontainedKeylineList({ carouselMainAxisSize, itemSize, itemSpa
 
   const xSmallSize = Math.min(defaultAnchorSize, itemSize);
   // The start anchor is half the cut off item, so motion at the start matches the end.
-  const leftAnchorSize = Math.max(xSmallSize, mediumItemSize * 0.5);
+  const leftAnchorSize = Math.max(xSmallSize, f(mediumItemSize * 0.5));
   return createLeftAlignedKeylineList(carouselMainAxisSize, itemSpacing, leftAnchorSize, defaultAnchorSize, arrangement);
 }
 
@@ -391,21 +404,23 @@ export function heroKeylineList({
   carouselMainAxisSize, preferredItemSize, itemSpacing, itemCount, isCentered = false,
   minSmallItemSize = CarouselDefaults.MinSmallItemSize, maxSmallItemSize = CarouselDefaults.MaxSmallItemSize,
 }) {
+  [carouselMainAxisSize, itemSpacing, minSmallItemSize, maxSmallItemSize] = [carouselMainAxisSize, itemSpacing, minSmallItemSize, maxSmallItemSize].map(f);
+  if (preferredItemSize !== null && preferredItemSize !== undefined) preferredItemSize = f(preferredItemSize);
   if (carouselMainAxisSize === 0) return emptyKeylineList();
 
   // Fewer than three items cannot be centered.
   const shouldCenter = isCentered && itemCount >= 3;
   let smallCounts = itemCount <= 1 ? [0] : shouldCenter ? [2] : [1];
   const targetLargeSize = Math.min(preferredItemSize ?? carouselMainAxisSize, carouselMainAxisSize);
-  const targetSmallSize = coerceIn(targetLargeSize / 3, minSmallItemSize, maxSmallItemSize);
+  const targetSmallSize = coerceIn(f(targetLargeSize / 3), minSmallItemSize, maxSmallItemSize);
 
   // Room for the small items and a large item at least 25% larger than them.
-  const fullscreenThreshold = minSmallItemSize * Math.max(...smallCounts) + minSmallItemSize * 1.25;
+  const fullscreenThreshold = f(f(minSmallItemSize * Math.max(...smallCounts)) + f(minSmallItemSize * 1.25));
   if (carouselMainAxisSize < fullscreenThreshold) smallCounts = [0];
 
-  const minAvailableLargeSpace = carouselMainAxisSize - minSmallItemSize * Math.max(...smallCounts);
-  const minLargeCount = Math.max(1, Math.floor(minAvailableLargeSpace / targetLargeSize));
-  const maxLargeCount = Math.ceil(carouselMainAxisSize / targetLargeSize);
+  const minAvailableLargeSpace = f(carouselMainAxisSize - f(minSmallItemSize * Math.max(...smallCounts)));
+  const minLargeCount = Math.max(1, toInt(Math.floor(f(minAvailableLargeSpace / targetLargeSize))));
+  const maxLargeCount = toInt(Math.ceil(f(carouselMainAxisSize / targetLargeSize)));
   const largeCounts = Array.from({ length: maxLargeCount - minLargeCount + 1 }, (_, i) => maxLargeCount - i);
   const anchorSize = CarouselDefaults.AnchorSize;
   const arrangement = Arrangement.findLowestCostArrangement({
@@ -444,11 +459,11 @@ export function createCenterAlignedKeylineList(carouselMainAxisSize, itemSpacing
 /** A medium item no bigger than a large one, cut off enough to show motion. */
 function calculateMediumChildSize(minimumMediumSize, largeItemSize, remainingSpace) {
   // Ideally a third of it is cut off: 1.5 times the remaining space.
-  let mediumItemSize = Math.max(remainingSpace * 1.5, minimumMediumSize);
+  let mediumItemSize = Math.max(f(remainingSpace * 1.5), minimumMediumSize);
   // Too close to the large size gives too little motion between them.
-  const largeItemThreshold = largeItemSize * CarouselDefaults.MediumLargeItemDiffThreshold;
+  const largeItemThreshold = f(largeItemSize * f(CarouselDefaults.MediumLargeItemDiffThreshold));
   if (mediumItemSize > largeItemThreshold) {
-    const sizeWithFifthCutOff = remainingSpace * 1.2;
+    const sizeWithFifthCutOff = f(remainingSpace * f(1.2));
     mediumItemSize = Math.min(Math.max(largeItemThreshold, sizeWithFifthCutOff), largeItemSize);
   }
   return mediumItemSize;
@@ -458,6 +473,7 @@ function calculateMediumChildSize(minimumMediumSize, largeItemSize, remainingSpa
 
 export class Strategy {
   constructor(defaultKeylines, availableSpace, itemSpacing, beforeContentPadding, afterContentPadding, steps = null) {
+    [availableSpace, itemSpacing, beforeContentPadding, afterContentPadding] = [availableSpace, itemSpacing, beforeContentPadding, afterContentPadding].map(f);
     this.defaultKeylines = defaultKeylines;
     this.startKeylineSteps = steps ? steps.start : getStartKeylineSteps(defaultKeylines, availableSpace, itemSpacing, beforeContentPadding);
     this.endKeylineSteps = steps ? steps.end : getEndKeylineSteps(defaultKeylines, availableSpace, itemSpacing, afterContentPadding);
@@ -499,9 +515,10 @@ export class Strategy {
 
   _keylinesForScrollOffset(scrollOffset, maxScrollOffset, roundToNearestStep) {
     // Rounding can make the offset slightly negative.
-    const positiveScrollOffset = Math.max(0, scrollOffset);
+    const positiveScrollOffset = Math.max(0, f(scrollOffset));
     const startShiftOffset = this.startShiftDistance;
-    const endShiftOffset = Math.max(0, maxScrollOffset - this.endShiftDistance);
+    maxScrollOffset = f(maxScrollOffset);
+    const endShiftOffset = Math.max(0, f(maxScrollOffset - this.endShiftDistance));
     // Outside both shift ranges the default keylines apply.
     if (positiveScrollOffset >= startShiftOffset && positiveScrollOffset <= endShiftOffset) return this.defaultKeylines;
 
@@ -515,7 +532,7 @@ export class Strategy {
       steps = this.endKeylineSteps;
       // End shifting from the very start: interpolate from the last start step
       // straight to the last end step, skipping the default step.
-      if (endShiftOffset < 0.01 && this.startKeylineSteps.length === 2 && this.endKeylineSteps.length === 2) {
+      if (endShiftOffset < f(0.01) && this.startKeylineSteps.length === 2 && this.endKeylineSteps.length === 2) {
         this._lastStartAndEndKeylineListSteps ??= [this.startKeylineSteps.at(-1), this.endKeylineSteps.at(-1)];
         steps = this._lastStartAndEndKeylineListSteps;
       }
@@ -541,12 +558,12 @@ export class Strategy {
 
 function getStartShiftDistance(startKeylineSteps, beforeContentPadding) {
   if (!startKeylineSteps.length) return 0;
-  return Math.max(startKeylineSteps.at(-1)[0].unadjustedOffset - startKeylineSteps[0][0].unadjustedOffset, beforeContentPadding);
+  return Math.max(f(startKeylineSteps.at(-1)[0].unadjustedOffset - startKeylineSteps[0][0].unadjustedOffset), beforeContentPadding);
 }
 
 function getEndShiftDistance(endKeylineSteps, afterContentPadding) {
   if (!endKeylineSteps.length) return 0;
-  return Math.max(endKeylineSteps[0].at(-1).unadjustedOffset - endKeylineSteps.at(-1).at(-1).unadjustedOffset, afterContentPadding);
+  return Math.max(f(endKeylineSteps[0].at(-1).unadjustedOffset - endKeylineSteps.at(-1).at(-1).unadjustedOffset), afterContentPadding);
 }
 
 function getStartKeylineSteps(defaultKeylines, carouselMainAxisSize, itemSpacing, beforeContentPadding) {
@@ -628,10 +645,10 @@ function getEndKeylineSteps(defaultKeylines, carouselMainAxisSize, itemSpacing, 
 
 function createShiftedKeylineListForContentPadding(from, carouselMainAxisSize, itemSpacing, contentPadding, pivot, pivotIndex) {
   const numberOfNonAnchorKeylines = from.filter(k => !k.isAnchor).length;
-  const sizeReduction = contentPadding / numberOfNonAnchorKeylines;
+  const sizeReduction = f(contentPadding / numberOfNonAnchorKeylines);
   // Offsets follow each item's reduced size...
-  const newKeylines = keylineListOf(carouselMainAxisSize, itemSpacing, { pivotIndex, pivotOffset: pivot.offset - sizeReduction / 2 + contentPadding }, scope => {
-    for (const k of from) scope.add(k.size - Math.abs(sizeReduction), k.isAnchor);
+  const newKeylines = keylineListOf(carouselMainAxisSize, itemSpacing, { pivotIndex, pivotOffset: f(f(pivot.offset - half(sizeReduction)) + contentPadding) }, scope => {
+    for (const k of from) scope.add(f(k.size - Math.abs(sizeReduction)), k.isAnchor);
   });
   // ...while unadjusted offsets stay those of the pager, which still lays items
   // out end to end at their original size.
@@ -641,9 +658,9 @@ function createShiftedKeylineListForContentPadding(from, carouselMainAxisSize, i
 function moveKeylineAndCreateShiftedKeylineList(from, srcIndex, dstIndex, carouselMainAxisSize, itemSpacing) {
   // -1 when the pivot shifts toward the start, 1 toward the end.
   const pivotDir = srcIndex > dstIndex ? 1 : -1;
-  const pivotDelta = (from[srcIndex].size - from[srcIndex].cutoff + itemSpacing) * pivotDir;
+  const pivotDelta = f(f(f(from[srcIndex].size - from[srcIndex].cutoff) + itemSpacing) * pivotDir);
   const newPivotIndex = from.pivotIndex + pivotDir;
-  const newPivotOffset = from.pivot.offset + pivotDelta;
+  const newPivotOffset = f(from.pivot.offset + pivotDelta);
   const moved = [...from];
   const [keyline] = moved.splice(srcIndex, 1);
   moved.splice(dstIndex, 0, keyline);
@@ -658,10 +675,10 @@ function getStepInterpolationPoints(totalShiftDistance, steps, isShiftingLeft) {
   for (let i = 1; i < steps.length; i++) {
     const prevKeylines = steps[i - 1], currKeylines = steps[i];
     const distanceShifted = isShiftingLeft
-      ? currKeylines[0].unadjustedOffset - prevKeylines[0].unadjustedOffset
-      : prevKeylines.at(-1).unadjustedOffset - currKeylines.at(-1).unadjustedOffset;
-    const stepPercentage = distanceShifted / totalShiftDistance;
-    points.push(i === steps.length - 1 ? 1 : points[i - 1] + stepPercentage);
+      ? f(currKeylines[0].unadjustedOffset - prevKeylines[0].unadjustedOffset)
+      : f(prevKeylines.at(-1).unadjustedOffset - currKeylines.at(-1).unadjustedOffset);
+    const stepPercentage = f(distanceShifted / totalShiftDistance);
+    points.push(i === steps.length - 1 ? 1 : f(points[i - 1] + stepPercentage));
   }
   return points;
 }
@@ -670,7 +687,7 @@ function getStepInterpolationPoints(totalShiftDistance, steps, isShiftingLeft) {
 export function lerpRange(outputMin, outputMax, inputMin, inputMax, value) {
   if (value <= inputMin) return outputMin;
   if (value >= inputMax) return outputMax;
-  return lerpValue(outputMin, outputMax, (value - inputMin) / (inputMax - inputMin));
+  return lerpValue(outputMin, outputMax, f(f(value - inputMin) / f(inputMax - inputMin)));
 }
 
 /* ------------------------------------------------------------------- Snap -- */
@@ -679,14 +696,14 @@ export function lerpRange(outputMin, outputMax, inputMin, inputMax, value) {
 export function getSnapPositionOffset(strategy, itemIndex, itemCount) {
   if (!strategy.isValid) return 0;
   // By default the first focal keyline's resting position.
-  let offset = roundToInt(strategy.defaultKeylines.firstFocal.unadjustedOffset - strategy.itemMainAxisSize / 2);
+  let offset = roundToInt(f(strategy.defaultKeylines.firstFocal.unadjustedOffset - half(strategy.itemMainAxisSize)));
 
   const startLast = strategy.startKeylineSteps.length - 1;
   if (itemIndex <= startLast) {
     // Steps run from the default step to the first start step.
     const stepIndex = coerceIn(startLast - itemIndex, 0, startLast);
     const startKeylines = strategy.startKeylineSteps[stepIndex];
-    offset = roundToInt(startKeylines.firstFocal.unadjustedOffset - strategy.itemMainAxisSize / 2);
+    offset = roundToInt(f(startKeylines.firstFocal.unadjustedOffset - half(strategy.itemMainAxisSize)));
   }
 
   const lastItemIndex = itemCount - 1;
@@ -694,17 +711,27 @@ export function getSnapPositionOffset(strategy, itemIndex, itemCount) {
   if (itemIndex >= lastItemIndex - endLast && itemCount > strategy.defaultKeylines.focalCount) {
     const stepIndex = coerceIn(endLast - (lastItemIndex - itemIndex), 0, endLast);
     const endKeylines = strategy.endKeylineSteps[stepIndex];
-    offset = roundToInt(endKeylines.lastFocal.unadjustedOffset - strategy.itemMainAxisSize / 2);
+    offset = roundToInt(f(endKeylines.lastFocal.unadjustedOffset - half(strategy.itemMainAxisSize)));
   }
   return offset;
 }
 
 /* ------------------------------------------------------------- Placement -- */
 
+/**
+ * calculateCurrentScrollOffset: the carousel's scroll offset from the pager's
+ * current page and its offset fraction.
+ */
+export function calculateCurrentScrollOffset(strategy, currentPage, currentPageOffsetFraction, pageCount) {
+  const itemSizeWithSpacing = f(strategy.itemMainAxisSize + strategy.itemSpacing);
+  const currentItemScrollOffset = f(f(currentPage * itemSizeWithSpacing) + f(f(currentPageOffsetFraction) * itemSizeWithSpacing));
+  return f(currentItemScrollOffset - getSnapPositionOffset(strategy, currentPage, pageCount));
+}
+
 /** calculateMaxScrollOffset: the pager's scroll range. */
 export function calculateMaxScrollOffset(strategy, itemCount) {
-  const maxScrollPossible = strategy.itemMainAxisSize * itemCount + strategy.itemSpacing * (itemCount - 1);
-  return Math.max(0, maxScrollPossible - strategy.availableSpace);
+  const maxScrollPossible = f(f(strategy.itemMainAxisSize * itemCount) + f(strategy.itemSpacing * f(itemCount - 1)));
+  return Math.max(0, f(maxScrollPossible - strategy.availableSpace));
 }
 
 /**
@@ -712,18 +739,21 @@ export function calculateMaxScrollOffset(strategy, itemCount) {
  * a scroll offset, where item i's box starts at i * (size + spacing) - scroll.
  */
 export function carouselItemPlacement(strategy, index, scrollOffset, maxScrollOffset) {
+  scrollOffset = f(scrollOffset);
   const keylines = strategy.getKeylineListForScrollOffset(scrollOffset, maxScrollOffset);
-  const itemSizeWithSpacing = strategy.itemMainAxisSize + strategy.itemSpacing;
-  const unadjustedCenter = index * itemSizeWithSpacing + strategy.itemMainAxisSize / 2 - scrollOffset;
+  const itemSizeWithSpacing = f(strategy.itemMainAxisSize + strategy.itemSpacing);
+  const unadjustedCenter = f(f(f(index * itemSizeWithSpacing) + half(strategy.itemMainAxisSize)) - scrollOffset);
   const keylineBefore = keylines.getKeylineBefore(unadjustedCenter);
   const keylineAfter = keylines.getKeylineAfter(unadjustedCenter);
-  const progress = keylineBefore === keylineAfter ? 1 : (unadjustedCenter - keylineBefore.unadjustedOffset) / (keylineAfter.unadjustedOffset - keylineBefore.unadjustedOffset);
+  // Keyline is a data class: these compare by value.
+  const isOutOfKeylineBounds = keylineEquals(keylineBefore, keylineAfter);
+  const progress = isOutOfKeylineBounds ? 1
+    : f(f(unadjustedCenter - keylineBefore.unadjustedOffset) / f(keylineAfter.unadjustedOffset - keylineBefore.unadjustedOffset));
   const interpolated = lerpKeyline(keylineBefore, keylineAfter, progress);
-  const isOutOfKeylineBounds = keylineBefore === keylineAfter;
-  const center = strategy.itemMainAxisSize / 2, halfMask = interpolated.size / 2;
+  const center = half(strategy.itemMainAxisSize), halfMask = half(interpolated.size);
   // Pin masked items' edges together.
-  let translation = interpolated.offset - unadjustedCenter;
+  let translation = f(interpolated.offset - unadjustedCenter);
   // Beyond the first or last keyline, keep offsetting by the masked size.
-  if (isOutOfKeylineBounds) translation += (unadjustedCenter - interpolated.unadjustedOffset) / interpolated.size;
-  return { size: interpolated.size, maskStart: center - halfMask, maskEnd: center + halfMask, translation, keyline: interpolated };
+  if (isOutOfKeylineBounds) translation = f(translation + f(f(unadjustedCenter - interpolated.unadjustedOffset) / interpolated.size));
+  return { size: interpolated.size, maskStart: f(center - halfMask), maskEnd: f(center + halfMask), translation, keyline: interpolated };
 }

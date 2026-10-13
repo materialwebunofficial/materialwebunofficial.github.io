@@ -102,7 +102,7 @@ export async function testWebPlatform(browser, base, mode='dist') {
     }
     await mount('<md-date-picker inline value="2028-02-29"></md-date-picker>');
     check(await page.evaluate(()=>{const h=document.querySelector('md-date-picker');const before=h.value;h.value='';return [before,h.value,h.state.selectedDate];}),['02/29/2028','',null],'valid leap date and clear');
-    check(await page.evaluate(()=>{const h=document.querySelector('md-date-picker');h.value='0099-01-01';return [h.value,h.state.selectedDate?.getFullYear()];}),['01/01/0099',99],'accepted four-digit years preserve their century and format');
+    check(await page.evaluate(()=>{const h=document.querySelector('md-date-picker');h.yearRange=[1,9999];h.value='0099-01-01';const kept=[h.value,h.state.selectedDate?.getFullYear()];h.removeAttribute('year-range');h.value='0099-01-01';return [...kept,h.value,h.state.selectedDate];}),['01/01/0099',99,'01/01/0099',null],'four-digit years keep their century; outside DatePickerDefaults.YearRange (1900..2100) the value is no selection');
     check(errors,[],'no runtime errors');
     console.log(`Web platform (${mode}): ${checks} consumer checks passed`);
   } finally {await page.close();}

@@ -207,6 +207,24 @@ export class MdSlider extends HTMLElement {
   name: string;
   /** @deprecated Compatibility attribute; all default tracks are 16dp. */
   size: string;
+  /** SliderDefaults.Track height in CSS pixels (`track-height`); 16. */
+  trackHeight: number;
+  /**
+   * SliderDefaults.Track trackCornerSize (`track-corner-size`); null is half the
+   * track height. Setting it also shrinks the corners near the ends, as the
+   * source overload that takes it does.
+   */
+  trackCornerSize: number | null;
+  /** trackInsideCornerSize (`track-inside-corner-size`); 2. */
+  trackInsideCornerSize: number;
+  /** thumbTrackGapSize (`thumb-track-gap`); 6. */
+  thumbTrackGapSize: number;
+  /** drawStopIndicator; false (`stop-indicator="false"`) draws none. */
+  stopIndicator: boolean;
+  /** SliderDefaults.Thumb size along the track (`thumb-width`); 4. */
+  thumbWidth: number;
+  /** SliderDefaults.Thumb size across the track (`thumb-height`); 44. */
+  thumbHeight: number;
   readonly form: HTMLFormElement | null;
   readonly labels: NodeListOf<HTMLLabelElement>;
   readonly type: 'range';
@@ -730,14 +748,22 @@ export class MdDivider extends HTMLElement {
   /** true or "start": 16dp start inset; "middle": 16dp at both ends (M3 divider specs). */
   inset: boolean;
   vertical: boolean;
-  /** Thickness in dp (DividerDefaults.Thickness 1dp). */
+  /**
+   * Thickness in dp (DividerDefaults.Thickness 1dp). 0 (the attribute also
+   * accepts "hairline") is Dp.Hairline: no layout size, one device pixel drawn.
+   */
   thickness: number;
   color: string;
 }
 
 export class MdCarousel extends HTMLElement {
-  /** HorizontalMultiBrowseCarousel (default), HorizontalUncontainedCarousel or HorizontalCenteredHeroCarousel. Child elements are the items. */
-  layout: 'multi-browse' | 'uncontained' | 'hero';
+  /**
+   * HorizontalMultiBrowseCarousel (default), HorizontalUncontainedCarousel,
+   * HorizontalCenteredHeroCarousel, or 'multi-aspect': a LazyRow of items at
+   * their own widths with Modifier.carouselParallaxScrollEffect. Child
+   * elements are the items.
+   */
+  layout: 'multi-browse' | 'uncontained' | 'hero' | 'multi-aspect';
   /** Large item size for multi-browse and hero, in dp. */
   preferredItemWidth: number;
   /** Item size for uncontained, in dp. */
@@ -748,7 +774,10 @@ export class MdCarousel extends HTMLElement {
   /** Start and end content padding, in dp. */
   contentPadding: number;
   userScrollEnabled: boolean;
-  /** The item closest to its resting position (CarouselState.currentItem). */
+  /**
+   * The item closest to its resting position (CarouselState.currentItem); for
+   * multi-aspect, the list's firstVisibleItemIndex.
+   */
   readonly currentItem: number;
   activeIndex: number;
   scrollToItem(index: number): void;
@@ -771,6 +800,17 @@ export class MdDatePicker extends HTMLElement {
    * input pattern; `value`, `startDate` and `endDate` stay MM/DD/YYYY or ISO.
    */
   locale: string;
+  /**
+   * DatePickerState.yearRange as [first, last] (`year-range="1900..2100"`,
+   * DatePickerDefaults.YearRange): bounds the months, years, arrows and input;
+   * a value outside it is no selection.
+   */
+  yearRange: [number, number];
+  /**
+   * SelectableDates: a day is enabled when isSelectableYear(year) and
+   * isSelectableDate(the day's UTC midnight, in milliseconds) allow it.
+   */
+  selectableDates: { isSelectableDate?(utcTimeMillis: number): boolean; isSelectableYear?(year: number): boolean } | null;
   show(): void;
   close(): void;
 }
@@ -838,6 +878,13 @@ export class MdList extends HTMLElement {
 export class MdListItem extends HTMLElement {
   variant: 'standard' | 'segmented';
   selectionMode: 'none' | 'single' | 'multiple';
+  /**
+   * combinedClickable's onLongClick: a press held 400ms (or a context menu
+   * request) dispatches `long-click`, and that press does not click.
+   */
+  longClick: boolean;
+  /** onLongClickLabel; it describes the item. */
+  longClickLabel: string;
 
   headline: string;
   supportingText: string;
@@ -956,6 +1003,12 @@ export interface TabItemData {
   label?: string; icon?: string; accessibleLabel?: string; panel?: string;
   disabled?: boolean; enabled?: boolean; iconPosition?: 'top' | 'start';
   selectedContentColor?: string; unselectedContentColor?: string;
+  /**
+   * Wraps the icon in a BadgedBox: '' (or true) is a dot, other text the
+   * badge's content. The badge stays inside the tab (badgeBounds); the content
+   * joins the tab's accessible name.
+   */
+  badge?: string | number | boolean;
 }
 export class MdTabs extends HTMLElement {
   tabs: TabItemData[];

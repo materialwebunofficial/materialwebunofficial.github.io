@@ -7,13 +7,15 @@
  * progress (MotionSchemeKeyTokens.FastSpatial): 56dp/16dp (FAB), 80dp/20dp
  * (medium) or 96dp/28dp (large) to the 56dp round close button. Container
  * goes from the color's container role to the color role, the icon from
- * on-container to on-color and from 24/28/36dp to 20dp; the glyph switches to
- * "close" past 50% progress. Shadow: FAB elevation level 3.
+ * on-container to on-color (Compose's Color lerp, in Oklab) and from 24/28/36dp
+ * to 20dp; the glyph switches to "close" past 50% progress. Shadow: FAB
+ * elevation level 3.
  *
  * Items: 56dp tall, fully rounded, 24dp leading/trailing space, 8dp
  * icon-label space, Title Medium label, container-role surface without
  * elevation, 4dp apart and 8dp above the FAB, aligned to its end.
- * They appear from the bottom with an Int stagger (SlowEffects); each item's
+ * They appear from the bottom with an Int stagger: an Animatable<Int> on
+ * SlowEffects with a visibility threshold of 1, read with toInt(); each item's
  * width grows with FastSpatial and its alpha with FastEffects.
  */
 import { SelectionMotion } from '../motion/selection-motion.js';
@@ -129,7 +131,8 @@ const SIZES = {
 const FINAL = { size: 56, radius: 28, icon: 20 };
 const ROLES = new Set(['primary', 'secondary', 'tertiary']);
 const lerp = (a, b, t) => a + (b - a) * t;
-const mix = (from, to, t) => `color-mix(in srgb, ${to} ${(Math.max(0, Math.min(1, t)) * 100).toFixed(3)}%, ${from})`;
+// Compose's Color lerp interpolates in Oklab.
+const mix = (from, to, t) => `color-mix(in oklab, ${to} ${(Math.max(0, Math.min(1, t)) * 100).toFixed(3)}%, ${from})`;
 
 export class MdFabMenu extends HTMLElement {
   static get observedAttributes() {
@@ -315,12 +318,13 @@ export class MdFabMenu extends HTMLElement {
       this._staggerMotion = new SelectionMotion(this, { count: open ? this._records.length : 0 }, values => this._drawStagger(values.count));
     }
     this._fabMotion.set({ checked: { value: open ? 1 : 0, role: this._role('expressiveSpatialFast'), snap: !animate } });
-    // Int VectorConverter: SlowEffects with a visibility threshold of one item.
-    this._staggerMotion.set({ count: { value: open ? this._records.length : 0, role: 'expressiveEffectSlow', snap: !animate } });
+    // Animatable<Int>: SlowEffects with a visibility threshold of one item.
+    this._staggerMotion.set({ count: { value: open ? this._records.length : 0, role: 'expressiveEffectSlow', visibilityThreshold: 1, truncInitial: true, snap: !animate } });
   }
 
   _drawStagger(count) {
-    const shown = Math.round(count), total = this._records.length;
+    // Int.VectorConverter converts with toInt(), which truncates.
+    const shown = Math.trunc(count), total = this._records.length;
     for (const record of this._records) {
       const visible = record.index >= total - shown;
       if (visible === record.visible && record.motion) continue;

@@ -9,9 +9,14 @@
  *
  * Insets come from the M3 divider specs, where Compose applies them as
  * padding: inset is 16dp at the start, inset="middle" 16dp at both ends.
+ *
+ * thickness="0" (or "hairline") is Dp.Hairline: the divider takes no layout
+ * space and its Canvas draws a hairline stroke, one device pixel wide, at its
+ * edge. The pixel follows page zoom and the display's density.
  */
 
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
+import { observeDensity } from '../utils/density.js';
 
 const defaultStyle = `
   :host {
@@ -48,6 +53,10 @@ const defaultStyle = `
     height: 100%;
     margin: 0;
   }
+  /* Dp.Hairline: no layout size; one device pixel drawn over the edge. */
+  .line.hairline { position: relative; overflow: visible; background-color: transparent; }
+  .line.hairline::before { content: ''; position: absolute; inset: 0 0 auto 0; height: var(--_hairline, 1px); background-color: var(--_line-color); }
+  .line.hairline.vertical::before { inset: 0 auto 0 0; height: auto; width: var(--_hairline, 1px); }
 `;
 
 const dividerSheet = createComponentSheet(defaultStyle);
@@ -72,6 +81,11 @@ export class MdDivider extends HTMLElement {
     this._sync();
   }
 
+  disconnectedCallback() {
+    this._stopDensity?.();
+    this._stopDensity = null;
+  }
+
   attributeChangedCallback(name, oldVal, newVal) {
     if (!this._rendered || oldVal === newVal) return;
     this._sync();
@@ -89,9 +103,12 @@ export class MdDivider extends HTMLElement {
     else this.removeAttribute('vertical');
   }
 
+  /** In CSS pixels; 0 is Dp.Hairline. */
   get thickness() {
-    const t = parseFloat(this.getAttribute('thickness'));
-    return isNaN(t) || t <= 0 ? 1.0 : t;
+    const raw = this.getAttribute('thickness');
+    if (raw === 'hairline') return 0;
+    const t = parseFloat(raw);
+    return isNaN(t) || t < 0 ? 1.0 : t;
   }
   set thickness(val) {
     if (val === null || val === undefined) this.removeAttribute('thickness');
@@ -108,7 +125,8 @@ export class MdDivider extends HTMLElement {
     const line = this.shadowRoot.querySelector('.line');
     if (!line) return;
     const inset = this.inset && !this.vertical;
-    line.className = `line${inset ? ' inset' : ''}${inset && this.getAttribute('inset') === 'middle' ? ' middle' : ''}${this.vertical ? ' vertical' : ''}`;
+    const hairline = this.thickness === 0;
+    line.className = `line${inset ? ' inset' : ''}${inset && this.getAttribute('inset') === 'middle' ? ' middle' : ''}${this.vertical ? ' vertical' : ''}${hairline ? ' hairline' : ''}`;
 
     if (!this.vertical) {
       line.style.height = `${this.thickness}px`;
@@ -118,10 +136,16 @@ export class MdDivider extends HTMLElement {
       line.style.height = '';
     }
 
-    if (this.color) {
-      line.style.backgroundColor = this.color;
+    const color = this.color || 'var(--md-sys-color-outline-variant, #CAC4D0)';
+    line.style.backgroundColor = this.color && !hairline ? this.color : '';
+    line.style.setProperty('--_line-color', color);
+    if (hairline && this.isConnected) {
+      const draw = () => line.style.setProperty('--_hairline', `${1 / devicePixelRatio}px`);
+      draw();
+      this._stopDensity ||= observeDensity(draw);
     } else {
-      line.style.backgroundColor = '';
+      this._stopDensity?.();
+      this._stopDensity = null;
     }
   }
 

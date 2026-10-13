@@ -1,0 +1,40 @@
+{
+  "revision": "a095da93f8e98dea8748ceed79ea8427aade245f",
+  "sources": [
+    {
+      "file": "Arrangement.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/carousel/Arrangement.kt",
+      "sha256": "39ff3ff95a28cd995bffdb8da9410313a27b60a6d173fc33a9c0b67cbfcc9010"
+    },
+    {
+      "file": "Carousel.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/carousel/Carousel.kt",
+      "sha256": "d634e48d71794251b63c8eb5a78b413ec6adb492a8c9c500d63ae50f154cc2c4"
+    },
+    {
+      "file": "CarouselParallaxScrollEffect.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/carousel/CarouselParallaxScrollEffect.kt",
+      "sha256": "2c32adcf1cd11d93002b59981c3e20924784c62ec70cf0c44fb8fa9fea2f9ad4"
+    },
+    {
+      "file": "KeylineList.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/carousel/KeylineList.kt",
+      "sha256": "718bb58b748f898482241d121d1bc681cc4b3e6722e39c16dc19a1753f67eca7"
+    },
+    {
+      "file": "KeylineSnapPosition.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/carousel/KeylineSnapPosition.kt",
+      "sha256": "23cbccbffc81bf8d3b534aee40d496b6aeb819e4217da5af26906e19050f4135"
+    },
+    {
+      "file": "Keylines.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/carousel/Keylines.kt",
+      "sha256": "a33ed44d518421f0014fdc489774846a9160fc894026da9df3509feb0c50ce4e"
+    },
+    {
+      "file": "Strategy.kt",
+      "url": "https://raw.githubusercontent.com/androidx/androidx/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/carousel/Strategy.kt",
+      "sha256": "0a58694f0095071b90196c0ee40f0bd3942fe71ab6271b638c6de388cc22b3c2"
+    }
+  ]
+}

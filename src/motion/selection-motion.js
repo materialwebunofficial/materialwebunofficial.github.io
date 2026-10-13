@@ -20,7 +20,7 @@ export class SpringValue {
     return { position: Math.fround(state.position + a.to), velocity: Math.fround(state.velocity) };
   }
 
-  to(target, spec, { now = performance.now(), snap = false, delay = 0, transition = false, velocity = null, roundInitial = false } = {}) {
+  to(target, spec, { now = performance.now(), snap = false, delay = 0, transition = false, velocity = null, roundInitial = false, truncInitial = false } = {}) {
     if (target === this.target && velocity === null) return;
     const current = this.sample(now);
     // Transition.updateAnimation replaces interrupted non-spring specs with its
@@ -32,8 +32,9 @@ export class SpringValue {
     }
     this.target = target;
     // IntSize transitions retarget from the converted (rounded) current value,
-    // while keeping the previous animation's Float velocity vector.
-    const a = { from: roundInitial ? Math.round(current.position) : current.position, to: target, velocity: Math.fround(velocity ?? current.velocity),
+    // while keeping the previous animation's Float velocity vector; an
+    // Animatable<Int> restarts from Int.VectorConverter's toInt() (truncated).
+    const a = { from: truncInitial ? Math.trunc(current.position) : roundInitial ? Math.round(current.position) : current.position, to: target, velocity: Math.fround(velocity ?? current.velocity),
       stiffness: Math.fround(spec.stiffness), dampingRatio: Math.fround(spec.dampingRatio),
       visibilityThreshold: Math.fround(spec.visibilityThreshold ?? .01),
       start: now, snap };
@@ -62,8 +63,10 @@ export class SelectionMotion {
   set(updates) {
     if (this.disposed) return;
     const now = performance.now();
-    for (const [key, { value, role = 'expressiveSpatialMedium', ...options }] of Object.entries(updates)) {
-      this.channels[key].to(value, SpringPhysics.getPreset(role, this.element), { ...options, now });
+    for (const [key, { value, role = 'expressiveSpatialMedium', visibilityThreshold, ...options }] of Object.entries(updates)) {
+      // spring(visibilityThreshold = ...): e.g. 1 for an Int or IntSize channel.
+      const preset = SpringPhysics.getPreset(role, this.element);
+      this.channels[key].to(value, visibilityThreshold == null ? preset : { ...preset, visibilityThreshold }, { ...options, now });
     }
     if (this.media?.matches) this.finish();
     else this.tick(now);

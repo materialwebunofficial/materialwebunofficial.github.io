@@ -4,6 +4,151 @@ Status: in progress. Passing tests below verify the listed scope; they do not es
 
 Reference: [AndroidX revision a095da93](https://github.com/androidx/androidx/tree/a095da93f8e98dea8748ceed79ea8427aade245f/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3). Motion token fixtures retain their Apache license in `test/fixtures/androidx`. Local research copies live in ignored `research/official-2026-09`.
 
+## FAB menu, tabs and icon button audits, 2026-10-12
+
+FAB menu (FloatingActionButtonMenu.kt). Two differences from the source were
+fixed. The toggle FAB mixed its container (PrimaryContainer to Primary) and
+icon (OnPrimaryContainer to OnPrimary) colors in sRGB; Compose's Color lerp
+interpolates in Oklab, which md-fab-menu now uses. The item stagger is an
+Animatable<Int> on SlowEffects whose spring has a visibility threshold of 1
+and whose value is read with Int.VectorConverter's toInt(); the component
+rounded the count and kept the Float threshold of 0.01, so items appeared half
+an item early and the last one late. SelectionMotion.set now takes a
+per-channel visibilityThreshold for such Int and IntSize channels. Already
+matching: the FastSpatial checked progress, 56dp size with the corner 16 to
+28dp and icon 24 to 20dp, the glyph switching past half progress, item width
+on FastSpatial and alpha on FastEffects, items 4dp apart and 8dp above the FAB.
+Test: test/browser/fab-menu-parity.mjs (301 frame-by-frame checks against
+springs and an Oklab lerp computed independently; it fails on the previous
+code).
+
+Tabs (TabRow.kt, Tab.kt). Expressive's input to tabs is the motion scheme:
+the indicator's width and offset and the scrollable row's scroll animate on
+DefaultSpatial, a tab's content color on DefaultEffects (to selected) and
+FastEffects (to unselected). md-tabs uses those roles; nothing else in the
+tab row changed. The inventory item is closed.
+
+Icon buttons (IconButton.kt). The non-toggle IconButton and OutlinedIconButton
+default to LocalContentColor for the icon and the outline; the Expressive
+toggle overloads and iconButtonVibrantColors / outlinedIconButtonVibrantBorder
+use the colors the source calls "recommended high contrast" (OnSurfaceVariant,
+OutlineVariant). md-icon-button keeps the recommended colors as its default
+and documents the local-content option (`--md-icon-button-content-color` and
+`--md-icon-button-outline-color` set to `currentColor`).
+
+Segmented buttons (SegmentedButton.kt). The row is `width(IntrinsicSize.Min)`
+with `weight(1f)` segments, so every segment is as wide as the widest
+segment's min intrinsic width: the 18 + 8dp icon space, 12dp padding on each
+side and the label's min intrinsic width, which for text is its widest word
+(rounded up), at least 58dp. A multi-word label therefore wraps; the row
+centres its children vertically and does not stretch them, so a wrapped
+segment (56dp) stands taller than the others (40dp); wrapped lines start at
+the label's edge (TextAlign.Start). md-segmented-button kept labels on one
+line at their full width. It now measures each label's min-content width
+(hidden min-content copies, re-measured on the shared frame queue when fonts
+or labels change) and gives the host that width, which an author width such
+as 100% still replaces, as fillMaxWidth does. The label offset is an
+Animatable<Int>: Int.VectorConverter reads it with toInt(), which truncates,
+and an interrupted animation restarts from that truncated value; the
+component rounded both. SpringValue.to takes `truncInitial` for such
+channels (IntSize and IntOffset converters round, which `roundInitial`
+keeps). The FAB menu's stagger uses the same. test/browser/segmented-button-parity.mjs
+now expects the source's widths from independently measured words and the
+wrapped segment's height and centring.
+
+Split button layout (SplitButton.kt SplitButtonLayout). The trailing button
+is measured first at its max intrinsic width, the leading button gets the
+rest of the width less the 2dp spacing, and both take the taller of their
+heights at those widths, centred. md-split-button kept the label on one line
+and its inline-flex row overflowed a narrow container. The row is now a flex
+row that fits its container, the trailing button keeps its width, and the
+leading label wraps (TextAlign.Start) with both buttons stretched to the
+taller height; the outer corners stay full and the inner ones small. Test:
+test/browser/split-button-layout.mjs (6 checks at a free and a 170px width).
+
+Accessibility tree. test/browser/accessibility-tree.mjs reads Chromium's
+accessibility tree (CDP Accessibility.getFullAXTree), which screen readers
+consume, for the home page and all 43 catalog sections: 478 interactive
+nodes, every one named, toggles exposing checked or selected, none nested in
+another interactive node. This checks the semantics a screen reader receives;
+it is not a run of TalkBack, VoiceOver or NVDA.
+
+List long click (ListItem.kt, foundation Clickable.kt). The interactive
+ListItem overloads take onLongClick and onLongClickLabel through
+combinedClickable: a pointer press held for longPressTimeoutMillis (400ms,
+Android's ViewConfiguration) calls onLongClick and the release that follows
+does not click, a shorter press clicks, and input that leaves the item's
+bounds is cancelled; a key press (Enter, Space) held as long calls onLongClick
+and its release does not click. md-list-item had no long click. `long-click`
+now does all of this and dispatches `long-click`. The source's semantics
+action (labelled onLongClickLabel) has no ARIA counterpart; the context menu
+request (secondary click, Shift+F10, the Menu key) performs the action, and
+`long-click-label` describes the item. Reordering is not a ListItem feature in
+the source either: the item only shows the dragged state its interaction
+source reports, which `dragged` sets. Test: test/browser/list-long-click.mjs
+(12 checks under a controlled clock).
+
+Badges in tabs (Badge.kt, Tab.kt). Tab applies `badgeBounds()`, which
+provides two rulers, the tab's end edge and top edge, and BadgedBox places
+its badge at x = min(anchor width - 6 or 12dp, end ruler - badge width) and
+y = max(-badge height + 6 or 14dp, top ruler), so a badge on a tab icon never
+leaves the tab. The rulers are provided unmirrored and the badge is placed
+with placeRelative. md-tabs could not show a badge at all; a tab item's
+`badge` ('' for a dot, or the content) now wraps its icon in that BadgedBox
+with that clamping, in both directions, and the content joins the tab's
+accessible name (Tab merges its children's semantics). The showcase's
+primary tabs mark Explore with a dot. Test: test/browser/tab-badges.mjs
+(18 checks: dot and content placement, RTL, a wide badge held at a narrow
+tab's end, names, removal).
+
+Dividers (Divider.kt). HorizontalDivider and VerticalDivider take
+`thickness = Dp.Hairline`: the Canvas is 0dp thick and draws a hairline
+stroke, one device pixel. md-divider turned 0 into 1px; `thickness="0"` (or
+`"hairline"`) now takes no layout space and draws one device pixel at its
+edge, following page zoom and the display's density. Test:
+test/browser/divider-parity.mjs (16 checks at 1x and 2x: default 1dp
+OutlineVariant line, start and middle insets, given thickness and color,
+vertical, hairline in both orientations).
+
+Top app bar. The open item "audit search app bar variants" is closed:
+TopSearchBar is deprecated at this revision ("Renamed to AppBarWithSearch"),
+which md-app-bar-with-search ports.
+
+## Slider Track and Thumb parameters, 2026-10-12
+
+The inventory listed "Expressive slider sizes need an audit". At a095da93
+there are no slider size tokens (only SliderTokens); a slider's size is
+configured through SliderDefaults.Track and SliderDefaults.Thumb: the track's
+height (its modifier), trackCornerSize, trackInsideCornerSize,
+thumbTrackGapSize, drawStopIndicator (null draws none) and the Thumb's
+thumbSize. SliderWithTrackIconsSample uses a 36dp track with 12dp corners and
+no stop indicator. md-slider had all of these fixed (16px track, 8px corner,
+4 x 44px thumb, 2px inset). They are now attributes and properties:
+`track-height`, `track-corner-size`, `track-inside-corner-size`,
+`thumb-track-gap`, `stop-indicator="false"`, `thumb-width` (along the track)
+and `thumb-height` (across it). As in the source, an unset corner is half the
+track height, and giving one selects the Track overload that also shrinks the
+corners near the ends; the slider is max(track, thumb) across and at least
+48dp; the track is inset by half the thumb along it, which also insets the
+pointer's pixel range (SliderState.updateDimensions); track gaps use the thumb
+size; a stepped thumb is placed by the track corner (CornerSizeAlignmentLine);
+the thumb halves along the track while pressed, dragged or focused. Defaults
+are unchanged.
+
+Evidence: tools/androidx-sliders/track-parameters-snapshot.mjs executes the
+unchanged drawTrack, drawTrackPath, drawStopIndicator and
+stepsToTickFractions bodies in the existing density-1 Kotlin host with these
+parameters varied (track 16 to 96dp, given and unspecified corners, inside
+corners 0 to 4, gaps 0 to 6, thumb widths 4 to 8, no stop indicator, with and
+without shrinking) across standard, centered, vertical and range tracks,
+lengths, values, steps and directions. test/unit/slider-track-parameters.test.mjs
+requires exact Float equality with all 4,320 cases;
+test/browser/slider-track-parameters.mjs compares the drawn SVG of 288 of them
+in md-slider and checks layout, inset, pointer range, stepping, orientation
+and the unchanged defaults. The existing 1,536 drawing, 1,320 pointer and 360
+state cases still pass. The showcase adds a "Track and thumb" example with
+the sample's values.
+
 ## Showcase text and review, 2026-10-12
 
 Material writes interface text in sentence case. The showcase's button,
@@ -112,6 +257,27 @@ docked picker has no Compose source; its arrows now lay out at their 40dp
 size and its month and year menus use the same menu button, shortening the
 label before the row would overflow. Unused older styles (36px arrows,
 pill and text buttons, a scale-keyframe ripple) were removed.
+
+Year range and selectable dates (DatePickerState yearRange, SelectableDates).
+`year-range` ("first..last", DatePickerDefaults.YearRange 1900..2100 by
+default) bounds the month list, the year picker, the month and year arrows
+(MonthsNavigation's previousAvailable / nextAvailable at the list ends) and
+the input ("Date out of expected year range"), and a value or range end
+outside it is no selection, as the state's selection setters drop it. The
+`selectableDates` property takes isSelectableDate(utcTimeMillis, the day's UTC
+midnight) and isSelectableYear(year): a day is enabled when both allow it, a
+year when isSelectableYear does, and DateInputValidator then reports "Date not
+allowed: <yMMMd>". Disabled days and years use the disabled color branches
+(disabledDayContentColor OnSurface at 38%, disabledYearContentColor
+OnSurfaceVariant at 38%, alpha packed to 8 bits as Compose's sRGB colors
+are; a disabled current year loses its current-year color but keeps its
+outline) and cannot be picked; the arrow keys pass over disabled days, as
+focus search passes over Compose's disabled day cells. The source requires
+the initially displayed month inside the range (it throws); a value outside
+it here leaves no selection and shows the current month, held inside the
+range. test/browser/date-picker-selectable.mjs (18 checks);
+test/browser/web-platform.mjs keeps its four-digit-year parsing check with a
+wide year range and now also checks the default range.
 
 Tests: test/unit/date-locale.test.mjs (26 checks: input patterns for six
 locales, first day of week, weekday order, skeletons, SMART parsing,
@@ -352,11 +518,89 @@ bindings: a horizontal wheel or trackpad scrolls directly and settles like a
 release without velocity; arrow keys, Home and End on the focused carousel
 animate between items; focus moving into an item brings it to rest; items off
 screen are hidden from focus and assistive technology. A touch drag no longer
-ends at the implicit pointer capture handoff. Not ported: the vertical
-carousels, CarouselParallaxScrollEffect and Android's stretch overscroll.
+ends at the implicit pointer capture handoff. Not ported: Android's stretch
+overscroll (the platform's OverscrollEffect, not carousel code).
 test/unit/carousel-keylines.test.mjs checks arrangement fill, size order,
 alignment, content padding, rest size at snap positions and hero centering
-(320 invariants); Kotlin oracles are not generated.
+(320 invariants).
+
+### Carousel Kotlin oracle, Float arithmetic and multi-aspect parallax, 2026-10-13
+
+tools/androidx-carousel/snapshot.mjs compiles the unchanged, hash-pinned
+Arrangement.kt, KeylineList.kt, Keylines.kt and Strategy.kt, and the
+getSnapPositionOffset, CarouselAlignment, calculateCurrentScrollOffset,
+calculateMaxScrollOffset, getProgress and Modifier.carouselItem placement
+bodies (Carousel.kt, KeylineSnapPosition.kt) through a density-1 Kotlin host.
+It writes test/fixtures/androidx/carousel/carousel-oracle.json: 756
+multi-browse/uncontained/hero cases (7 widths, preferred sizes, 0/8dp spacing,
+0/16dp padding, 1-10 items) with keylines, strategy sizes, start/end steps and
+snap offsets, plus 14,688 item placements.
+
+The first comparison found real differences. Compose computes all of this in
+Float, and some branches depend on Float rounding. One example: an anchor whose
+offset is 204.99998 in Float (205.00000000000003 in double) counts as cut off,
+with a 10px cutoff. That cutoff moves the pivot of the next shifted step. The
+JS port ran in doubles, so it diverged in step keylines, and some placements
+were off by up to about 120px. carousel-keylines.js now performs every
+operation in Kotlin Float arithmetic (Math.fround, in the source's order).
+This includes Float.MAX_VALUE, f(0.1)/f(0.85)/f(1.2), Kotlin toInt and
+data-class keyline equality. md-carousel takes its scroll offset from the
+ported calculateCurrentScrollOffset. test/unit/carousel-oracle.test.mjs now
+matches the oracle exactly: every Float, Int and Boolean is equal.
+
+Vertical carousels: at this revision Orientation.Vertical exists only in the
+internal Carousel(); the public composables are the three horizontal ones, so
+there is no public vertical carousel to port.
+
+CarouselParallaxScrollEffect.kt is a public experimental modifier for
+scrollable lists with items of different sizes. MultiAspectCarouselRowSample
+uses it on a LazyRow (305/205/275/350/100dp items, 8dp spacing, 16dp padding).
+carousel-parallax.js ports the source's Float arithmetic for calculateItemInfo,
+getMaskIntensity, the ranged lerp and the empty item info. Its results equal
+10,880 oracle item infos exactly; the cases cover aspect ratios at the
+9:16/1:1/16:9 boundaries, a zero cross size, visible and not visible items,
+and two viewports.
+
+md-carousel layout="multi-aspect" is that LazyRow with the modifier:
+- Items keep their own widths: the child's CSS width, an image's aspect ratio
+  at the carousel height, or the items attribute's new `width`.
+- Items are laid out end to end with item-spacing and content-padding, at
+  LazyList's whole-pixel scroll position.
+- The parallax uses LazyListLayoutInfo's offsets: viewport start is minus the
+  start padding, the end is the width less that padding. An item counts as
+  visible when it reaches into the padding area. The cross size is the list's
+  height.
+- The box is translated by the item position plus the parallax. Its clip is
+  the Extra Large mask over maskStart..maskEnd, moved back by the parallax, so
+  the content shifts under a mask that stays on the item.
+- In RTL the item positions mirror. Mask and translation stay physical
+  (left-based) because MaskShape and the draw translate use physical
+  coordinates. Like the source, this mirrors oddly in RTL; it is kept, not
+  corrected.
+- Scrolling has no snapping. A release uses the list's default spline decay;
+  a wheel scrolls directly.
+- currentItem is firstVisibleItemIndex.
+- animateScrollToItem is LazyLayoutScrollScope's: straight to a visible item.
+  Otherwise it springs in legs bounded by 2500/1500/50dp until the item is
+  visible, then on to it with the velocity reached. It teleports after 100
+  items and ends with snapToItem.
+- Focus brings an item into view with BringIntoViewSpec's default distance and
+  spring().
+
+While testing this, a float bug turned up in _scrollBy: it computed consumed
+as (scroll + delta) - scroll, which can differ from delta. The source's
+"hit the end" test (delta != consumed) then fired early about one run in
+four. An unclamped delta is now consumed whole.
+
+test/browser/carousel-multi-aspect.mjs (129 checks) covers:
+- each item's width, translation and mask against the production parallax
+  function, at rest, after scrollToItem, after a wheel, after animateScrollToItem
+  to the end and after bring-into-view;
+- that hidden items are not focusable;
+- RTL, the switch back to a pager layout, and the items attribute's widths.
+
+The showcase Carousel section has a multi-aspect example with the sample's
+widths.
 
 ## Sheets, catalog navigation, color lab, load order and accessibility, 2026-10-10 (second round)
 

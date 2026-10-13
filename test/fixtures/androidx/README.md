@@ -16,3 +16,9 @@ sources and is compared numerically with the web interpolation code.
 
 `material-shapes-cubics.json` contains the 35 normalized polygon paths exported
 from MaterialShapes. The test checks every generated SVG coordinate against it.
+
+`carousel/` holds the unchanged, hash-pinned compose/material3 carousel sources
+and `carousel-oracle.json`, generated from them by
+`node tools/androidx-carousel/snapshot.mjs` (keylines, strategy steps, snap
+offsets, carouselItem placements and CarouselParallaxScrollEffect item info).
+`test/unit/carousel-oracle.test.mjs` compares the web port with it exactly.

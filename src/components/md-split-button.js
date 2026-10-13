@@ -65,7 +65,11 @@ const DEFAULT_ITEMS = [{ icon: 'edit', label: 'Edit' }, { icon: 'content_copy', 
 const defaultStyle = `
   :host { display: inline-block; vertical-align: middle; position: relative; outline: none; }
 
-  .layout { display: inline-flex; align-items: stretch; gap: var(--_spacing, 2px); }
+  /* SplitButtonLayout: the trailing button is measured first at its max
+     intrinsic width; the leading button takes the rest of the width (less the
+     spacing), where its label may wrap; both take the taller height. */
+  .layout { display: flex; align-items: stretch; gap: var(--_spacing, 2px); }
+  .btn-right { flex: none; }
 
   .btn-left, .btn-right {
     position: relative;
@@ -101,7 +105,7 @@ const defaultStyle = `
     inset: min(0px, calc((100% - 48px) / 2)) 0;
   }
 
-  .content { position: relative; display: inline-flex; align-items: center; gap: inherit; pointer-events: none; }
+  .content { position: relative; display: inline-flex; align-items: center; gap: inherit; min-width: 0; pointer-events: none; }
   .glyph {
     font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);
     font-size: var(--_lead-icon);
@@ -115,7 +119,8 @@ const defaultStyle = `
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     flex: none;
   }
-  .label { white-space: nowrap; }
+  /* Text's default TextAlign.Start; it wraps when the width runs out. */
+  .label { white-space: normal; text-align: start; min-width: 0; }
   .arrow { display: block; width: var(--_trail-icon); height: var(--_trail-icon); fill: currentColor; flex: none; }
   .arrow svg { display: block; width: 100%; height: 100%; }
 

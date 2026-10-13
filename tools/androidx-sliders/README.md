@@ -59,3 +59,12 @@ constraints, label/tooltip positioning and animation, complete accessible-name
 computation for complex label markup, rotated/reflected/fractional/DPR geometry and
 other browser engines.
 Successful tests establish the documented slices, not complete slider parity.
+
+`node tools/androidx-sliders/track-parameters-snapshot.mjs` runs the same
+unchanged drawTrack, drawTrackPath, drawStopIndicator and stepsToTickFractions
+bodies with SliderDefaults.Track / Thumb parameters varied: track height
+(16 to 96dp), given and unspecified trackCornerSize, trackInsideCornerSize,
+thumbTrackGapSize, the thumb size along the track, drawStopIndicator = null and
+corner shrinking. Its 4,320 cases are in `track-parameters-oracle.json`;
+`test/unit/slider-track-parameters.test.mjs` requires exact Float equality and
+`test/browser/slider-track-parameters.mjs` compares md-slider's drawn SVG.

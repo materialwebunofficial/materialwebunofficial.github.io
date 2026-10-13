@@ -2,6 +2,13 @@
  * Web adaptation of AndroidX Material3 Tab, LeadingIconTab and TabRow.
  * Source revision: a095da93f8e98dea8748ceed79ea8427aade245f.
  * Layout policies are ported in tab-layout.js; native fonts and input remain web adapters.
+ *
+ * A tab's `badge` (an empty string for a dot, or the content) wraps its icon in
+ * a BadgedBox: the badge sits at the icon's top end (6dp in and overlapping
+ * 6dp, or 12dp in and overlapping 14dp with content) and Tab's badgeBounds
+ * rulers keep it inside the tab (Badge.kt; the rulers are provided unmirrored
+ * and the badge is placed relative, as in the source). The count joins the
+ * tab's accessible name, as Tab merges its children's semantics.
  */
 import { delegateHostAria } from '../utils/host-aria.js';
 import { safeJsonParse } from '../utils/security.js';
@@ -12,6 +19,7 @@ import { ColorMotion } from '../motion/color-motion.js';
 import { observeThemeContext } from '../theme/theme-context.js';
 import { tabBaselineLayout, fixedTabRow, scrollableTabRow, tabIndicatorGeometry, tabScrollOffset, applyTabScrollDelta, tabContentOffset } from './tab-layout.js';
 import { bindStateLayer } from '../motion/state-layer.js';
+import './md-badge.js';
 
 const style = `
  :host{display:block;width:100%;min-width:0;box-sizing:border-box;user-select:none;-webkit-user-select:none}
@@ -34,6 +42,7 @@ const style = `
  .measure{position:absolute;visibility:hidden;white-space:pre;width:max-content;pointer-events:none}
  .icon{position:absolute;width:24px;height:24px;font-family: var(--md-icon-font-family, 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif);font-weight:400;font-style:normal;font-size:24px;line-height:24px;letter-spacing:normal;text-transform:none;white-space:nowrap;word-wrap:normal;direction:ltr;font-feature-settings:'liga';-webkit-font-smoothing:antialiased}
  .color-probe{position:absolute;visibility:hidden;pointer-events:none}
+ .tab-badge{position:absolute;pointer-events:none}
  .indicator{position:absolute;bottom:0;left:0;height:3px;border-radius:3px;background:var(--md-sys-color-primary,#6750A4);pointer-events:none}
  :host([variant=secondary]) .indicator{border-radius:0}
  .divider{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--md-sys-color-outline-variant,#CAC4D0);pointer-events:none}
@@ -130,7 +139,11 @@ export class MdTabs extends HTMLElement {
   data.forEach((item,i)=>{
    const r=this._records[i];r.data=item;r.text.data=item.label==null?'':String(item.label);r.measure.textContent=r.text.data;
    r.label.hidden=!r.text.data;r.icon.textContent=item.icon==null?'':String(item.icon);r.icon.hidden=!r.icon.textContent;
-   r.button.setAttribute('aria-label',item.accessibleLabel==null?(r.text.data||r.icon.textContent):String(item.accessibleLabel));
+   const badge=item.badge==null||item.badge===false?null:item.badge===true?'':String(item.badge);
+   if(badge!=null&&!r.badge){r.badge=make('md-badge','tab-badge',r.button);r.badge.setAttribute('aria-hidden','true');}
+   if(r.badge){r.badge.hidden=badge==null||r.icon.hidden;if(badge)r.badge.setAttribute('label',badge);else r.badge.removeAttribute('label');}
+   const name=[r.text.data||r.icon.textContent,badge||''].filter(Boolean).join(', ');
+   r.button.setAttribute('aria-label',item.accessibleLabel==null?name:String(item.accessibleLabel));
    const disabled=!this.enabled||item.disabled===true||item.enabled===false;
    if(disabled&&!r.button.disabled&&r.button.classList.contains('pressed'))r.suppressActivation=true;
    const rebind=!r.abort||r.abort.signal.aborted||disabled!==r.button.disabled;r.button.disabled=disabled;
@@ -187,6 +200,7 @@ export class MdTabs extends HTMLElement {
    px(r.content,{...offset,...m.size});
    if(m.placements.text){const t=m.placements.text;px(r.label,{...t,x:t.x+(m.leading?0:16),width:m.text.width});}
    if(m.placements.icon)px(r.icon,m.placements.icon);
+   this._placeBadge(r,offset,m,physicalWidth);
   });
   const position=row.positions[this.selected];this._indicator.hidden=!position;
   if(!position){this._indicatorMotion?.dispose();this._indicatorMotion=null;return;}
@@ -195,6 +209,15 @@ export class MdTabs extends HTMLElement {
   else this._indicatorMotion.set({width:{value:width},offset:{value:offset}});
   if(this.scrollable&&this._scrollSelection!==this.selected){this._scrollSelection=this.selected;this._centerSelected(viewportWidth);}
   if(!this.scrollable){this._scrollSelection=null;this._scrollMotion?.dispose();this._scrollMotion=null;this._viewport.scrollLeft=0;}
+ }
+ /** BadgedBox placement, held inside the tab by badgeBounds (Badge.kt). */
+ _placeBadge(r,offset,m,tabWidth){
+  const badge=r.badge,icon=m.placements.icon;if(!badge||badge.hidden||!icon)return;
+  const bw=badge.offsetWidth,bh=badge.offsetHeight,content=bw>6;
+  const horizontal=content?12:6,vertical=content?14:6;
+  const ax=offset.x+icon.x,ay=offset.y+icon.y,aw=icon.width;
+  const x=Math.min(aw-horizontal,Math.trunc(tabWidth-ax)-bw),y=Math.max(-bh+vertical,Math.trunc(-ay));
+  badge.style.left=`${ax+(this._rtl?aw-x-bw:x)}px`;badge.style.top=`${ay+y}px`;
  }
  _drawIndicator(value){
   const p=this._positions[this.selected];if(!p||!this.isConnected)return;

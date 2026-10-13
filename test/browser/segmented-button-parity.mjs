@@ -38,6 +38,11 @@ export async function testSegmentedButtonParity(browser, base) {
           host: host.getBoundingClientRect().width,
           boxes: segs.map(s => { const r = s.getBoundingClientRect(); return { x: r.left, w: r.width, h: r.height }; }),
           labels: segs.map(s => s.querySelector('.label').getBoundingClientRect().width),
+          // Independent text widths in LabelLarge: each label's widest word and whole line.
+          words: segs.map(s => { const label = s.querySelector('.label'), c = getComputedStyle(label), ctx = document.createElement('canvas').getContext('2d');
+            ctx.font = `${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; ctx.letterSpacing = c.letterSpacing;
+            return { longest: Math.max(...label.textContent.split(/\s+/).map(w => ctx.measureText(w).width)), line: ctx.measureText(label.textContent).width }; }),
+          centers: segs.map(s => { const r = s.getBoundingClientRect(); return r.top + r.height / 2; }),
           radii: segs.map(s => { const c = getComputedStyle(s); return [c.borderStartStartRadius, c.borderStartEndRadius, c.borderEndStartRadius, c.borderEndEndRadius]; }),
         };
       };
@@ -50,11 +55,16 @@ export async function testSegmentedButtonParity(browser, base) {
       const unit = 1 / 64 + 1e-6;
       // weight(1f) under IntrinsicSize.Min: every item takes the widest item's width.
       assert.ok(g.boxes.every(b => Math.abs(b.w - w) <= unit), `${id} equal widths ${JSON.stringify(g.boxes)}`);
-      assert.ok(g.boxes.every(b => Math.abs(b.h - 40) < 0.01), `${id} 40dp height`);
+      // A label wider than its segment wraps (two LabelLarge lines: 2 x 20 + 2 x 8dp);
+      // the others stay 40dp, centred in the row (CenterVertically).
+      const lines = g.words.map(word => word.line > w - 50 + 0.5 ? 2 : 1);
+      assert.ok(g.boxes.every((b, k) => Math.abs(b.h - (lines[k] === 2 ? 56 : 40)) < 0.01), `${id} heights ${JSON.stringify(g.boxes.map(b => b.h))}`);
+      assert.ok(g.centers.every(c => Math.abs(c - g.centers[0]) < 0.6), `${id} segments centred`);
       if (id !== 'wide') {
-        // Content = max(18, icon) + 8 + label inside 12dp padding; MinWidth 58dp.
-        const expected = Math.max(58, 24 + 26 + Math.max(...g.labels));
-        assert.ok(Math.abs(w - expected) < 0.6, `${id} width ${w} vs ${expected}`);
+        // IntrinsicSize.Min: max(18, icon) + 8 + the label's min intrinsic width
+        // (its widest word, rounded up) inside 12dp padding; MinWidth 58dp.
+        const expected = Math.max(58, 24 + 26 + Math.ceil(Math.max(...g.words.map(word => word.longest))));
+        assert.ok(Math.abs(w - expected) < 1, `${id} width ${w} vs ${expected}`);
       } else {
         // fillMaxWidth-style author width: (W + (n - 1) * space) / n.
         assert.ok(Math.abs(w - (600 + (n - 1) * space) / n) <= unit, `wide width ${w}`);

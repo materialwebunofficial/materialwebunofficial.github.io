@@ -1,12 +1,14 @@
 /**
  * Material Design 3 Expressive (MD3E) Web Component: <md-card>
  *
- * Spec: MD3E-DESIGN-FOUNDATIONS-AND-COMPONENT-ANATOMY.md §8 & §13
- *   - 3 variants: elevated, filled, outlined
- *   - 4 slots: header, media, default (body), actions
- *   - 12dp corner radius with 16dp uniform padding
- *   - Interactive state layer, hover elevation, focus ring
- *   - Full keyboard accessibility and ripple effect
+ * The container is AndroidX a095da93 Card / ElevatedCard / OutlinedCard
+ * (Card.kt, CardDefaults; a Material 3 component Expressive left unchanged):
+ * CornerMedium (12dp) shape, the filled/elevated/outlined colors, border and
+ * the resting and interaction elevations, with the clickable overloads' state
+ * layer and ripple. Compose's Card is a Surface around a Column and leaves the
+ * content's layout to the app; the header, media, body and actions slots and
+ * the 16dp padding (--md-card-padding, 0 for the bare container) and gap
+ * (--md-card-gap) follow the M3 card spec pages instead.
  */
 
 import { createRipple, bindPress, nestedInteractiveEvent } from '../motion/interactions.js';

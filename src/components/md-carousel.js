@@ -32,15 +32,29 @@ import {FrameResizeObserver} from '../utils/resize-observer.js';
  *   focus moving into an item brings it to its resting position. Items outside
  *   the viewport are hidden from focus and assistive technology, as the pager
  *   does not compose them.
+ * - Multi-aspect. layout="multi-aspect" is the LazyRow of the source's
+ *   MultiAspectCarouselRowSample with Modifier.carouselParallaxScrollEffect
+ *   (CarouselParallaxScrollEffect.kt, carousel-parallax.js) on every item.
+ *   Items keep their own widths (the child's CSS width, an image's aspect
+ *   ratio at the carousel's height, or the items attribute's width) and are
+ *   laid out end to end with item-spacing and content-padding. They scroll
+ *   without snapping (the list's default spline decay fling); entering or
+ *   leaving the viewport, an item is masked with the Extra Large shape and its
+ *   content translated by the parallax distance, both from its aspect ratio
+ *   against the list's height. As in the source, mask and translation are
+ *   physical (left-based) in RTL too. currentItem is the list's
+ *   firstVisibleItemIndex; animateScrollToItem is LazyLayoutScrollScope's, and
+ *   focus brings an item into view with the default BringIntoViewSpec.
  *
- * The items attribute (JSON [{ image, title }]) is a convenience that creates
- * image items; children take precedence.
+ * The items attribute (JSON [{ image, title, width }]) is a convenience that
+ * creates image items; children take precedence.
  */
 
 import {
   Strategy, multiBrowseKeylineList, uncontainedKeylineList, heroKeylineList,
-  getSnapPositionOffset, calculateMaxScrollOffset, carouselItemPlacement, CarouselDefaults,
+  getSnapPositionOffset, calculateCurrentScrollOffset, calculateMaxScrollOffset, carouselItemPlacement, CarouselDefaults,
 } from './carousel-keylines.js';
+import { calculateParallaxItemInfo } from './carousel-parallax.js';
 import { PointerVelocityTracker } from '../motion/velocity-tracker.js';
 import { AndroidFlingDecay } from '../motion/android-fling.js';
 import { pointerSlop } from '../motion/touch-slop.js';
@@ -61,6 +75,17 @@ const SNAP_SPRING = { dampingRatio: 1, stiffness: 400, visibilityThreshold: 1 };
 // spring(): animateScrollToItem's default spec.
 const SCROLL_SPRING = { dampingRatio: 1, stiffness: 1500, visibilityThreshold: 0.01 };
 const WHEEL_SETTLE_DELAY = 100;
+// LazyLayoutScrollScope.animateScrollToItem: TargetDistance, BoundDistance,
+// MinimumDistance (dp) and LazyListState's NumberOfItemsToTeleport.
+const TARGET_DISTANCE = 2500, BOUND_DISTANCE = 1500, MINIMUM_DISTANCE = 50, ITEMS_FOR_TELEPORT = 100;
+
+/** BringIntoViewSpec.defaultCalculateScrollDistance. */
+function bringIntoViewDistance(offset, size, containerSize) {
+  const leadingEdge = offset, trailingEdge = offset + size;
+  if (leadingEdge >= 0 && trailingEdge <= containerSize) return 0;
+  if (leadingEdge < 0 && trailingEdge > containerSize) return 0;
+  return Math.abs(leadingEdge) < Math.abs(trailingEdge - containerSize) ? leadingEdge : trailingEdge - containerSize;
+}
 
 const defaultStyle = `
   :host {
@@ -101,6 +126,8 @@ const defaultStyle = `
     margin: 0;
   }
   ::slotted(img), .item > img { object-fit: cover; -webkit-user-drag: none; }
+  /* LazyRow items size themselves. */
+  :host([layout="multi-aspect"]) ::slotted(*), :host([layout="multi-aspect"]) .item > img { width: auto; }
 `;
 
 const carouselSheet = createComponentSheet(defaultStyle);
@@ -132,14 +159,15 @@ export class MdCarousel extends HTMLElement {
     this._drag = null;
     this._currentPage = 0;
     this._pendingPage = null;
+    this._list = null;
   }
 
   /* ------------------------------------------------------------- properties -- */
 
-  /** 'multi-browse' (default), 'uncontained' or 'hero'. */
+  /** 'multi-browse' (default), 'uncontained', 'hero' or 'multi-aspect'. */
   get layout() {
     const value = this.getAttribute('layout');
-    return value === 'uncontained' || value === 'hero' ? value : 'multi-browse';
+    return value === 'uncontained' || value === 'hero' || value === 'multi-aspect' ? value : 'multi-browse';
   }
   set layout(v) { this.setAttribute('layout', v); }
 
@@ -230,17 +258,20 @@ export class MdCarousel extends HTMLElement {
 
   /* ----------------------------------------------------------------- public -- */
 
-  /** CarouselState.scrollToItem. */
+  /** CarouselState.scrollToItem (LazyListState.scrollToItem for multi-aspect). */
   scrollToItem(index) {
     this._stopMotion();
     const count = this._items.length;
     if (!count) return;
-    this._setScrollForPage(Math.min(Math.max(0, Math.trunc(index)), count - 1), 0);
+    const target = Math.min(Math.max(0, Math.trunc(index)), count - 1);
+    if (this._list) this._scroll = this._listItemScroll(target, 0);
+    else this._setScrollForPage(target, 0);
     this._draw();
   }
 
   /** CarouselState.animateScrollToItem with the default spring. */
   animateScrollToItem(index) {
+    if (this._list) { this._listAnimateScrollToItem(index); return; }
     const count = this._items.length;
     if (!count || !this._strategy.isValid) { this._pendingPage = index; return; }
     const target = Math.min(Math.max(0, Math.trunc(index)), count - 1);
@@ -280,6 +311,7 @@ export class MdCarousel extends HTMLElement {
   _buildItems() {
     const children = [...this.children];
     const sources = children.length ? children : this.itemsList;
+    for (const item of this._items) this._resizeObserver?.unobserve(item.box);
     this._viewport.replaceChildren();
     this._items = sources.map((source, index) => {
       const box = document.createElement('div');
@@ -294,10 +326,12 @@ export class MdCarousel extends HTMLElement {
         this._viewport.append(box);
         slot.assign(source);
       } else {
-        box.innerHTML = source?.image ? `<img src="${escapeHtml(source.image)}" alt="${escapeHtml(source.title || source.alt || '')}" draggable="false">` : '';
+        const width = Number(source?.width);
+        const size = Number.isFinite(width) && width > 0 ? ` style="width:${width}px"` : '';
+        box.innerHTML = source?.image ? `<img src="${escapeHtml(source.image)}" alt="${escapeHtml(source.title || source.alt || '')}" draggable="false"${size}>` : '';
         this._viewport.append(box);
       }
-      return { box, mask: -1, left: NaN, z: -1, hidden: null };
+      return { box, mask: -1, left: NaN, z: -1, hidden: null, start: 0, size: 0 };
     });
   }
 
@@ -308,6 +342,12 @@ export class MdCarousel extends HTMLElement {
     if (!this._viewport) return;
     const availableSpace = this._viewport.clientWidth;
     this._rtl = getComputedStyle(this).direction === 'rtl';
+    if (this.layout === 'multi-aspect') { this._measureList(availableSpace); return; }
+    if (this._list) {
+      for (const item of this._items) { this._resizeObserver?.unobserve(item.box); item.mask = null; }
+      this._list = null;
+      this._scroll = 0;
+    }
     const previousPage = this._strategy.isValid ? this._currentPage : null;
     const previousFraction = this._strategy.isValid ? this._currentPageOffsetFraction() : 0;
     const itemCount = this._items.length;
@@ -348,10 +388,179 @@ export class MdCarousel extends HTMLElement {
     this._draw();
   }
 
+  /**
+   * LazyRow measure for layout="multi-aspect": items at their own widths, end
+   * to end with the item spacing, keeping the first visible item and its
+   * offset across size changes.
+   */
+  _measureList(availableSpace) {
+    const previous = this._list ? this._listVisibleRange() : null;
+    this._strategy = Strategy.Empty;
+    const spacing = Math.round(this.itemSpacing), padding = Math.round(this.contentPadding);
+    for (const item of this._items) {
+      item.box.style.width = '';
+      item.left = NaN; item.mask = null;
+      if (item.z !== null) { item.box.style.zIndex = ''; item.z = null; }
+      this._resizeObserver?.observe(item.box);
+    }
+    let start = 0;
+    for (const item of this._items) { item.size = item.box.offsetWidth; item.start = start; start += item.size + spacing; }
+    this._list = { spacing, padding, content: Math.max(0, start - spacing), cross: this._viewport.clientHeight };
+    this._availableSpace = availableSpace;
+    const count = this._items.length;
+    if (!count) { this._scroll = 0; this._draw(); return; }
+    if (this._pendingPage !== null) {
+      const page = Math.min(Math.max(0, this._pendingPage), count - 1);
+      this._pendingPage = null;
+      this._scroll = this._listItemScroll(page, 0);
+    } else if (previous) {
+      this._scroll = this._listItemScroll(Math.min(previous.first, count - 1), previous.firstOffset);
+    } else {
+      this._scroll = Math.min(Math.max(0, this._scroll), this._maxScroll());
+    }
+    this._draw();
+  }
+
+  /** The scroll position of an item's start plus an offset, within the list's range. */
+  _listItemScroll(index, offset) {
+    return Math.min(Math.max(0, this._items[index].start + offset), this._maxScroll());
+  }
+
+  /**
+   * LazyListLayoutInfo at the current (whole pixel) scroll: firstVisibleItemIndex
+   * and its scroll offset, the composed items (those reaching into the content
+   * padding too) and their average size with spacing.
+   */
+  _listVisibleRange() {
+    const list = this._list, scroll = Math.round(this._scroll), count = this._items.length;
+    const viewportStart = -list.padding, viewportEnd = this._availableSpace - list.padding;
+    let first = -1, firstOffset = 0, firstComposed = -1, last = -1, sum = 0, composed = 0;
+    for (let index = 0; index < count; index++) {
+      const item = this._items[index], offset = item.start - scroll;
+      if (first < 0 && (offset + item.size + list.spacing > 0 || index === count - 1)) { first = index; firstOffset = -offset; }
+      if (offset + item.size + list.spacing > viewportStart && offset < viewportEnd) {
+        if (firstComposed < 0) firstComposed = index;
+        last = index; sum += item.size; composed++;
+      }
+    }
+    return { first: Math.max(0, first), firstOffset, firstComposed, last, average: composed ? Math.trunc(sum / composed) + list.spacing : 0 };
+  }
+
+  /** LazyRow placement, with carouselParallaxScrollEffect on every item. */
+  _drawList() {
+    const list = this._list, count = this._items.length, available = this._availableSpace;
+    const scroll = Math.round(this._scroll), rtl = this._rtl;
+    const previous = this._currentPage;
+    const range = this._listVisibleRange();
+    this._currentPage = range.first;
+    for (let index = 0; index < count; index++) {
+      const item = this._items[index];
+      const offset = item.start - scroll;
+      const isItemVisible = index >= range.firstComposed && index <= range.last;
+      const info = calculateParallaxItemInfo({
+        isItemVisible, itemMainAxisSize: item.size, itemCrossAxisSize: list.cross, itemOffset: offset,
+        viewportStartOffset: -list.padding, viewportEndOffset: available - list.padding,
+      });
+      // MaskShape: the shape over [maskStart, maskEnd], or the whole item.
+      const maskStart = info.size === 0 ? 0 : info.maskStart, maskEnd = info.size === 0 ? item.size : info.maskEnd;
+      const left = list.padding + offset;
+      const x = rtl ? available - left - item.size : left;
+      // The content is drawn translated by the parallax distance under a mask
+      // that stays with the item: the box moves, its clip moves back.
+      const boxX = x + info.parallax;
+      if (item.left !== boxX) { item.box.style.transform = `translateX(${boxX}px)`; item.left = boxX; }
+      const mask = `${maskStart - info.parallax} ${maskEnd - info.parallax}`;
+      if (item.mask !== mask) {
+        item.box.style.clipPath = `inset(0px ${item.size - maskEnd + info.parallax}px 0px ${maskStart - info.parallax}px round var(--md-sys-shape-corner-extra-large, 28px))`;
+        item.mask = mask;
+      }
+      const hidden = !isItemVisible || item.size === 0 || x + maskEnd <= 0 || x + maskStart >= available;
+      if (item.hidden !== hidden) { item.box.toggleAttribute('data-offscreen', hidden); item.hidden = hidden; }
+    }
+    if (previous !== this._currentPage) {
+      this.dispatchEvent(new CustomEvent('change', { detail: { index: this._currentPage }, bubbles: true, composed: true }));
+    }
+  }
+
+  /**
+   * LazyLayoutScrollScope.animateScrollToItem (scroll offset 0) with the
+   * default spring: straight to a visible item; otherwise spring toward it in
+   * bounded legs until it is visible, then on to it with the velocity reached.
+   */
+  _listAnimateScrollToItem(index) {
+    const count = this._items.length;
+    if (!count) return;
+    index = Math.min(Math.max(0, Math.trunc(index)), count - 1);
+    this._stopMotion();
+    const snapToItem = () => { this._scroll = this._listItemScroll(index, 0); this._draw(); };
+    if (this._reducedMotion()) { snapToItem(); this._settled(); return; }
+    const isItemVisible = () => { const { first, last } = this._listVisibleRange(); return index >= first && index <= last; };
+    const calculateDistanceTo = () => {
+      const { first, last, average, firstOffset } = this._listVisibleRange();
+      return index >= first && index <= last ? this._items[index].start - Math.round(this._scroll) : average * (index - first) - firstOffset;
+    };
+    const forward = index > this._listVisibleRange().first;
+    const isOvershot = () => {
+      const { first, firstOffset } = this._listVisibleRange();
+      return forward ? first > index || (first === index && firstOffset > 0) : first < index || (first === index && firstOffset < 0);
+    };
+    const searchTarget = () => {
+      const expected = calculateDistanceTo();
+      const distance = Math.abs(expected) < TARGET_DISTANCE ? Math.max(Math.abs(expected), MINIMUM_DISTANCE) : TARGET_DISTANCE;
+      return forward ? distance : -distance;
+    };
+    const motion = { frame: 0 };
+    let leg = null, loops = 1;
+    const animate = (target, velocity, seek) => {
+      const duration = springDuration({ from: 0, to: target, velocity, stiffness: SCROLL_SPRING.stiffness, dampingRatio: SCROLL_SPRING.dampingRatio, visibilityThreshold: SCROLL_SPRING.visibilityThreshold });
+      leg = { target, velocity, seek, previous: 0, start: performance.now(), duration };
+    };
+    const end = snap => { this._motion = null; if (snap) snapToItem(); this._settled(); };
+    if (isItemVisible()) animate(calculateDistanceTo(), 0, true);
+    else animate(searchTarget(), 0, false);
+    const step = now => {
+      if (this._motion !== motion) return;
+      const elapsed = now - leg.start, done = elapsed >= leg.duration, target = leg.target;
+      const state = done ? { position: target, velocity: 0 }
+        : SpringPhysics.solve({ from: 0, to: target, velocity: leg.velocity, dampingRatio: SCROLL_SPRING.dampingRatio, stiffness: SCROLL_SPRING.stiffness, time: elapsed / 1000 });
+      const value = state.position;
+      // Springs can overshoot their target: clamp to it.
+      const coerced = target > 0 ? Math.min(value, target) : target < 0 ? Math.max(value, target) : 0;
+      if (leg.seek) {
+        const delta = coerced - leg.previous;
+        const consumed = this._scrollBy(delta);
+        leg.previous += delta;
+        if (done || delta !== consumed || coerced !== value) { end(true); return; }
+      } else {
+        let cancelled = false;
+        if (!isItemVisible()) {
+          const delta = coerced - leg.previous;
+          const consumed = this._scrollBy(delta);
+          if (!isItemVisible() && !isOvershot()) {
+            // Hit the end without finding the item.
+            if (delta !== consumed) { end(false); return; }
+            leg.previous += delta;
+            if (forward ? value > BOUND_DISTANCE : value < -BOUND_DISTANCE) cancelled = true;
+            const { first, last } = this._listVisibleRange();
+            if (forward && loops >= 2 && index - last > ITEMS_FOR_TELEPORT) { this._scroll = this._listItemScroll(index - ITEMS_FOR_TELEPORT, 0); this._draw(); }
+            if (!forward && loops >= 2 && first - index > ITEMS_FOR_TELEPORT) { this._scroll = this._listItemScroll(index + ITEMS_FOR_TELEPORT, 0); this._draw(); }
+          }
+        }
+        if (isOvershot()) { end(true); return; }
+        if (isItemVisible()) animate(calculateDistanceTo(), state.velocity, true);
+        else if (cancelled || done) { loops++; animate(searchTarget(), cancelled ? state.velocity : 0, false); }
+      }
+      motion.frame = requestAnimationFrame(step);
+    };
+    this._motion = motion;
+    motion.frame = requestAnimationFrame(step);
+  }
+
   /* -------------------------------------------------------------- pager state -- */
 
   _pageStride() { return this._pageSize + this._pageSpacing; }
   _maxScroll() {
+    if (this._list) return Math.max(0, this._list.content + 2 * this._list.padding - this._availableSpace);
     const count = this._items.length;
     return Math.max(0, count * this._pageSize + (count - 1) * this._pageSpacing - this._availableSpace);
   }
@@ -395,8 +604,10 @@ export class MdCarousel extends HTMLElement {
 
   /** ScrollScope.scrollBy: the consumed part of a delta. */
   _scrollBy(delta) {
-    const next = Math.min(Math.max(0, this._scroll + delta), this._maxScroll());
-    const consumed = next - this._scroll;
+    const target = this._scroll + delta;
+    const next = Math.min(Math.max(0, target), this._maxScroll());
+    // An unclamped delta is consumed whole ((a + d) - a can differ from d).
+    const consumed = next === target ? delta : next - this._scroll;
     this._scroll = next;
     if (consumed !== 0) this._draw();
     return consumed;
@@ -408,6 +619,7 @@ export class MdCarousel extends HTMLElement {
 
   /** Modifier.carouselItem for every item at the current scroll offset. */
   _draw() {
+    if (this._list) { this._drawList(); return; }
     const strategy = this._strategy, count = this._items.length;
     if (!strategy.isValid || !count) {
       for (const item of this._items) item.box.toggleAttribute('data-offscreen', true);
@@ -415,9 +627,8 @@ export class MdCarousel extends HTMLElement {
     }
     const previous = this._currentPage;
     this._currentPage = this._computeCurrentPage();
-    const stride = strategy.itemMainAxisSize + strategy.itemSpacing;
     // calculateCurrentScrollOffset, from the pager's current page and fraction.
-    const scrollOffset = this._currentPage * stride + this._currentPageOffsetFraction() * stride - this._snapOffset(this._currentPage);
+    const scrollOffset = calculateCurrentScrollOffset(strategy, this._currentPage, this._currentPageOffsetFraction(), count);
     const maxScrollOffset = calculateMaxScrollOffset(strategy, count);
     const rtl = this._rtl;
     for (let index = 0; index < count; index++) {
@@ -514,6 +725,8 @@ export class MdCarousel extends HTMLElement {
    * (px/s, positive scrolls forward) and the gesture's down-to-up distance.
    */
   _fling(velocity, dragDelta) {
+    // The list's default fling: the spline decay, without snapping.
+    if (this._list) { if (this._items.length) this._decay(velocity); return; }
     if (!this._strategy.isValid || !this._items.length) return;
     if (this.layout === 'uncontained') { this._decay(velocity); return; }
     // singleAdvanceFlingBehavior: with PagerSnapDistance.atMost(1) the
@@ -606,7 +819,15 @@ export class MdCarousel extends HTMLElement {
     viewport.addEventListener('focusin', event => {
       const index = this._items.findIndex(item => item.box.contains(event.target) ||
         item.box.querySelector('slot')?.assignedElements().some(el => el === event.target || el.contains(event.target)));
-      if (index >= 0 && index !== this._currentPage && !this._drag) this.animateScrollToItem(index);
+      if (index < 0 || this._drag) return;
+      if (this._list) {
+        // Focus brings the item into view (BringIntoViewSpec's default distance).
+        const item = this._items[index];
+        const distance = bringIntoViewDistance(this._list.padding + item.start - Math.round(this._scroll), item.size, this._availableSpace);
+        if (distance) this._animateBy(distance, 0, SCROLL_SPRING);
+        return;
+      }
+      if (index !== this._currentPage) this.animateScrollToItem(index);
     }, { signal });
   }
 
@@ -669,7 +890,7 @@ export class MdCarousel extends HTMLElement {
     if (consumed !== 0) event.preventDefault();
     clearTimeout(this._wheelTimer);
     // When the wheel stops, settle as a release without velocity does.
-    if (this.layout !== 'uncontained') this._wheelTimer = setTimeout(() => this._fling(0, 0), WHEEL_SETTLE_DELAY);
+    if (this.layout !== 'uncontained' && !this._list) this._wheelTimer = setTimeout(() => this._fling(0, 0), WHEEL_SETTLE_DELAY);
   }
 
   _key(event) {

@@ -3,24 +3,29 @@ import {FrameResizeObserver} from '../utils/resize-observer.js';
 import { delegateHostAria } from '../utils/host-aria.js';
 import { createComponentSheet, adoptSheet } from '../utils/styles.js';
 import { observeThemeContext } from '../theme/theme-context.js';
+import { HostStyleSheet } from '../utils/host-style.js';
 import { pointerSlop } from '../motion/touch-slop.js';
 import { sliderTrackLayout, sliderTrackPath, sliderThumbOffset, sliderValueFraction, SliderPointerState, RangeSliderPointerState, snapSliderValue } from './slider-layout.js';
 
 const defaultStyle = `
   :host { display:block; width:100%; min-width:48px; outline:none; user-select:none; touch-action:pan-y; vertical-align:middle; }
-  .slider-root { position:relative; width:100%; height:48px; cursor:pointer; outline:none; -webkit-tap-highlight-color:transparent; }
-  .track-box { position:absolute; left:2px; right:2px; top:16px; height:16px; pointer-events:none; overflow:visible; }
+  /* SliderImpl: max(track, thumb) across, at least 48dp (minimumInteractiveComponentSize);
+     the track is inset by half the thumb along it and centered across. */
+  .slider-root { position:relative; width:100%; height:var(--_cross, 48px); cursor:pointer; outline:none; -webkit-tap-highlight-color:transparent; }
+  .track-box { position:absolute; left:calc(var(--_thumb-along, 4px) / 2); right:calc(var(--_thumb-along, 4px) / 2);
+    top:calc((var(--_cross, 48px) - var(--_track, 16px)) / 2); height:var(--_track, 16px); pointer-events:none; overflow:visible; }
   .track-box svg { display:block; width:100%; height:100%; overflow:visible; }
   .active-track, .stop-dot.stop { fill:var(--md-slider-active-track-bg, var(--md-sys-color-primary)); }
   .inactive-track { fill:var(--md-slider-track-bg, var(--md-sys-color-secondary-container)); }
   .stop-dot.active-tick { fill:var(--md-slider-active-tick-color, var(--md-sys-color-secondary-container)); }
   .stop-dot.inactive-tick { fill:var(--md-slider-inactive-tick-color, var(--md-sys-color-primary)); }
-  .thumb { position:absolute; width:4px; height:44px; top:50%; transform:translate(-50%, -50%); outline:none; z-index:1; }
+  .thumb { position:absolute; width:var(--_thumb-along, 4px); height:var(--_thumb-across, 44px); top:50%; transform:translate(-50%, -50%); outline:none; z-index:1; }
   .thumb[hidden] { display:none; }
   .handle { position:absolute; inset:0; border-radius:9999px; background:var(--md-slider-thumb-bg, var(--md-sys-color-primary)); }
-  .thumb.pressed .handle, .thumb.focused .handle { left:1px; right:1px; }
+  /* ThumbContent: half as wide along the track while pressed, dragged or focused. */
+  .thumb.pressed .handle, .thumb.focused .handle { left:calc(var(--_thumb-along, 4px) / 4); right:calc(var(--_thumb-along, 4px) / 4); }
   .slider-root:focus-visible .handle, .thumb:focus-visible .handle { outline:3px solid var(--md-sys-color-secondary); outline-offset:3px; }
-  .tooltip { position:absolute; bottom:56px; left:50%; transform:translateX(-50%); pointer-events:none; white-space:nowrap; visibility:hidden;
+  .tooltip { position:absolute; bottom:calc(100% + 12px); left:50%; transform:translateX(-50%); pointer-events:none; white-space:nowrap; visibility:hidden;
     background:var(--md-sys-color-inverse-surface); color:var(--md-sys-color-inverse-on-surface);
     font:var(--md-sys-typescale-label-large); letter-spacing:var(--md-sys-typescale-label-large-tracking); padding:4px 8px; border-radius:4px; }
   .labeled .thumb.pressed .tooltip, .labeled .thumb.focused .tooltip, .labeled:hover .tooltip { visibility:visible; }
@@ -29,12 +34,13 @@ const defaultStyle = `
   .disabled .inactive-track, .disabled .stop-dot.active-tick { fill:color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent); }
   .disabled .handle { background:color-mix(in srgb, var(--md-sys-color-on-surface) 38%, var(--md-sys-color-surface)); }
   .disabled .tooltip { visibility:hidden; }
-  :host([orientation="vertical"]) { width:48px; height:200px; min-height:48px; touch-action:pan-x; }
+  :host([orientation="vertical"]) { width:var(--_slider-cross, 48px); height:200px; min-height:48px; touch-action:pan-x; }
   :host([orientation="vertical"]) .slider-root { height:100%; }
-  :host([orientation="vertical"]) .track-box { top:2px; bottom:2px; height:auto; left:16px; right:auto; width:16px; }
-  :host([orientation="vertical"]) .thumb { width:44px; height:4px; left:50%; }
-  :host([orientation="vertical"]) .thumb.pressed .handle, :host([orientation="vertical"]) .thumb.focused .handle { left:0; right:0; top:1px; bottom:1px; }
-  :host([orientation="vertical"]) .tooltip { bottom:auto; left:56px; top:50%; transform:translateY(-50%); }
+  :host([orientation="vertical"]) .track-box { top:calc(var(--_thumb-along, 4px) / 2); bottom:calc(var(--_thumb-along, 4px) / 2); height:auto;
+    left:calc((var(--_cross, 48px) - var(--_track, 16px)) / 2); right:auto; width:var(--_track, 16px); }
+  :host([orientation="vertical"]) .thumb { width:var(--_thumb-across, 44px); height:var(--_thumb-along, 4px); left:50%; }
+  :host([orientation="vertical"]) .thumb.pressed .handle, :host([orientation="vertical"]) .thumb.focused .handle { left:0; right:0; top:calc(var(--_thumb-along, 4px) / 4); bottom:calc(var(--_thumb-along, 4px) / 4); }
+  :host([orientation="vertical"]) .tooltip { bottom:auto; left:calc(100% + 12px); top:50%; transform:translateY(-50%); }
 `;
 const sliderSheet = createComponentSheet(defaultStyle);
 const finite = (value, fallback) => { const n = Number.parseFloat(value); return Number.isFinite(n) ? n : fallback; };
@@ -45,7 +51,8 @@ export class MdSlider extends HTMLElement {
   static formAssociated = true;
   static get observedAttributes() {
     return ['value','min','max','step','steps','disabled','labeled','stops','size','centered','orientation',
-      'name','value-range','top-to-bottom','range','range-start','range-end','label','aria-label','aria-labelledby','dir'];
+      'name','value-range','top-to-bottom','range','range-start','range-end','label','aria-label','aria-labelledby','dir',
+      'track-height','track-corner-size','track-inside-corner-size','thumb-track-gap','stop-indicator','thumb-width','thumb-height'];
   }
   constructor() {
     super(); this.attachShadow({ mode:'open' }); adoptSheet(this.shadowRoot, sliderSheet);
@@ -97,6 +104,33 @@ export class MdSlider extends HTMLElement {
   // AndroidX defaults to values increasing from top to bottom.
   get topToBottom() { return this.getAttribute('top-to-bottom') !== 'false'; }
   set topToBottom(v) { this.setAttribute('top-to-bottom', String(!!v)); }
+  /*
+   * SliderDefaults.Track and Thumb parameters, in CSS pixels: the track's height
+   * (its modifier; 16dp), trackCornerSize (unset: half the height; set: the
+   * overload that also shrinks corners near the ends), trackInsideCornerSize
+   * (2dp), thumbTrackGapSize (6dp), drawStopIndicator (stop-indicator="false"
+   * is null) and thumbSize: thumb-width along the track (4dp) and thumb-height
+   * across it (44dp), whatever the orientation. Expressive slider sizes are
+   * these values; this revision has no size tokens for them.
+   */
+  _dimension(name, fallback) {
+    const value = Number.parseFloat(this.getAttribute(name));
+    return Number.isFinite(value) && value >= 0 ? value : fallback;
+  }
+  get trackHeight() { return this._dimension('track-height', 16); }
+  set trackHeight(v) { v == null ? this.removeAttribute('track-height') : this.setAttribute('track-height', String(v)); }
+  get trackCornerSize() { return this.hasAttribute('track-corner-size') ? this._dimension('track-corner-size', null) : null; }
+  set trackCornerSize(v) { v == null ? this.removeAttribute('track-corner-size') : this.setAttribute('track-corner-size', String(v)); }
+  get trackInsideCornerSize() { return this._dimension('track-inside-corner-size', 2); }
+  set trackInsideCornerSize(v) { v == null ? this.removeAttribute('track-inside-corner-size') : this.setAttribute('track-inside-corner-size', String(v)); }
+  get thumbTrackGapSize() { return this._dimension('thumb-track-gap', 6); }
+  set thumbTrackGapSize(v) { v == null ? this.removeAttribute('thumb-track-gap') : this.setAttribute('thumb-track-gap', String(v)); }
+  get stopIndicator() { return this.getAttribute('stop-indicator') !== 'false'; }
+  set stopIndicator(v) { this.setAttribute('stop-indicator', String(!!v)); }
+  get thumbWidth() { return this._dimension('thumb-width', 4); }
+  set thumbWidth(v) { v == null ? this.removeAttribute('thumb-width') : this.setAttribute('thumb-width', String(v)); }
+  get thumbHeight() { return this._dimension('thumb-height', 44); }
+  set thumbHeight(v) { v == null ? this.removeAttribute('thumb-height') : this.setAttribute('thumb-height', String(v)); }
   // Compatibility only: the source exposes one 16dp default track, not five size tokens.
   get size() { return this.getAttribute('size') ?? 'xs'; }
   set size(v) { v == null ? this.removeAttribute('size') : this.setAttribute('size', v); }
@@ -190,17 +224,25 @@ export class MdSlider extends HTMLElement {
       this._singleInput = new SliderPointerState(this.min,this.max,this.steps);
       this._rangeInput = new RangeSliderPointerState(this.min,this.max,this.steps);
     }
+    const track = this.trackHeight, along = this.thumbWidth, across = this.thumbHeight, cornerSize = this.trackCornerSize;
+    const cross = Math.max(48, track, across);
+    for (const [name, value] of [['--_track', track], ['--_thumb-along', along], ['--_thumb-across', across], ['--_cross', cross]]) root.style.setProperty(name, `${value}px`);
+    this._hostStyle.host.setProperty('--_slider-cross', `${cross}px`);
     const total = vertical ? root.clientHeight : root.clientWidth;
-    this._singleInput.total = total;
-    this._rangeInput.update(total,this.rangeStart,this.rangeEnd,this._isDragging);
-    const length = Math.max(0, (vertical ? root.clientHeight : root.clientWidth) - 4);
+    this._singleInput.total = total; this._singleInput.thumb = along;
+    this._rangeInput.update(total,this.rangeStart,this.rangeEnd,this._isDragging,along);
+    const length = Math.max(0, total - along);
+    // CornerSizeAlignmentLine: the corner also places a stepped thumb.
+    const corner = cornerSize ?? track / 2;
     const end = this._fraction(range ? this.rangeEnd : this.value), start = range ? this._fraction(this.rangeStart) : 0;
-    this._layout = sliderTrackLayout({length, start, end, steps:this.steps, range, centered:!range && this.centered, vertical, rtl, reverse});
-    this._svg.setAttribute('viewBox', vertical ? `0 0 16 ${length || 1}` : `0 0 ${length || 1} 16`);
+    this._layout = sliderTrackLayout({length, thickness:track, start, end, steps:this.steps, range, centered:!range && this.centered, vertical, rtl, reverse,
+      gap:this.thumbTrackGapSize, insideCorner:this.trackInsideCornerSize, corner, handle:along, stopIndicators:this.stopIndicator,
+      shrink:cornerSize != null || (!range && this.centered) || vertical});
+    this._svg.setAttribute('viewBox', vertical ? `0 0 ${track || 1} ${length || 1}` : `0 0 ${length || 1} ${track || 1}`);
     const paths = this._layout.paths.map(p => { const n = document.createElementNS(SVG,'path'); n.setAttribute('class',p.role+'-track'); n.setAttribute('d',sliderTrackPath(p)); return n; });
     const dots = this._layout.dots.map(dot => {
       const n = document.createElementNS(SVG,'circle'); n.setAttribute('class',`stop-dot ${dot.kind} ${dot.role}`);
-      n.setAttribute('cx',vertical ? '8' : String(dot.position)); n.setAttribute('cy',vertical ? String(dot.position) : '8'); n.setAttribute('r','2'); return n;
+      n.setAttribute('cx',vertical ? String(track/2) : String(dot.position)); n.setAttribute('cy',vertical ? String(dot.position) : String(track/2)); n.setAttribute('r','2'); return n;
     });
     this._svg.replaceChildren(...paths,...dots);
     root.classList.toggle('disabled',this.disabled); root.classList.toggle('labeled',this.labeled);
@@ -213,7 +255,7 @@ export class MdSlider extends HTMLElement {
     else for (const attr of ['aria-valuemin','aria-valuemax','aria-valuenow','aria-orientation']) root.removeAttribute(attr);
     for (const [n,p,value,isStart] of [[this._thumb,end,range ? this.rangeEnd : this.value,false],[this._startThumb,start,this.rangeStart,true]]) {
       n.hidden = isStart && !range;
-      const offset = sliderThumbOffset(length,p,this.steps), position = 2 + (reverse ? length-offset : offset);
+      const offset = sliderThumbOffset(length,p,this.steps,corner), position = along/2 + (reverse ? length-offset : offset);
       n.style.left = vertical ? '50%' : `${position}px`; n.style.top = vertical ? `${position}px` : '50%';
       n.classList.toggle('focused',!this.disabled && (range ? this.shadowRoot.activeElement === n : this.shadowRoot.activeElement === root));
       n.querySelector('.tooltip').textContent = String(Number(value.toFixed(2)));
@@ -342,6 +384,7 @@ export class MdSlider extends HTMLElement {
     const hasSheet = this.shadowRoot.adoptedStyleSheets?.length;
     this.shadowRoot.innerHTML = `${hasSheet ? '' : `<style>${defaultStyle}</style>`}<div class="slider-root" role="slider" tabindex="0"><div class="track-box"><svg aria-hidden="true" preserveAspectRatio="none"></svg></div><div class="thumb range-start-thumb" hidden><span class="handle"></span><span class="tooltip"></span></div><div class="thumb"><span class="handle"></span><span class="tooltip"></span></div></div>`;
     this._root = this.shadowRoot.querySelector('.slider-root'); this._svg = this.shadowRoot.querySelector('svg');
+    this._hostStyle = new HostStyleSheet(this.shadowRoot);
     this._thumb = this.shadowRoot.querySelector('.thumb:not(.range-start-thumb)'); this._startThumb = this.shadowRoot.querySelector('.range-start-thumb');
   }
 }

@@ -39,8 +39,9 @@ export function sliderThumbOffset(length, fraction, steps = 0, corner = 8) {
 }
 
 /** SliderState.dispatchRawDeltaInternal: snap in pixels, then scale to user values. */
-export function sliderPointerValue(coordinate, total, min, max, steps = 0) {
-  const maxPx = f(Math.max(f(total - 2), 0)), minPx = f(Math.min(2, maxPx));
+/** SliderState.updateDimensions: the pixel range is inset by half the thumb along the track. */
+export function sliderPointerValue(coordinate, total, min, max, steps = 0, thumb = 4) {
+  const half = f(thumb / 2), maxPx = f(Math.max(f(total - half), 0)), minPx = f(Math.min(half, maxPx));
   const offset = snapSliderValue(f(coordinate), minPx, maxPx, steps);
   return scale(minPx, maxPx, offset, min, max);
 }
@@ -49,12 +50,12 @@ export function sliderPointerValue(coordinate, total, min, max, steps = 0) {
 export class SliderPointerState {
   constructor(min, max, steps = 0) {
     this.min = f(min); this.max = f(max); this.steps = steps;
-    this.total = 0; this.rawOffset = 0; this.pressOffset = 0;
+    this.total = 0; this.thumb = 4; this.rawOffset = 0; this.pressOffset = 0;
   }
   press(coordinate) { this.pressOffset = f(f(coordinate) - this.rawOffset); }
   drag(delta) {
     this.rawOffset = f(f(this.rawOffset + f(delta)) + this.pressOffset); this.pressOffset = 0;
-    return sliderPointerValue(this.rawOffset, this.total, this.min, this.max, this.steps);
+    return sliderPointerValue(this.rawOffset, this.total, this.min, this.max, this.steps, this.thumb);
   }
 }
 
@@ -64,9 +65,9 @@ export class RangeSliderPointerState {
     this.min = f(min); this.max = f(max); this.steps = steps;
     this.minPx = this.maxPx = this.rawOffsetStart = this.rawOffsetEnd = 0;
   }
-  update(total, start, end, dragging = false) {
+  update(total, start, end, dragging = false, thumb = 4) {
     this.start = f(start); this.end = f(end);
-    const maxPx = f(Math.max(f(total - 2), 0)), minPx = f(Math.min(2, maxPx));
+    const half = f(thumb / 2), maxPx = f(Math.max(f(total - half), 0)), minPx = f(Math.min(half, maxPx));
     if (!dragging && (this.minPx !== minPx || this.maxPx !== maxPx || this.start !== this.end)) {
       this.minPx = minPx; this.maxPx = maxPx;
       this.rawOffsetStart = scale(this.min, this.max, this.start, minPx, maxPx);
@@ -97,15 +98,16 @@ export class RangeSliderPointerState {
 export function sliderTrackLayout({ length, thickness = 16, start = 0, end = .5, steps = 0,
   range = false, centered = false, vertical = false, rtl = false, reverse = false,
   gap = 6, insideCorner = 2, corner = thickness / 2, shrink = centered || vertical,
-  stopIndicators = true }) {
+  stopIndicators = true, handle = 4 }) {
   length = f(Math.max(0, length)); thickness = f(thickness); corner = f(corner); insideCorner = f(insideCorner);
   start = f(start); end = f(end);
   const ticks = sliderTickFractions(steps), rtlHorizontal = rtl && !vertical;
   const valuePosition = p => ticks.length && p !== 0 && p !== 1
     ? f(f(f(length - f(corner * 2)) * p) + corner) : f(length * p);
   const valueStart = valuePosition(start), valueEnd = valuePosition(end), center = f(length / 2);
-  const startHandle = range || (centered && end <= .5) ? 4 : 0;
-  const endHandle = !centered || end >= .5 ? 4 : 0;
+  // The thumbs' size along the track (SliderState.thumbWidth / thumbHeight).
+  const startHandle = range || (centered && end <= .5) ? handle : 0;
+  const endHandle = !centered || end >= .5 ? handle : 0;
   const startGap = (range || centered) && gap > 0 ? f(startHandle / 2 + gap) : 0;
   const endGap = gap > 0 ? f(endHandle / 2 + gap) : 0;
   const paths = [], dots = [];
